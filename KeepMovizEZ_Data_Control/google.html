@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <title>Series Info & Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px;
+            background: #f0f0f0;
+        }
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+        }
+        button {
+            cursor: pointer;
+        }
+        #calculator {
+            margin-top: 40px;
+            background: #fff;
+            display: inline-block;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        #calcDisplay {
+            width: 200px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 18px;
+            text-align: right;
+        }
+        .calcBtn {
+            width: 45px;
+            height: 45px;
+            margin: 3px;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Series Info Search</h1>
+    <input type="text" id="seriesName" placeholder="Enter series/movie name" />
+    <select id="typeSelect">
+        <option value="series">Series</option>
+        <option value="movie">Movie</option>
+    </select>
+    <br>
+    <button onclick="searchGoogle('total seasons')">Total Seasons</button>
+    <button onclick="searchGoogle('total episodes')">Total Episodes</button>
+    <button onclick="searchGoogle('total runtime')">Total Runtime</button>
+    <button onclick="searchGoogle('per episode runtime')">Per Episode Runtime</button>
+    <br>
+    <button class="btn btn-info btn-sm btn-block" onclick="openXedni()">Go to xedni.html</button>
+    
+    <div id="calculator">
+        <input type="text" id="calcDisplay" placeholder="0" readonly />
+        <br>
+        <div>
+            <button class="calcBtn" onclick="addCalc('7')">7</button>
+            <button class="calcBtn" onclick="addCalc('8')">8</button>
+            <button class="calcBtn" onclick="addCalc('9')">9</button>
+            <button class="calcBtn" onclick="addCalc('/')">/</button>
+        </div>
+        <div>
+            <button class="calcBtn" onclick="addCalc('4')">4</button>
+            <button class="calcBtn" onclick="addCalc('5')">5</button>
+            <button class="calcBtn" onclick="addCalc('6')">6</button>
+            <button class="calcBtn" onclick="addCalc('*')">*</button>
+        </div>
+        <div>
+            <button class="calcBtn" onclick="addCalc('1')">1</button>
+            <button class="calcBtn" onclick="addCalc('2')">2</button>
+            <button class="calcBtn" onclick="addCalc('3')">3</button>
+            <button class="calcBtn" onclick="addCalc('-')">-</button>
+        </div>
+        <div>
+            <button class="calcBtn" onclick="addCalc('0')">0</button>
+            <button class="calcBtn" onclick="addCalc('.')">.</button>
+            <button class="calcBtn" onclick="calculate()">=</button>
+            <button class="calcBtn" onclick="addCalc('+')">+</button>
+        </div>
+        <div>
+            <button class="calcBtn" onclick="clearCalc()">C</button>
+        </div>
+    </div>
+
+    <script>
+        // Google search function
+        function searchGoogle(queryType) {
+            const name = document.getElementById('seriesName').value.trim();
+            const type = document.getElementById('typeSelect').value;
+            if (!name) {
+                alert("Please enter a series/movie name.");
+                return;
+            }
+            const searchQuery = `${name} ${type} ${queryType}`;
+            window.location.href = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+        }
+
+        // Open xedni.html in a new window
+        let xedniWindow;
+        function openXedni() {
+            if (!xedniWindow || xedniWindow.closed) {
+                xedniWindow = window.open("xedni.html", "_blank", "width=800,height=600");
+            } else {
+                xedniWindow.focus();
+            }
+        }
+
+        // Calculator
+        let calcExpression = "";
+        const display = document.getElementById("calcDisplay");
+
+        function addCalc(value) {
+            calcExpression += value;
+            display.value = calcExpression;
+        }
+
+        function clearCalc() {
+            calcExpression = "";
+            display.value = "0";
+        }
+
+        function calculate() {
+            try {
+                // Evaluate expression with BODMAS
+                const result = eval(calcExpression);
+                display.value = result;
+                calcExpression = result.toString();
+            } catch {
+                display.value = "Error";
+                calcExpression = "";
+            }
+        }
+    </script>
+</body>
+</html>

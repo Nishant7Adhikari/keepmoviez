@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeepMovizEZ - Data Backend</title>
+    <!-- Dependencies (Bootstrap, Font Awesome, Supabase) -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --success-flash: #d4edda;
+            --success-flash-border: #c3e6cb;
+            --danger-flash: #f8d7da;
+            --danger-flash-border: #f5c6cb;
+        }
+        body { background-color: #f4f7f6; padding-top: 70px; }
+        .navbar { box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .table-container { max-height: calc(100vh - 140px); overflow-y: auto; }
+        .table th { position: sticky; top: 0; background-color: #343a40; color: white; }
+        .editable-cell { cursor: pointer; }
+        .editable-cell:hover { background-color: #e9ecef; }
+        .saving { opacity: 0.5; pointer-events: none; }
+        .flash-success { animation: flash-success 1.5s ease-out; }
+        .flash-danger { animation: flash-danger 1.5s ease-out; }
+        @keyframes flash-success {
+            0% { background-color: var(--success-flash); border-color: var(--success-flash-border); }
+            100% { background-color: transparent; border-color: #dee2e6; }
+        }
+        @keyframes flash-danger {
+            0% { background-color: var(--danger-flash); border-color: var(--danger-flash-border); }
+            100% { background-color: transparent; border-color: #dee2e6; }
+        }
+   #authContainer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; z-index: 1050; display: flex; align-items: center; justify-content: center; }
+        #appContainer { display: none; }
+        .toast-container { position: fixed; top: 80px; right: 20px; z-index: 1055; }
+     
+    </style>
+</head>
+<body>
+
+    <!-- Main Application Container -->
+    <div id="appContainer">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+            <a class="navbar-brand" href="#">KeepMovizEZ Data Backend</a>
+            <div class="ml-auto d-flex align-items-center">
+                <span id="loggedInUser" class="navbar-text mr-3 text-white"></span>
+                <button onclick="goToXedni()">Research</button>
+                <button id="logoutBtn" class="btn btn-sm btn-outline-warning">Logout</button>
+            </div>
+        </nav>
+
+        <div class="container-fluid mt-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>Movie & Series Data</h5>
+                    <div id="loadingIndicator" style="display: none;"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <input type="text" id="filterName" class="form-control form-control-sm" placeholder="Filter by name...">
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filterCategory" class="form-control form-control-sm">
+                                <option value="">All Categories</option>
+                                <option value="Series">Series</option>
+                                <option value="Movie">Movie</option>
+                                <option value="Documentary">Documentary</option>
+                                <option value="Special">Special</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select id="filterMissingData" class="form-control form-control-sm">
+                                <option value="">All Entries</option>
+                                <option value="runtime">Missing Runtime</option>
+                                <option value="progress">"Continue" Series w/o Progress</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button id="fetchMissingRuntimesBtn" class="btn btn-info btn-sm btn-block"><i class="fas fa-magic"></i> Fetch Missing Runtimes</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive table-container">
+                        <table class="table table-bordered table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Runtime (Movie)</th>
+                                    <th>Seasons (Series)</th>
+                                    <th>Episodes (Series)</th>
+                                    <th>Avg Ep Runtime (min)</th>
+                                    <th>Seasons Done</th>
+                                    <th>Eps in Current</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataTableBody">
+                                <!-- Data will be injected here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <span id="rowCount">0</span> entries displayed. Click on a runtime or progress cell to edit.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Authentication Container -->
+    <div id="authContainer">
+        <div class="card" style="width: 400px;">
+            <div class="card-body">
+                <h4 class="card-title text-center">Backend Login</h4>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" class="form-control">
+                </div>
+                <div id="authError" class="alert alert-danger" style="display:none;"></div>
+                <button id="loginBtn" class="btn btn-primary btn-block">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+    
+    <!-- Embedded JS -->
+    <script>
+       function goToXedni() {
+            // Open xedni.html in the same tab
+            window.location.href = "google.html";
+        }
+       
+       
+        // --- 1. CONFIGURATION ---
+        const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqbmp0dmxreGhkYmRibmdkYWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNDM5NjAsImV4cCI6MjA2MzgxOTk2MH0.g1sD1xeJ05lHncxDDMUrhEiPGD8bYdyHWFJoDpq6aHs';
+        const TMDB_API_KEY = '828d6c100ab709fa58452862b0feb035';
+
+        // --- 2. GLOBAL STATE & DOM ELEMENTS ---
+        let supabase = null;
+        let currentUser = null;
+        let movieData = [];
+        const dom = {
+            authContainer: document.getElementById('authContainer'),
+            appContainer: document.getElementById('appContainer'),
+            loginBtn: document.getElementById('loginBtn'),
+            logoutBtn: document.getElementById('logoutBtn'),
+            authError: document.getElementById('authError'),
+            loggedInUser: document.getElementById('loggedInUser'),
+            dataTableBody: document.getElementById('dataTableBody'),
+            loadingIndicator: document.getElementById('loadingIndicator'),
+            rowCount: document.getElementById('rowCount'),
+            filterName: document.getElementById('filterName'),
+            filterCategory: document.getElementById('filterCategory'),
+            filterMissingData: document.getElementById('filterMissingData'),
+            fetchMissingRuntimesBtn: document.getElementById('fetchMissingRuntimesBtn')
+        };
+        
+        // --- 3. HELPER & UTILITY FUNCTIONS ---
+
+        const showToast = (message, type = 'success') => {
+            const toastContainer = document.querySelector('.toast-container');
+            const toastId = `toast-${Date.now()}`;
+            const toastHtml = `
+                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3000">
+                    <div class="toast-header text-white bg-${type === 'success' ? 'success' : 'danger'}">
+                        <strong class="mr-auto">${type === 'success' ? 'Success' : 'Error'}</strong>
+                        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="toast-body">${message}</div>
+                </div>`;
+            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+            $(`#${toastId}`).toast('show');
+            $(`#${toastId}`).on('hidden.bs.toast', () => document.getElementById(toastId).remove());
+        };
+        
+        const setLoading = (isLoading) => {
+            dom.loadingIndicator.style.display = isLoading ? 'inline-block' : 'none';
+        };
+
+        const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+        const tmdbFetch = async (endpoint) => {
+             if (!TMDB_API_KEY || TMDB_API_KEY.includes('YOUR_API_KEY')) {
+                throw new Error("TMDB API Key is not configured in the backend.html script.");
+            }
+            const url = `https://api.themoviedb.org/3${endpoint}?api_key=${TMDB_API_KEY}`;
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.status_message || `TMDB API Error (${response.status})`);
+            }
+            return await response.json();
+        };
+
+        // --- 4. DATA RENDERING & MANIPULATION ---
+
+        const renderTable = () => {
+            dom.dataTableBody.innerHTML = '';
+            const nameFilter = dom.filterName.value.toLowerCase();
+            const catFilter = dom.filterCategory.value;
+            const missingFilter = dom.filterMissingData.value;
+            
+            const filteredData = movieData.filter(entry => {
+                const nameMatch = !nameFilter || entry.name.toLowerCase().includes(nameFilter);
+                const catMatch = !catFilter || entry.category === catFilter;
+                
+                let missingMatch = true;
+                if (missingFilter === 'runtime') {
+                    const hasRuntime = (typeof entry.runtime === 'number' && entry.runtime > 0) || 
+                                     (typeof entry.runtime === 'object' && entry.runtime && entry.runtime.episodes);
+                    missingMatch = !hasRuntime;
+                } else if (missingFilter === 'progress') {
+                    const isContinueSeries = entry.category === 'Series' && entry.status === 'Continue';
+                    const hasProgress = typeof entry.seasons_completed === 'number' && typeof entry.current_season_episodes_watched === 'number';
+                    missingMatch = isContinueSeries && !hasProgress;
+                }
+                
+                return nameMatch && catMatch && missingMatch;
+            });
+
+            dom.rowCount.textContent = filteredData.length;
+
+            if (filteredData.length === 0) {
+                dom.dataTableBody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">No entries match your filters.</td></tr>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+            filteredData.forEach(entry => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = entry.id;
+                
+                const runtimeMovie = (entry.category !== 'Series' && typeof entry.runtime === 'number') ? entry.runtime : '';
+                const runtimeSeriesSeasons = (entry.category === 'Series' && typeof entry.runtime === 'object' && entry.runtime) ? entry.runtime.seasons : '';
+                const runtimeSeriesEpisodes = (entry.category === 'Series' && typeof entry.runtime === 'object' && entry.runtime) ? entry.runtime.episodes : '';
+                const runtimeSeriesAvg = (entry.category === 'Series' && typeof entry.runtime === 'object' && entry.runtime) ? entry.runtime.episode_run_time : '';
+                
+                tr.innerHTML = `
+                    <td>${entry.name}</td>
+                    <td>${entry.category}</td>
+                    <td>${entry.status}</td>
+                    <td class="editable-cell" data-field="runtime">${runtimeMovie}</td>
+                    <td class="editable-cell" data-field="runtime.seasons">${runtimeSeriesSeasons}</td>
+                    <td class="editable-cell" data-field="runtime.episodes">${runtimeSeriesEpisodes}</td>
+                    <td class="editable-cell" data-field="runtime.episode_run_time">${runtimeSeriesAvg}</td>
+                    <td class="editable-cell" data-field="seasons_completed">${entry.seasons_completed ?? ''}</td>
+                    <td class="editable-cell" data-field="current_season_episodes_watched">${entry.current_season_episodes_watched ?? ''}</td>
+                `;
+                fragment.appendChild(tr);
+            });
+            dom.dataTableBody.appendChild(fragment);
+        };
+
+        const makeCellEditable = (cell) => {
+            if (cell.querySelector('input')) return; // Already editing
+            
+            const originalValue = cell.textContent;
+            const field = cell.dataset.field;
+            
+            cell.innerHTML = `<input type="number" class="form-control form-control-sm" value="${originalValue}" />`;
+            const input = cell.querySelector('input');
+            input.focus();
+            
+            const saveChange = async () => {
+                const newValue = input.value.trim() === '' ? null : parseInt(input.value, 10);
+                if (isNaN(newValue) && newValue !== null) {
+                    cell.textContent = originalValue;
+                    showToast('Invalid input. Please enter a number.', 'danger');
+                    return;
+                }
+
+                cell.textContent = newValue ?? '';
+                const id = cell.parentElement.dataset.id;
+                await updateEntry(id, field, newValue);
+            };
+            
+            input.addEventListener('blur', saveChange);
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') input.blur();
+                if (e.key === 'Escape') {
+                    cell.textContent = originalValue;
+                    input.removeEventListener('blur', saveChange);
+                }
+            });
+        };
+
+        async function updateEntry(id, field, value) {
+            const tr = dom.dataTableBody.querySelector(`tr[data-id="${id}"]`);
+            tr.classList.add('saving');
+            
+            const localEntry = movieData.find(e => e.id === id);
+            if (!localEntry) return;
+
+            // Prepare the payload for Supabase
+            const updatePayload = {
+                last_modified_date: new Date().toISOString()
+            };
+
+            if (field.startsWith('runtime.')) {
+                const subField = field.split('.')[1];
+                // Ensure runtime is an object for series
+                if (localEntry.category === 'Series' && (typeof localEntry.runtime !== 'object' || localEntry.runtime === null)) {
+                    localEntry.runtime = {};
+                }
+                
+                if (localEntry.category !== 'Series') { // It's a movie
+                     localEntry.runtime = value;
+                } else { // It's a series
+                    localEntry.runtime[subField] = value;
+                }
+                updatePayload.runtime = localEntry.runtime;
+
+            } else {
+                localEntry[field] = value;
+                updatePayload[field] = value;
+            }
+
+            try {
+                const { error } = await supabase.from('movie_entries').update(updatePayload).eq('id', id);
+                if (error) throw error;
+                
+                tr.classList.remove('saving');
+                tr.className = 'flash-success';
+                showToast(`"${localEntry.name}" updated successfully.`);
+            } catch (error) {
+                console.error("Update failed:", error);
+                tr.classList.remove('saving');
+                tr.className = 'flash-danger';
+                showToast(`Failed to update "${localEntry.name}": ${error.message}`, 'danger');
+                // Revert local data on failure
+                // This is simplified; a full implementation would revert to the pre-edit state.
+                loadData(); 
+            }
+        };
+
+
+        // --- 5. CORE APPLICATION LOGIC ---
+
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase.from('movie_entries').select('*').order('name', { ascending: true });
+                if (error) throw error;
+                movieData = data;
+                renderTable();
+            } catch (error) {
+                console.error("Failed to load data:", error);
+                showToast(`Error loading data: ${error.message}`, 'danger');
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        const handleBatchFetch = async () => {
+            const entriesToFetch = movieData.filter(entry => {
+                 const hasRuntime = (typeof entry.runtime === 'number' && entry.runtime > 0) || 
+                                     (typeof entry.runtime === 'object' && entry.runtime && entry.runtime.episodes);
+                return entry.tmdb_id && !hasRuntime;
+            });
+
+            if (entriesToFetch.length === 0) {
+                showToast("No entries with missing runtime data found.", "success");
+                return;
+            }
+
+            setLoading(true);
+            let successCount = 0;
+            let errorCount = 0;
+            
+            showToast(`Starting to fetch runtimes for ${entriesToFetch.length} entries... This may take a while.`, 'success');
+
+            for (const entry of entriesToFetch) {
+                try {
+                    const endpoint = entry.category === 'Series' ? `/tv/${entry.tmdb_id}` : `/movie/${entry.tmdb_id}`;
+                    const details = await tmdbFetch(endpoint);
+                    await delay(250); // Rate limit
+
+                    let newRuntime = null;
+                    if (entry.category === 'Series') {
+                        newRuntime = {
+                            seasons: details.number_of_seasons || null,
+                            episodes: details.number_of_episodes || null,
+                            episode_run_time: details.episode_run_time && details.episode_run_time.length > 0 ? details.episode_run_time[0] : null
+                        };
+                    } else {
+                        newRuntime = details.runtime || null;
+                    }
+                    
+                    if (newRuntime) {
+                         await updateEntry(entry.id, 'runtime', newRuntime);
+                         successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (e) {
+                    console.error(`Failed to fetch for ${entry.name}: ${e.message}`);
+                    errorCount++;
+                }
+            }
+            
+            setLoading(false);
+            showToast(`Batch fetch complete! Successfully updated ${successCount} entries. Failed to update ${errorCount}.`, 'success');
+            loadData(); // Reload to show all changes
+        };
+
+
+        // --- 6. AUTHENTICATION ---
+        
+        const handleLogin = async () => {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            dom.authError.style.display = 'none';
+
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                dom.authError.textContent = error.message;
+                dom.authError.style.display = 'block';
+            } else {
+                currentUser = data.user;
+                dom.authContainer.style.display = 'none';
+                dom.appContainer.style.display = 'block';
+                dom.loggedInUser.textContent = `Logged in as: ${currentUser.email}`;
+                await loadData();
+            }
+        };
+
+        const handleLogout = async () => {
+            await supabase.auth.signOut();
+            currentUser = null;
+            movieData = [];
+            dom.dataTableBody.innerHTML = '';
+            dom.authContainer.style.display = 'flex';
+            dom.appContainer.style.display = 'none';
+        };
+
+
+        // --- 7. EVENT LISTENERS ---
+
+        const addEventListeners = () => {
+            dom.loginBtn.addEventListener('click', handleLogin);
+            dom.logoutBtn.addEventListener('click', handleLogout);
+            
+            dom.filterName.addEventListener('input', () => renderTable());
+            dom.filterCategory.addEventListener('change', () => renderTable());
+            dom.filterMissingData.addEventListener('change', () => renderTable());
+            
+            dom.dataTableBody.addEventListener('click', (e) => {
+                if (e.target && e.target.classList.contains('editable-cell')) {
+                    makeCellEditable(e.target);
+                }
+            });
+            
+            dom.fetchMissingRuntimesBtn.addEventListener('click', handleBatchFetch);
+        };
+        
+        
+        // --- 8. INITIALIZATION ---
+
+        const init = async () => {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                addEventListeners();
+                
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    dom.authContainer.style.display = 'none';
+                    dom.appContainer.style.display = 'block';
+                    dom.loggedInUser.textContent = `Logged in as: ${currentUser.email}`;
+                    await loadData();
+                } else {
+                    dom.authContainer.style.display = 'flex';
+                    dom.appContainer.style.display = 'none';
+                }
+            } catch (e) {
+                console.error("Initialization failed:", e);
+                dom.authError.textContent = 'Failed to initialize Supabase client. Check credentials.';
+                dom.authError.style.display = 'block';
+            }
+        };
+
+        // Run on DOM load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Need jQuery for Bootstrap toasts, so load it dynamically if not present.
+            if (typeof jQuery === 'undefined') {
+                const script = document.createElement('script');
+                script.src = 'https://code.jquery.com/jquery-3.5.1.slim.min.js';
+                script.onload = () => {
+                    const bsScript = document.createElement('script');
+                    bsScript.src = 'https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js';
+                    bsScript.onload = init;
+                    document.head.appendChild(bsScript);
+                };
+                document.head.appendChild(script);
+            } else {
+                init();
+            }
+        });
+    </script>
+</body>
+</html>
