@@ -972,7 +972,13 @@ a:hover { color: var(--link-hover-color); text-decoration: none; }
 .offcanvas-menu .list-group-item:last-child { border-bottom: none; }
 .offcanvas-menu .list-group-item:hover, .offcanvas-menu .list-group-item:focus { background-color: var(--table-header-bg); color: var(--primary-color); text-decoration: none; }
 .offcanvas-menu .list-group-item.text-danger:hover { background-color: var(--danger-hover-color); color: white; }
-.offcanvas-menu .list-group-item i.fas { width: 20px; text-align: center; margin-right: 0.75rem !important; }
+
+.offcanvas-menu .list-group-item i.fas { 
+    width: 20px; 
+    text-align: center; 
+    margin-bottom: 20px;
+    margin-right: 0.75rem !important; 
+}
 .offcanvas-footer { background-color: var(--card-bg); border-top: 1px solid var(--table-border-color); flex-shrink: 0; }
 #menuSupabaseLogoutBtn { border-color: var(--warning-color); color: var(--warning-color); }
 #menuSupabaseLogoutBtn:hover { background-color: var(--warning-color); color: var(--warning-text-color); }
