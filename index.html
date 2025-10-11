@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v4.2.5-->
+<!-- KeepMoviEZ  v4.2.6-->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -28,7 +28,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
     <!-- Supabase JS Client V2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
+
 <!-- END CHUNK: Document Head and Core Dependencies -->
 <body>
 <!-- START CHUNK: Overlays -->
@@ -57,13 +57,13 @@
                 <div id="authError" class="alert alert-danger mt-2" style="display:none;"></div>
                 <button id="supabaseLoginBtn" class="btn btn-primary btn-block mt-3">Login</button>
                 <button id="supabaseSignupBtn" class="btn btn-outline-info btn-block mt-2">Sign Up</button>
-                
+
                 <div class="text-center my-3 text-muted">OR</div>
 
                 <button id="supabaseGoogleSignInBtn" class="btn btn-light btn-block border">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" style="height: 18px; margin-right: 10px;">
                 </button>
-                
+
                 <button id="supabasePasswordResetBtn" class="btn btn-link btn-block mt-2">Forgot Password?</button>
             </div>
 
@@ -105,11 +105,11 @@
                 </button>
                 <!-- NEW Import/Pull Button -->
                 <button id="menuImportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
-                    <i class="fas fa-cloud-download-alt mr-2"></i> Import / Pull
+                    <i class="fas fa-cloud-download-alt mr-2"></i> Import
                 </button>
                 <!-- NEW Export/Push Button -->
                 <button id="menuExportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i> Export / Push
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> Export
                 </button>
                 <!-- Standard Sync Button -->
                 <button id="menuSyncDataBtn" class="list-group-item list-group-item-action d-flex align-items-center">
@@ -142,7 +142,7 @@
             <button id="menuSupabaseLogoutBtn" class="btn btn-outline-warning btn-block"><i class="fas fa-sign-in-alt"></i></button>
         </div>
         </div>
-        
+
     </div>
 <!-- END CHUNK: Off-Canvas Application Menu -->
 
@@ -151,7 +151,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="importModalLabel">Import / Pull Data</h5>
+                    <h5 class="modal-title" id="importModalLabel">Import Data</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -179,7 +179,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exportModalLabel">Export / Push Data</h5>
+                    <h5 class="modal-title" id="exportModalLabel">Export Data</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
@@ -249,7 +249,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <a id="Brand" class="navbar-brand" href="#"><strong id="fthis">KeepMoviEZ </strong></a>
-            
+
             <div class="ml-auto d-flex align-items-center">
                 <form id="navbarSearchForm" class="form-inline my-2 my-lg-0 mr-2">
                     <div class="input-group">
@@ -275,7 +275,7 @@
                     You can find a demo CSV file here: <a href="https://drive.google.com/file/d/1Q_qiQuJfY030fOUcv2tdezAh4qPUgZPh/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Demo CSV</a>.
                 </p>
             </div>
-            
+
             <div class="table-responsive" tabindex="0">
                 <div id="movieCardContainer" class="card-container">
                     <!-- Movie cards will be dynamically injected here -->
@@ -527,7 +527,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- SECTION 3: DETAILS & CLASSIFICATION -->
                             <div class="card">
                                 <div class="card-header" id="detailsHeading">
@@ -561,7 +561,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- SECTION 4: Related-->
                             <div class="card">
                                 <div class="card-header" id="advancedHeading">
@@ -646,7 +646,7 @@
                         <h5>Related</h5>
                         <ul id="detailsManualLinksList" class="list-unstyled related-list"></ul>
                     </div>
-                    
+
                     <hr id="manualLinksSeparator" style="display:none;"> 
                     <div id="detailsEnhancedRelatedSection" class="mt-3" style="display:none;">
                         <h5>Contextual Links</h5>
@@ -663,7 +663,7 @@
                             <ul id="detailsStudioList" class="list-unstyled related-list"></ul>
                         </div>
                     </div>
-                    
+
                      <hr id="enhancedRelatedSeparator" style="display:none;">
 
                     <div id="detailsWatchHistorySection" class="details-watch-history mt-3" style="display:none;">
@@ -1039,7 +1039,7 @@
                 <div class="modal-body">
                     <form id="batchEditForm">
                         <p>Apply changes to <strong id="batchEditCount">0</strong> selected entries. <span class="text-info">Only checked fields will be updated.</span></p>
-                        
+
                         <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_Status"></div>
                             <label for="batchEditStatus" class="col-3 col-form-label">Status</label>
@@ -1065,7 +1065,7 @@
                                 </select>
                             </div>
                         </div>
-                        
+
                         <hr>
                         <h6>Genre Actions</h6>
                         <div class="form-group form-row align-items-center">
@@ -1083,7 +1083,7 @@
                             </div>
                         </div>
                         <hr>
-                        
+
                         <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_OverallRating"></div>
                             <label for="batchEditOverallRating" class="col-3 col-form-label">Overall Rating</label>

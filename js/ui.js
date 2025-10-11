@@ -24,7 +24,6 @@ function getLatestWatchInstance(watchHistoryArray) {
     if (validHistory.length === 0) return null;
     return [...validHistory].sort((a, b) => new Date(b.date) - new Date(a.date))[0];
 }
-
 function renderWatchHistoryUI(entryWatchHistory = []) {
     const listEl = document.getElementById('watchHistoryList');
     if (!listEl) { console.warn("Element 'watchHistoryList' not found for UI rendering."); return; }
@@ -552,7 +551,7 @@ window.showDeleteConfirmationModal = function(id = null) {
 window.openDetailsModal = async function(id = null, tmdbObject = null) {
     showLoading("Loading details...");
     try {
-        let sourceData, isLocalEntry, fullDetails;
+        let sourceData, isLocalEntry, fullDetails, currentEntryId;
 
         if (id) {
             sourceData = movieData.find(m => m && m.id === id);
@@ -562,6 +561,7 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
                 return;
             }
             fullDetails = sourceData;
+            currentEntryId = id;
         } else if (tmdbObject) {
             sourceData = tmdbObject;
             isLocalEntry = false;
@@ -570,143 +570,124 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
                  showToast("Error", "Could not fetch full TMDB details.", "error");
                  return;
             }
+            currentEntryId = `tmdb_${fullDetails.id}`; // A temporary ID for non-local items
         } else {
             showToast("Error", "No entry specified to view.", "error");
             return;
         }
 
-        const displayObject = {
-            name: fullDetails.Name || fullDetails.title || fullDetails.name || 'Details',
-            year: fullDetails.Year || (fullDetails.release_date || fullDetails.first_air_date || '').substring(0, 4) || 'N/A',
-            description: fullDetails.Description || fullDetails.overview || 'N/A',
-            posterUrl: fullDetails['Poster URL'] || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${fullDetails.poster_path}` : null),
-            category: fullDetails.Category || (fullDetails.media_type === 'tv' ? 'Series' : 'Movie'),
-            genre: fullDetails.Genre || (fullDetails.genres || []).map(g => g.name).join(', ') || 'N/A',
-            language: fullDetails.Language || (fullDetails.spoken_languages || []).map(l => l.english_name).join(', ') || 'N/A',
-            country: fullDetails.Country ? getCountryFullName(fullDetails.Country) : (fullDetails.production_countries || []).map(c => c.name).join(', ') || 'N/A',
-            status: isLocalEntry ? fullDetails.Status : 'Not in Library',
-            overallRating: isLocalEntry ? fullDetails.overallRating : null,
-            recommendation: isLocalEntry ? fullDetails.Recommendation : null,
-            personalRecommendation: isLocalEntry ? fullDetails.personalRecommendation : null,
-            lastModifiedDate: isLocalEntry ? (fullDetails.lastModifiedDate ? new Date(fullDetails.lastModifiedDate).toLocaleString() : 'N/A') : null,
-            tmdbVoteAvg: fullDetails.tmdb_vote_average || fullDetails.vote_average,
-            tmdbVoteCount: fullDetails.tmdb_vote_count || fullDetails.vote_count,
-            keywords: fullDetails.keywords?.keywords || fullDetails.keywords?.results || fullDetails.keywords || [],
-            director: fullDetails.director_info || fullDetails.credits?.crew?.find(c => c.job === 'Director'),
-            cast: fullDetails.full_cast || fullDetails.credits?.cast || [],
-            watchHistory: isLocalEntry ? fullDetails.watchHistory : [],
-            seasonsCompleted: isLocalEntry ? fullDetails.seasonsCompleted : null,
-            currentSeasonEpisodesWatched: isLocalEntry ? fullDetails.currentSeasonEpisodesWatched : null,
-            runtimeData: fullDetails.runtime,
-            relatedEntries: isLocalEntry ? fullDetails.relatedEntries : [] // Added for the fix
-        };
-
+        // --- UI Helper Functions ---
         const setText = (selector, text) => { const el = document.querySelector(selector); if (el) el.textContent = text || 'N/A'; };
         const setHtml = (selector, html) => { const el = document.querySelector(selector); if (el) el.innerHTML = html || 'N/A'; };
         const toggle = (selector, condition) => $(selector).toggle(!!condition);
-
-        $('#detailsModal .modal-title').text(displayObject.name);
         
-        if (displayObject.posterUrl) {
-            $('#detailsPoster').attr('src', displayObject.posterUrl).removeClass('d-none');
-            $('#noPosterMessage').addClass('d-none');
-        } else {
-            $('#detailsPoster').addClass('d-none');
-            $('#noPosterMessage').text('No Poster Available').removeClass('d-none');
-        }
+        // --- Primary Details Population ---
+        $('#detailsModal .modal-title').text(fullDetails.Name || fullDetails.title || fullDetails.name || 'Details');
+        const posterUrl = fullDetails['Poster URL'] || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${fullDetails.poster_path}` : null);
+        if (posterUrl) { $('#detailsPoster').attr('src', posterUrl).removeClass('d-none'); $('#noPosterMessage').addClass('d-none'); }
+        else { $('#detailsPoster').addClass('d-none'); $('#noPosterMessage').removeClass('d-none'); }
+        setText('#detailsName', fullDetails.Name || fullDetails.title || fullDetails.name);
+        setText('#detailsCategory', fullDetails.Category || (fullDetails.media_type === 'tv' ? 'Series' : 'Movie'));
+        setText('#detailsGenre', fullDetails.Genre || (fullDetails.genres || []).map(g => g.name).join(', ') || 'N/A');
+        setText('#detailsStatus', isLocalEntry ? fullDetails.Status : 'Not in Library');
+        setText('#detailsLanguage', fullDetails.Language || (fullDetails.spoken_languages || []).map(l => l.english_name).join(', ') || 'N/A');
+        setText('#detailsYear', fullDetails.Year || (fullDetails.release_date || fullDetails.first_air_date || '').substring(0, 4) || 'N/A');
+        setText('#detailsCountry', fullDetails.Country ? getCountryFullName(fullDetails.Country) : (fullDetails.production_countries || []).map(c => c.name).join(', ') || 'N/A');
+        setText('#detailsDescription', fullDetails.Description || fullDetails.overview || 'N/A');
+        setText('#detailsLastModified', isLocalEntry && fullDetails.lastModifiedDate ? new Date(fullDetails.lastModifiedDate).toLocaleString() : 'N/A');
 
-        setText('#detailsYear', displayObject.year);
-        setText('#detailsDescription', displayObject.description);
-        setText('#detailsCategory', displayObject.category);
-        setText('#detailsGenre', displayObject.genre);
-        setText('#detailsLanguage', displayObject.language);
-        setText('#detailsCountry', displayObject.country);
+        // --- Conditional UI Elements ---
+        const isWatchedOrContinue = isLocalEntry && (fullDetails.Status === 'Watched' || fullDetails.Status === 'Continue');
+        toggle('#detailsRecommendationGroup', isWatchedOrContinue && !!fullDetails.Recommendation);
+        setText('#detailsRecommendation', fullDetails.Recommendation);
+        toggle('#detailsOverallRatingGroup', isWatchedOrContinue && !!fullDetails.overallRating);
+        setHtml('#detailsOverallRating', renderStars(fullDetails.overallRating));
+        toggle('#detailsPersonalRecommendationGroup', isLocalEntry && !!fullDetails.personalRecommendation);
+        setText('#detailsPersonalRecommendation', fullDetails.personalRecommendation);
+        const isContinueStatus = isLocalEntry && fullDetails.Status === 'Continue';
+        toggle('#detailsContinueGroup', isContinueStatus);
+        if (isContinueStatus) setText('#detailsContinue', `Season ${(fullDetails.seasonsCompleted || 0) + 1}, Ep ${fullDetails.currentSeasonEpisodesWatched || '?'}`);
 
+        // --- Runtime ---
         let runtimeText = 'N/A';
-        if (typeof displayObject.runtimeData === 'number' && displayObject.runtimeData > 0) {
-            const hours = Math.floor(displayObject.runtimeData / 60);
-            const minutes = displayObject.runtimeData % 60;
-            runtimeText = `${hours > 0 ? hours + 'h ' : ''}${minutes}m`;
-        } else if (typeof displayObject.runtimeData === 'object' && displayObject.runtimeData !== null) {
-            const { seasons, episodes, episode_run_time } = displayObject.runtimeData;
-            const parts = [];
-            if (seasons) parts.push(`<strong>Seasons:</strong> ${seasons}`);
-            if (episodes) parts.push(`<strong>Episodes:</strong> ${episodes}`);
-            if (episode_run_time) parts.push(`<strong>Avg. Ep:</strong> ${episode_run_time}m`);
-            if (parts.length > 0) runtimeText = parts.join(' | ');
-        }
+        const runtimeData = fullDetails.runtime;
+        if (typeof runtimeData === 'number' && runtimeData > 0) { const h = Math.floor(runtimeData / 60), m = runtimeData % 60; runtimeText = `${h > 0 ? h + 'h ' : ''}${m}m`; }
+        else if (typeof runtimeData === 'object' && runtimeData !== null) { const parts = []; if (runtimeData.seasons) parts.push(`<strong>Seasons:</strong> ${runtimeData.seasons}`); if (runtimeData.episodes) parts.push(`<strong>Episodes:</strong> ${runtimeData.episodes}`); if (runtimeData.episode_run_time) parts.push(`<strong>Avg. Ep:</strong> ${runtimeData.episode_run_time}m`); if (parts.length > 0) runtimeText = parts.join(' | '); }
         toggle('#detailsRuntimeGroup', runtimeText !== 'N/A');
         setHtml('#detailsRuntime', runtimeText);
         
-        const hasTmdbRating = typeof displayObject.tmdbVoteAvg === 'number' && displayObject.tmdbVoteCount > 0;
+        // --- TMDB, Cast & Crew ---
+        const hasTmdbRating = typeof (fullDetails.tmdb_vote_average ?? fullDetails.vote_average) === 'number' && (fullDetails.tmdb_vote_count ?? fullDetails.vote_count) > 0;
         toggle('#detailsTMDBRatingGroup', hasTmdbRating);
-        if (hasTmdbRating) {
-            setHtml('#detailsTMDBRating', `${displayObject.tmdbVoteAvg.toFixed(1)}/10 <small>(${displayObject.tmdbVoteCount} votes)</small>`);
-        }
+        if(hasTmdbRating) setHtml('#detailsTMDBRating', `${(fullDetails.tmdb_vote_average ?? fullDetails.vote_average).toFixed(1)}/10 <small>(${(fullDetails.tmdb_vote_count ?? fullDetails.vote_count)} votes)</small>`);
         
-        toggle('#detailsKeywords', displayObject.keywords.length > 0);
-        if (displayObject.keywords.length > 0) {
-            setText('#detailsKeywords', displayObject.keywords.map(k => k.name).join(', '));
-        }
+        const keywords = fullDetails.keywords?.keywords || fullDetails.keywords?.results || fullDetails.keywords || [];
+        toggle('#detailsKeywords', keywords.length > 0);
+        if(keywords.length > 0) setText('#detailsKeywords', keywords.map(k => k.name).join(', '));
 
-        const hasDirector = !!displayObject.director;
-        const hasCast = displayObject.cast.length > 0;
-        toggle('#detailsCastCrewSection, #castCrewSeparator', hasDirector || hasCast);
-        if (hasDirector) {
-            setHtml('#detailsDirector', `<a href="#" class="person-link" data-person-id="${displayObject.director.id}" data-person-name="${displayObject.director.name}">${displayObject.director.name}</a>`);
-        } else {
-            setText('#detailsDirector', 'N/A');
-        }
+        const director = fullDetails.director_info || fullDetails.credits?.crew?.find(c => c.job === 'Director');
+        const cast = fullDetails.full_cast || fullDetails.credits?.cast || [];
+        toggle('#detailsCastCrewSection, #castCrewSeparator', !!director || cast.length > 0);
+        setHtml('#detailsDirector', director ? `<a href="#" class="person-link" data-person-id="${director.id}" data-person-name="${director.name}">${director.name}</a>` : 'N/A');
         const castListEl = $('#detailsCastList').empty();
-        if (hasCast) {
-            displayObject.cast.slice(0, 10).forEach(member => {
-                if (member && member.name) castListEl.append(`<div class="col-md-4 col-6 mb-2 person-list-item"><a href="#" class="person-link" data-person-id="${member.id}" data-person-name="${member.name}">${member.name}</a> <small class="text-muted">(${member.character || 'N/A'})</small></div>`);
-            });
-        }
+        if(cast.length > 0) cast.slice(0, 10).forEach(member => member && member.name && castListEl.append(`<div class="col-md-4 col-6 mb-2 person-list-item"><a href="#" class="person-link" data-person-id="${member.id}" data-person-name="${member.name}">${member.name}</a> <small class="text-muted">(${member.character || 'N/A'})</small></div>`));
         
-        // --- START: RELATED ENTRIES FIX ---
+        // --- MANUAL (CUSTOM) LINKS ---
         const manualLinksList = $('#detailsManualLinksList').empty();
-        const hasManualLinks = isLocalEntry && displayObject.relatedEntries && displayObject.relatedEntries.length > 0;
+        const manualLinks = isLocalEntry ? (fullDetails.relatedEntries || []) : [];
+        const hasManualLinks = manualLinks.length > 0;
         toggle('#detailsManualLinksGroup, #manualLinksSeparator', hasManualLinks);
-        if (hasManualLinks) {
-            displayObject.relatedEntries.forEach(relatedId => {
-                const relatedMovie = movieData.find(m => m && m.id === relatedId);
-                if (relatedMovie) {
-                    manualLinksList.append(`<li><a href="#" class="related-item-link" data-movie-id="${relatedMovie.id}">${relatedMovie.Name}</a></li>`);
-                }
-            });
+        if (hasManualLinks) manualLinks.forEach(relatedId => { const movie = movieData.find(m => m.id === relatedId); if(movie) manualLinksList.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`); });
+
+        // --- ENHANCED (AUTOMATIC) LINKS ---
+        let hasEnhancedLinks = false;
+        // Franchise/Collection
+        const collectionId = fullDetails.tmdb_collection_id || fullDetails.belongs_to_collection?.id;
+        const franchiseListEl = $('#detailsFranchiseList').empty();
+        if (collectionId) {
+            const collectionName = fullDetails.tmdb_collection_name || fullDetails.belongs_to_collection?.name;
+            const franchiseMovies = movieData.filter(m => m.id !== currentEntryId && m.tmdb_collection_id === collectionId);
+            if(franchiseMovies.length > 0) {
+                $('#detailsFranchiseName').text(collectionName);
+                franchiseMovies.forEach(movie => franchiseListEl.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`));
+                hasEnhancedLinks = true;
+            }
         }
-        // --- END: RELATED ENTRIES FIX ---
-
-        toggle('#detailsStatus', isLocalEntry);
-        setText('#detailsStatus', displayObject.status);
-        const isWatchedOrContinue = isLocalEntry && (displayObject.status === 'Watched' || displayObject.status === 'Continue');
-        toggle('#detailsRecommendationGroup', isWatchedOrContinue && !!displayObject.recommendation);
-        setText('#detailsRecommendation', displayObject.recommendation);
-        toggle('#detailsOverallRatingGroup', isWatchedOrContinue && !!displayObject.overallRating);
-        setHtml('#detailsOverallRating', renderStars(displayObject.overallRating));
-        toggle('#detailsPersonalRecommendationGroup', isLocalEntry && !!displayObject.personalRecommendation);
-        setText('#detailsPersonalRecommendation', displayObject.personalRecommendation);
-        toggle('#detailsLastModified', isLocalEntry);
-        setText('#detailsLastModified', displayObject.lastModifiedDate);
-
-        const isContinueStatus = isLocalEntry && displayObject.status === 'Continue';
-        toggle('#detailsContinueGroup', isContinueStatus);
-        if (isContinueStatus) {
-            setText('#detailsContinue', `Season ${(displayObject.seasonsCompleted || 0) + 1}, Ep ${displayObject.currentSeasonEpisodesWatched || '?'}`);
+        toggle('#detailsFranchiseGroup', hasEnhancedLinks && franchiseListEl.children().length > 0);
+        // Director
+        const directorListEl = $('#detailsSameDirectorList').empty();
+        if(director?.id) {
+            const directorMovies = movieData.filter(m => m.id !== currentEntryId && m.director_info?.id === director.id);
+            if(directorMovies.length > 0) {
+                $('#detailsSameDirectorName').text(director.name);
+                directorMovies.forEach(movie => directorListEl.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`));
+                hasEnhancedLinks = true;
+            }
         }
+        toggle('#detailsDirectorGroup', hasEnhancedLinks && directorListEl.children().length > 0);
+        // Studio
+        const studioListEl = $('#detailsStudioList').empty();
+        const primaryStudio = (fullDetails.production_companies || [])[0];
+        if (primaryStudio?.id) {
+            const studioMovies = movieData.filter(m => m.id !== currentEntryId && m.production_companies?.some(pc => pc.id === primaryStudio.id));
+             if(studioMovies.length > 0) {
+                $('#detailsStudioName').text(primaryStudio.name);
+                studioMovies.forEach(movie => studioListEl.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`));
+                hasEnhancedLinks = true;
+            }
+        }
+        toggle('#detailsStudioGroup', hasEnhancedLinks && studioListEl.children().length > 0);
+        toggle('#detailsEnhancedRelatedSection, #enhancedRelatedSeparator', hasEnhancedLinks);
 
+        // --- WATCH HISTORY ---
         const whList = $('#detailsWatchHistoryList').empty();
-        toggle('#detailsWatchHistorySection', isLocalEntry && displayObject.watchHistory.length > 0);
-        if(isLocalEntry && displayObject.watchHistory.length > 0) {
-            [...displayObject.watchHistory].filter(wh => wh && wh.date).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(wh => {
-                whList.append(`<li class="list-group-item p-2"><strong>${new Date(wh.date).toLocaleDateString()}</strong> - ${renderStars(wh.rating)}${wh.notes ? `<br><small class="text-muted">Notes: ${wh.notes}</small>` : ''}</li>`);
-            });
-        }
+        const watchHistory = isLocalEntry ? (fullDetails.watchHistory || []) : [];
+        toggle('#detailsWatchHistorySection', watchHistory.length > 0);
+        if(watchHistory.length > 0) [...watchHistory].filter(wh => wh && wh.date).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(wh => whList.append(`<li class="list-group-item p-2"><strong>${new Date(wh.date).toLocaleDateString()}</strong> - ${renderStars(wh.rating)}${wh.notes ? `<br><small class="text-muted">Notes: ${wh.notes}</small>` : ''}</li>`));
         
+        // --- MODAL FOOTER BUTTONS ---
         toggle('#findSimilarBtn', isLocalEntry && !!fullDetails.tmdbId && isWatchedOrContinue);
         $('#findSimilarBtn').data('current-movie-id', isLocalEntry ? fullDetails.id : null);
-        
         toggle('#detailsModalAddBtn', !isLocalEntry);
         $('#detailsModalAddBtn').data('tmdbObject', isLocalEntry ? null : sourceData);
 
