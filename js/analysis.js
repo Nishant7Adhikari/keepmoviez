@@ -48,9 +48,11 @@ function calculateAllStatistics(currentMovieData) {
                 }
             }
         } else {
-            // For Movies/Docs/Specials, count runtime for EACH watch instance.
-            if (typeof movie.runtime === 'number' && movie.runtime > 0 && watchHistoryCount > 0) {
-                totalWatchTimeMinutes += movie.runtime * watchHistoryCount;
+            // For Movies/Docs/Specials: If 'Watched', count runtime at least once.
+            // If multiple watch instances exist, count for each one.
+            if (movie.Status === 'Watched' && typeof movie.runtime === 'number' && movie.runtime > 0) {
+                const multiplier = Math.max(1, watchHistoryCount);
+                totalWatchTimeMinutes += movie.runtime * multiplier;
             }
         }
 
