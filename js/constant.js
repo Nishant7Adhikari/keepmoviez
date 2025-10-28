@@ -9,7 +9,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const TMDB_API_KEY = 'public_placeholder'; // <--- IMPORTANT: this key is setup at supabase 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
 
-const DB_NAME = 'KeepMovieZ_UserCacheDB_v1';
+const DB_NAME = 'KeepMovieZ_UserCacheDB_v2';
 const DB_VERSION = 1;
 const STORE_NAME = 'movieEntries';
 const IDB_USER_DATA_KEY = 'userMovieData';

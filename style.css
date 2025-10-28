@@ -1035,6 +1035,11 @@ a:hover { color: var(--link-hover-color); text-decoration: none; }
 @media (min-width: 1200px) {
     .container-fluid { max-width: 95%; }
 }
+@media (min-width: 992px) {
+    .navbar-toggler {
+        display: block !important; /* Force menu button visible on large screens for offcanvas */
+    }
+}
 /* END CHUNK: 11: Responsive Design */
 
 /*START CHUNK: 12: Miscellaneous Specific Styles*/

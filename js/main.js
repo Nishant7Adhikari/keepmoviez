@@ -375,6 +375,11 @@ if (menuThemeToggleBtn) {
             
             // Auth, Sync, and Data Management
             document.getElementById('supabaseLoginBtn')?.addEventListener('click', () => supabaseSignInUser(document.getElementById('supabaseEmail').value, document.getElementById('supabasePassword').value));
+            // NEW: Enter keypress handler for password field to trigger login
+            document.getElementById('supabasePassword')?.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+            document.getElementById('supabaseLoginBtn')?.click();}});
             document.getElementById('supabaseGoogleSignInBtn')?.addEventListener('click', supabaseSignInWithGoogle);
             document.getElementById('supabaseSignupBtn')?.addEventListener('click', () => supabaseSignUpUser(document.getElementById('supabaseEmail').value, document.getElementById('supabasePassword').value));
             document.getElementById('supabasePasswordResetBtn')?.addEventListener('click', () => supabaseSendPasswordResetEmail(document.getElementById('supabaseEmail').value));

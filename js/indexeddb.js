@@ -35,7 +35,7 @@ async function openDatabase() {
 // START CHUNK: Clear Local Cache
 async function clearLocalMovieCache() {
     if (!db) {
-        console.error("Database not open. Cannot clear cache.");
+        console.warn("Database not open. Cannot clear cache."); // Changed from error to warn
         try {
             await openDatabase(); // Attempt to open if not already
             if (!db) return Promise.reject("Database could not be opened to clear cache.");

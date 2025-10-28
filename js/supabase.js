@@ -290,6 +290,7 @@ async function initAuth() {
 
         const handleUserSession = async (user) => {
             if (user) {
+                // *** CRITICAL CHANGE: Only call initializeApp on login/session restoration ***
                 try {
                     await openDatabase();
                     await initializeApp();
@@ -325,11 +326,17 @@ async function initAuth() {
             }
 
             const user = session?.user || null;
+            
+            // If the user hasn't changed and the app UI is already visible, do nothing.
             if (user?.id === currentSupabaseUser?.id && appContent.style.display === 'block') {
                 return;
             }
+
+            // Set the new user state
+            const previousUserId = currentSupabaseUser?.id;
             currentSupabaseUser = user;
             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
+
 
             if (event === 'SIGNED_OUT') {
                 await resetAppForLogout("You have been logged out.");
@@ -337,7 +344,8 @@ async function initAuth() {
                 document.getElementById('supabaseAuthForm').style.display = 'block';
                 document.getElementById('passwordSetupSection').style.display = 'none';
                 showToast("Success", "Your password has been updated. Please log in.", "success");
-            } else {
+            } else if (user && user.id !== previousUserId) {
+                 // Only run full initialization if a new user signs in or session is restored
                 await handleUserSession(user);
             }
         });
@@ -348,6 +356,9 @@ async function initAuth() {
 
         if (!session) {
             await resetAppForLogout("Please log in to continue.");
+        } else {
+            // Handle existing session restoration on page load
+             await handleUserSession(session.user);
         }
     } catch (error) {
         console.error("Authentication initialization failed:", error);
@@ -358,40 +369,43 @@ async function initAuth() {
 async function initializeApp() {
     showLoading("Loading your collection...");
     try {
-        if (authContainer) authContainer.style.display = 'none';
-        if (appContent) appContent.style.display = 'block';
-
+        // 1. Load data from IndexedDB (fast local load)
         movieData = await loadFromIndexedDB();
         console.log(`Loaded ${movieData.length} entries from local cache.`);
-
-        if (typeof recalculateAndApplyAllRelationships === 'function') recalculateAndApplyAllRelationships();
-        sortMovies(currentSortColumn, currentSortDirection);
-        if (typeof renderMovieCards === 'function') renderMovieCards();
-        if (typeof populateGenreDropdown === 'function') populateGenreDropdown();
         
+        // 2. Perform initial sync ONLY if it's the first time for this user on this device
         if (currentSupabaseUser) {
             const hasSyncedThisSession = localStorage.getItem(`hasSynced_${currentSupabaseUser.id}`);
             if (!hasSyncedThisSession) {
                 console.log("First sync for this user on this device, performing initial sync.");
                 showToast("Syncing...", "Checking for updates from the cloud.", "info", 2000);
-                await comprehensiveSync(true);
+                await comprehensiveSync(true); // Run the mandatory sync
                 console.log("Initial sync complete. Re-rendering UI with fetched data.");
-                if (typeof renderMovieCards === 'function') {
-                    renderMovieCards();
-                }
-                localStorage.setItem(`hasSynced_${currentSupabaseUser.id}`, 'true');
+                localStorage.setItem(`hasSynced_${currentSupabaseUser.id}`, 'true'); // Set the flag so this doesn't run again
             } else {
                 console.log("Initial sync already performed, skipping automatic sync.");
             }
         }
 
+        // 3. Process and Render UI with the (now potentially updated) data
+        if (typeof recalculateAndApplyAllRelationships === 'function') recalculateAndApplyAllRelationships();
+        sortMovies(currentSortColumn, currentSortDirection);
+        if (typeof renderMovieCards === 'function') renderMovieCards();
+        if (typeof populateGenreDropdown === 'function') populateGenreDropdown();
+        
         await window.checkAndNotifyNewAchievements(true);
 
         if (typeof migrateVeryOldLocalStorageData === 'function') {
             await migrateVeryOldLocalStorageData();
         }
+
+        // 4. Show the main UI
+        if (authContainer) authContainer.style.display = 'none';
+        if (appContent) appContent.style.display = 'block';
+
     } catch (error) {
         console.error("Critical error during app initialization:", error);
+        // If the error is critical, show auth again.
         showToast("Application Start Failed", `Error: ${error.message}`, "error", 0);
         await resetAppForLogout(`Failed to start: ${error.message}`);
     } finally {
@@ -400,7 +414,7 @@ async function initializeApp() {
 }
 
 async function resetAppForLogout(message) {
-    console.log("Resetting application UI. Message:", message);
+    console.warn("Resetting application UI. Message:", message); // Changed console error to warn
     if (currentSupabaseUser) {
         localStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
     }
