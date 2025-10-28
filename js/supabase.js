@@ -33,7 +33,8 @@ function localEntryToSupabaseFormat(localEntry, userId) {
         tmdb_collection_name: entryToFormat.tmdb_collection_name || null, tmdb_collection_total_parts: parseNumeric(entryToFormat.tmdb_collection_total_parts), director_info: entryToFormat.director_info || null,
         full_cast: Array.isArray(entryToFormat.full_cast) ? entryToFormat.full_cast : [], production_companies: Array.isArray(entryToFormat.production_companies) ? entryToFormat.production_companies : [],
         tmdb_vote_average: parseNumeric(entryToFormat.tmdb_vote_average, true), tmdb_vote_count: parseNumeric(entryToFormat.tmdb_vote_count), runtime: runtimeValue,
-        is_deleted: entryToFormat.is_deleted || false
+        is_deleted: entryToFormat.is_deleted || false,
+        imdb_id: entryToFormat.imdb_id || null
     };
     return supabaseRow;
 }
@@ -66,10 +67,11 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
         tmdb_vote_count: supabaseEntry.tmdb_vote_count !== null ? parseInt(supabaseEntry.tmdb_vote_count) : null,
         runtime: localRuntime,
         is_deleted: supabaseEntry.is_deleted || false,
+        imdb_id: supabaseEntry.imdb_id || null,
         _sync_state: 'synced'
     };
 }
-// END CHUNK: 1
+// END CHUNK: 1: Supabase Data Transformation Helpers
 
 //START CHUNK: 2: Comprehensive Two-Way Sync (REWRITTEN)
 async function comprehensiveSync(silent = false) {

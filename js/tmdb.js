@@ -129,7 +129,7 @@ async function applyTmdbSelection(item) {
     let detailData = {};
 
     try {
-        detailData = await callTmdbApiDirect(`/${item.media_type}/${item.id}`, { append_to_response: 'keywords,credits,collection' });
+        detailData = await callTmdbApiDirect(`/${item.media_type}/${item.id}`, { append_to_response: 'keywords,credits,collection,external_ids' });
 
         if (detailData.genres) tmdbGenres = detailData.genres.map(g => g.name);
         if (detailData.production_countries && detailData.production_countries.length > 0) tmdbCountryISO = detailData.production_countries[0].iso_3166_1 || '';
@@ -227,7 +227,8 @@ async function applyTmdbSelection(item) {
             runtime: tmdbRuntime,
             tmdb_collection_id: tmdbCollectionId,
             tmdb_collection_name: tmdbCollectionName, 
-            tmdb_collection_total_parts: tmdbCollectionTotalParts
+            tmdb_collection_total_parts: tmdbCollectionTotalParts,
+            imdb_id: detailData.external_ids?.imdb_id || null
         };
     }
     if (typeof showToast === 'function') showToast("Info Applied", `${item.title || item.name} details pre-filled. Review and save.`, "info", 3000);

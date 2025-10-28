@@ -48,7 +48,7 @@ const CSV_HEADERS = [
     "Language", "Year", "Country", "Description", "Poster URL",
     "watchHistory", "relatedEntries", "Last Watched Date", "Last Watch Rating", "lastModifiedDate",
     "tmdbId", "tmdbMediaType", "keywords", "tmdb_collection_id", "tmdb_collection_name",
-    "director_info", "full_cast", "production_companies", "tmdb_vote_average", "tmdb_vote_count", "runtime"
+    "director_info", "full_cast", "production_companies", "tmdb_vote_average", "tmdb_vote_count", "runtime", "imdb_id"
 ];
 
 

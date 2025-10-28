@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v4.2.6-->
+<!-- KeepMoviEZ  v4.2.7-->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -31,6 +31,7 @@
 
 <!-- END CHUNK: Document Head and Core Dependencies -->
 <body>
+    
 <!-- START CHUNK: Overlays -->
     <div id="loadingOverlay" class="loading-overlay">
         <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
@@ -287,10 +288,10 @@
 <!-- START CHUNK: Bottom Navigation & Action Bar -->
         <nav id="bottomNav" class="navbar fixed-bottom-nav center-add-btn">
             <div id="multiSelectActionsBar" class="multi-select-actions-bar" style="display: none;">
-                <button id="batchEditSelectedBtn" class="btn btn-info"><i class="fas fa-edit"></i> Edit Selected</button>
-                <button id="batchDeleteSelectedBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete Selected</button>
+                <button id="batchEditSelectedBtn" class="btn btn-info"><i class="fas fa-edit"></i> Edit</button>
+                <button id="batchDeleteSelectedBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
                 <button id="cancelMultiSelectBtn" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
-                <span id="multiSelectCount" class="text-white ml-2 small">0 selected</span>
+                <span id="multiSelectCount" class="text-white ml-2 small">0</span>
             </div>
             <button id="addNewEntryBtn" class="btn btn-primary" data-toggle="modal" data-target="#entryModal"> <i class="fas fa-plus-circle"></i> </button>
         </nav>
@@ -628,6 +629,46 @@
                                      <p id="detailsTMDBRatingGroup" style="display:none;"><strong>TMDB Rating:</strong> <span id="detailsTMDBRating"></span></p>
                                 </div>
                             </div>
+                            <div id="detailsParentalGuideSection" class="mt-2" style="display:none;">
+                                <p><strong>Parents Guide:</strong>
+                                    <a href="#" id="imdbParentalGuideBtn" class="btn btn-sm btn-outline-info ml-2" target="_blank" rel="noopener noreferrer">
+                                        <i class="fas fa-child"></i> View for Title
+                                    </a>
+                                </p>
+                                <div id="seriesParentalGuideControls" class="details-parental-guide-controls mt-2 p-2 border rounded" style="display:none; background-color: rgba(0,0,0,0.03);">
+                                    <div class="d-flex flex-wrap align-items-center">
+                                        <div class="d-flex align-items-center mr-3 mb-2">
+                                            <label for="pgSeasonInput" class="small mr-2 mb-0">Season</label>
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <div class="input-group-prepend">
+                                                    <button class="btn btn-secondary" type="button" onclick="this.parentElement.nextElementSibling.stepDown()">-</button>
+                                                </div>
+                                                <input type="number" class="form-control text-center" id="pgSeasonInput" value="1" min="1">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-secondary" type="button" onclick="this.parentElement.previousElementSibling.stepUp()">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center mr-3 mb-2">
+                                            <label for="pgEpisodeInput" class="small mr-2 mb-0">Episode</label>
+                                            <div class="input-group input-group-sm" style="width: 120px;">
+                                                <div class="input-group-prepend">
+                                                    <button class="btn btn-secondary" type="button" onclick="this.parentElement.nextElementSibling.stepDown()">-</button>
+                                                </div>
+                                                <input type="number" class="form-control text-center" id="pgEpisodeInput" value="1" min="1">
+                                                <div class="input-group-append">
+                                                    <button class="btn btn-secondary" type="button" onclick="this.parentElement.previousElementSibling.stepUp()">+</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-2">
+                                             <button id="imdbEpisodeParentalGuideBtn" class="btn btn-sm btn-info">
+                                                <i class="fas fa-search"></i> Find for Episode
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <p class="mt-2"><strong>Description:</strong> <span id="detailsDescription"></span></p>
                              <p class="mt-2"><strong>Keywords:</strong> <span id="detailsKeywords" class="text-muted small">N/A</span></p>
                             <p class="mt-2"><strong>Last Modified:</strong> <span id="detailsLastModified" class="text-muted small"></span></p>
@@ -635,38 +676,50 @@
                     </div>
 
                     <hr>
-                    <div id="detailsCastCrewSection" class="mt-3" style="display:none;">
-                        <h5>Cast & Crew</h5>
-                        <p><strong>Director:</strong> <span id="detailsDirector" class="person-link">N/A</span></p>
-                        <h6>Main Cast:</h6>
-                        <div id="detailsCastList" class="row person-list"></div>
-                    </div>
-                    <hr id="castCrewSeparator" style="display:none;">
-                    <div id="detailsManualLinksGroup" class="related-group mt-3" style.display:none;">
-                        <h5>Related</h5>
-                        <ul id="detailsManualLinksList" class="list-unstyled related-list"></ul>
-                    </div>
+                    <!-- ## COLLAPSIBLE SECTIONS START ## -->
+                    <div id="detailsCollapsibleSections">
+                        <div id="detailsCastCrewSectionToggle" class="details-collapse-header" data-toggle="collapse" data-target="#detailsCastCrewCollapse" aria-expanded="false" aria-controls="detailsCastCrewCollapse" style="display:none;">
+                            <h5>Cast & Crew</h5>
+                        </div>
+                        <div id="detailsCastCrewCollapse" class="collapse">
+                            <div class="details-collapse-body">
+                                <p><strong>Director:</strong> <span id="detailsDirector" class="person-link">N/A</span></p>
+                                <h6>Main Cast:</h6>
+                                <div id="detailsCastList" class="row person-list"></div>
+                            </div>
+                        </div>
 
-                    <hr id="manualLinksSeparator" style="display:none;"> 
-                    <div id="detailsEnhancedRelatedSection" class="mt-3" style="display:none;">
-                        <h5>Contextual Links</h5>
-                        <div id="detailsFranchiseGroup" class="related-group" style="display:none;">
-                            <h6>Part of Franchise/Collection: <span id="detailsFranchiseName" class="text-info"></span></h6>
-                            <ul id="detailsFranchiseList" class="list-unstyled related-list"></ul>
+                        <div id="detailsRelatedLinksSectionToggle" class="details-collapse-header mt-2" data-toggle="collapse" data-target="#detailsRelatedLinksCollapse" aria-expanded="false" aria-controls="detailsRelatedLinksCollapse" style="display:none;">
+                             <h5>Related Entries</h5>
                         </div>
-                        <div id="detailsDirectorGroup" class="related-group mt-2" style="display:none;">
-                            <h6>More by Director <span id="detailsSameDirectorName" class="text-info"></span>:</h6>
-                            <ul id="detailsSameDirectorList" class="list-unstyled related-list"></ul>
-                        </div>
-                        <div id="detailsStudioGroup" class="related-group mt-2" style="display:none;">
-                            <h6>More by Studio: <span id="detailsStudioName" class="text-info"></span></h6>
-                            <ul id="detailsStudioList" class="list-unstyled related-list"></ul>
+                        <div id="detailsRelatedLinksCollapse" class="collapse">
+                             <div class="details-collapse-body">
+                                <div id="detailsManualLinksGroup" class="related-group mt-3" style="display:none;">
+                                    <h6>Manually Linked</h6>
+                                    <ul id="detailsManualLinksList" class="list-unstyled related-list"></ul>
+                                </div>
+                                <div id="detailsEnhancedRelatedSection" class="mt-3" style="display:none;">
+                                    <h6>Contextual Links</h6>
+                                    <div id="detailsFranchiseGroup" class="related-group" style="display:none;">
+                                        <p class="mb-1 small">Part of <strong><span id="detailsFranchiseName" class="text-info"></span></strong>:</p>
+                                        <ul id="detailsFranchiseList" class="list-unstyled related-list"></ul>
+                                    </div>
+                                    <div id="detailsDirectorGroup" class="related-group mt-2" style="display:none;">
+                                        <p class="mb-1 small">More by <strong><span id="detailsSameDirectorName" class="text-info"></span></strong>:</p>
+                                        <ul id="detailsSameDirectorList" class="list-unstyled related-list"></ul>
+                                    </div>
+                                    <div id="detailsStudioGroup" class="related-group mt-2" style="display:none;">
+                                         <p class="mb-1 small">More by <strong><span id="detailsStudioName" class="text-info"></span></strong>:</p>
+                                        <ul id="detailsStudioList" class="list-unstyled related-list"></ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                     <hr id="enhancedRelatedSeparator" style="display:none;">
+                    <!-- ## COLLAPSIBLE SECTIONS END ## -->
 
                     <div id="detailsWatchHistorySection" class="details-watch-history mt-3" style="display:none;">
+                        <hr>
                         <h5>Watch History</h5>
                         <ul id="detailsWatchHistoryList" class="list-unstyled"></ul>
                     </div>

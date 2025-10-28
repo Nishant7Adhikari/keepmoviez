@@ -208,7 +208,6 @@ function normalizeImportedRow(row) {
         entryId = generateUUID();
     }
     
-    // --- MODIFIED: Preserve relatedEntries from the imported file ---
     let relatedEntriesFromFile = [];
     if (typeof row.relatedEntries === 'string' && row.relatedEntries.trim()) {
         relatedEntriesFromFile = row.relatedEntries.split(',').map(id => id.trim()).filter(Boolean);
@@ -233,11 +232,11 @@ function normalizeImportedRow(row) {
         Description: String(row.Description || '').trim(),
         'Poster URL': String(row['Poster URL'] || row.poster_url || '').trim(),
         watchHistory: [],
-        relatedEntries: relatedEntriesFromFile, // Keep the imported relationships
+        relatedEntries: relatedEntriesFromFile,
         lastModifiedDate: row.lastModifiedDate || new Date().toISOString(),
         tmdbId: String(row.tmdbId || '').trim() || null,
         tmdbMediaType: row.tmdbMediaType || null,
-        // --- NEW: Safely parse rich data if it exists ---
+        imdb_id: String(row.imdb_id || '').trim() || null,
         runtime: (typeof row.runtime === 'string' && row.runtime.startsWith('{')) ? JSON.parse(row.runtime) : (row.runtime || null),
         keywords: (typeof row.keywords === 'string' && row.keywords.startsWith('[')) ? JSON.parse(row.keywords) : (Array.isArray(row.keywords) ? row.keywords : []),
         director_info: (typeof row.director_info === 'string' && row.director_info.startsWith('{')) ? JSON.parse(row.director_info) : (row.director_info || null),

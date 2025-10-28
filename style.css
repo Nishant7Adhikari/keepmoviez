@@ -653,6 +653,168 @@ p {
 }
 /* END CHUNK: 7: Button Styles */
 
+
+/*START CHUNK: 8: Modals, Toasts, and Overlays*/
+
+.modal-content {
+    border-radius: var(--border-radius-lg);
+    border: none;
+    background-color: var(--card-bg);
+    animation: fadeUp 0.3s ease-out;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    padding-top: 1.5rem;
+}
+.modal-header {
+    background-color: var(--primary-color);
+    color: white;
+    border-top-left-radius: var(--border-radius-lg);
+    border-top-right-radius: var(--border-radius-lg);
+    border-bottom: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.modal-header .close {
+    color: white;
+    opacity: 0.9;
+    text-shadow: none;
+    transition: opacity 0.15s ease, color 0.15s ease;
+}
+.modal-header .close:hover {
+    opacity: 1;
+}
+.modal-header.bg-warning .close {
+    color: var(--warning-text-color) !important;
+}
+.modal-header.bg-primary { background-color: var(--primary-color) !important; color: white !important;}
+.modal-header.bg-secondary { background-color: var(--secondary-color) !important; color: white !important;}
+.modal-header.bg-success { background-color: var(--success-color) !important; color: var(--success-text-color) !important;}
+.modal-header.bg-info { background-color: var(--info-color) !important; color: white !important;}
+.modal-header.bg-danger { background-color: var(--danger-color) !important; color: white !important;}
+.modal-header.bg-warning { background-color: var(--warning-color) !important; color: var(--warning-text-color) !important;}
+
+.modal-footer {
+    border-top: none;
+    background-color: var(--card-bg);
+    border-bottom-left-radius: var(--border-radius-lg);
+    border-bottom-right-radius: var(--border-radius-lg);
+    transition: background-color 0.3s ease;
+}
+.filter-modal-section {
+    margin-bottom: 1.5rem;
+}
+.filter-modal-section h6 {
+    border-bottom: 1px solid var(--table-border-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+.toast-container {
+    position: absolute; /* <<< THIS IS THE FIX: Changed from absolute to fixed */
+    z-index: 9999;
+    top: 0;
+    right: 0;
+}
+.toast {
+    border-radius: var(--border-radius-sm);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    animation: fadeUp 0.3s ease-out;
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    min-width: 300px; /* Ensure toast has a reasonable width */
+}
+.dark-theme .toast {
+    background-color: var(--card-bg);
+    color: var(--body-text-color);
+}
+.toast-header {
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 0.75rem;
+}
+.toast-header .close {
+    margin-left: auto;
+    padding: 0;
+    line-height: 1;
+    font-size: 1.25rem;
+}
+.toast-header .dynamic-toast-buttons .btn-link {
+    font-size: 0.9rem;
+    padding: 0;
+    margin-right: 0.5rem;
+}
+.toast-header { background-color: var(--toast-header-primary); color: white; }
+.toast-header.bg-success { background-color: var(--toast-header-success) !important; color: var(--success-text-color) !important; }
+.toast-header.bg-danger { background-color: var(--toast-header-danger) !important; color: white !important; }
+.toast-header.bg-warning { background-color: var(--toast-header-warning) !important; color: var(--warning-text-color) !important; }
+.toast-header.bg-info { background-color: var(--toast-header-info) !important; color: white !important; }
+.toast-header .close { color: inherit; opacity: 1; }
+
+.toast-footer {
+    background-color: var(--card-bg);
+    border-top: 1px solid var(--table-border-color);
+    border-bottom-left-radius: var(--border-radius-sm);
+    border-bottom-right-radius: var(--border-radius-sm);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.dark-theme .toast-footer {
+    background-color: var(--input-bg);
+    border-top: 1px solid var(--table-border-color);
+}
+#appToast{
+   position: absolute;
+   top: 0%;
+   right: 0%;
+   z-index: 9999;
+}
+/* NEW styles for the Entry Form Accordion */
+.entry-form-accordion .card {
+    border: none;
+    border-bottom: 1px solid var(--table-border-color);
+    border-radius: 0;
+    background-color: transparent;
+}
+.entry-form-accordion .card:first-of-type {
+    border-top: 1px solid var(--table-border-color);
+}
+.entry-form-accordion .card-header {
+    background-color: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+.entry-form-accordion .card-header h5 {
+    margin-bottom: 0;
+}
+.entry-form-accordion .card-header .btn-link {
+    color: var(--primary-color);
+    font-weight: 600;
+    text-decoration: none;
+    width: 100%;
+    text-align: left;
+    padding: 1rem 0;
+    font-size: 1.1rem;
+}
+.entry-form-accordion .card-header .btn-link:hover {
+    color: var(--primary-hover-color);
+}
+.entry-form-accordion .card-header .btn-link::after {
+    content: '\f077'; /* Font Awesome chevron-up */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    float: right;
+    transition: transform 0.2s ease-in-out;
+}
+.entry-form-accordion .card-header .btn-link.collapsed::after {
+    transform: rotate(180deg);
+}
+.entry-form-accordion .card-body {
+    padding: 0 0 1rem 0;
+}
+/* END NEW styles for Entry Form Accordion */
+
+/* END CHUNK: 8: Modals, Toasts, and Overlays */
+
 /*START CHUNK: 9: Statistics, Reporting & Details UI*/
 .tmdb-details-poster {
     width: 100%;
@@ -900,6 +1062,83 @@ a:hover { color: var(--link-hover-color); text-decoration: none; }
 .auth-card .btn-link:hover { color: var(--link-hover-color); }
 #appContent { display: none; }
 #passwordSetupSection{ height: 100%; }
+.contextual-link-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease;
+    border-radius: var(--border-radius-xs);
+}
+.contextual-link-item:hover {
+    background-color: var(--table-header-bg);
+}
+.contextual-link-poster {
+    width: 100px;
+    object-fit: cover;
+    border-radius: 3px;
+    margin-right: 10px;
+    flex-shrink: 0;
+    background-color: var(--table-header-bg);
+}
+.contextual-link-item span {
+    font-weight: 500;
+}
+.dark-theme .details-parental-guide-controls {
+    background-color: rgba(255,255,255,0.05) !important;
+}
+.details-parental-guide-controls .form-control {
+    padding: .25rem .5rem;
+}
+.details-parental-guide-controls .input-group-sm .btn {
+    padding: .25rem .5rem;
+}
+#detailsParentalGuideSection .btn i {
+    margin-right: 5px;
+}
+.details-parental-guide-controls input[type=number]::-webkit-inner-spin-button, 
+.details-parental-guide-controls input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}
+.details-parental-guide-controls input[type=number] {
+  -moz-appearance: textfield;
+}
+/* ## STYLES FOR COLLAPSIBLE SECTIONS ## */
+.details-collapse-header {
+    cursor: pointer;
+    padding: 0.75rem 0.5rem;
+    border-radius: var(--border-radius-sm);
+    transition: background-color 0.2s ease-in-out;
+    position: relative;
+}
+.details-collapse-header:hover {
+    background-color: var(--table-header-bg);
+}
+.details-collapse-header h5 {
+    margin-bottom: 0;
+}
+.details-collapse-header::after {
+    content: '\f078'; /* Font Awesome chevron-down */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    transition: transform 0.2s ease-in-out;
+    color: var(--tdcolor);
+}
+.details-collapse-header[aria-expanded="true"]::after {
+    transform: translateY(-50%) rotate(-180deg);
+}
+.details-collapse-body {
+    padding: 1rem;
+    border: 1px solid var(--table-border-color);
+    border-top: none;
+    border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+    margin-top: -8px; /* Pulls it up to the header */
+}
 /* END CHUNK: 12: Miscellaneous Specific Styles */
 
 /*START CHUNK: 13: Achievement Badge Component*/
@@ -993,165 +1232,3 @@ a:hover { color: var(--link-hover-color); text-decoration: none; }
 .auth-container { z-index: 1055; }
 .offcanvas-menu [data-toggle="modal"] { cursor: pointer; }
 /* END CHUNK: 15: Z-Index Management */
-
-/*START CHUNK: 8: Modals, Toasts, and Overlays*/
-/* Add this inside the START CHUNK: 8 */
-
-.modal-content {
-    border-radius: var(--border-radius-lg);
-    border: none;
-    background-color: var(--card-bg);
-    animation: fadeUp 0.3s ease-out;
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-    padding-top: 1.5rem;
-}
-.modal-header {
-    background-color: var(--primary-color);
-    color: white;
-    border-top-left-radius: var(--border-radius-lg);
-    border-top-right-radius: var(--border-radius-lg);
-    border-bottom: none;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
-.modal-header .close {
-    color: white;
-    opacity: 0.9;
-    text-shadow: none;
-    transition: opacity 0.15s ease, color 0.15s ease;
-}
-.modal-header .close:hover {
-    opacity: 1;
-}
-.modal-header.bg-warning .close {
-    color: var(--warning-text-color) !important;
-}
-.modal-header.bg-primary { background-color: var(--primary-color) !important; color: white !important;}
-.modal-header.bg-secondary { background-color: var(--secondary-color) !important; color: white !important;}
-.modal-header.bg-success { background-color: var(--success-color) !important; color: var(--success-text-color) !important;}
-.modal-header.bg-info { background-color: var(--info-color) !important; color: white !important;}
-.modal-header.bg-danger { background-color: var(--danger-color) !important; color: white !important;}
-.modal-header.bg-warning { background-color: var(--warning-color) !important; color: var(--warning-text-color) !important;}
-
-.modal-footer {
-    border-top: none;
-    background-color: var(--card-bg);
-    border-bottom-left-radius: var(--border-radius-lg);
-    border-bottom-right-radius: var(--border-radius-lg);
-    transition: background-color 0.3s ease;
-}
-.filter-modal-section {
-    margin-bottom: 1.5rem;
-}
-.filter-modal-section h6 {
-    border-bottom: 1px solid var(--table-border-color);
-    padding-bottom: 0.5rem;
-    margin-bottom: 1rem;
-}
-.toast-container {
-    position: absolute; /* <<< THIS IS THE FIX: Changed from absolute to fixed */
-    z-index: 9999;
-    top: 0;
-    right: 0;
-}
-.toast {
-    border-radius: var(--border-radius-sm);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-    animation: fadeUp 0.3s ease-out;
-    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
-    min-width: 300px; /* Ensure toast has a reasonable width */
-}
-.dark-theme .toast {
-    background-color: var(--card-bg);
-    color: var(--body-text-color);
-}
-.toast-header {
-    font-weight: 600;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-right: 0.75rem;
-}
-.toast-header .close {
-    margin-left: auto;
-    padding: 0;
-    line-height: 1;
-    font-size: 1.25rem;
-}
-.toast-header .dynamic-toast-buttons .btn-link {
-    font-size: 0.9rem;
-    padding: 0;
-    margin-right: 0.5rem;
-}
-.toast-header { background-color: var(--toast-header-primary); color: white; }
-.toast-header.bg-success { background-color: var(--toast-header-success) !important; color: var(--success-text-color) !important; }
-.toast-header.bg-danger { background-color: var(--toast-header-danger) !important; color: white !important; }
-.toast-header.bg-warning { background-color: var(--toast-header-warning) !important; color: var(--warning-text-color) !important; }
-.toast-header.bg-info { background-color: var(--toast-header-info) !important; color: white !important; }
-.toast-header .close { color: inherit; opacity: 1; }
-
-.toast-footer {
-    background-color: var(--card-bg);
-    border-top: 1px solid var(--table-border-color);
-    border-bottom-left-radius: var(--border-radius-sm);
-    border-bottom-right-radius: var(--border-radius-sm);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-.dark-theme .toast-footer {
-    background-color: var(--input-bg);
-    border-top: 1px solid var(--table-border-color);
-}
-#appToast{
-   position: absolute;
-   top: 0%;
-   right: 0%;
-   z-index: 9999;
-}
-/* NEW styles for the Entry Form Accordion */
-.entry-form-accordion .card {
-    border: none;
-    border-bottom: 1px solid var(--table-border-color);
-    border-radius: 0;
-    background-color: transparent;
-}
-.entry-form-accordion .card:first-of-type {
-    border-top: 1px solid var(--table-border-color);
-}
-.entry-form-accordion .card-header {
-    background-color: transparent;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
-.entry-form-accordion .card-header h5 {
-    margin-bottom: 0;
-}
-.entry-form-accordion .card-header .btn-link {
-    color: var(--primary-color);
-    font-weight: 600;
-    text-decoration: none;
-    width: 100%;
-    text-align: left;
-    padding: 1rem 0;
-    font-size: 1.1rem;
-}
-.entry-form-accordion .card-header .btn-link:hover {
-    color: var(--primary-hover-color);
-}
-.entry-form-accordion .card-header .btn-link::after {
-    content: '\f077'; /* Font Awesome chevron-up */
-    font-family: 'Font Awesome 5 Free';
-    font-weight: 900;
-    float: right;
-    transition: transform 0.2s ease-in-out;
-}
-.entry-form-accordion .card-header .btn-link.collapsed::after {
-    transform: rotate(180deg);
-}
-.entry-form-accordion .card-body {
-    padding: 0 0 1rem 0;
-}
-/* END NEW styles for Entry Form Accordion */
-
-/* END CHUNK: 8: Modals, Toasts, and Overlays */

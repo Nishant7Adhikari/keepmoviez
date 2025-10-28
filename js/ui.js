@@ -449,9 +449,16 @@ function populateFilterGenreDropdown() {
 }
 // END CHUNK: Filter Modal UI
 
-/* ui.js */
-
 // START CHUNK: Modal Preparation and Display Logic
+function openParentsGuideGoogleSearch(title, season = null, episode = null) {
+  let query = `${title} parents guide`;
+  if (season && episode) {
+    query = `${title} S${season}E${episode} parents guide`;
+  }
+  const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
 window.prepareAddModal = function() {
     const entryModalLabel = document.querySelector('#entryModal .modal-title');
     const entryForm = document.getElementById('entryForm');
@@ -513,7 +520,8 @@ window.prepareEditModal = function(id) {
             keywords: movie.keywords || [], full_cast: movie.full_cast || [], director_info: movie.director_info || null, 
             production_companies: movie.production_companies || [], tmdb_vote_average: movie.tmdb_vote_average, 
             tmdb_vote_count: movie.tmdb_vote_count, runtime: movie.runtime, tmdb_collection_id: movie.tmdb_collection_id, 
-            tmdb_collection_name: movie.tmdb_collection_name
+            tmdb_collection_name: movie.tmdb_collection_name,
+            imdb_id: movie.imdb_id || null
         };
     }
     
@@ -556,37 +564,31 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         if (id) {
             sourceData = movieData.find(m => m && m.id === id);
             isLocalEntry = true;
-            if (!sourceData) {
-                showToast("Error", "Entry details not found.", "error");
-                return;
-            }
+            if (!sourceData) { showToast("Error", "Entry details not found.", "error"); return; }
             fullDetails = sourceData;
             currentEntryId = id;
         } else if (tmdbObject) {
             sourceData = tmdbObject;
             isLocalEntry = false;
-            fullDetails = await callTmdbApiDirect(`/${sourceData.media_type}/${sourceData.id}`, { append_to_response: 'keywords,credits,collection' });
-            if (!fullDetails) {
-                 showToast("Error", "Could not fetch full TMDB details.", "error");
-                 return;
-            }
-            currentEntryId = `tmdb_${fullDetails.id}`; // A temporary ID for non-local items
-        } else {
-            showToast("Error", "No entry specified to view.", "error");
-            return;
-        }
+            fullDetails = await callTmdbApiDirect(`/${sourceData.media_type}/${sourceData.id}`, { append_to_response: 'keywords,credits,collection,external_ids' });
+            if (!fullDetails) { showToast("Error", "Could not fetch full TMDB details.", "error"); return; }
+            currentEntryId = `tmdb_${fullDetails.id}`;
+        } else { showToast("Error", "No entry specified to view.", "error"); return; }
 
-        // --- UI Helper Functions ---
+        const titleForSearch = fullDetails.Name || fullDetails.title || fullDetails.name;
+        
         const setText = (selector, text) => { const el = document.querySelector(selector); if (el) el.textContent = text || 'N/A'; };
         const setHtml = (selector, html) => { const el = document.querySelector(selector); if (el) el.innerHTML = html || 'N/A'; };
         const toggle = (selector, condition) => $(selector).toggle(!!condition);
         
-        // --- Primary Details Population ---
-        $('#detailsModal .modal-title').text(fullDetails.Name || fullDetails.title || fullDetails.name || 'Details');
+        // Reset collapse state on open
+        $('#detailsCollapsibleSections .collapse').collapse('hide');
+        
+        $('#detailsModal .modal-title').text(titleForSearch || 'Details');
         const posterUrl = fullDetails['Poster URL'] || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${fullDetails.poster_path}` : null);
         if (posterUrl) { $('#detailsPoster').attr('src', posterUrl).removeClass('d-none'); $('#noPosterMessage').addClass('d-none'); }
         else { $('#detailsPoster').addClass('d-none'); $('#noPosterMessage').removeClass('d-none'); }
-        setText('#detailsName', fullDetails.Name || fullDetails.title || fullDetails.name);
+        setText('#detailsName', titleForSearch);
         setText('#detailsCategory', fullDetails.Category || (fullDetails.media_type === 'tv' ? 'Series' : 'Movie'));
         setText('#detailsGenre', fullDetails.Genre || (fullDetails.genres || []).map(g => g.name).join(', ') || 'N/A');
         setText('#detailsStatus', isLocalEntry ? fullDetails.Status : 'Not in Library');
@@ -596,7 +598,6 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         setText('#detailsDescription', fullDetails.Description || fullDetails.overview || 'N/A');
         setText('#detailsLastModified', isLocalEntry && fullDetails.lastModifiedDate ? new Date(fullDetails.lastModifiedDate).toLocaleString() : 'N/A');
 
-        // --- Conditional UI Elements ---
         const isWatchedOrContinue = isLocalEntry && (fullDetails.Status === 'Watched' || fullDetails.Status === 'Continue');
         toggle('#detailsRecommendationGroup', isWatchedOrContinue && !!fullDetails.Recommendation);
         setText('#detailsRecommendation', fullDetails.Recommendation);
@@ -608,7 +609,6 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         toggle('#detailsContinueGroup', isContinueStatus);
         if (isContinueStatus) setText('#detailsContinue', `Season ${(fullDetails.seasonsCompleted || 0) + 1}, Ep ${fullDetails.currentSeasonEpisodesWatched || '?'}`);
 
-        // --- Runtime ---
         let runtimeText = 'N/A';
         const runtimeData = fullDetails.runtime;
         if (typeof runtimeData === 'number' && runtimeData > 0) { const h = Math.floor(runtimeData / 60), m = runtimeData % 60; runtimeText = `${h > 0 ? h + 'h ' : ''}${m}m`; }
@@ -616,7 +616,6 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         toggle('#detailsRuntimeGroup', runtimeText !== 'N/A');
         setHtml('#detailsRuntime', runtimeText);
         
-        // --- TMDB, Cast & Crew ---
         const hasTmdbRating = typeof (fullDetails.tmdb_vote_average ?? fullDetails.vote_average) === 'number' && (fullDetails.tmdb_vote_count ?? fullDetails.vote_count) > 0;
         toggle('#detailsTMDBRatingGroup', hasTmdbRating);
         if(hasTmdbRating) setHtml('#detailsTMDBRating', `${(fullDetails.tmdb_vote_average ?? fullDetails.vote_average).toFixed(1)}/10 <small>(${(fullDetails.tmdb_vote_count ?? fullDetails.vote_count)} votes)</small>`);
@@ -627,21 +626,18 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
 
         const director = fullDetails.director_info || fullDetails.credits?.crew?.find(c => c.job === 'Director');
         const cast = fullDetails.full_cast || fullDetails.credits?.cast || [];
-        toggle('#detailsCastCrewSection, #castCrewSeparator', !!director || cast.length > 0);
+        toggle('#detailsCastCrewSectionToggle', !!director || cast.length > 0);
         setHtml('#detailsDirector', director ? `<a href="#" class="person-link" data-person-id="${director.id}" data-person-name="${director.name}">${director.name}</a>` : 'N/A');
         const castListEl = $('#detailsCastList').empty();
         if(cast.length > 0) cast.slice(0, 10).forEach(member => member && member.name && castListEl.append(`<div class="col-md-4 col-6 mb-2 person-list-item"><a href="#" class="person-link" data-person-id="${member.id}" data-person-name="${member.name}">${member.name}</a> <small class="text-muted">(${member.character || 'N/A'})</small></div>`));
         
-        // --- MANUAL (CUSTOM) LINKS ---
         const manualLinksList = $('#detailsManualLinksList').empty();
         const manualLinks = isLocalEntry ? (fullDetails.relatedEntries || []) : [];
         const hasManualLinks = manualLinks.length > 0;
-        toggle('#detailsManualLinksGroup, #manualLinksSeparator', hasManualLinks);
+        toggle('#detailsManualLinksGroup', hasManualLinks);
         if (hasManualLinks) manualLinks.forEach(relatedId => { const movie = movieData.find(m => m.id === relatedId); if(movie) manualLinksList.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`); });
 
-        // --- ENHANCED (AUTOMATIC) LINKS ---
         let hasEnhancedLinks = false;
-        // Franchise/Collection
         const collectionId = fullDetails.tmdb_collection_id || fullDetails.belongs_to_collection?.id;
         const franchiseListEl = $('#detailsFranchiseList').empty();
         if (collectionId) {
@@ -649,43 +645,126 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
             const franchiseMovies = movieData.filter(m => m.id !== currentEntryId && m.tmdb_collection_id === collectionId);
             if(franchiseMovies.length > 0) {
                 $('#detailsFranchiseName').text(collectionName);
-                franchiseMovies.forEach(movie => franchiseListEl.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`));
+                franchiseMovies.sort((a, b) => (parseInt(a.Year, 10) || 0) - (parseInt(b.Year, 10) || 0)).forEach(movie => {
+                    const poster = movie['Poster URL'] || 'icons/placeholder-poster.png';
+                    franchiseListEl.append(`<li><a href="#" class="related-item-link contextual-link-item" data-movie-id="${movie.id}"><img src="${poster}" alt="Poster" class="contextual-link-poster"><span>${movie.Name}</span><small class="text-muted ml-2">(${movie.Year || 'N/A'})</small></a></li>`);
+                });
                 hasEnhancedLinks = true;
             }
         }
-        toggle('#detailsFranchiseGroup', hasEnhancedLinks && franchiseListEl.children().length > 0);
-        // Director
+        toggle('#detailsFranchiseGroup', franchiseListEl.children().length > 0);
+        
         const directorListEl = $('#detailsSameDirectorList').empty();
         if(director?.id) {
             const directorMovies = movieData.filter(m => m.id !== currentEntryId && m.director_info?.id === director.id);
             if(directorMovies.length > 0) {
                 $('#detailsSameDirectorName').text(director.name);
-                directorMovies.forEach(movie => directorListEl.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`));
+                directorMovies.sort((a, b) => (parseInt(a.Year, 10) || 0) - (parseInt(b.Year, 10) || 0)).forEach(movie => {
+                    const poster = movie['Poster URL'] || 'icons/placeholder-poster.png';
+                    directorListEl.append(`<li><a href="#" class="related-item-link contextual-link-item" data-movie-id="${movie.id}"><img src="${poster}" alt="Poster" class="contextual-link-poster"><span>${movie.Name}</span><small class="text-muted ml-2">(${movie.Year || 'N/A'})</small></a></li>`);
+                });
                 hasEnhancedLinks = true;
             }
         }
-        toggle('#detailsDirectorGroup', hasEnhancedLinks && directorListEl.children().length > 0);
-        // Studio
+        toggle('#detailsDirectorGroup', directorListEl.children().length > 0);
+        
         const studioListEl = $('#detailsStudioList').empty();
         const primaryStudio = (fullDetails.production_companies || [])[0];
         if (primaryStudio?.id) {
             const studioMovies = movieData.filter(m => m.id !== currentEntryId && m.production_companies?.some(pc => pc.id === primaryStudio.id));
              if(studioMovies.length > 0) {
                 $('#detailsStudioName').text(primaryStudio.name);
-                studioMovies.forEach(movie => studioListEl.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`));
+                studioMovies.sort((a, b) => (parseInt(a.Year, 10) || 0) - (parseInt(b.Year, 10) || 0)).forEach(movie => {
+                    const poster = movie['Poster URL'] || 'icons/placeholder-poster.png';
+                    studioListEl.append(`<li><a href="#" class="related-item-link contextual-link-item" data-movie-id="${movie.id}"><img src="${poster}" alt="Poster" class="contextual-link-poster"><span>${movie.Name}</span><small class="text-muted ml-2">(${movie.Year || 'N/A'})</small></a></li>`);
+                });
                 hasEnhancedLinks = true;
             }
         }
-        toggle('#detailsStudioGroup', hasEnhancedLinks && studioListEl.children().length > 0);
-        toggle('#detailsEnhancedRelatedSection, #enhancedRelatedSeparator', hasEnhancedLinks);
+        toggle('#detailsStudioGroup', studioListEl.children().length > 0);
+        toggle('#detailsEnhancedRelatedSection', hasEnhancedLinks);
+        toggle('#detailsRelatedLinksSectionToggle', hasManualLinks || hasEnhancedLinks);
 
-        // --- WATCH HISTORY ---
+        const guideSection = $('#detailsParentalGuideSection');
+        const seriesControls = $('#seriesParentalGuideControls');
+        const guideBtn = $('#imdbParentalGuideBtn');
+        const episodeGuideBtn = $('#imdbEpisodeParentalGuideBtn');
+
+        guideSection.hide(); seriesControls.hide();
+        guideBtn.off('click').attr('href', '#');
+        episodeGuideBtn.off('click');
+
+        const tmdbId = fullDetails.tmdbId || fullDetails.id;
+        const mediaType = fullDetails.tmdbMediaType || fullDetails.media_type;
+
+        if (tmdbId) {
+            guideSection.show();
+            const localImdbId = fullDetails.imdb_id;
+
+            if (localImdbId) {
+                const url = `https://m.imdb.com/title/${localImdbId}/parentalguide/`;
+                guideBtn.attr('href', url).on('click', function(e) { e.preventDefault(); window.open(url, '_blank', 'noopener,noreferrer'); });
+            } else {
+                guideBtn.on('click', async function(e) {
+                    e.preventDefault();
+                    showLoading("Fetching IMDb ID...");
+                    try {
+                        const externalIds = await callTmdbApiDirect(`/${mediaType}/${tmdbId}/external_ids`);
+                        if (externalIds && externalIds.imdb_id) {
+                            const url = `https://m.imdb.com/title/${externalIds.imdb_id}/parentalguide/`;
+                            if (isLocalEntry) {
+                                const localIndex = movieData.findIndex(m => m.id === currentEntryId);
+                                if (localIndex !== -1) {
+                                    movieData[localIndex].imdb_id = externalIds.imdb_id;
+                                    if (movieData[localIndex]._sync_state !== 'new') { movieData[localIndex]._sync_state = 'edited'; }
+                                    movieData[localIndex].lastModifiedDate = new Date().toISOString();
+                                }
+                            }
+                            window.open(url, '_blank', 'noopener,noreferrer');
+                        } else {
+                            showToast("IMDb ID Not Found", "Searching Google for the parents guide.", "info");
+                            openParentsGuideGoogleSearch(titleForSearch);
+                        }
+                    } catch (error) {
+                        showToast("API Error", "Could not fetch IMDb ID. Searching Google instead.", "warning");
+                        openParentsGuideGoogleSearch(titleForSearch);
+                    } finally { hideLoading(); }
+                });
+            }
+
+            if (mediaType === 'tv') {
+                seriesControls.show();
+                const totalSeasons = fullDetails.runtime?.seasons || fullDetails.number_of_seasons || 1;
+                $('#pgSeasonInput').attr('max', totalSeasons);
+
+                episodeGuideBtn.on('click', async function() {
+                    const seasonNum = parseInt($('#pgSeasonInput').val());
+                    const epNum = parseInt($('#pgEpisodeInput').val());
+                    if (isNaN(seasonNum) || isNaN(epNum) || seasonNum < 1 || epNum < 1 || seasonNum > totalSeasons) {
+                        showToast("Invalid Input", "Please enter a valid season and episode number.", "warning"); return;
+                    }
+                    showLoading(`Finding guide for S${seasonNum}E${epNum}...`);
+                    try {
+                        const epExternalIds = await callTmdbApiDirect(`/tv/${tmdbId}/season/${seasonNum}/episode/${epNum}/external_ids`);
+                        if (epExternalIds && epExternalIds.imdb_id) {
+                            window.open(`https://m.imdb.com/title/${epExternalIds.imdb_id}/parentalguide/`, '_blank', 'noopener,noreferrer');
+                        } else {
+                            showToast("IMDb ID Not Found", `Searching Google for S${seasonNum}E${epNum} parents guide.`, "info");
+                            openParentsGuideGoogleSearch(titleForSearch, seasonNum, epNum);
+                        }
+                    } catch (error) {
+                        showToast("API Error", `Could not fetch episode details. Searching Google instead.`, "warning");
+                        openParentsGuideGoogleSearch(titleForSearch, seasonNum, epNum);
+                    } finally { hideLoading(); }
+                });
+            }
+        }
+        
         const whList = $('#detailsWatchHistoryList').empty();
         const watchHistory = isLocalEntry ? (fullDetails.watchHistory || []) : [];
         toggle('#detailsWatchHistorySection', watchHistory.length > 0);
         if(watchHistory.length > 0) [...watchHistory].filter(wh => wh && wh.date).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(wh => whList.append(`<li class="list-group-item p-2"><strong>${new Date(wh.date).toLocaleDateString()}</strong> - ${renderStars(wh.rating)}${wh.notes ? `<br><small class="text-muted">Notes: ${wh.notes}</small>` : ''}</li>`));
         
-        // --- MODAL FOOTER BUTTONS ---
         toggle('#findSimilarBtn', isLocalEntry && !!fullDetails.tmdbId && isWatchedOrContinue);
         $('#findSimilarBtn').data('current-movie-id', isLocalEntry ? fullDetails.id : null);
         toggle('#detailsModalAddBtn', !isLocalEntry);
