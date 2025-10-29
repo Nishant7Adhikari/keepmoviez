@@ -1,5 +1,4 @@
 // supabase.js
-
 // START CHUNK: 1: Supabase Data Transformation Helpers
 function localEntryToSupabaseFormat(localEntry, userId) {
     if (!localEntry || !localEntry.id || !userId) { console.error("Invalid input to localEntryToSupabaseFormat", { localEntry, userId }); return null; }
@@ -118,7 +117,10 @@ async function comprehensiveSync(silent = false) {
 
         if (!silent) showLoading("Checking for remote updates...");
         const { data: remoteState, error: fetchError } = await window.supabaseClient
-            .from('movie_entries').select('id, last_modified_date');
+            .from('movie_entries')
+            .select('id, last_modified_date')
+            .eq('user_id', currentSupabaseUser.id)
+            .eq('is_deleted', false);
         if (fetchError) throw new Error(`Fetching remote state failed: ${fetchError.message}`);
         const remoteStateMap = new Map(remoteState.map(e => [e.id, e.last_modified_date]));
 
@@ -135,7 +137,11 @@ async function comprehensiveSync(silent = false) {
         if (idsToPull.length > 0) {
             if (!silent) showLoading(`Downloading ${idsToPull.length} remote updates...`);
             const { data: entriesToPullData, error: pullError } = await window.supabaseClient
-                .from('movie_entries').select('*').in('id', idsToPull);
+                .from('movie_entries')
+                .select('*')
+                .in('id', idsToPull)
+                .eq('user_id', currentSupabaseUser.id)
+                .eq('is_deleted', false);
             if (pullError) throw new Error(`Downloading remote entries failed: ${pullError.message}`);
             
             pulledCount = entriesToPullData.length;
@@ -373,17 +379,27 @@ async function initializeApp() {
         movieData = await loadFromIndexedDB();
         console.log(`Loaded ${movieData.length} entries from local cache.`);
         
-        // 2. Perform initial sync ONLY if it's the first time for this user on this device
+        // 2. Perform initial sync on session start or if local cache is empty
         if (currentSupabaseUser) {
-            const hasSyncedThisSession = localStorage.getItem(`hasSynced_${currentSupabaseUser.id}`);
-            if (!hasSyncedThisSession) {
-                console.log("First sync for this user on this device, performing initial sync.");
+            const hasSyncedThisSession = sessionStorage.getItem(`hasSynced_${currentSupabaseUser.id}`);
+            const needsSync = !hasSyncedThisSession || movieData.length === 0;
+            
+            if (needsSync) {
+                console.log("Performing initial sync (session start or empty cache).");
                 showToast("Syncing...", "Checking for updates from the cloud.", "info", 2000);
-                await comprehensiveSync(true); // Run the mandatory sync
-                console.log("Initial sync complete. Re-rendering UI with fetched data.");
-                localStorage.setItem(`hasSynced_${currentSupabaseUser.id}`, 'true'); // Set the flag so this doesn't run again
+                
+                const syncResult = await comprehensiveSync(true);
+                
+                if (syncResult && syncResult.success) {
+                    console.log("Initial sync complete. Re-rendering UI with fetched data.");
+                    sessionStorage.setItem(`hasSynced_${currentSupabaseUser.id}`, 'true');
+                    movieData = await loadFromIndexedDB();
+                } else {
+                    console.error("Initial sync failed:", syncResult?.error);
+                    showToast("Sync Issue", "Could not sync with cloud. Showing cached data.", "warning", 3000);
+                }
             } else {
-                console.log("Initial sync already performed, skipping automatic sync.");
+                console.log("Session sync already performed, using cached data.");
             }
         }
 
@@ -405,7 +421,6 @@ async function initializeApp() {
 
     } catch (error) {
         console.error("Critical error during app initialization:", error);
-        // If the error is critical, show auth again.
         showToast("Application Start Failed", `Error: ${error.message}`, "error", 0);
         await resetAppForLogout(`Failed to start: ${error.message}`);
     } finally {
@@ -416,7 +431,7 @@ async function initializeApp() {
 async function resetAppForLogout(message) {
     console.warn("Resetting application UI. Message:", message); // Changed console error to warn
     if (currentSupabaseUser) {
-        localStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
+        sessionStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
     }
     movieData = [];
     currentSupabaseUser = null;
