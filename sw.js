@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'keepmoviez-cache-v4.2.9'; // <<-- IMPORTANT: Version number incremented
+const CACHE_NAME = 'keepmoviez-cache-v5.0.0'; // <<-- IMPORTANT: Version number incremented
 const OFFLINE_URL = 'offline.html'; 
 const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co'; // Define Supabase URL for easy checking
 const CORE_ASSETS = [

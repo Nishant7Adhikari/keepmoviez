@@ -266,7 +266,15 @@ function calculateAllStatistics(currentMovieData) {
     stats.totalWatchInstances = allWatchInstances.length;
     stats.topRatedGenresOverall = Object.keys(genreRatedEntriesCount).map(g => ({ label: g, value: (genreRatingsSum[g] / genreRatedEntriesCount[g]).toFixed(2), count: genreRatedEntriesCount[g] })).filter(g => g.count > 1).sort((a,b) => b.value - a.value || b.count - a.count);
     stats.watchesByYear = Object.entries(watchesByYear).map(([year, data]) => ({ year, instances: data.instances, unique_titles: data.titles.size, avg_rating: data.ratedCount > 0 ? (data.ratingsSum / data.ratedCount).toFixed(2) : 'N/A' })).sort((a,b) => b.year - a.year);
-    stats.watchesByMonth = Object.values(watchesByMonth).sort((a,b) => new Date(b.month_year_iso) - new Date(a.month_year_iso));
+
+    // **FIXED**: Correctly calculate the size of the unique titles set.
+    stats.watchesByMonth = Object.values(watchesByMonth)
+        .map(monthData => ({
+            ...monthData,
+            unique_titles: monthData.titles.size 
+        }))
+        .sort((a, b) => new Date(b.month_year_iso) - new Date(a.month_year_iso));
+
     stats.avgRatingByMonth = Object.values(watchesByMonth).filter(m => m.ratedCount > 0).map(m => ({ label: m.month_year_label, value: (m.ratingsSum / m.ratedCount).toFixed(2), iso: m.month_year_iso })).sort((a, b) => new Date(a.iso) - new Date(b.iso));
     stats.topSingleGenres = formatCounts(watchedGenreCounts);
     stats.genreCombinations = formatCounts(genreCombinationsCounts).filter(c => c.value > 1);

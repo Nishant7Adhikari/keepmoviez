@@ -333,4 +333,4 @@ function logWatchlistActivity(type) {
         console.error("Failed to log watchlist activity:", e);
     }
 }
-// END CHUNK: Watchlist Activity Logger```
+// END CHUNK: Watchlist Activity Logger

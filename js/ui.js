@@ -139,89 +139,6 @@ async function deleteWatchInstanceFromList(watchId) {
 // END CHUNK: Watch History Management (UI)
 
 // START CHUNK: Main View Rendering
-function sortMovies(column, direction) {
-    if (!Array.isArray(movieData)) { console.error("movieData is not an array. Cannot sort."); return; }
-    movieData.sort((a, b) => {
-        if (!a && !b) return 0; if (!a) return 1; if (!b) return -1;
-        let valA, valB;
-        const ascEmpty = Infinity;
-        const descEmpty = -Infinity;
-
-        switch (column) {
-            case 'LastWatchedDate':
-                const latestA = getLatestWatchInstance(a.watchHistory);
-                const latestB = getLatestWatchInstance(b.watchHistory);
-                valA = latestA ? new Date(latestA.date).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
-                valB = latestB ? new Date(latestB.date).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
-                break;
-            case 'lastModifiedDate':
-                valA = a.lastModifiedDate ? new Date(a.lastModifiedDate).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
-                valB = b.lastModifiedDate ? new Date(b.lastModifiedDate).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
-                break;
-            case 'Year':
-                valA = a.Year && !isNaN(parseInt(a.Year, 10)) ? parseInt(a.Year, 10) : (direction === 'asc' ? ascEmpty : descEmpty);
-                valB = b.Year && !isNaN(parseInt(b.Year, 10)) ? parseInt(b.Year, 10) : (direction === 'asc' ? ascEmpty : descEmpty);
-                break;
-            case 'overallRating':
-                valA = a.overallRating && a.overallRating !== '' ? parseFloat(a.overallRating) : -1;
-                valB = b.overallRating && b.overallRating !== '' ? parseFloat(b.overallRating) : -1;
-                break;
-            default:
-                valA = String(a[column] || '').toLowerCase().trim();
-                valB = String(b[column] || '').toLowerCase().trim();
-                break;
-        }
-        
-        let comparison = 0;
-        if (valA < valB) comparison = -1;
-        else if (valA > valB) comparison = 1;
-
-        if (comparison === 0 && column !== 'Name') {
-            const nameA = String(a.Name || '').toLowerCase();
-            const nameB = String(b.Name || '').toLowerCase();
-            if (nameA < nameB) return -1;
-            if (nameA > nameB) return 1;
-            return 0;
-        }
-        
-        return direction === 'asc' ? comparison : -comparison;
-    });
-}
-
-function applyFilters(data) {
-    // --- MODIFIED: Added a filter to always exclude soft-deleted items ---
-    let filteredData = data.filter(m => !m.is_deleted);
-
-    if (filterQuery) {
-        const lowerFilterQuery = filterQuery.toLowerCase();
-        filteredData = filteredData.filter(movie => {
-            if (!movie) return false;
-            return (movie.Name && String(movie.Name).toLowerCase().includes(lowerFilterQuery)) ||
-                   (movie.Year && String(movie.Year).toLowerCase().includes(lowerFilterQuery)) ||
-                   (movie.Status && String(movie.Status).toLowerCase().includes(lowerFilterQuery)) ||
-                   (movie.Genre && String(movie.Genre).toLowerCase().includes(lowerFilterQuery));
-        });
-    }
-    
-    if (activeFilters.category !== 'all') filteredData = filteredData.filter(m => m.Category === activeFilters.category);
-    if (activeFilters.country !== 'all') filteredData = filteredData.filter(m => m.Country === activeFilters.country);
-    if (activeFilters.language !== 'all') filteredData = filteredData.filter(m => m.Language === activeFilters.language);
-    
-    if (activeFilters.genres.length > 0) {
-        filteredData = filteredData.filter(m => {
-            if (!m.Genre) return false;
-            const movieGenres = m.Genre.split(',').map(g => g.trim());
-            if (activeFilters.genreLogic === 'AND') {
-                return activeFilters.genres.every(filterGenre => movieGenres.includes(filterGenre));
-            } else { // OR logic
-                return activeFilters.genres.some(filterGenre => movieGenres.includes(filterGenre));
-            }
-        });
-    }
-
-    return filteredData;
-}
-
 function renderMovieCards() {
     const cardContainer = document.getElementById('movieCardContainer');
     const initialMessage = document.getElementById('initialMessage');
@@ -264,7 +181,21 @@ function renderMovieCards() {
         if (isMultiSelectMode && selectedEntryIds.includes(movie.id)) {
             card.classList.add('selected');
         }
+
+        // Conditionally add the quick update button
+        const showQuickUpdateButton = movie.Status === 'To Watch' || movie.Status === 'Continue';
         
+        // **MODIFIED**: Conditional logic for the last watched info
+        let lastWatchedInfo;
+        if (movie.Status === 'To Watch' || movie.Status === 'Unwatched') {
+            lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
+        } else {
+            lastWatchedInfo = `<span class="card-last-watched">
+                                <i class="fas fa-history" title="Last Watched"></i>
+                                ${latestWatch && latestWatch.date ? new Date(latestWatch.date).toLocaleDateString() : 'N/A'}
+                               </span>`;
+        }
+
         card.innerHTML = `
             <div class="card-thumbnail">
                 <img data-src="${posterUrl}" alt="Poster for ${movie.Name}" class="lazy">
@@ -281,12 +212,9 @@ function renderMovieCards() {
                     </div>
                 </div>
                 <div class="card-footer">
-                    <span class="card-last-watched">
-                        <i class="fas fa-history" title="Last Watched"></i>
-                        ${latestWatch && latestWatch.date ? new Date(latestWatch.date).toLocaleDateString() : 'N/A'}
-                    </span>
+                    ${lastWatchedInfo}
                     <div class="card-actions">
-                         <button class="btn btn-sm btn-outline-info btn-action view-btn" title="View Details" data-movie-id="${movie.id}"><i class="fas fa-eye"></i></button>
+                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus"></i></button>` : ''}
                          <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" data-movie-id="${movie.id}"><i class="fas fa-edit"></i></button>
                          <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" data-movie-id="${movie.id}"><i class="fas fa-trash-alt"></i></button>
                     </div>
@@ -332,8 +260,6 @@ function populateFilterModalOptions() {
     document.getElementById('filterCategory').value = activeFilters.category;
     document.getElementById('filterCountry').value = activeFilters.country;
     document.getElementById('filterLanguage').value = activeFilters.language;
-    document.getElementById('sortColumn').value = currentSortColumn;
-    document.getElementById('sortDirection').value = currentSortDirection;
     
     const genreLogicRadio = document.querySelector(`input[name="filterGenreLogic"][value="${activeFilters.genreLogic}"]`);
     if (genreLogicRadio) genreLogicRadio.checked = true;
@@ -353,6 +279,13 @@ function resetFilters() {
     currentSortColumn = 'Name';
     currentSortDirection = 'asc';
     
+    // Update the UI of the new sort controls
+    const sortColumnDropdown = document.getElementById('sortColumnDropdown');
+    const sortDirectionToggleIcon = document.querySelector('#sortDirectionToggle i');
+    if(sortColumnDropdown) sortColumnDropdown.textContent = 'N'; // Abbreviation for Name
+    if(sortDirectionToggleIcon) sortDirectionToggleIcon.className = 'fas fa-arrow-down';
+
+
     const form = document.getElementById('filterSortForm');
     if (form) form.reset();
 
@@ -450,55 +383,69 @@ function populateFilterGenreDropdown() {
 // END CHUNK: Filter Modal UI
 
 // START CHUNK: Modal Preparation and Display Logic
-function openParentsGuideGoogleSearch(title, season = null, episode = null) {
-  let query = `${title} parents guide`;
-  if (season && episode) {
-    query = `${title} S${season}E${episode} parents guide`;
-  }
-  const url = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
-  window.open(url, '_blank', 'noopener,noreferrer');
-}
-
 window.prepareAddModal = function() {
-    const entryModalLabel = document.querySelector('#entryModal .modal-title');
+    const entryModal = $('#entryModal');
+    entryModal.find('.modal-title').text('Add New Entry');
     const entryForm = document.getElementById('entryForm');
-    if (entryModalLabel) entryModalLabel.textContent = 'Add New Entry';
     if (entryForm) { entryForm.reset(); entryForm._tempTmdbData = {}; }
+
+    // Reset all fields and states
     document.getElementById('editEntryId').value = '';
     document.getElementById('tmdbId').value = '';
     document.getElementById('tmdbMediaType').value = '';
     document.getElementById('currentWatchHistory').value = '[]';
+    
     const tmdbResultsEl = document.getElementById('tmdbSearchResults');
     if (tmdbResultsEl) { tmdbResultsEl.innerHTML = ''; tmdbResultsEl.style.display = 'none'; }
+    
     formFieldsGlob.relatedEntriesNames.value = '';
-    formFieldsGlob.relatedEntriesSuggestions.innerHTML = ''; formFieldsGlob.relatedEntriesSuggestions.style.display = 'none';
+    formFieldsGlob.relatedEntriesSuggestions.innerHTML = ''; 
+    formFieldsGlob.relatedEntriesSuggestions.style.display = 'none';
     formFieldsGlob.tmdbSearchYear.value = '';
-    selectedGenres = []; renderGenreTags();
+
+    selectedGenres = []; 
+    renderGenreTags();
     document.getElementById('genreSearchInput').value = '';
     populateGenreDropdown();
     document.getElementById('genreItemsContainer').classList.remove('show');
-    renderWatchHistoryUI([]); closeWatchInstanceForm(); toggleConditionalFields();
-    $('#entryModal').modal('show');
-    $('#entryModal').one('shown.bs.modal', () => formFieldsGlob.name.focus());
+    renderWatchHistoryUI([]); 
+    closeWatchInstanceForm(); 
+    
+    // Configure for "Add Mode"
+    $('#advancedSectionAccordion').hide();
+    $('#addModeButtons').show();
+    $('#updateEntryBtn').hide();
+    
+    toggleConditionalFields();
+    entryModal.modal('show');
+    entryModal.one('shown.bs.modal', () => formFieldsGlob.name.focus());
 }
 
 window.prepareEditModal = function(id) {
     const movie = movieData.find(m => m && m.id === id);
     if (!movie) { showToast("Error", "Entry not found for editing.", "error"); return; }
-    const entryModalLabel = document.querySelector('#entryModal .modal-title');
+    
+    const entryModal = $('#entryModal');
+    entryModal.find('.modal-title').text(`Edit: ${movie.Name || 'Entry'}`);
     const entryForm = document.getElementById('entryForm');
-    if (entryModalLabel) entryModalLabel.textContent = `Edit: ${movie.Name || 'Entry'}`;
     if (entryForm) entryForm.reset();
     document.getElementById('editEntryId').value = movie.id;
 
-    formFieldsGlob.name.value = movie.Name || ''; formFieldsGlob.category.value = movie.Category || 'Movie';
+    // Populate all fields, including those in the advanced section
+    formFieldsGlob.name.value = movie.Name || ''; 
+    formFieldsGlob.category.value = movie.Category || 'Movie';
     formFieldsGlob.status.value = movie.Status || 'To Watch';
-    formFieldsGlob.recommendation.value = movie.Recommendation || ''; formFieldsGlob.overallRating.value = movie.overallRating || '';
-    formFieldsGlob.personalRecommendation.value = movie.personalRecommendation || ''; formFieldsGlob.language.value = movie.Language || '';
+    // ... (rest of the fields as before)
+    formFieldsGlob.recommendation.value = movie.Recommendation || ''; 
+    formFieldsGlob.overallRating.value = movie.overallRating || '';
+    formFieldsGlob.personalRecommendation.value = movie.personalRecommendation || ''; 
+    formFieldsGlob.language.value = movie.Language || '';
     formFieldsGlob.seasonsCompleted.value = movie.seasonsCompleted || '';
     formFieldsGlob.currentSeasonEpisodesWatched.value = movie.currentSeasonEpisodesWatched || '';
-    formFieldsGlob.year.value = movie.Year || ''; formFieldsGlob.country.value = movie.Country || '';
-    formFieldsGlob.description.value = movie.Description || ''; formFieldsGlob.posterUrl.value = movie['Poster URL'] || '';
+    formFieldsGlob.year.value = movie.Year || ''; 
+    formFieldsGlob.country.value = movie.Country || '';
+    formFieldsGlob.description.value = movie.Description || ''; 
+    formFieldsGlob.posterUrl.value = movie['Poster URL'] || '';
     formFieldsGlob.tmdbSearchYear.value = '';
     
     if (movie.Category === 'Series' && typeof movie.runtime === 'object' && movie.runtime) {
@@ -525,16 +472,26 @@ window.prepareEditModal = function(id) {
         };
     }
     
-    formFieldsGlob.relatedEntriesSuggestions.innerHTML = ''; formFieldsGlob.relatedEntriesSuggestions.style.display = 'none';
+    formFieldsGlob.relatedEntriesSuggestions.innerHTML = ''; 
+    formFieldsGlob.relatedEntriesSuggestions.style.display = 'none';
     selectedGenres = movie.Genre ? String(movie.Genre).split(',').map(g => String(g).trim()).filter(Boolean) : [];
     renderGenreTags();
     document.getElementById('genreSearchInput').value = '';
     populateGenreDropdown();
     document.getElementById('genreItemsContainer').classList.remove('show');
     document.getElementById('currentWatchHistory').value = JSON.stringify(movie.watchHistory || []);
-    renderWatchHistoryUI(movie.watchHistory || []); closeWatchInstanceForm();
-    const tmdbResultsEl = document.getElementById('tmdbSearchResults'); if (tmdbResultsEl) { tmdbResultsEl.innerHTML = ''; tmdbResultsEl.style.display = 'none'; }
-    toggleConditionalFields(); $('#entryModal').modal('show');
+    renderWatchHistoryUI(movie.watchHistory || []); 
+    closeWatchInstanceForm();
+    const tmdbResultsEl = document.getElementById('tmdbSearchResults'); 
+    if (tmdbResultsEl) { tmdbResultsEl.innerHTML = ''; tmdbResultsEl.style.display = 'none'; }
+    
+    // Configure for "Edit Mode"
+    $('#advancedSectionAccordion').show();
+    $('#addModeButtons').hide();
+    $('#updateEntryBtn').show();
+    
+    toggleConditionalFields(); 
+    entryModal.modal('show');
 }
 
 window.showDeleteConfirmationModal = function(id = null) {
@@ -559,218 +516,181 @@ window.showDeleteConfirmationModal = function(id = null) {
 window.openDetailsModal = async function(id = null, tmdbObject = null) {
     showLoading("Loading details...");
     try {
-        let sourceData, isLocalEntry, fullDetails, currentEntryId;
+        let sourceData, isLocalEntry, fullDetails;
 
+        // 1. DETERMINE DATA SOURCE
         if (id) {
             sourceData = movieData.find(m => m && m.id === id);
             isLocalEntry = true;
-            if (!sourceData) { showToast("Error", "Entry details not found.", "error"); return; }
+            if (!sourceData) { throw new Error("Entry details not found in your library."); }
             fullDetails = sourceData;
-            currentEntryId = id;
         } else if (tmdbObject) {
             sourceData = tmdbObject;
             isLocalEntry = false;
-            fullDetails = await callTmdbApiDirect(`/${sourceData.media_type}/${sourceData.id}`, { append_to_response: 'keywords,credits,collection,external_ids' });
-            if (!fullDetails) { showToast("Error", "Could not fetch full TMDB details.", "error"); return; }
-            currentEntryId = `tmdb_${fullDetails.id}`;
-        } else { showToast("Error", "No entry specified to view.", "error"); return; }
+            // **BUG FIX**: Correctly define the variable and pass it in the params object.
+            const appendToResponse = 'keywords,credits,external_ids';
+            fullDetails = await callTmdbApiDirect(`/${sourceData.media_type}/${sourceData.id}`, { append_to_response: appendToResponse });
+            if (!fullDetails) { throw new Error("Could not fetch full TMDB details."); }
+        } else {
+            throw new Error("No entry specified to view.");
+        }
 
-        const titleForSearch = fullDetails.Name || fullDetails.title || fullDetails.name;
-        
-        const setText = (selector, text) => { const el = document.querySelector(selector); if (el) el.textContent = text || 'N/A'; };
-        const setHtml = (selector, html) => { const el = document.querySelector(selector); if (el) el.innerHTML = html || 'N/A'; };
-        const toggle = (selector, condition) => $(selector).toggle(!!condition);
-        
-        // Reset collapse state on open
-        $('#detailsCollapsibleSections .collapse').collapse('hide');
-        
-        $('#detailsModal .modal-title').text(titleForSearch || 'Details');
-        const posterUrl = fullDetails['Poster URL'] || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${fullDetails.poster_path}` : null);
-        if (posterUrl) { $('#detailsPoster').attr('src', posterUrl).removeClass('d-none'); $('#noPosterMessage').addClass('d-none'); }
-        else { $('#detailsPoster').addClass('d-none'); $('#noPosterMessage').removeClass('d-none'); }
-        setText('#detailsName', titleForSearch);
-        setText('#detailsCategory', fullDetails.Category || (fullDetails.media_type === 'tv' ? 'Series' : 'Movie'));
-        setText('#detailsGenre', fullDetails.Genre || (fullDetails.genres || []).map(g => g.name).join(', ') || 'N/A');
-        setText('#detailsStatus', isLocalEntry ? fullDetails.Status : 'Not in Library');
-        setText('#detailsLanguage', fullDetails.Language || (fullDetails.spoken_languages || []).map(l => l.english_name).join(', ') || 'N/A');
-        setText('#detailsYear', fullDetails.Year || (fullDetails.release_date || fullDetails.first_air_date || '').substring(0, 4) || 'N/A');
-        setText('#detailsCountry', fullDetails.Country ? getCountryFullName(fullDetails.Country) : (fullDetails.production_countries || []).map(c => c.name).join(', ') || 'N/A');
-        setText('#detailsDescription', fullDetails.Description || fullDetails.overview || 'N/A');
-        setText('#detailsLastModified', isLocalEntry && fullDetails.lastModifiedDate ? new Date(fullDetails.lastModifiedDate).toLocaleString() : 'N/A');
+        const modal = $('#detailsModal');
+        const setText = (selector, text) => modal.find(selector).text(text || 'N/A');
+        const setHtml = (selector, html) => modal.find(selector).html(html || 'N/A');
+        const toggle = (selector, condition) => modal.find(selector).toggle(!!condition);
 
-        const isWatchedOrContinue = isLocalEntry && (fullDetails.Status === 'Watched' || fullDetails.Status === 'Continue');
-        toggle('#detailsRecommendationGroup', isWatchedOrContinue && !!fullDetails.Recommendation);
+        // 2. POPULATE POSTER
+        const posterUrl = fullDetails['Poster URL'] || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w780${fullDetails.poster_path}` : null);
+        toggle('#detailsPoster', !!posterUrl);
+        toggle('#noPosterMessage', !posterUrl);
+        if (posterUrl) modal.find('#detailsPoster').attr('src', posterUrl);
+
+        // 3. POPULATE INFO
+        const title = fullDetails.Name || fullDetails.title || fullDetails.name;
+        setText('#detailsName', title);
+
+        const year = fullDetails.Year || (fullDetails.release_date || fullDetails.first_air_date || '').substring(0, 4);
+        const lang = fullDetails.Language || (fullDetails.spoken_languages?.[0]?.english_name);
+        const country = fullDetails.Country ? getCountryFullName(fullDetails.Country) : (fullDetails.production_countries?.[0]?.name);
+        const mediaType = fullDetails.tmdbMediaType || fullDetails.media_type || fullDetails.Category;
+
+        let metaLineParts = [year, lang, country].filter(Boolean);
+        
+        if ((mediaType === 'Series' || mediaType === 'tv') && isLocalEntry) {
+            const seasons = fullDetails.runtime?.seasons ?? fullDetails.number_of_seasons;
+            const episodes = fullDetails.runtime?.episodes ?? fullDetails.number_of_episodes;
+            let seriesInfo = [];
+            if (episodes) seriesInfo.push(`${episodes} Episodes`);
+            if (seasons) seriesInfo.push(`${seasons} Seasons`);
+            if (seriesInfo.length > 0) metaLineParts.push(seriesInfo.join(', '));
+        } else {
+            const runtimeData = fullDetails.runtime;
+            if (typeof runtimeData === 'number' && runtimeData > 0) {
+                const h = Math.floor(runtimeData / 60), m = runtimeData % 60;
+                metaLineParts.push(`${h > 0 ? h + 'h ' : ''}${m}m`);
+            }
+        }
+        modal.find('#detailsMeta').text(metaLineParts.join(' • '));
+
+        const genres = fullDetails.Genre ? fullDetails.Genre.split(',').map(g => g.trim()) : (fullDetails.genres || []).map(g => g.name);
+        const genreContainer = modal.find('#detailsGenre').empty();
+        if (genres.length > 0) genres.forEach(g => genreContainer.append(`<span class="genre-pill">${g}</span>`));
+        
+        const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' ' + year + ' trailer')}`;
+        const streamingUrl = `https://www.justwatch.com/us/search/${encodeURIComponent(title)}`;
+        modal.find('#detailsTrailerBtn').attr('href', trailerUrl);
+        modal.find('#detailsStreamingBtn').attr('href', streamingUrl);
+
+        const tmdbId = fullDetails.tmdbId || fullDetails.id;
+        const imdbId = fullDetails.imdb_id || fullDetails.external_ids?.imdb_id;
+        
+        toggle('#detailsParentalGuideSection', !!tmdbId);
+        if (tmdbId) {
+            const isSeries = mediaType === 'tv' || mediaType === 'Series';
+            toggle('#imdbParentalGuideBtnMovie', !isSeries);
+            toggle('#imdbParentalGuideBtnSeries', isSeries);
+
+            const pgSeasonInput = modal.find('#pgSeasonInput');
+            const pgEpisodeInput = modal.find('#pgEpisodeInput');
+            
+            const getGuideUrl = async () => {
+                const s = parseInt(pgSeasonInput.val()) || 0;
+                const e = parseInt(pgEpisodeInput.val()) || 0;
+                if (isSeries && s > 0 && e > 0) {
+                    try {
+                        const epIds = await callTmdbApiDirect(`/tv/${tmdbId}/season/${s}/episode/${e}/external_ids`);
+                        if (epIds.imdb_id) return `https://m.imdb.com/title/${epIds.imdb_id}/parentalguide/`;
+                    } catch (err) { console.warn('Could not fetch episode IMDb ID'); }
+                    return `https://www.google.com/search?q=${encodeURIComponent(`${title} season ${s} episode ${e} parents guide`)}`;
+                } else {
+                    if (imdbId) return `https://m.imdb.com/title/${imdbId}/parentalguide/`;
+                    return `https://www.google.com/search?q=${encodeURIComponent(`${title} parents guide`)}`;
+                }
+            };
+
+            if (isSeries) {
+                // Default values are set here, but will be overwritten by progress logic if applicable
+                pgSeasonInput.val('1'); 
+                pgEpisodeInput.val('0'); 
+                modal.find('.btn-pg-stepper').off('click').on('click', function() {
+                    const targetId = $(this).data('target');
+                    const step = parseInt($(this).data('step'));
+                    const input = modal.find(`#${targetId}`);
+                    let currentVal = parseInt(input.val()) || 0;
+                    currentVal += step;
+                    
+                    if(targetId === 'pgSeasonInput' && currentVal < 1) currentVal = 1;
+                    if(targetId === 'pgEpisodeInput' && currentVal < 0) currentVal = 0;
+                    
+                    input.val(currentVal);
+                });
+            }
+            modal.find('#imdbParentalGuideBtnMovie, #imdbEpisodeParentalGuideBtn').off('click').on('click', async function(e) {
+                e.preventDefault();
+                showLoading("Finding guide...");
+                const url = await getGuideUrl();
+                window.open(url, '_blank', 'noopener,noreferrer');
+                hideLoading();
+            });
+        }
+        
+        const isRated = isLocalEntry && (fullDetails.Status === 'Watched' || fullDetails.Status === 'Continue');
+        toggle('#detailsRecommendationGroup', isRated && !!fullDetails.Recommendation);
         setText('#detailsRecommendation', fullDetails.Recommendation);
-        toggle('#detailsOverallRatingGroup', isWatchedOrContinue && !!fullDetails.overallRating);
+        toggle('#detailsOverallRatingGroup', isRated && !!fullDetails.overallRating);
         setHtml('#detailsOverallRating', renderStars(fullDetails.overallRating));
         toggle('#detailsPersonalRecommendationGroup', isLocalEntry && !!fullDetails.personalRecommendation);
         setText('#detailsPersonalRecommendation', fullDetails.personalRecommendation);
-        const isContinueStatus = isLocalEntry && fullDetails.Status === 'Continue';
-        toggle('#detailsContinueGroup', isContinueStatus);
-        if (isContinueStatus) setText('#detailsContinue', `Season ${(fullDetails.seasonsCompleted || 0) + 1}, Ep ${fullDetails.currentSeasonEpisodesWatched || '?'}`);
-
-        let runtimeText = 'N/A';
-        const runtimeData = fullDetails.runtime;
-        if (typeof runtimeData === 'number' && runtimeData > 0) { const h = Math.floor(runtimeData / 60), m = runtimeData % 60; runtimeText = `${h > 0 ? h + 'h ' : ''}${m}m`; }
-        else if (typeof runtimeData === 'object' && runtimeData !== null) { const parts = []; if (runtimeData.seasons) parts.push(`<strong>Seasons:</strong> ${runtimeData.seasons}`); if (runtimeData.episodes) parts.push(`<strong>Episodes:</strong> ${runtimeData.episodes}`); if (runtimeData.episode_run_time) parts.push(`<strong>Avg. Ep:</strong> ${runtimeData.episode_run_time}m`); if (parts.length > 0) runtimeText = parts.join(' | '); }
-        toggle('#detailsRuntimeGroup', runtimeText !== 'N/A');
-        setHtml('#detailsRuntime', runtimeText);
         
-        const hasTmdbRating = typeof (fullDetails.tmdb_vote_average ?? fullDetails.vote_average) === 'number' && (fullDetails.tmdb_vote_count ?? fullDetails.vote_count) > 0;
-        toggle('#detailsTMDBRatingGroup', hasTmdbRating);
-        if(hasTmdbRating) setHtml('#detailsTMDBRating', `${(fullDetails.tmdb_vote_average ?? fullDetails.vote_average).toFixed(1)}/10 <small>(${(fullDetails.tmdb_vote_count ?? fullDetails.vote_count)} votes)</small>`);
+        const isContinueSeries = isLocalEntry && (mediaType === 'Series' || mediaType === 'tv') && fullDetails.Status === 'Continue';
+        toggle('#detailsContinueGroup', isContinueSeries);
+        if(isContinueSeries) {
+            const displaySeason = (fullDetails.seasonsCompleted || 0) + 1;
+            const displayEpisode = fullDetails.currentSeasonEpisodesWatched || 0;
+            
+            setText('#detailsContinueText', `Completed up to: Season ${displaySeason}, Episode ${displayEpisode}`);
+            
+            const pgSeasonInput = modal.find('#pgSeasonInput');
+            const pgEpisodeInput = modal.find('#pgEpisodeInput');
+            if (pgSeasonInput.length) pgSeasonInput.val(displaySeason);
+            if (pgEpisodeInput.length) pgEpisodeInput.val(displayEpisode);
+        }
         
+        $('.details-accordion .collapse').collapse('hide');
+        setText('#detailsDescription', fullDetails.Description || fullDetails.overview);
         const keywords = fullDetails.keywords?.keywords || fullDetails.keywords?.results || fullDetails.keywords || [];
-        toggle('#detailsKeywords', keywords.length > 0);
-        if(keywords.length > 0) setText('#detailsKeywords', keywords.map(k => k.name).join(', '));
+        toggle('#detailsKeywordsContainer', keywords.length > 0);
+        if (keywords.length > 0) setText('#detailsKeywords', keywords.map(k => k.name).join(', '));
 
         const director = fullDetails.director_info || fullDetails.credits?.crew?.find(c => c.job === 'Director');
         const cast = fullDetails.full_cast || fullDetails.credits?.cast || [];
         toggle('#detailsCastCrewSectionToggle', !!director || cast.length > 0);
-        setHtml('#detailsDirector', director ? `<a href="#" class="person-link" data-person-id="${director.id}" data-person-name="${director.name}">${director.name}</a>` : 'N/A');
-        const castListEl = $('#detailsCastList').empty();
-        if(cast.length > 0) cast.slice(0, 10).forEach(member => member && member.name && castListEl.append(`<div class="col-md-4 col-6 mb-2 person-list-item"><a href="#" class="person-link" data-person-id="${member.id}" data-person-name="${member.name}">${member.name}</a> <small class="text-muted">(${member.character || 'N/A'})</small></div>`));
+        modal.find('#detailsCastCrewContent').html('').append(
+            `<p><strong>Director:</strong> <span id="detailsDirector" class="person-link">${director ? director.name : 'N/A'}</span></p>
+             <h6>Main Cast</h6><div id="detailsCastList" class="row person-list"></div>`
+        );
+        if(cast.length > 0) cast.slice(0, 10).forEach(member => modal.find('#detailsCastList').append(`<div class="col-md-6 col-12 mb-1"><a href="#" class="person-link" data-person-id="${member.id}" data-person-name="${member.name}">${member.name}</a> <small class="text-muted">(${member.character || 'N/A'})</small></div>`));
+
+        const relatedContent = modal.find('#detailsRelatedLinksContent').empty();
+        const relatedEntries = isLocalEntry ? (fullDetails.relatedEntries || []).map(rId => movieData.find(m => m.id === rId)).filter(Boolean) : [];
+        toggle('#detailsRelatedLinksSectionToggle', relatedEntries.length > 0);
+        if (relatedEntries.length > 0) relatedEntries.forEach(m => relatedContent.append(`<div><a href="#" class="related-item-link" data-movie-id="${m.id}">${m.Name}</a></div>`));
         
-        const manualLinksList = $('#detailsManualLinksList').empty();
-        const manualLinks = isLocalEntry ? (fullDetails.relatedEntries || []) : [];
-        const hasManualLinks = manualLinks.length > 0;
-        toggle('#detailsManualLinksGroup', hasManualLinks);
-        if (hasManualLinks) manualLinks.forEach(relatedId => { const movie = movieData.find(m => m.id === relatedId); if(movie) manualLinksList.append(`<li><a href="#" class="related-item-link" data-movie-id="${movie.id}">${movie.Name}</a></li>`); });
-
-        let hasEnhancedLinks = false;
-        const collectionId = fullDetails.tmdb_collection_id || fullDetails.belongs_to_collection?.id;
-        const franchiseListEl = $('#detailsFranchiseList').empty();
-        if (collectionId) {
-            const collectionName = fullDetails.tmdb_collection_name || fullDetails.belongs_to_collection?.name;
-            const franchiseMovies = movieData.filter(m => m.id !== currentEntryId && m.tmdb_collection_id === collectionId);
-            if(franchiseMovies.length > 0) {
-                $('#detailsFranchiseName').text(collectionName);
-                franchiseMovies.sort((a, b) => (parseInt(a.Year, 10) || 0) - (parseInt(b.Year, 10) || 0)).forEach(movie => {
-                    const poster = movie['Poster URL'] || 'icons/placeholder-poster.png';
-                    franchiseListEl.append(`<li><a href="#" class="related-item-link contextual-link-item" data-movie-id="${movie.id}"><img src="${poster}" alt="Poster" class="contextual-link-poster"><span>${movie.Name}</span><small class="text-muted ml-2">(${movie.Year || 'N/A'})</small></a></li>`);
-                });
-                hasEnhancedLinks = true;
-            }
-        }
-        toggle('#detailsFranchiseGroup', franchiseListEl.children().length > 0);
-        
-        const directorListEl = $('#detailsSameDirectorList').empty();
-        if(director?.id) {
-            const directorMovies = movieData.filter(m => m.id !== currentEntryId && m.director_info?.id === director.id);
-            if(directorMovies.length > 0) {
-                $('#detailsSameDirectorName').text(director.name);
-                directorMovies.sort((a, b) => (parseInt(a.Year, 10) || 0) - (parseInt(b.Year, 10) || 0)).forEach(movie => {
-                    const poster = movie['Poster URL'] || 'icons/placeholder-poster.png';
-                    directorListEl.append(`<li><a href="#" class="related-item-link contextual-link-item" data-movie-id="${movie.id}"><img src="${poster}" alt="Poster" class="contextual-link-poster"><span>${movie.Name}</span><small class="text-muted ml-2">(${movie.Year || 'N/A'})</small></a></li>`);
-                });
-                hasEnhancedLinks = true;
-            }
-        }
-        toggle('#detailsDirectorGroup', directorListEl.children().length > 0);
-        
-        const studioListEl = $('#detailsStudioList').empty();
-        const primaryStudio = (fullDetails.production_companies || [])[0];
-        if (primaryStudio?.id) {
-            const studioMovies = movieData.filter(m => m.id !== currentEntryId && m.production_companies?.some(pc => pc.id === primaryStudio.id));
-             if(studioMovies.length > 0) {
-                $('#detailsStudioName').text(primaryStudio.name);
-                studioMovies.sort((a, b) => (parseInt(a.Year, 10) || 0) - (parseInt(b.Year, 10) || 0)).forEach(movie => {
-                    const poster = movie['Poster URL'] || 'icons/placeholder-poster.png';
-                    studioListEl.append(`<li><a href="#" class="related-item-link contextual-link-item" data-movie-id="${movie.id}"><img src="${poster}" alt="Poster" class="contextual-link-poster"><span>${movie.Name}</span><small class="text-muted ml-2">(${movie.Year || 'N/A'})</small></a></li>`);
-                });
-                hasEnhancedLinks = true;
-            }
-        }
-        toggle('#detailsStudioGroup', studioListEl.children().length > 0);
-        toggle('#detailsEnhancedRelatedSection', hasEnhancedLinks);
-        toggle('#detailsRelatedLinksSectionToggle', hasManualLinks || hasEnhancedLinks);
-
-        const guideSection = $('#detailsParentalGuideSection');
-        const seriesControls = $('#seriesParentalGuideControls');
-        const guideBtn = $('#imdbParentalGuideBtn');
-        const episodeGuideBtn = $('#imdbEpisodeParentalGuideBtn');
-
-        guideSection.hide(); seriesControls.hide();
-        guideBtn.off('click').attr('href', '#');
-        episodeGuideBtn.off('click');
-
-        const tmdbId = fullDetails.tmdbId || fullDetails.id;
-        const mediaType = fullDetails.tmdbMediaType || fullDetails.media_type;
-
-        if (tmdbId) {
-            guideSection.show();
-            const localImdbId = fullDetails.imdb_id;
-
-            if (localImdbId) {
-                const url = `https://m.imdb.com/title/${localImdbId}/parentalguide/`;
-                guideBtn.attr('href', url).on('click', function(e) { e.preventDefault(); window.open(url, '_blank', 'noopener,noreferrer'); });
-            } else {
-                guideBtn.on('click', async function(e) {
-                    e.preventDefault();
-                    showLoading("Fetching IMDb ID...");
-                    try {
-                        const externalIds = await callTmdbApiDirect(`/${mediaType}/${tmdbId}/external_ids`);
-                        if (externalIds && externalIds.imdb_id) {
-                            const url = `https://m.imdb.com/title/${externalIds.imdb_id}/parentalguide/`;
-                            if (isLocalEntry) {
-                                const localIndex = movieData.findIndex(m => m.id === currentEntryId);
-                                if (localIndex !== -1) {
-                                    movieData[localIndex].imdb_id = externalIds.imdb_id;
-                                    if (movieData[localIndex]._sync_state !== 'new') { movieData[localIndex]._sync_state = 'edited'; }
-                                    movieData[localIndex].lastModifiedDate = new Date().toISOString();
-                                }
-                            }
-                            window.open(url, '_blank', 'noopener,noreferrer');
-                        } else {
-                            showToast("IMDb ID Not Found", "Searching Google for the parents guide.", "info");
-                            openParentsGuideGoogleSearch(titleForSearch);
-                        }
-                    } catch (error) {
-                        showToast("API Error", "Could not fetch IMDb ID. Searching Google instead.", "warning");
-                        openParentsGuideGoogleSearch(titleForSearch);
-                    } finally { hideLoading(); }
-                });
-            }
-
-            if (mediaType === 'tv') {
-                seriesControls.show();
-                const totalSeasons = fullDetails.runtime?.seasons || fullDetails.number_of_seasons || 1;
-                $('#pgSeasonInput').attr('max', totalSeasons);
-
-                episodeGuideBtn.on('click', async function() {
-                    const seasonNum = parseInt($('#pgSeasonInput').val());
-                    const epNum = parseInt($('#pgEpisodeInput').val());
-                    if (isNaN(seasonNum) || isNaN(epNum) || seasonNum < 1 || epNum < 1 || seasonNum > totalSeasons) {
-                        showToast("Invalid Input", "Please enter a valid season and episode number.", "warning"); return;
-                    }
-                    showLoading(`Finding guide for S${seasonNum}E${epNum}...`);
-                    try {
-                        const epExternalIds = await callTmdbApiDirect(`/tv/${tmdbId}/season/${seasonNum}/episode/${epNum}/external_ids`);
-                        if (epExternalIds && epExternalIds.imdb_id) {
-                            window.open(`https://m.imdb.com/title/${epExternalIds.imdb_id}/parentalguide/`, '_blank', 'noopener,noreferrer');
-                        } else {
-                            showToast("IMDb ID Not Found", `Searching Google for S${seasonNum}E${epNum} parents guide.`, "info");
-                            openParentsGuideGoogleSearch(titleForSearch, seasonNum, epNum);
-                        }
-                    } catch (error) {
-                        showToast("API Error", `Could not fetch episode details. Searching Google instead.`, "warning");
-                        openParentsGuideGoogleSearch(titleForSearch, seasonNum, epNum);
-                    } finally { hideLoading(); }
-                });
-            }
-        }
-        
-        const whList = $('#detailsWatchHistoryList').empty();
         const watchHistory = isLocalEntry ? (fullDetails.watchHistory || []) : [];
         toggle('#detailsWatchHistorySection', watchHistory.length > 0);
-        if(watchHistory.length > 0) [...watchHistory].filter(wh => wh && wh.date).sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(wh => whList.append(`<li class="list-group-item p-2"><strong>${new Date(wh.date).toLocaleDateString()}</strong> - ${renderStars(wh.rating)}${wh.notes ? `<br><small class="text-muted">Notes: ${wh.notes}</small>` : ''}</li>`));
+        const whList = modal.find('#detailsWatchHistoryList').empty();
+        if(watchHistory.length > 0) [...watchHistory].sort((a,b) => new Date(b.date) - new Date(a.date)).forEach(wh => whList.append(`<li><strong>${new Date(wh.date).toLocaleDateString()}</strong> - ${renderStars(wh.rating)} ${wh.notes ? `<small class="text-muted d-block">${wh.notes}</small>`: ''}</li>`));
         
-        toggle('#findSimilarBtn', isLocalEntry && !!fullDetails.tmdbId && isWatchedOrContinue);
-        $('#findSimilarBtn').data('current-movie-id', isLocalEntry ? fullDetails.id : null);
-        toggle('#detailsModalAddBtn', !isLocalEntry);
-        $('#detailsModalAddBtn').data('tmdbObject', isLocalEntry ? null : sourceData);
+        setText('#detailsLastModified', isLocalEntry && fullDetails.lastModifiedDate ? `Last Modified: ${new Date(fullDetails.lastModifiedDate).toLocaleString()}` : '');
 
-        $('#detailsModal').modal('show');
+        // 4. FOOTER BUTTONS
+        toggle('#findSimilarBtn', isLocalEntry && !!fullDetails.tmdbId && isRated);
+        modal.find('#findSimilarBtn').data('current-movie-id', isLocalEntry ? fullDetails.id : null);
+        toggle('#detailsModalAddBtn', !isLocalEntry);
+        modal.find('#detailsModalAddBtn').data('tmdbObject', isLocalEntry ? null : sourceData);
+
+        modal.modal('show');
     } catch (error) { 
         console.error("Error in openDetailsModal:", error); 
         showToast("Details Error", `Error: ${error.message}`, "error");
@@ -860,11 +780,15 @@ function toggleConditionalFields() {
     const isContinueSeries = (status === 'Continue' && category === 'Series');
 
     $('#seriesContinueGroup').toggle(isContinueSeries);
-    $('#recommendationGroup, #overallRatingGroup, #watchHistorySection, #watchHistorySeparator').toggle(isWatchedOrContinue);
+    $('#recommendationGroup, #overallRatingGroup, #watchHistorySection').toggle(isWatchedOrContinue);
 
     const isSeries = category === 'Series';
     $('#movieRuntimeGroup').toggle(!isSeries);
     $('#seriesRuntimeGroup').toggle(isSeries);
+    
+    // This is part of the new Add/Edit logic, but fits here
+    // It's mainly for the Add modal, but harmless in the Edit modal
+    $('#personalRecommendationGroup').toggle(isWatchedOrContinue);
 }
 
 function updateSyncButtonState() {
@@ -1016,7 +940,7 @@ window.downloadDetailsAsPNG = async function() {
     const detailsModal = document.getElementById('detailsModal');
     if (!detailsModal) return;
 
-    const modalTitle = detailsModal.querySelector('.modal-title').textContent;
+    const modalTitle = detailsModal.querySelector('#detailsName').textContent; // Using ID for robustness
     const posterImg = document.getElementById('detailsPoster');
     const posterSrc = posterImg && !posterImg.classList.contains('d-none') ? posterImg.src : null;
 
@@ -1152,4 +1076,31 @@ function roundRect(ctx, x, y, width, height, radius) {
     ctx.quadraticCurveTo(x, y, x + radius, y);
     ctx.closePath();
 }
-// END CHUNK: Download Details as PNG
+
+// START CHUNK: Quick Update Modal Logic
+window.prepareQuickUpdateModal = function(id) {
+    const movie = movieData.find(m => m && m.id === id);
+    if (!movie) { showToast("Error", "Entry not found for quick update.", "error"); return; }
+
+    const modal = $('#quickUpdateModal');
+    const form = document.getElementById('quickUpdateForm');
+    if(form) form.reset();
+
+    $('#quickUpdateEntryId').val(id);
+    modal.find('.modal-title').text(`Update: ${movie.Name}`);
+
+    const isSeries = movie.Category === 'Series';
+    $('#quickUpdateSeriesProgress').toggle(isSeries);
+    $('#quickUpdateFinishedToggleWrapper').toggle(isSeries);
+
+    if (isSeries) {
+        $('#quickUpdateSeasons').val(movie.seasonsCompleted || '0');
+        $('#quickUpdateEpisodes').val(movie.currentSeasonEpisodesWatched || '0');
+    }
+
+    $('#quickUpdateDate').val(new Date().toISOString().split('T')[0]);
+    $('#quickUpdateConditionalFields').hide();
+
+    modal.modal('show');
+}
+// END CHUNK: Quick Update Modal Logic

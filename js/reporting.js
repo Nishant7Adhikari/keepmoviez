@@ -69,7 +69,6 @@ let suggestionEngineState = {
     lastUsedSeedIndex: -1
 };
 
-// <<-- MODIFIED SECTION START -->>
 // Main function to display the new "Suggestion Hub" modal
 async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
     const modalBody = document.getElementById('personalizedSuggestionsModalBody');
@@ -86,7 +85,6 @@ async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
     let seedMovie;
 
     if (sourceMovieId) {
-        // --- THIS IS THE FIX ---
         // A specific movie ID was passed (from "Find Similar"), so we MUST use it as the seed.
         seedMovie = movieData.find(m => m.id === sourceMovieId);
         // The refresh button will now re-run suggestions for THIS specific movie.
@@ -122,8 +120,6 @@ async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
         }
     });
 }
-// <<-- MODIFIED SECTION END -->>
-
 
 // Intelligent seed movie finder
 function findNextBestSeedMovie() {
@@ -302,7 +298,6 @@ if (!document.getElementById('suggestion-hub-styles')) {
 
 // <<-- REIMAGINED SUGGESTION ENGINE END -->>
 
-// ... (The rest of the file from displayAchievementsModal onwards remains unchanged)
 function displayAchievementsModal() {
     const badgesContainer = document.getElementById('achievementBadgesModal');
     if (!badgesContainer) { console.warn("Achievements modal badges container not found."); return; }
@@ -505,6 +500,7 @@ function renderChartsForModal(statsData, chartInstanceObj) {
     if (ratedGenres.length >= 3) renderSingleChart('chartModalRatingByGenreRadar', 'radar', ratedGenres.map(d => d.label), [{ label: 'Average Overall Rating', data: ratedGenres.map(d => parseFloat(d.value)) }]);
 }
 
+// **MODIFIED**: This function now retains the original icon for unlocked achievements.
 function generateBadgesAndAchievements(achievementStats, container) {
     if (!container) return;
     container.innerHTML = '';
@@ -538,15 +534,14 @@ function generateBadgesAndAchievements(achievementStats, container) {
         badge.dataset.threshold = ach.threshold;
         badge.dataset.achieved = ach.isAchieved;
 
-        badge.innerHTML = ach.isAchieved
-    ? `<span class="fa-stack fa-2x">
-           <i class="fas fa-trophy fa-stack-2x"></i>
-       </span>
-       <span>${ach.name}</span>`
-    : `<span class="fa-stack fa-2x">
-           <i class="${ach.icon} fa-stack-2x"></i>
-       </span>
-       <span>${ach.name}</span>`;
+        // **MODIFICATION**: The innerHTML now always uses the specific icon from the achievement object.
+        // The 'achieved' class will handle the gold coloring via CSS (to be added in style.css).
+        badge.innerHTML = `
+            <span class="fa-stack fa-2x">
+                <i class="${ach.icon} fa-stack-2x"></i>
+            </span>
+            <span>${ach.name}</span>`;
+            
         container.appendChild(badge);
     });
 }

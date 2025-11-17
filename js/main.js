@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showLoading("Initializing application...");
 
 //START CHUNK: 2: Theme Setup Logic
-    // --- Theme Setup ---
     const menuThemeToggleBtn = document.getElementById('menuThemeToggleBtn');
     const body = document.body;
     const LIGHT_THEME = 'light-theme';
@@ -55,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (menuCloseButton) menuCloseButton.addEventListener('click', closeMenu);
     if (appMenuBackdrop) appMenuBackdrop.addEventListener('click', closeMenu);
     if (appMenu) appMenu.querySelectorAll('[data-dismiss-menu="true"]').forEach(item => item.addEventListener('click', closeMenu));
-    /* END CHUNK: 3: Off-Canvas Menu Logic */
+// END CHUNK: 3: Off-Canvas Menu Logic 
 
 //START CHUNK: 4: UI Event Listeners (Vanilla)
 if (menuThemeToggleBtn) {
@@ -90,9 +89,14 @@ if (menuThemeToggleBtn) {
                 finally { hideLoading(); }
             });
 
-            // Forms
-            document.getElementById('entryForm')?.addEventListener('submit', window.handleFormSubmit);
+            // Forms - Listeners for NEW save buttons
+            document.getElementById('quickSaveBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'quickSave'));
+            document.getElementById('saveAndAddAnotherBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'saveAndAddAnother'));
+            document.getElementById('saveAndEditBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'saveAndEdit'));
+            document.getElementById('updateEntryBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'quickSave')); // Edit mode also uses quickSave logic (just save and close)
             document.getElementById('batchEditForm')?.addEventListener('submit', window.handleBatchEditFormSubmit);
+            document.getElementById('quickUpdateForm')?.addEventListener('submit', window.handleQuickUpdateSave);
+
 
             // Navbar Search
             document.getElementById('navbarSearchForm')?.addEventListener('submit', (event) => {
@@ -130,7 +134,6 @@ if (menuThemeToggleBtn) {
 //END CHUNK: 4: UI Event Listeners (Vanilla)
 
 //START CHUNK: 5: Interactive Genre Picker Wiring
-    // --- Genre Picker Wiring ---
     function wireUpGenrePicker(containerId, inputId, itemsId, addFn, removeFn, filterFn, getSelectedFn) {
         const container = document.getElementById(containerId);
         const input = document.getElementById(inputId);
@@ -198,20 +201,14 @@ if (menuThemeToggleBtn) {
         });
     }
 
-    // Wire up Entry Modal Genre Picker
     wireUpGenrePicker('genreInputContainer', 'genreSearchInput', 'genreItemsContainer', addGenre, removeGenre, filterGenreDropdown, () => selectedGenres);
-    // Wire up Filter Modal Genre Picker
     wireUpGenrePicker('filterGenreContainer', 'filterGenreSearchInput', 'filterGenreItemsContainer', addFilterGenre, removeFilterGenre, populateFilterGenreDropdown, () => selectedFilterGenres);
-    /* END CHUNK: 5: Interactive Genre Picker Wiring */
+// END CHUNK: 5: Interactive Genre Picker Wiring 
     
 //START CHUNK: 6: jQuery-Dependent Event Listeners
-    // --- jQuery-Dependent Listeners for Modals & Buttons ---
     if (typeof $ !== 'undefined') {
-        // ### BUG FIX FOR STACKED MODALS ###
         $(document).on('hidden.bs.modal', '.modal', function () {
-            // After a modal is hidden, check if there is another modal still visible
             if ($('.modal.show').length > 0) {
-                // If so, manually add the 'modal-open' class back to the body
                 $('body').addClass('modal-open');
             }
         });
@@ -290,59 +287,35 @@ if (menuThemeToggleBtn) {
             showToast(name, message, type, 5000);
         });
         
-        // <<-- NEWLY ADDED SECTION START -->>
         $('#detailsModalAddBtn').on('click', function() {
             const tmdbObject = $(this).data('tmdbObject');
-            if (!tmdbObject) {
-                showToast("Error", "No TMDB data found to add.", "error");
-                return;
-            }
-
-            // This sequence is important to prevent modal conflicts
+            if (!tmdbObject) { showToast("Error", "No TMDB data found to add.", "error"); return; }
             $('#detailsModal').modal('hide');
             $('#detailsModal').one('hidden.bs.modal', async () => {
-                // 1. Open the "Add New" modal, which resets the form to a clean state
                 prepareAddModal(); 
-                
-                // 2. Populate the clean form with the TMDB data
                 await applyTmdbSelection(tmdbObject); 
-                
-                // 3. Ensure the Status is set to "To Watch" by default for new additions
                 const statusSelect = document.getElementById('status');
-                if (statusSelect) {
-                    statusSelect.value = 'To Watch';
-                    toggleConditionalFields(); // Re-run this to hide rating fields etc.
-                }
-
-                // The modal is already shown by prepareAddModal, but this ensures it if logic changes
+                if (statusSelect) { statusSelect.value = 'To Watch'; toggleConditionalFields(); }
                 $('#entryModal').modal('show'); 
             });
         });
-        // <<-- NEWLY ADDED SECTION END -->>
 
-        // Person details modal event listeners
         $(document).on('click', '.person-link', function(e) {
             e.preventDefault();
             const personId = $(this).data('person-id');
             const personName = $(this).data('person-name');
-            if (personId && personName) {
-                openPersonDetailsModal(personId, personName);
-            }
+            if (personId && personName) openPersonDetailsModal(personId, personName);
         });
 
-        // Download details as PNG
         $(document).on('click', '#downloadDetailsImageBtn', function(e) {
             e.preventDefault();
-            if (typeof downloadDetailsAsPNG === 'function') {
-                downloadDetailsAsPNG();
-            }
+            if (typeof downloadDetailsAsPNG === 'function') downloadDetailsAsPNG();
         });
 
     } else { console.warn("jQuery not loaded. Some features may not work."); }
-/* END CHUNK: 6: jQuery-Dependent Event Listeners */
+// END CHUNK: 6: jQuery-Dependent Event Listeners 
 
 //START CHUNK: 7: Final Event Listener Wiring & Global Listeners
-        // --- Non-jQuery Listeners ---
             document.getElementById('confirmEraseDataBtn')?.addEventListener('click', window.eraseAllData);
             document.getElementById('checkRepairDataBtn')?.addEventListener('click', window.performDataCheckAndRepair);
             document.getElementById('status')?.addEventListener('change', toggleConditionalFields);
@@ -351,6 +324,32 @@ if (menuThemeToggleBtn) {
             
             formFieldsGlob.relatedEntriesNames?.addEventListener('input', debounce(populateRelatedEntriesSuggestions, 300));
 
+// NEW: Sort Control Listeners
+const abbreviationMap = {
+    Name: 'N',
+    lastModifiedDate: 'M',
+    LastWatchedDate: 'W',
+    Year: 'Y',
+    overallRating: 'R'
+};
+document.querySelectorAll('.dropdown-menu[aria-labelledby="sortColumnDropdown"] .dropdown-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        currentSortColumn = e.target.dataset.sortBy;
+        // MODIFIED: Use the abbreviation map to set the button text
+        document.getElementById('sortColumnDropdown').textContent = abbreviationMap[currentSortColumn] || 'N';
+        sortMovies(currentSortColumn, currentSortDirection);
+        renderMovieCards();
+    });
+});
+document.getElementById('sortDirectionToggle')?.addEventListener('click', (e) => {
+    currentSortDirection = (currentSortDirection === 'asc') ? 'desc' : 'asc';
+    const icon = e.currentTarget.querySelector('i');
+    if (icon) icon.className = `fas fa-arrow-${currentSortDirection === 'asc' ? 'down' : 'up'}`;
+    sortMovies(currentSortColumn, currentSortDirection);
+    renderMovieCards();
+});
+
             // Filter Modal
             document.getElementById('applyFiltersBtn')?.addEventListener('click', () => {
                 activeFilters.category = document.getElementById('filterCategory').value;
@@ -358,10 +357,7 @@ if (menuThemeToggleBtn) {
                 activeFilters.language = document.getElementById('filterLanguage').value;
                 activeFilters.genres = [...selectedFilterGenres];
                 activeFilters.genreLogic = document.querySelector('input[name="filterGenreLogic"]:checked').value;
-                currentSortColumn = document.getElementById('sortColumn').value;
-                currentSortDirection = document.getElementById('sortDirection').value;
-                sortMovies(currentSortColumn, currentSortDirection);
-                renderMovieCards();
+                renderMovieCards(); // Filter is applied in renderMovieCards
                 $('#filterSortModal').modal('hide');
                 showToast("Filters Applied", "The movie list has been updated.", "success");
             });
@@ -369,17 +365,13 @@ if (menuThemeToggleBtn) {
 
             // Confirmation Modals
             document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => { if (isMultiSelectMode) await window.performBatchDelete(); else await window.performDeleteEntry(); });
-            document.getElementById('confirmDuplicateSaveBtn')?.addEventListener('click', async () => { if (pendingEntryForConfirmation) await window.proceedWithEntrySave(pendingEntryForConfirmation, pendingEditIdForConfirmation); $('#duplicateNameConfirmModal').modal('hide'); });
+            document.getElementById('confirmDuplicateSaveBtn')?.addEventListener('click', async () => { if (pendingEntryForConfirmation) await window.proceedWithEntrySave(pendingEntryForConfirmation, pendingEditIdForConfirmation, 'quickSave'); $('#duplicateNameConfirmModal').modal('hide'); });
             document.getElementById('cancelDuplicateSaveBtn')?.addEventListener('click', () => { pendingEntryForConfirmation = null; pendingEditIdForConfirmation = null; });
             document.getElementById('exportStatsPdfBtn')?.addEventListener('click', () => exportStatsAsPdf());
             
             // Auth, Sync, and Data Management
             document.getElementById('supabaseLoginBtn')?.addEventListener('click', () => supabaseSignInUser(document.getElementById('supabaseEmail').value, document.getElementById('supabasePassword').value));
-            // NEW: Enter keypress handler for password field to trigger login
-            document.getElementById('supabasePassword')?.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-            document.getElementById('supabaseLoginBtn')?.click();}});
+            document.getElementById('supabasePassword')?.addEventListener('keydown', (event) => { if (event.key === 'Enter') { event.preventDefault(); document.getElementById('supabaseLoginBtn')?.click();}});
             document.getElementById('supabaseGoogleSignInBtn')?.addEventListener('click', supabaseSignInWithGoogle);
             document.getElementById('supabaseSignupBtn')?.addEventListener('click', () => supabaseSignUpUser(document.getElementById('supabaseEmail').value, document.getElementById('supabasePassword').value));
             document.getElementById('supabasePasswordResetBtn')?.addEventListener('click', () => supabaseSendPasswordResetEmail(document.getElementById('supabaseEmail').value));
@@ -387,50 +379,24 @@ if (menuThemeToggleBtn) {
                 const newPass = document.getElementById('newPassword').value;
                 const confirmPass = document.getElementById('confirmNewPassword').value;
                 const errorDiv = document.getElementById('passwordResetError');
-                if (newPass.length < 6) {
-                    errorDiv.textContent = "Password must be at least 6 characters.";
-                    errorDiv.style.display = 'block';
-                    return;
-                }
-                if (newPass !== confirmPass) {
-                    errorDiv.textContent = "Passwords do not match.";
-                    errorDiv.style.display = 'block';
-                    return;
-                }
+                if (newPass.length < 6) { errorDiv.textContent = "Password must be at least 6 characters."; errorDiv.style.display = 'block'; return; }
+                if (newPass !== confirmPass) { errorDiv.textContent = "Passwords do not match."; errorDiv.style.display = 'block'; return; }
                 supabaseUpdateUserPassword(newPass);
             });
             document.getElementById('menuSupabaseLogoutBtn')?.addEventListener('click', supabaseSignOutUser);
             
-            // Standard Sync
             document.getElementById('menuSyncDataBtn')?.addEventListener('click', () => { closeMenu(); comprehensiveSync(false); });
-            
-            // New Import/Export Modal Triggers
             document.getElementById('menuImportBtn')?.addEventListener('click', () => { $('#importModal').modal('show'); closeMenu(); });
             document.getElementById('menuExportBtn')?.addEventListener('click', () => { $('#exportModal').modal('show'); closeMenu(); });
             
-            // Event listeners for buttons INSIDE the new modals
             document.getElementById('exportCsvBtn')?.addEventListener('click', () => { generateAndDownloadFile('csv'); $('#exportModal').modal('hide'); });
             document.getElementById('exportJsonBtn')?.addEventListener('click', () => { generateAndDownloadFile('json'); $('#exportModal').modal('hide'); });
             
-            // Listeners for the "trigger" buttons that show confirmation modals
-            document.getElementById('forcePullTriggerBtn')?.addEventListener('click', () => {
-                $('#importModal').modal('hide');
-                $('#confirmForcePullModal').modal('show');
-            });
-            document.getElementById('forcePushTriggerBtn')?.addEventListener('click', () => {
-                $('#exportModal').modal('hide');
-                $('#confirmForcePushModal').modal('show');
-            });
+            document.getElementById('forcePullTriggerBtn')?.addEventListener('click', () => { $('#importModal').modal('hide'); $('#confirmForcePullModal').modal('show'); });
+            document.getElementById('forcePushTriggerBtn')?.addEventListener('click', () => { $('#exportModal').modal('hide'); $('#confirmForcePushModal').modal('show'); });
 
-            // Listeners for the final confirmation buttons
-            document.getElementById('confirmForcePullBtn')?.addEventListener('click', async () => {
-                $('#confirmForcePullModal').modal('hide');
-                await forcePullFromSupabase();
-            });
-            document.getElementById('confirmForcePushBtn')?.addEventListener('click', async () => {
-                $('#confirmForcePushModal').modal('hide');
-                await forcePushToSupabase();
-            });
+            document.getElementById('confirmForcePullBtn')?.addEventListener('click', async () => { $('#confirmForcePullModal').modal('hide'); await forcePullFromSupabase(); });
+            document.getElementById('confirmForcePushBtn')?.addEventListener('click', async () => { $('#confirmForcePushModal').modal('hide'); await forcePushToSupabase(); });
 
             // Multi-Select Bar
             document.getElementById('batchEditSelectedBtn')?.addEventListener('click', prepareBatchEditModal);
@@ -443,51 +409,27 @@ if (menuThemeToggleBtn) {
                 entryModal.addEventListener('click', async (event) => {
                     const button = event.target.closest('button');
                     if (!button) return;
-
-                    if (button.id === 'toggleAddWatchInstanceFormBtn') {
-                        prepareAddWatchInstanceForm();
-                    }
-                    else if (button.id === 'saveWatchInstanceBtn') {
-                        await saveOrUpdateWatchInstance();
-                    }
-                    else if (button.id === 'cancelWatchInstanceBtn') {
-                        closeWatchInstanceForm();
-                    }
-                    else if (button.classList.contains('edit-watch-btn')) {
-                        const watchId = button.dataset.watchid;
-                        if (watchId) prepareEditWatchInstanceForm(watchId);
-                    }
-                    else if (button.classList.contains('delete-watch-btn')) {
-                        const watchId = button.dataset.watchid;
-                        if (watchId) await deleteWatchInstanceFromList(watchId);
-                    }
+                    if (button.id === 'toggleAddWatchInstanceFormBtn') prepareAddWatchInstanceForm();
+                    else if (button.id === 'saveWatchInstanceBtn') await saveOrUpdateWatchInstance();
+                    else if (button.id === 'cancelWatchInstanceBtn') closeWatchInstanceForm();
+                    else if (button.classList.contains('edit-watch-btn')) { const watchId = button.dataset.watchid; if (watchId) prepareEditWatchInstanceForm(watchId); }
+                    else if (button.classList.contains('delete-watch-btn')) { const watchId = button.dataset.watchid; if (watchId) await deleteWatchInstanceFromList(watchId); }
                 });
             }
 
-            // --- Global Listeners ---
+            // Quick Update Modal Listener
+            document.getElementById('quickUpdateFinishedToggle')?.addEventListener('change', (e) => {
+                $('#quickUpdateConditionalFields').toggle(e.target.checked);
+            });
+
+            // Global Listeners
             document.addEventListener('click', () => recordUniqueDateForAchievement('app_usage_dates_achievement'), { once: true, passive: true });
-            window.addEventListener('online', async () => {
-                const onlineIndicator = document.getElementById('menuOnlineStatusIndicator');
-                if (onlineIndicator) {
-                    onlineIndicator.textContent = 'Online';
-                    onlineIndicator.className = 'badge badge-pill badge-success';
-                }
-                showToast("Connection Restored", "You are back online.", "success");
-                if (currentSupabaseUser) await comprehensiveSync(true);
-            });
-            window.addEventListener('offline', () => {
-                const onlineIndicator = document.getElementById('menuOnlineStatusIndicator');
-                if (onlineIndicator) {
-                    onlineIndicator.textContent = 'Offline';
-                    onlineIndicator.className = 'badge badge-pill badge-danger';
-                }
-                showToast("Connection Lost", "You are offline. Changes will be synced later.", "warning");
-            });
-/* END CHUNK: 7: Final Event Listener Wiring & Global Listeners */
+            window.addEventListener('online', async () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Online'; onlineIndicator.className = 'badge badge-pill badge-success'; } showToast("Connection Restored", "You are back online.", "success"); if (currentSupabaseUser) await comprehensiveSync(true); });
+            window.addEventListener('offline', () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Offline'; onlineIndicator.className = 'badge badge-pill badge-danger'; } showToast("Connection Lost", "You are offline. Changes will be synced later.", "warning"); });
+// END CHUNK: 7: Final Event Listener Wiring & Global Listeners 
             
 //START CHUNK: 8: Application Initialization
-   // --- App Initialization ---
-    if ('serviceWorker' in navigator) {
+   if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW registered.')).catch(err => console.log('SW reg failed: ', err)); });
     }
 
@@ -497,5 +439,5 @@ if (menuThemeToggleBtn) {
         console.error("CRITICAL: initAuth function not found. App cannot start.");
         showToast("Fatal Error", "Authentication module failed to load.", "error", 0);
     }
-    /* END CHUNK: 8: Application Initialization */
+// END CHUNK: 8: Application Initialization 
 });

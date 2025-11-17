@@ -16,15 +16,17 @@ window.handleCardClick = function(event) {
         return;
     }
 
-    const targetClasses = event.target.classList;
-    const parentClasses = event.target.parentElement.classList;
+    const target = event.target;
+    const parent = event.target.parentElement;
 
-    if (targetClasses.contains('edit-btn') || parentClasses.contains('edit-btn')) {
+    if (target.matches('.edit-btn, .edit-btn *')) {
         prepareEditModal(movieId);
-    } else if (targetClasses.contains('delete-btn') || parentClasses.contains('delete-btn')) {
+    } else if (target.matches('.delete-btn, .delete-btn *')) {
         showDeleteConfirmationModal(movieId);
-    } else if (targetClasses.contains('view-btn') || parentClasses.contains('view-btn')) {
+    } else if (target.matches('.view-btn, .view-btn *')) {
         openDetailsModal(movieId);
+    } else if (target.matches('.quick-update-btn, .quick-update-btn *')) {
+        prepareQuickUpdateModal(movieId);
     } else {
         openDetailsModal(movieId); // Default action for clicking the card body
     }
@@ -94,8 +96,92 @@ function updateMultiSelectCount() {
 }
 // END CHUNK: Card Interaction and Multi-Select
 
+// START CHUNK: Data Sorting and Filtering Logic (Moved from ui.js)
+function sortMovies(column, direction) {
+    if (!Array.isArray(movieData)) { console.error("movieData is not an array. Cannot sort."); return; }
+    movieData.sort((a, b) => {
+        if (!a && !b) return 0; if (!a) return 1; if (!b) return -1;
+        let valA, valB;
+        const ascEmpty = Infinity;
+        const descEmpty = -Infinity;
+
+        switch (column) {
+            case 'LastWatchedDate':
+                const latestA = getLatestWatchInstance(a.watchHistory);
+                const latestB = getLatestWatchInstance(b.watchHistory);
+                valA = latestA ? new Date(latestA.date).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
+                valB = latestB ? new Date(latestB.date).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
+                break;
+            case 'lastModifiedDate':
+                valA = a.lastModifiedDate ? new Date(a.lastModifiedDate).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
+                valB = b.lastModifiedDate ? new Date(b.lastModifiedDate).getTime() : (direction === 'asc' ? ascEmpty : descEmpty);
+                break;
+            case 'Year':
+                valA = a.Year && !isNaN(parseInt(a.Year, 10)) ? parseInt(a.Year, 10) : (direction === 'asc' ? ascEmpty : descEmpty);
+                valB = b.Year && !isNaN(parseInt(b.Year, 10)) ? parseInt(b.Year, 10) : (direction === 'asc' ? ascEmpty : descEmpty);
+                break;
+            case 'overallRating':
+                valA = a.overallRating && a.overallRating !== '' ? parseFloat(a.overallRating) : -1;
+                valB = b.overallRating && b.overallRating !== '' ? parseFloat(b.overallRating) : -1;
+                break;
+            default: // Name
+                valA = String(a[column] || '').toLowerCase().trim();
+                valB = String(b[column] || '').toLowerCase().trim();
+                break;
+        }
+        
+        let comparison = 0;
+        if (valA < valB) comparison = -1;
+        else if (valA > valB) comparison = 1;
+
+        if (comparison === 0 && column !== 'Name') {
+            const nameA = String(a.Name || '').toLowerCase();
+            const nameB = String(b.Name || '').toLowerCase();
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+            return 0;
+        }
+        
+        return direction === 'asc' ? comparison : -comparison;
+    });
+}
+
+function applyFilters(data) {
+    let filteredData = data.filter(m => !m.is_deleted);
+
+    if (filterQuery) {
+        const lowerFilterQuery = filterQuery.toLowerCase();
+        filteredData = filteredData.filter(movie => {
+            if (!movie) return false;
+            return (movie.Name && String(movie.Name).toLowerCase().includes(lowerFilterQuery)) ||
+                   (movie.Year && String(movie.Year).toLowerCase().includes(lowerFilterQuery)) ||
+                   (movie.Status && String(movie.Status).toLowerCase().includes(lowerFilterQuery)) ||
+                   (movie.Genre && String(movie.Genre).toLowerCase().includes(lowerFilterQuery));
+        });
+    }
+    
+    if (activeFilters.category !== 'all') filteredData = filteredData.filter(m => m.Category === activeFilters.category);
+    if (activeFilters.country !== 'all') filteredData = filteredData.filter(m => m.Country === activeFilters.country);
+    if (activeFilters.language !== 'all') filteredData = filteredData.filter(m => m.Language === activeFilters.language);
+    
+    if (activeFilters.genres.length > 0) {
+        filteredData = filteredData.filter(m => {
+            if (!m.Genre) return false;
+            const movieGenres = m.Genre.split(',').map(g => g.trim());
+            if (activeFilters.genreLogic === 'AND') {
+                return activeFilters.genres.every(filterGenre => movieGenres.includes(filterGenre));
+            } else { // OR logic
+                return activeFilters.genres.some(filterGenre => movieGenres.includes(filterGenre));
+            }
+        });
+    }
+
+    return filteredData;
+}
+// END CHUNK: Data Sorting and Filtering Logic
+
 // START CHUNK: Entry Form Submission and Save Logic
-window.handleFormSubmit = async function(event) {
+window.handleFormSubmit = async function(event, saveAction = 'quickSave') {
     event.preventDefault();
     if (!formFieldsGlob) { console.error("formFieldsGlob not initialized!"); return; }
     showLoading("Saving entry...");
@@ -129,29 +215,20 @@ window.handleFormSubmit = async function(event) {
             lastModifiedDate: new Date().toISOString(), doNotRecommendDaily: false,
             tmdbId: document.getElementById('tmdbId').value || null, tmdbMediaType: document.getElementById('tmdbMediaType').value || null,
             ...cachedTmdbData,
-            // --- NEW: Add sync state properties ---
-            is_deleted: false, // Always false when saving
+            is_deleted: false,
             _sync_state: editId ? 'edited' : 'new'
         };
 
-        // ### Cleaned Up Runtime Logic ###
         if (entry.Category === 'Series') {
             const seasons = parseInt(formFieldsGlob.runtimeSeriesSeasons.value, 10);
             const episodes = parseInt(formFieldsGlob.runtimeSeriesEpisodes.value, 10);
             const avgEp = parseInt(formFieldsGlob.runtimeSeriesAvgEp.value, 10);
-            
             if (!isNaN(seasons) || !isNaN(episodes) || !isNaN(avgEp)) {
-                entry.runtime = {
-                    seasons: !isNaN(seasons) ? seasons : null,
-                    episodes: !isNaN(episodes) ? episodes : null,
-                    episode_run_time: !isNaN(avgEp) ? avgEp : null
-                };
+                entry.runtime = { seasons: !isNaN(seasons) ? seasons : null, episodes: !isNaN(episodes) ? episodes : null, episode_run_time: !isNaN(avgEp) ? avgEp : null };
             }
-        } else { // Movie, Documentary, Special
+        } else {
             const runtime = parseInt(formFieldsGlob.runtimeMovie.value, 10);
-            if (!isNaN(runtime)) {
-                entry.runtime = runtime;
-            }
+            if (!isNaN(runtime)) entry.runtime = runtime;
         }
 
         if (editId) { const existingEntry = movieData.find(m => m && m.id === editId); if (existingEntry) entry.doNotRecommendDaily = existingEntry.doNotRecommendDaily; }
@@ -162,37 +239,37 @@ window.handleFormSubmit = async function(event) {
             $('#duplicateNameConfirmModal').modal('show');
             hideLoading(); return;
         }
-        await proceedWithEntrySave(entry, editId);
+        await proceedWithEntrySave(entry, editId, saveAction);
     } catch (error) { console.error("Error in handleFormSubmit:", error); showToast("Save Error", `Error: ${error.message}`, "error"); hideLoading(); }
 }
 
-window.proceedWithEntrySave = async function(entryToSave, idToEdit) {
+window.proceedWithEntrySave = async function(entryToSave, idToEdit, saveAction) {
+    let savedEntryId = idToEdit;
     try {
         if (!idToEdit) {
             entryToSave.id = entryToSave.id || generateUUID();
+            savedEntryId = entryToSave.id;
             movieData.push(entryToSave);
-            showToast("Entry Added", `"${entryToSave.Name}" added locally.`, "success", undefined, DO_NOT_SHOW_AGAIN_KEYS.ENTRY_ADDED);
             
-            // LOGGING FOR WATCHLIST GROWTH: Log if a new item is added directly to the watchlist
-            if (entryToSave.Status === 'To Watch') {
-                logWatchlistActivity('added');
-            }
+            const toastActions = (saveAction === 'quickSave' || saveAction === 'saveAndAddAnother') ? [{
+                label: 'Edit Details',
+                className: 'btn-outline-light btn-sm',
+                onClick: () => prepareEditModal(savedEntryId)
+            }] : [];
+            
+            showToast("Entry Added", `"${entryToSave.Name}" added locally.`, "success", undefined, DO_NOT_SHOW_AGAIN_KEYS.ENTRY_ADDED, toastActions);
+            
+            if (entryToSave.Status === 'To Watch') logWatchlistActivity('added');
         } else {
             const existingIndex = movieData.findIndex(m => m && m.id === idToEdit);
             if (existingIndex !== -1) {
-                // LOGGING FOR WATCHLIST GROWTH: Log if an item is completed
                 const oldStatus = movieData[existingIndex].Status;
                 const newStatus = entryToSave.Status;
-                if (oldStatus === 'To Watch' && newStatus === 'Watched') {
-                    logWatchlistActivity('completed');
-                }
+                if (oldStatus === 'To Watch' && newStatus === 'Watched') logWatchlistActivity('completed');
 
-                // Preserve original sync state if it was 'new'
                 const originalSyncState = movieData[existingIndex]._sync_state;
                 movieData[existingIndex] = { ...movieData[existingIndex], ...entryToSave, id: idToEdit };
-                if (originalSyncState === 'new') {
-                    movieData[existingIndex]._sync_state = 'new';
-                }
+                if (originalSyncState === 'new') movieData[existingIndex]._sync_state = 'new';
             } else {
                 showToast("Update Error", "Entry to update not found.", "error"); hideLoading(); return;
             }
@@ -202,11 +279,25 @@ window.proceedWithEntrySave = async function(entryToSave, idToEdit) {
         sortMovies(currentSortColumn, currentSortDirection);
         renderMovieCards();
         await saveToIndexedDB();
-        $('#entryModal').modal('hide');
-        pendingEntryForConfirmation = null; pendingEditIdForConfirmation = null;
-
-        await checkAndNotifyNewAchievements();
         
+        // Handle post-save actions
+        switch(saveAction) {
+            case 'saveAndAddAnother':
+                $('#entryModal').modal('hide');
+                $('#entryModal').one('hidden.bs.modal', prepareAddModal);
+                break;
+            case 'saveAndEdit':
+                $('#entryModal').modal('hide');
+                $('#entryModal').one('hidden.bs.modal', () => prepareEditModal(savedEntryId));
+                break;
+            case 'quickSave':
+            default:
+                 $('#entryModal').modal('hide');
+                break;
+        }
+
+        pendingEntryForConfirmation = null; pendingEditIdForConfirmation = null;
+        await checkAndNotifyNewAchievements();
         if (entryToSave.tmdb_collection_id) await propagateCollectionDataUpdate(entryToSave);
 
     } catch (error) {
@@ -218,44 +309,105 @@ window.proceedWithEntrySave = async function(entryToSave, idToEdit) {
 }
 // END CHUNK: Entry Form Submission and Save Logic
 
-// START CHUNK: Deletion Logic
-// REMOVED: The old localStorage-based deletion queue is no longer needed.
+// START CHUNK: Quick Update Save Logic
+window.handleQuickUpdateSave = async function(event) {
+    event.preventDefault();
+    showLoading("Saving progress...");
 
+    try {
+        const entryId = document.getElementById('quickUpdateEntryId').value;
+        const entryIndex = movieData.findIndex(m => m && m.id === entryId);
+        if (entryIndex === -1) {
+            throw new Error("Entry not found to update.");
+        }
+
+        const movie = movieData[entryIndex];
+        const isSeries = movie.Category === 'Series';
+
+        const watchDate = document.getElementById('quickUpdateDate').value;
+        const watchRating = document.getElementById('quickUpdateRating').value;
+        const watchNotes = document.getElementById('quickUpdateNotes').value.trim();
+
+        if (!watchDate) {
+            throw new Error("Watch Date is required.");
+        }
+
+        // Always create a new watch record for this session
+        const newWatchRecord = {
+            watchId: generateUUID(),
+            date: watchDate,
+            rating: watchRating,
+            notes: watchNotes
+        };
+        if (!Array.isArray(movie.watchHistory)) movie.watchHistory = [];
+        movie.watchHistory.push(newWatchRecord);
+
+        if (isSeries) {
+            const isFinished = document.getElementById('quickUpdateFinishedToggle').checked;
+            movie.seasonsCompleted = parseInt(document.getElementById('quickUpdateSeasons').value, 10) || movie.seasonsCompleted || 0;
+            movie.currentSeasonEpisodesWatched = parseInt(document.getElementById('quickUpdateEpisodes').value, 10) || movie.currentSeasonEpisodesWatched || 0;
+
+            if (isFinished) {
+                movie.Status = 'Watched';
+                movie.overallRating = document.getElementById('quickUpdateOverallRating').value;
+                movie.Recommendation = document.getElementById('quickUpdateRecommendation').value;
+                if (movie.Status === 'To Watch') logWatchlistActivity('completed');
+            } else {
+                movie.Status = 'Continue'; // Ensure status is Continue if it was To Watch
+            }
+
+        } else { // It's a Movie/Doc/Special
+            movie.Status = 'Watched';
+            movie.overallRating = watchRating; // As per our logic, copy session rating to overall
+            movie.Recommendation = document.getElementById('quickUpdateRecommendation')?.value || ''; // In case it's part of the modal
+            if (movie.Status === 'To Watch') logWatchlistActivity('completed');
+        }
+
+        movie.lastModifiedDate = new Date().toISOString();
+        if (movie._sync_state !== 'new') {
+            movie._sync_state = 'edited';
+        }
+
+        await saveToIndexedDB();
+        renderMovieCards();
+        await checkAndNotifyNewAchievements();
+
+        $('#quickUpdateModal').modal('hide');
+        showToast("Progress Updated", `"${movie.Name}" has been updated.`, "success");
+
+    } catch (error) {
+        console.error("Error in handleQuickUpdateSave:", error);
+        showToast("Update Failed", error.message, "error");
+    } finally {
+        hideLoading();
+    }
+}
+// END CHUNK: Quick Update Save Logic
+
+// START CHUNK: Deletion Logic
 window.performDeleteEntry = async function() {
     if (!movieIdToDelete) { showToast("Error", "No entry selected.", "error"); $('#confirmDeleteModal').modal('hide'); return; }
     showLoading("Deleting entry locally...");
     try {
         const entryIndex = movieData.findIndex(m => m && m.id === movieIdToDelete);
-        if (entryIndex === -1) {
-            showToast("Error", "Entry not found for deletion.", "error");
-            return;
-        }
-
+        if (entryIndex === -1) { showToast("Error", "Entry not found for deletion.", "error"); return; }
         const movieName = movieData[entryIndex].Name || "The entry";
-        
-        // --- NEW: Soft Delete Logic ---
         movieData[entryIndex].is_deleted = true;
         movieData[entryIndex]._sync_state = 'deleted';
         movieData[entryIndex].lastModifiedDate = new Date().toISOString();
 
-        // Update relationships of other entries pointing to this one
         movieData.forEach(movie => { 
             if (movie && movie.relatedEntries && movie.relatedEntries.includes(movieIdToDelete)) { 
                 movie.relatedEntries = movie.relatedEntries.filter(id => id !== movieIdToDelete); 
                 movie.lastModifiedDate = new Date().toISOString(); 
-                if (movie._sync_state !== 'new') {
-                    movie._sync_state = 'edited';
-                }
+                if (movie._sync_state !== 'new') movie._sync_state = 'edited';
             } 
         });
         
         recalculateAndApplyAllRelationships();
-        renderMovieCards(); // This will now hide the soft-deleted entry
+        renderMovieCards();
         await saveToIndexedDB();
         showToast("Entry Deleted", `${movieName} removed locally. Sync with cloud to finalize.`, "warning", undefined, DO_NOT_SHOW_AGAIN_KEYS.ENTRY_DELETED);
-
-        // REMOVED: No automatic sync
-        // if (currentSupabaseUser) await comprehensiveSync(true);
 
     } catch (error) { console.error("Error deleting entry:", error); showToast("Delete Failed", `Error: ${error.message}`, "error", 7000);
     } finally { movieIdToDelete = null; $('#confirmDeleteModal').modal('hide'); hideLoading(); }
@@ -269,7 +421,6 @@ window.performBatchDelete = async function() {
         const currentTimestamp = new Date().toISOString();
         let changesMade = false;
 
-        // --- NEW: Batch Soft Delete Logic ---
         idsToDelete.forEach(deletedId => {
             const entryIndex = movieData.findIndex(m => m && m.id === deletedId);
             if (entryIndex !== -1) {
@@ -280,16 +431,13 @@ window.performBatchDelete = async function() {
             }
         });
 
-        // Update relationships
         movieData.forEach(movie => {
             if (movie && movie.relatedEntries) {
                 const originalCount = movie.relatedEntries.length;
                 movie.relatedEntries = movie.relatedEntries.filter(id => !idsToDelete.includes(id));
                 if (movie.relatedEntries.length < originalCount) {
                     movie.lastModifiedDate = currentTimestamp;
-                     if (movie._sync_state !== 'new') {
-                        movie._sync_state = 'edited';
-                    }
+                     if (movie._sync_state !== 'new') movie._sync_state = 'edited';
                 }
             }
         });
@@ -300,16 +448,12 @@ window.performBatchDelete = async function() {
             renderMovieCards();
             showToast("Local Deletion", `${numToDelete} entries removed locally. Sync with cloud to finalize.`, "warning");
         }
-        
-        // REMOVED: No automatic sync
-        // if (currentSupabaseUser) await comprehensiveSync(true);
-
     } catch (error) { console.error("Batch delete error:", error); showToast("Batch Delete Failed", `Error: ${error.message}`, "error", 7000);
     } finally { disableMultiSelectMode(); $('#confirmDeleteModal').modal('hide'); hideLoading(); }
 }
 // END CHUNK: Deletion Logic
 
-// START CHUNK: Global Data Management (Erase, Check/Repair)
+// START CHUNK: Global Data Management (Check/Repair)
 window.performDataCheckAndRepair = async function() {
     showLoading("Performing data integrity checks...");
     try {
@@ -339,7 +483,7 @@ window.performDataCheckAndRepair = async function() {
     } catch (error) { console.error("Error during data check/repair:", error); showToast("Repair Error", `Failed: ${error.message}`, "error");
     } finally { hideLoading(); }
 }
-// END CHUNK: Global Data Management (Erase, Check/Repair)
+// END CHUNK: Global Data Management (Check/Repair)
 
 // START CHUNK: Batch Edit Logic
 window.handleBatchEditFormSubmit = async function(event) {
@@ -359,17 +503,9 @@ window.handleBatchEditFormSubmit = async function(event) {
     if (isChecked('batchEditApply_PersonalRecommendation')) changes.personalRecommendation = getVal('batchEditPersonalRecommendation');
     if (isChecked('batchEditApply_Country')) changes.Country = getVal('batchEditCountry').trim().toUpperCase();
     if (isChecked('batchEditApply_Language')) changes.Language = getVal('batchEditLanguage').trim();
+    if (isChecked('batchEditApply_Year')) { const yearStr = getVal('batchEditYear').trim(); const parsedYear = parseInt(yearStr, 10); changes.Year = yearStr === '' ? null : (isNaN(parsedYear) ? entry.Year : parsedYear); }
 
-    if (isChecked('batchEditApply_Year')) {
-        const yearStr = getVal('batchEditYear').trim();
-        const parsedYear = parseInt(yearStr, 10);
-        changes.Year = yearStr === '' ? null : (isNaN(parsedYear) ? entry.Year : parsedYear); // Keep old value if new is invalid
-    }
-
-    if (Object.keys(changes).length === 0 && !changes.addGenre && !changes.removeGenre) {
-        showToast("No Changes", "Check a box to apply its value.", "info");
-        return;
-    }
+    if (Object.keys(changes).length === 0 && !changes.addGenre && !changes.removeGenre) { showToast("No Changes", "Check a box to apply its value.", "info"); return; }
     
     showLoading(`Applying batch edits to ${selectedEntryIds.length} entries...`);
     try {
@@ -379,53 +515,18 @@ window.handleBatchEditFormSubmit = async function(event) {
         selectedEntryIds.forEach(id => {
             const entryIndex = movieData.findIndex(m => m.id === id);
             if (entryIndex === -1) return;
-            
             let entry = movieData[entryIndex];
             let entryModified = false;
-
-            // LOGGING FOR WATCHLIST GROWTH: Detect and log completions during batch edit
-            if ('Status' in changes) {
-                const oldStatus = entry.Status;
-                const newStatus = changes.Status;
-                if (oldStatus === 'To Watch' && newStatus === 'Watched') {
-                    logWatchlistActivity('completed');
-                }
-            }
-
+            if ('Status' in changes) { const oldStatus = entry.Status, newStatus = changes.Status; if (oldStatus === 'To Watch' && newStatus === 'Watched') logWatchlistActivity('completed'); }
             const standardKeys = ['Status', 'Category', 'overallRating', 'Recommendation', 'personalRecommendation', 'Year', 'Country', 'Language'];
-            standardKeys.forEach(key => {
-                if (key in changes && entry[key] !== changes[key]) {
-                    entry[key] = changes[key];
-                    entryModified = true;
-                }
-            });
-
-            if ('addGenre' in changes && changes.addGenre) {
-                let genres = new Set((entry.Genre || '').split(',').map(g => g.trim()).filter(Boolean));
-                if (!genres.has(changes.addGenre)) { genres.add(changes.addGenre); entry.Genre = Array.from(genres).sort().join(', '); entryModified = true; }
-            }
-
-            if ('removeGenre' in changes && changes.removeGenre) {
-                let genres = new Set((entry.Genre || '').split(',').map(g => g.trim()).filter(Boolean));
-                if (genres.has(changes.removeGenre)) { genres.delete(changes.removeGenre); entry.Genre = Array.from(genres).sort().join(', '); entryModified = true; }
-            }
-            
-            if (entryModified) {
-                entry.lastModifiedDate = currentLMD;
-                if (entry._sync_state !== 'new') { // Don't overwrite 'new' status
-                    entry._sync_state = 'edited';
-                }
-                changesMadeCount++;
-            }
+            standardKeys.forEach(key => { if (key in changes && entry[key] !== changes[key]) { entry[key] = changes[key]; entryModified = true; } });
+            if ('addGenre' in changes && changes.addGenre) { let genres = new Set((entry.Genre || '').split(',').map(g => g.trim()).filter(Boolean)); if (!genres.has(changes.addGenre)) { genres.add(changes.addGenre); entry.Genre = Array.from(genres).sort().join(', '); entryModified = true; } }
+            if ('removeGenre' in changes && changes.removeGenre) { let genres = new Set((entry.Genre || '').split(',').map(g => g.trim()).filter(Boolean)); if (genres.has(changes.removeGenre)) { genres.delete(changes.removeGenre); entry.Genre = Array.from(genres).sort().join(', '); entryModified = true; } }
+            if (entryModified) { entry.lastModifiedDate = currentLMD; if (entry._sync_state !== 'new') entry._sync_state = 'edited'; changesMadeCount++; }
         });
 
-        if (changesMadeCount > 0) {
-            await saveToIndexedDB();
-            renderMovieCards();
-            showToast("Batch Edit Complete", `${changesMadeCount} of ${selectedEntryIds.length} entries updated locally.`, "success");
-        } else {
-            showToast("No Changes Applied", "Entries already had the specified values.", "info");
-        }
+        if (changesMadeCount > 0) { await saveToIndexedDB(); renderMovieCards(); showToast("Batch Edit Complete", `${changesMadeCount} of ${selectedEntryIds.length} entries updated locally.`, "success"); }
+        else { showToast("No Changes Applied", "Entries already had the specified values.", "info"); }
         $('#batchEditModal').modal('hide');
         disableMultiSelectMode();
     } catch (error) { console.error("Error in batch edit:", error); showToast("Batch Edit Error", `Failed: ${error.message}`, "error");
@@ -442,20 +543,11 @@ window.markDailyRecCompleted = async function(event) {
         movieData[movieIndex].lastModifiedDate = new Date().toISOString();
         if(!Array.isArray(movieData[movieIndex].watchHistory)) movieData[movieIndex].watchHistory = [];
         movieData[movieIndex].watchHistory.push({ watchId: generateUUID(), date: new Date().toISOString().slice(0,10), rating: '', notes: 'Marked as Watched from Daily Recommendation' });
-        
-        // --- NEW: Mark as edited for sync ---
-        if (movieData[movieIndex]._sync_state !== 'new') {
-            movieData[movieIndex]._sync_state = 'edited';
-        }
-
+        if (movieData[movieIndex]._sync_state !== 'new') movieData[movieIndex]._sync_state = 'edited';
         incrementLocalStorageCounter('daily_rec_watched_achievement');
-        
         await saveToIndexedDB();
         renderMovieCards();
         showToast("Great!", `Marked "${movieData[movieIndex].Name}" as Watched.`, "success");
-
-        // REMOVED: No automatic sync
-        // if(currentSupabaseUser) await comprehensiveSync(true);
     }
 }
 
@@ -463,10 +555,8 @@ window.markDailyRecSkipped = async function(event) {
     let dailyRecSkipCount = parseInt(localStorage.getItem(DAILY_REC_SKIP_COUNT_KEY) || '0');
     dailyRecSkipCount++;
     localStorage.setItem(DAILY_REC_SKIP_COUNT_KEY, dailyRecSkipCount.toString());
-    localStorage.removeItem(DAILY_RECOMMENDATION_ID_KEY); // Invalidate current pick
-
+    localStorage.removeItem(DAILY_RECOMMENDATION_ID_KEY);
     showToast("Skipped", "Getting you a new recommendation...", "info");
-    
     $('#dailyRecommendationModal').modal('hide');
     $('#dailyRecommendationModal').one('hidden.bs.modal', async () => {
         showLoading("Getting next pick...");
@@ -484,9 +574,7 @@ function incrementLocalStorageCounter(key) {
         let count = parseInt(localStorage.getItem(key) || '0');
         if (isNaN(count)) count = 0;
         localStorage.setItem(key, (count + 1).toString());
-    } catch (e) {
-        console.error(`Failed to increment localStorage counter for key: ${key}`, e);
-    }
+    } catch (e) { console.error(`Failed to increment localStorage counter for key: ${key}`, e); }
 }
 
 function recordUniqueDateForAchievement(key) {
@@ -499,75 +587,33 @@ function recordUniqueDateForAchievement(key) {
             dates.push(today);
             localStorage.setItem(key, JSON.stringify(dates));
         }
-    } catch (e) {
-        console.error(`Failed to record unique date for key: ${key}`, e);
-    }
+    } catch (e) { console.error(`Failed to record unique date for key: ${key}`, e); }
 }
 window.checkAndNotifyNewAchievements = async function(isInitialLoad = false) {
-    if (movieData.length === 0) {
-        knownUnlockedAchievements.clear();
-        return;
-    }
-    
+    if (movieData.length === 0) { knownUnlockedAchievements.clear(); return; }
     const stats = calculateAllStatistics(movieData);
     let unlockedCountForMeta = 0;
     const currentlyUnlocked = new Set();
     
-    ACHIEVEMENTS.forEach(ach => {
-        if (ach.type !== 'meta_achievement_count') {
-            const { isAchieved } = checkAchievement(ach, stats);
-            if (isAchieved) {
-                unlockedCountForMeta++;
-                currentlyUnlocked.add(ach.id);
-            }
-        }
-    });
-
+    ACHIEVEMENTS.forEach(ach => { if (ach.type !== 'meta_achievement_count') { const { isAchieved } = checkAchievement(ach, stats); if (isAchieved) { unlockedCountForMeta++; currentlyUnlocked.add(ach.id); } } });
     stats.unlockedCountForMeta = unlockedCountForMeta;
+    ACHIEVEMENTS.forEach(ach => { if (ach.type === 'meta_achievement_count') { const { isAchieved } = checkAchievement(ach, stats); if (isAchieved) currentlyUnlocked.add(ach.id); } });
 
-    ACHIEVEMENTS.forEach(ach => {
-        if (ach.type === 'meta_achievement_count') {
-            const { isAchieved } = checkAchievement(ach, stats);
-            if (isAchieved) {
-                currentlyUnlocked.add(ach.id);
-            }
-        }
-    });
-
-    if (isInitialLoad) {
-        knownUnlockedAchievements = currentlyUnlocked;
-        return;
-    }
+    if (isInitialLoad) { knownUnlockedAchievements = currentlyUnlocked; return; }
 
     const newlyUnlocked = [...currentlyUnlocked].filter(id => !knownUnlockedAchievements.has(id));
-
     if (newlyUnlocked.length > 0) {
         newlyUnlocked.forEach((id, index) => {
             const achievement = ACHIEVEMENTS.find(ach => ach.id === id);
             if (achievement) {
                 const toastActions = [{
-                    label: 'View Achievements',
-                    className: 'btn-outline-light',
-                    onClick: () => {
-                        if (typeof displayAchievementsModal === 'function' && typeof $ !== 'undefined') {
-                            displayAchievementsModal();
-                            $('#achievementsModal').modal('show');
-                        }
-                    }
+                    label: 'View Achievements', className: 'btn-outline-light',
+                    onClick: () => { if (typeof displayAchievementsModal === 'function' && typeof $ !== 'undefined') { displayAchievementsModal(); $('#achievementsModal').modal('show'); } }
                 }];
-                setTimeout(() => { 
-                    showToast(
-                        `🏆 Achievement Unlocked!`,
-                        `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`,
-                        'success',
-                        0,
-                        null,
-                        toastActions
-                    );
-                }, 500 * index);
+                setTimeout(() => { showToast(`🏆 Achievement Unlocked!`, `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`, 'success', 0, null, toastActions); }, 500 * index);
             }
         });
     }
-
     knownUnlockedAchievements = currentlyUnlocked;
 }
+// END CHUNK: Achievement and Usage Helpers

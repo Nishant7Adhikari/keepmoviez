@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeepMoviEZ - Documentation</title>
+    
+    <!-- Dependencies for consistent styling -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #007b8a;
+            --primary-hover: #00636e;
+            --secondary-color: #d72462;
+            --light-bg: #f8f9fa;
+            --dark-text: #212529;
+            --light-text: #6c757d;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--dark-text);
+            background-color: #fff;
+            position: relative;
+        }
+
+        .container {
+            padding-top: 2rem;
+            padding-bottom: 4rem;
+        }
+
+        /* --- Header --- */
+        .doc-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .doc-header h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        /* --- Table of Contents (Sidebar) --- */
+        #toc {
+            position: sticky;
+            top: 20px;
+            max-height: calc(100vh - 40px);
+            overflow-y: auto;
+        }
+        #toc .nav-link {
+            color: var(--light-text);
+            font-weight: 500;
+            padding: 0.3rem 1rem;
+            border-left: 3px solid transparent;
+            font-size: 0.9rem;
+        }
+        #toc .nav-link:hover {
+            color: var(--primary-hover);
+            background-color: var(--light-bg);
+        }
+        #toc .nav-link.active {
+            color: var(--primary-color);
+            font-weight: 600;
+            border-left-color: var(--primary-color);
+            background-color: transparent;
+        }
+
+        /* --- Main Content --- */
+        #main-content section {
+            padding-top: 2.5rem;
+            margin-top: -2.5rem; /* Offset for anchor links */
+            margin-bottom: 2rem;
+        }
+        h2 {
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        h4 {
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+        code {
+            background-color: #e9ecef;
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            color: var(--secondary-color);
+        }
+        .alert {
+            border-radius: 8px;
+        }
+        .alert h5 {
+            margin-top: 0;
+            color: inherit;
+        }
+        
+        /* --- FAQ Accordion Styling --- */
+        #faqAccordion .card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px !important;
+            margin-bottom: 0.5rem;
+        }
+        #faqAccordion .card-header {
+            background-color: #fff;
+            border-bottom: none;
+            padding: 0;
+        }
+        #faqAccordion .card-header h5 {
+            margin: 0;
+        }
+        #faqAccordion .card-header .btn-link {
+            width: 100%;
+            text-align: left;
+            text-decoration: none;
+            color: var(--dark-text);
+            font-weight: 600;
+            padding: 1rem 1.25rem;
+            position: relative;
+        }
+        #faqAccordion .card-header .btn-link:hover {
+            background-color: var(--light-bg);
+        }
+        #faqAccordion .card-header .btn-link::after {
+            content: '\f078'; /* chevron-down */
+            font-family: 'Font Awesome 5 Free';
+            font-weight: 900;
+            position: absolute;
+            right: 1.25rem;
+            transition: transform 0.2s ease-in-out;
+        }
+        #faqAccordion .card-header .btn-link:not(.collapsed)::after {
+            transform: rotate(-180deg);
+        }
+        #faqAccordion .card-body {
+            color: var(--light-text);
+            line-height: 1.6;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 767px) {
+            #toc {
+                position: static;
+                margin-bottom: 2rem;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+
+<body data-spy="scroll" data-target="#toc" data-offset="50">
+
+    <div class="container">
+        <header class="doc-header">
+            <h1>KeepMoviEZ Documentation</h1>
+            <p class="lead">Your guide to mastering the movie and series tracker.</p>
+        </header>
+
+        <div class="row">
+            <!-- Table of Contents Sidebar -->
+            <nav id="toc" class="col-md-3">
+                <ul class="nav nav-pills flex-column">
+                    <li class="nav-item"><a class="nav-link" href="#introduction">Introduction</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#getting-started">Getting Started</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#key-fields">Guide to Key Fields</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#core-features">Core Features</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#data-management">Data Management</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#discover">Discover & Explore</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#local-only-workflow">Local-Only Workflow</a></li>
+                </ul>
+            </nav>
+
+            <!-- Main Content -->
+            <div id="main-content" class="col-md-9">
+
+                <section id="introduction">
+                    <h2>Introduction</h2>
+                    <p>Welcome to KeepMoviEZ, your personal companion for tracking every step of your cinematic journey. This document provides a clear and direct guide to all of the app's features.</p>
+                    <div class="alert alert-info">
+                        <h5>Our Philosophy</h5>
+                        <p class="mb-0">KeepMoviEZ is built with a deep respect for your privacy. The app works perfectly offline, with your data stored securely on your device. The optional cloud sync feature is a powerful tool for backup and multi-device access, but it is always under your control. Your data is yours—never analyzed, shared, or sold.</p>
+                    </div>
+                </section>
+
+                <section id="getting-started">
+                    <h2>Getting Started: Your First 5 Minutes</h2>
+                    <p>Follow these simple steps to get up and running quickly.</p>
+                    <h4>1. Create Your Account</h4>
+                    <p>An account is required to use the app. This creates your secure, personal space for all your data. After this one-time setup, the app is fully functional offline.</p>
+                    
+                    <h4>2. Add Your First Entry</h4>
+                    <p>Tap the <code>+</code> button at the bottom of the screen. In the form that appears, simply type the name of a movie or series and tap the "Search & Autofill" button. Select the correct title from the list to automatically fill in details like the year, poster, and description. Then click "Quick Save".</p>
+                    
+                    <h4>3. Understand the Main Screen</h4>
+                    <p>Your collection is displayed as a series of cards. You can instantly see a title's poster, name, status, and your rating. Use the search bar at the top to find entries, and use the adjacent buttons to change the sort order or apply detailed filters.</p>
+                </section>
+
+                <section id="key-fields">
+                    <h2>A Guide to Key Fields</h2>
+                    <p>Some fields have specific purposes that are important for accurate statistics. Here’s how to use them correctly.</p>
+
+                    <h4 id="series-progress">Tracking Series Progress (Crucial!)</h4>
+                    <p>To ensure your watch time and stats are calculated correctly for series, follow this simple rule:</p>
+                    <blockquote class="blockquote">
+                        <p class="mb-0">If you are currently watching Season 1, the <code>Seasons Completed</code> field should be <strong>0</strong>. If you have finished Season 1 and are now on Season 2, Episode 5, you should enter <strong>1</strong> in <code>Seasons Completed</code> and <strong>5</strong> in <code>Episode (this season)</code>.</p>
+                    </blockquote>
+                    <p>This ensures the app can accurately calculate your total watch time for series.</p>
+
+                    <h4>Overall Rating vs. Watch Record Rating</h4>
+                    <ul>
+                        <li><strong>Overall Rating:</strong> This is your final, definitive score for the entire movie or series.</li>
+                        <li><strong>Watch Record Rating:</strong> This is the rating for a <em>specific viewing session</em>. For example, your overall rating for a movie might be 3 stars, but a recent re-watch felt like 4 stars. For a series, you can use this to log how you felt after a specific binge-watching session (e.g., watching S2E3 to S2E7).</li>
+                    </ul>
+
+                    <h4 id="watch-time-clarification">A Note on Watch Records and Total Watch Time</h4>
+                    <div class="alert alert-warning">
+                        <h5>How Your Watch Time is Calculated</h5>
+                        <ul>
+                            <li><strong>For Movies, Docs & Specials:</strong> Total watch time is calculated by multiplying the movie's runtime by the <strong>number of watch records</strong> it has.</li>
+                            <li><strong>For Series:</strong> Total watch time is calculated based on your progress in the <code>Seasons Completed</code> and <code>Episode</code> fields, regardless of how many watch records you have.</li>
+                        </ul>
+                        <hr>
+                        <p class="mb-0"><strong>Recommendation for Accurate Stats:</strong> For movies, we recommend creating only <strong>one watch record per full viewing</strong> to avoid inflating your total watch time statistic. If you watch a movie over two days, log it on the day you finish.</p>
+                    </div>
+
+                    <h4>Recommendation vs. Watch Preference</h4>
+                    <ul>
+                        <li><strong>My Recommendation:</strong> This is your public-facing verdict (e.g., "Highly Recommended"). Think of it as what you'd tell a friend.</li>
+                        <li><strong>Watch Preference:</strong> This is a private reminder for yourself (e.g., "Watch Alone" or "Safe to Share"). It helps you remember if a movie is suitable for a specific audience. For example, you can mark a movie as "Watch Alone" if you can't watch it with family, so you know not to suggest it for a group movie night.</li>
+                    </ul>
+                </section>
+
+                <section id="core-features">
+                    <h2>Core Features in Detail</h2>
+                    
+                    <h4>Adding & Editing Entries</h4>
+                    <p>When adding a new entry, you have three save options designed for different intents:</p>
+                    <ul>
+                        <li><code>Quick Save</code>: The default choice. Saves the entry and closes the form.</li>
+                        <li><code>Save & Add Another</code>: Saves the current entry and immediately prepares the form for a new one. Perfect for bulk-adding titles.</li>
+                        <li><code>Save & Edit</code>: Saves the entry and re-opens it in the full edit mode. Use this when you want to immediately add advanced details, watch history, or link related entries.</li>
+                    </ul>
+                    <p><strong>TMDB Search & Autofill:</strong> This is the recommended way to add entries. It fetches rich data like posters, cast, genres, and runtime, which makes all other features like stats and suggestions more powerful.</p>
+
+                    <h4>Quickly Logging Progress</h4>
+                    <p>The calendar icon <i class="fas fa-calendar-plus"></i> on each card is the "Quick Update" button. This is the fastest way to log your progress (for a series) or a new watch session (for a movie) without opening the full edit form.</p>
+
+                    <h4>Managing Your Library with Multi-Select</h4>
+                    <p><strong>How to activate:</strong> Long-press (press and hold) on any card to activate Multi-Select Mode.</p>
+                    <p>Once active, you can tap to select or deselect multiple cards. A bar will appear at the bottom allowing you to perform two main actions on all selected items at once:</p>
+                    <ul>
+                        <li><strong>Batch Edit:</strong> Change the Status, Category, Genre, Rating, and more for all selected entries.</li>
+                        <li><strong>Batch Delete:</strong> Remove multiple entries from your log.</li>
+                    </ul>
+                </section>
+                
+                <section id="data-management">
+                    <h2>Understanding Your Data</h2>
+                    <p>KeepMoviEZ gives you full control over your data, whether it's on your device or in the cloud.</p>
+                    
+                    <h4>The Three Sync Methods</h4>
+                    <div class="alert alert-light border">
+                        <dl>
+                            <dt>Sync with Cloud (Standard Sync)</dt>
+                            <dd>The standard, smart sync. It compares your device and the cloud and only syncs the necessary changes. Use this regularly to keep devices up-to-date.</dd>
+                            
+                            <dt class="mt-3">Force Pull from Cloud</dt>
+                            <dd>Erases local data on your device and replaces it with your cloud backup. Use this when setting up a new device or if local data seems corrupted.</dd>
+                            
+                            <dt class="mt-3 text-danger">Force Push to Cloud (DANGER)</dt>
+                            <dd class="text-danger">Erases your entire cloud backup and replaces it with the data from your current device. Only use this if you are 100% certain your current device is the correct "master" copy and you are willing to lose all other changes.</dd>
+                        </dl>
+                    </div>
+
+                    <h4>Smart Import Assistant</h4>
+                    <p>You can import data from a <code>.csv</code> or <code>.json</code> file, perfect for migrating from another app or restoring a manual backup. The assistant will guide you, offering strategies like:</p>
+                    <ul>
+                        <li><strong>Append New Entries Only:</strong> Safely adds new titles without touching your existing data.</li>
+                        <li><strong>Smart Backfill Missing Data:</strong> Adds new titles and, for existing ones, only fills in empty fields (like runtime or cast) without overwriting your data.</li>
+                    </ul>
+                    
+                    <h4>Exporting Your Data</h4>
+                    <p>You can export your entire collection as a <code>.csv</code> or <code>.json</code> file at any time. This is recommended for creating personal backups, maintaining your privacy, and having the freedom to use your data anywhere you want.</p>
+                </section>
+
+                <section id="discover">
+                    <h2>Discover & Explore</h2>
+                    <p>Beyond tracking, KeepMoviEZ helps you explore your own taste and discover new titles.</p>
+                    <ul>
+                        <li><strong>Daily Recommendation:</strong> A daily pick from your own "To Watch" list, helping you decide what to watch next from your backlog.</li>
+                        <li><strong>Engine Suggestions:</strong> A powerful discovery tool that analyzes your highest-rated entries and uses TMDB to find new movies and series you might love, based on similar genres, directors, and collections.</li>
+                        <li><strong>Achievements:</strong> A fun way to celebrate your viewing milestones and encourage you to explore new genres, eras of cinema, and the app's features.</li>
+                    </ul>
+                </section>
+
+                <section id="faq">
+                    <h2>Frequently Asked Questions</h2>
+                    <div class="accordion" id="faqAccordion">
+
+                        <!-- FAQ Items will be injected here -->
+                        
+                    </div>
+                </section>
+                
+                <section id="local-only-workflow">
+                    <h2>Special Workflow: Using Local-Only Mode</h2>
+                    <p>For users who prefer not to use any cloud features, follow this workflow for a completely private, device-only experience.</p>
+                    <div class="alert alert-warning">
+                        <h5>Your Responsibility</h5>
+                        <p class="mb-0">In this mode, you are solely responsible for backing up your data. We highly recommend performing regular manual exports.</p>
+                    </div>
+                    <ol>
+                        <li><strong>Initial Login:</strong> Create an account and log in one time. This requires an internet connection and is necessary to start the app.</li>
+                        <li><strong>Use the App Normally:</strong> Add, edit, and track your media. All data will be saved only to your device's local database.</li>
+                        <li><strong>AVOID Cloud Buttons:</strong> To remain in local-only mode, <strong>never</strong> click "Sync with Cloud", "Force Pull", or "Force Push" in the menu.</li>
+                        <li><strong>Create Manual Backups:</strong> Periodically go to <code>Menu > Export > Export as File</code> and save the JSON file to a safe place. This file is your personal backup. You can restore it later using the <code>Menu > Import</code> function.</li>
+                    </ol>
+                    <p>Note: Searching TMDB for new entries will still require an internet connection, but the data fetched is only saved to your local device.</p>
+                </section>
+
+            </div>
+        </div>
+    </div>
+    
+    <!-- Script for Bootstrap and dynamic functionality -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- FAQ Data ---
+            const faqs = [
+                // Getting Started & Accounts
+                { q: "Do I really need an account? Why can't I use it anonymously?", a: "Yes, an account is required to initialize the app and secure your personal data space. This architecture prevents unauthorized access and ensures your locally-stored data is tied to a verified identity. After the initial login, the app is fully functional offline." },
+                { q: "I forgot my password. What do I do?", a: "On the login screen, enter your email address and click the 'Forgot Password?' link. You will receive an email with instructions to reset your password." },
+                { q: "I logged out and all my movies are gone! Where did they go?", a: "For your security, logging out clears the local data cache from the device. Your data is safe in the cloud (if you've synced). Simply log back in and perform a 'Sync with Cloud' or 'Force Pull' to restore your collection to the device." },
+                { q: "Is signing in with Google secure?", a: "Yes, it's highly secure. The app uses the official and secure Supabase authentication method, which interfaces directly with Google. We never see or store your Google password." },
+                { q: "Can I change the email address associated with my account?", a: "Currently, changing your email address is not supported directly within the app. You would need to export your data, create a new account with the new email, and import your data into the new account." },
+                
+                // Data Entry & Management
+                { q: "How do I add a movie that isn't on TMDB?", a: "Simply leave the 'Search TMDB' field blank and manually fill in all the details (Name, Year, Genre, etc.) in the form. The app is designed to work perfectly with manually entered data." },
+                { q: "The TMDB search autofilled the wrong information. How do I fix it?", a: "No problem. After the data is autofilled, you can simply click into any field (like Name, Year, or Genre) and edit it before saving. Your manual changes will always take precedence." },
+                { q: "Why did a 'Duplicate Name' warning appear when I tried to save?", a: "This warning appears if another entry with the exact same name already exists in your log. It's a safeguard to prevent accidental duplicates. You can choose to 'Save Anyway' if you are intentionally creating a separate entry (e.g., a remake)." },
+                { q: "How do I link a sequel to its original movie?", a: "Use the 'Link to Other Entries' field in the Advanced Details section of the edit form. Start typing the name of the movie *that is already in your log*, and select it from the suggestions. This creates a direct link between the two entries." },
+                { q: "I added a new genre like 'Found Footage'. Will it be available for other entries?", a: "Yes. Any new genre you create is automatically added to the genre suggestion list for all other entries, making it easy to categorize your collection consistently." },
+                { q: "What's the difference between the main Description and the 'Notes' in a watch record?", a: "The main <code>Description</code> is for the movie's general synopsis. <code>Notes</code> within a watch record are for your personal thoughts about a *specific viewing* (e.g., 'Watched this on a rainy day, loved the ending this time')." },
+
+                // Data Syncing, Backup & Import/Export
+                { q: "How often should I sync with the cloud?", a: "We recommend syncing after any significant session of adding or updating entries, especially if you use multiple devices. This ensures your cloud backup is always current." },
+                { q: "I made changes on my phone, but they don't appear on my tablet. Why?", a: "You need to perform a sync on both devices. First, open the app on your phone and press 'Sync with Cloud'. After it completes, open the app on your tablet and press 'Sync with Cloud' again. The tablet will then download the changes." },
+                { q: "When should I *really* use 'Force Push'?", a: "Only in a rare 'emergency' where you are 100% certain that the data on your current device is the correct master copy and your cloud data is wrong or corrupted. For example, after a large offline data-correction session. <strong>99% of the time, you should use the regular 'Sync'.</strong>" },
+                { q: "I accidentally used 'Force Pull' and lost some recent changes. Can I get them back?", a: "Unfortunately, no. 'Force Pull' is an irreversible action that overwrites your local data. This is why the app presents a strong warning before proceeding. We recommend always trying a regular 'Sync' first." },
+                { q: "What is the best file format to export for a backup?", a: "<strong>JSON</strong>. While CSV is useful for spreadsheets, JSON is the perfect format for a complete backup. It preserves all data structures (like watch history and cast lists) perfectly and can be re-imported flawlessly using the Smart Import Assistant." },
+                { q: "What does the 'Smart Backfill' import option do?", a: "This is a powerful feature for enriching your existing library. It adds new entries from your file, and for entries that already exist in your log, it will *only fill in blank fields*. It will not overwrite any data you have already entered, making it safe for adding details like runtime or cast to your collection." },
+
+                // Features & Functionality
+                { q: "The 'Engine Suggestions' aren't very good. How can I improve them?", a: "The suggestion engine relies on your data. To improve its suggestions, try to: (1) Rate more of your watched movies, especially with 4 or 5 stars. (2) Use the TMDB search to add rich data to your favorite entries. The more the engine knows about what you love, the better its picks will be." },
+                { q: "An achievement isn't unlocking. Is it broken?", a: "Usually, this is due to the specific criteria. For example, the 'Weekend Warrior' achievement requires 3 watch instances on the *same* weekend (Saturday/Sunday). Check the achievement's description carefully. If you're certain you've met the criteria, performing a 'Check & Repair Data' from the Erase Data modal can sometimes resolve inconsistencies." },
+                { q: "How do I use the Parental Guide for a specific TV episode?", a: "In the Details modal for a series, use the `+` and `-` buttons in the 'Parents Guide' section to select the season and episode number you want to check, then click the book icon." },
+                { q: "How do I start Multi-Select on a touchscreen?", a: "The same way as on a desktop: just <strong>press and hold</strong> your finger on any movie card for about half a second. The multi-select bar will then appear at the bottom." },
+                { q: "Can I share my stats or a movie I just watched?", a: "Yes! Open the 'Details' modal for any movie and click the green 'Share' button. This will generate a stylish, shareable PNG image with the movie's poster, your rating, and other key details. You can then download it or share it directly to other apps." },
+                { q: "Why does the 'Find Similar' button only appear on some movies?", a: "The 'Find Similar' button, which opens the Engine Suggestions, only appears for entries that have been (1) marked as 'Watched' or 'Continue' and (2) have TMDB data linked to them. The engine needs this information to find relevant suggestions." },
+                
+                // Troubleshooting & 'Why' Questions
+                { q: "I deleted an entry by mistake. Can I undo it?", a: "Deletion on your device is final and cannot be undone through the user interface. If you have a recent cloud sync, you could potentially use 'Force Pull' to restore the data, but this would also revert any other recent changes you've made." },
+                { q: "The main search bar isn't finding a movie I know is in my log. What's wrong?", a: "You most likely have a filter active. Click the filter icon <i class='fas fa-filter'></i> in the top bar and press 'Clear Filters' to see your entire collection again." },
+                { q: "Why does the app sometimes need an internet connection to start up?", a: "The app performs a quick, one-time check with the authentication server when you first open it to verify your session. After this initial check, it can operate completely offline." },
+                { q: "The app seems slow or is acting strange. What's a first step I can take?", a: "Try the built-in data integrity check. Go to <code>Menu > Erase Data</code>, and instead of erasing, click the <code>Check & Repair Data</code> button. This will scan your collection for common issues (like orphaned links) and fix them automatically." },
+                { q: "An image I generated with the 'Share' button looks wrong.", a: "This can occasionally happen with very long movie titles. We are continuously working to improve the image generation. Try again, and if the problem persists, please feel free to report it." },
+                { q: "The app logged me out automatically. Why?", a: "For security, your login session will expire after a certain period of inactivity, as is standard with most secure applications. Simply log back in to continue." },
+                
+                // Advanced Usage & Suggestions
+                { q: "What's the best way to manage a large collection of TV series I'm actively watching?", a: "Set their status to 'Continue' and regularly use the 'Quick Update' button on the cards to log your progress. This is much faster than opening the full edit form each time you watch a few episodes." },
+                { q: "How can I use my exported data for my own analysis?", a: "Export your data as a <strong>CSV</strong> file to easily open it in spreadsheet software like Excel or Google Sheets. For more advanced analysis with programming scripts (like Python or R), export as <strong>JSON</strong>." },
+                { q: "How can I see all movies by a specific director in my log?", a: "While there isn't a dedicated 'filter by director' option, the main search bar is very powerful. Simply type the director's name into the search bar, and it will show all entries where their name appears in the data." },
+                { q: "Can I customize the Categories (e.g., add 'Anime') or Statuses?", a: "Currently, the core categories and statuses are fixed to ensure data consistency and accurate statistics. However, we appreciate the suggestion for future updates!" },
+                { q: "What does the 'Recalculate Relationships' function do?", a: "This is a data integrity process. It ensures that when you link entries (e.g., a movie and its sequel), the links are always two-way and that all linked entries belong to the same 'group.' It runs automatically to keep your data clean." },
+                { q: "Is there a way to view my data on a desktop computer?", a: "Yes! KeepMoviEZ is a Progressive Web App (PWA). On a desktop browser like Chrome or Edge, you can visit the web address, and you should see an 'Install' icon in the address bar. This will install the app to your computer, allowing it to run like a native desktop application." }
+            ];
+
+            const faqContainer = document.getElementById('faqAccordion');
+            faqs.forEach((faq, index) => {
+                const isFirst = index === 0;
+                const faqHTML = `
+                    <div class="card">
+                        <div class="card-header" id="faq${index}-h">
+                            <h5 class="mb-0">
+                                <button class="btn btn-link ${isFirst ? '' : 'collapsed'}" data-toggle="collapse" data-target="#faq${index}-c" aria-expanded="${isFirst}" aria-controls="faq${index}-c">
+                                    ${faq.q}
+                                </button>
+                            </h5>
+                        </div>
+                        <div id="faq${index}-c" class="collapse ${isFirst ? 'show' : ''}" aria-labelledby="faq${index}-h" data-parent="#faqAccordion">
+                            <div class="card-body">${faq.a}</div>
+                        </div>
+                    </div>
+                `;
+                faqContainer.innerHTML += faqHTML;
+            });
+            
+            // --- Simple and efficient scrollspy using IntersectionObserver ---
+            const sections = document.querySelectorAll('#main-content section');
+            const navLinks = document.querySelectorAll('#toc .nav-link');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const id = entry.target.getAttribute('id');
+                        navLinks.forEach(link => {
+                            link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                        });
+                    }
+                });
+            }, { rootMargin: '-20% 0px -70% 0px' });
+
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+
+</html>
