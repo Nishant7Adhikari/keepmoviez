@@ -1,13 +1,37 @@
 // sw.js
-const CACHE_NAME = 'keepmoviez-cache-v5.0.0'; // <<-- IMPORTANT: Version number incremented
+const CACHE_NAME = 'keepmoviez-local-v5.1.0'; // Version bumped to force update
 const OFFLINE_URL = 'offline.html'; 
-const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co'; // Define Supabase URL for easy checking
+const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co'; 
+
 const CORE_ASSETS = [
-  './', // Alias for index.html
+  './',
   './index.html',
   './offline.html',
   './style.css',  
   './manifest.json',
+  
+  // Local CSS
+  './libs/css/bootstrap.min.css',
+  './libs/css/all.min.css',
+
+  // Local Fonts
+  './libs/webfonts/fa-solid-900.woff2',
+  './libs/webfonts/fa-brands-400.woff2',
+  './libs/webfonts/fa-regular-400.woff2',
+  
+  // Local JS Libraries
+  './libs/js/crypto-js.min.js',
+  './libs/js/supabase.min.js',
+  './libs/js/jquery.min.js',
+  './libs/js/popper.min.js',
+  './libs/js/bootstrap.min.js',
+  './libs/js/papaparse.min.js',
+  './libs/js/chart.js',
+  './libs/js/html2canvas.min.js',
+  './libs/js/jspdf.umd.min.js',
+  './libs/js/jspdf.plugin.autotable.min.js',
+
+  // App Logic Scripts
   './js/constant.js',
   './js/utils.js',
   './js/indexeddb.js',
@@ -22,34 +46,20 @@ const CORE_ASSETS = [
   './js/app.js',
   './js/supabase.js',
   './js/main.js',
+  
+  // Icons
   './icons/icon-192x192.png',
-  './icons/icon-512x512.png', 
-  'https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css',
-  'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap',
-  'https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js',
-  'https://code.jquery.com/jquery-3.5.1.slim.min.js',
-  'https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js',
-  'https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js',
-  'https://cdn.jsdelivr.net/npm/chart.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+  './icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('Opened cache and caching core assets');
-        const googleFontsRequest = new Request(
-          'https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap',
-          { mode: 'no-cors' }
-        );
-        const assetsToCache = CORE_ASSETS.filter(url => !url.includes('fonts.googleapis.com'));
-        assetsToCache.push(googleFontsRequest);
-
-        return cache.addAll(assetsToCache);
+        console.log('Opened cache and caching local assets');
+        // We explicitly allow the caching to proceed even if Google Fonts (external) fails,
+        // but here we are only caching CORE_ASSETS which are all local now.
+        return cache.addAll(CORE_ASSETS);
       })
       .then(() => {
         console.log('Core assets cached successfully');
@@ -77,7 +87,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// << START OF CORRECTED FETCH LOGIC >>
 self.addEventListener('fetch', (event) => {
   const { request } = event;
 
@@ -90,7 +99,6 @@ self.addEventListener('fetch', (event) => {
 
   if (isApiRequest) {
     // Strategy: Network-Only for all API calls to ensure data freshness.
-    // This is the key fix for the bug.
     event.respondWith(fetch(request));
 
   } else if (isAppScript) {
@@ -107,7 +115,7 @@ self.addEventListener('fetch', (event) => {
           return networkResponse;
         })
         .catch(() => {
-          console.warn(`Network failed for ${request.url}, serving from cache.`);
+          // console.warn(`Network failed for ${request.url}, serving from cache.`);
           return caches.match(request);
         })
     );
@@ -116,16 +124,17 @@ self.addEventListener('fetch', (event) => {
     // Strategy: Network-First for main page navigation.
     event.respondWith(
       fetch(request).catch(() => {
-        return caches.match(OFFLINE_URL);
+        return caches.match(OFFLINE_URL) || caches.match('./index.html');
       })
     );
 
   } else {
-    // Strategy: Cache-First for all other static assets (CSS, libraries, images, fonts).
+    // Strategy: Cache-First for all other static assets (Local Libs, CSS, Images, Fonts).
     event.respondWith(
       caches.match(request).then((response) => {
         return response || fetch(request).then((networkResponse) => {
-            if (networkResponse && networkResponse.status === 200) {
+            // Only cache valid responses
+            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
               const responseToCache = networkResponse.clone();
               caches.open(CACHE_NAME).then((cache) => {
                 cache.put(request, responseToCache);
@@ -137,4 +146,3 @@ self.addEventListener('fetch', (event) => {
     );
   }
 });
-// << END OF CORRECTED FETCH LOGIC >>

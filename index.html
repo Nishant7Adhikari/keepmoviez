@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.0.0 -->
+<!-- KeepMoviEZ  v5.0.1 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -8,26 +8,30 @@
     <title>KeepMoviEZ</title>
     <link rel="icon" type="image/x-icon" href="favicon.png">
     <!-- Primary Meta Tags -->
-  <title>KeepMoviEZ  - Smart Movie & Series Tracker | Log, Rate & Visualize</title>
-  <meta name="title" content="KeepMoviEZ  - Smart Movie & Series Tracker | Log, Rate & Visualize">
-  <meta name="description" content="KeepMoviEZ  is your personal smart movie and series tracking app. Created by Nishant Adhikari @  nishantadhikari.info.np">
-  <meta name="keywords" content="KeepMoviEZ , movie tracker, TV tracker, watchlist manager, movie log app, film log, media tracker, movie history app, watch stats, TMDB log, personal movie diary, PWA movie app, Supabase media app, media collection, KMZLogger, MovizEZCloudTracker, KMZMediaStats">
-  <meta name="robots" content="index, follow">
-  <meta name="author" content="KeepMoviEZ  Team">
-  <link rel="canonical" href="keepmoviez.nishantadhikari.info.np">
+    <title>KeepMoviEZ - Smart Movie & Series Tracker | Log, Rate & Visualize</title>
+    <meta name="title" content="KeepMoviEZ - Smart Movie & Series Tracker | Log, Rate & Visualize">
+    <meta name="description" content="KeepMoviEZ is your personal smart movie and series tracking app.">
+    <meta name="keywords" content="KeepMoviEZ, movie tracker, media collection">
+    <meta name="robots" content="index, follow">
+    <meta name="author" content="KeepMoviEZ Team">
+    <link rel="canonical" href="keepmoviez.nishantadhikari.info.np">
 
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <!-- Local Libraries (CSS) -->
+    <link href="libs/css/bootstrap.min.css" rel="stylesheet">
+    <link href="libs/css/all.min.css" rel="stylesheet"> <!-- Font Awesome -->
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="style.css">
 
     <!-- PWA Manifest and Theme -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#2C3E50"> <!-- Should match manifest.json theme_color -->
+    <meta name="theme-color" content="#2C3E50">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-    <!-- Supabase JS Client V2 -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Critical Local JS Libraries -->
+    <script src="libs/js/crypto-js.min.js"></script>
+    <script src="libs/js/supabase.min.js"></script>
 
 <!-- END CHUNK: Document Head and Core Dependencies -->
 <body>
@@ -1394,17 +1398,17 @@
 <!-- END CHUNK: Toast Notification Component -->
 
 <!-- START CHUNK: JavaScript Libraries and Application Logic Scripts -->
-    <!-- Base libraries first -->
+    <!-- Local Base Libraries -->
+    <script src="libs/js/jquery.min.js"></script>
+    <script src="libs/js/popper.min.js"></script>
+    <script src="libs/js/bootstrap.min.js"></script>
+    <script src="libs/js/papaparse.min.js"></script>
+    <script src="libs/js/chart.js"></script>
     
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PDF Export Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.4/jspdf.plugin.autotable.min.js"></script>
+    <!-- Local PDF Export Libraries -->
+    <script src="libs/js/html2canvas.min.js"></script>
+    <script src="libs/js/jspdf.umd.min.js"></script>
+    <script src="libs/js/jspdf.plugin.autotable.min.js"></script>
 
    <!-- Custom JS modules  -->
     <script src="js/constant.js"></script>
