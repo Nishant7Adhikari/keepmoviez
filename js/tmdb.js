@@ -192,7 +192,20 @@ async function applyTmdbSelection(item) {
     }
 
     formFieldsGlob.name.value = item.title || item.name || formFieldsGlob.name.value;
-    formFieldsGlob.category.value = item.media_type === 'movie' ? 'Movie' : (item.media_type === 'tv' ? 'Series' : 'Special');
+    
+    // Auto-Category Logic
+    let detectedCategory = 'Movie';
+    if (item.media_type === 'tv') {
+        detectedCategory = 'Series';
+    } else if (item.media_type === 'movie') {
+        // Check if it's a documentary based on genre ID 99 or name
+        const hasDocGenre = (tmdbGenres || []).some(g => g.toLowerCase() === 'documentary');
+        if (hasDocGenre) {
+            detectedCategory = 'Documentary';
+        }
+    }
+    formFieldsGlob.category.value = detectedCategory;
+
     formFieldsGlob.year.value = year;
     formFieldsGlob.country.value = tmdbCountryISO;
     formFieldsGlob.language.value = tmdbLanguage;

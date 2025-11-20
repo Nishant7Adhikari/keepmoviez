@@ -689,27 +689,39 @@ function getDailyRecommendationMovie() {
     const lastRecDate = localStorage.getItem(DAILY_RECOMMENDATION_DATE_KEY);
     const lastRecId = localStorage.getItem(DAILY_RECOMMENDATION_ID_KEY);
     let dailyRecSkipCount = parseInt(localStorage.getItem(DAILY_REC_SKIP_COUNT_KEY) || '0');
+    
+    // Reset skips if it's a new day
     if (lastRecDate !== today) {
         dailyRecSkipCount = 0;
         localStorage.setItem(DAILY_REC_SKIP_COUNT_KEY, '0');
         localStorage.removeItem(DAILY_RECOMMENDATION_ID_KEY);
     }
+    
+    // Check skip limit
     if (lastRecDate === today && dailyRecSkipCount >= MAX_DAILY_SKIPS) {
         return { message: "You've skipped the maximum number of daily recommendations. Check back tomorrow!", movie: null, dailyRecSkipCount };
     }
+    
+    // Return existing recommendation if valid
     if (lastRecDate === today && lastRecId) {
-        const existingRec = movieData.find(m => m.id === lastRecId && m.Status === 'To Watch' && !m.doNotRecommendDaily);
+        const existingRec = movieData.find(m => m.id === lastRecId && m.Status === 'To Watch' && !m.doNotRecommendDaily && !m.is_deleted);
         if (existingRec) {
             return { message: "Success", movie: existingRec, dailyRecSkipCount };
         }
     }
-    const toWatchList = movieData.filter(m => m.Status === 'To Watch' && !m.doNotRecommendDaily);
+    
+    // Find new recommendation
+    const toWatchList = movieData.filter(m => m.Status === 'To Watch' && !m.doNotRecommendDaily && !m.is_deleted);
     if (toWatchList.length === 0) return { message, movie: null, dailyRecSkipCount };
+    
     const potentialPicks = toWatchList.filter(m => m.id !== lastRecId);
     const listToPickFrom = potentialPicks.length > 0 ? potentialPicks : toWatchList;
     const recommendedMovie = listToPickFrom[Math.floor(Math.random() * listToPickFrom.length)];
+    
     localStorage.setItem(DAILY_RECOMMENDATION_ID_KEY, recommendedMovie.id);
     localStorage.setItem(DAILY_RECOMMENDATION_DATE_KEY, today);
+    
+    // Show toast only if it's the first time generating today
     if (lastRecDate !== today) {
         showToast("Daily Recommendation", "Here is your pick for today!", "info", 4000, DO_NOT_SHOW_AGAIN_KEYS.DAILY_RECOMMENDATION_INTRO);
     }

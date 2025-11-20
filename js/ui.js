@@ -1096,10 +1096,19 @@ window.prepareQuickUpdateModal = function(id) {
     if (isSeries) {
         $('#quickUpdateSeasons').val(movie.seasonsCompleted || '0');
         $('#quickUpdateEpisodes').val(movie.currentSeasonEpisodesWatched || '0');
+        // Hide extra fields initially for series; they show if "Finished?" is toggled
+        $('#quickUpdateConditionalFields').hide();
+    } else {
+        // Show extra fields immediately for Movies/Docs/Specials
+        $('#quickUpdateConditionalFields').show();
+        
+        // Pre-fill if existing data exists
+        $('#quickUpdateOverallRating').val(movie.overallRating || '');
+        $('#quickUpdateRecommendation').val(movie.Recommendation || '');
+        $('#quickUpdatePersonalRecommendation').val(movie.personalRecommendation || '');
     }
 
     $('#quickUpdateDate').val(new Date().toISOString().split('T')[0]);
-    $('#quickUpdateConditionalFields').hide();
 
     modal.modal('show');
 }

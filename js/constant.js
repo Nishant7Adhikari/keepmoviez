@@ -72,9 +72,12 @@ const countryCodeToNameMap = {
     "BO": "Bolivia", "DO": "Dominican Republic", "PR": "Puerto Rico"
 };
 
-const ALL_GENRES = [ "Action", "Adventure", "Animation", "Comedy", "Crime", "Documentary", "Drama", "Family", "Fantasy", "History",
-  "Horror", "Music", "Mystery", "Romance", "Science Fiction",
-  "Thriller", "TV Movie", "War", "Western", "Biopic", "Disaster", "Game", "Sports", "Legal", "Medical", "Musical", "Police", "Military", "Political", "Psychological", "Time Travel", "Tragedy", "Uplifting", "War", "Work", "School"
+// Updated Genre List: Removed Duplicate 'War', Added TV specific genres (Kids, News, Reality, Soap, Talk)
+const ALL_GENRES = [ 
+  "Action", "Adventure", "Animation", "Biopic", "Comedy", "Crime", "Disaster", "Documentary", "Drama", 
+  "Family", "Fantasy", "Game", "History", "Horror", "Kids", "Legal", "Medical", "Military", "Music", "Musical", 
+  "Mystery", "News", "Police", "Political", "Psychological", "Reality", "Romance", "School", "Science Fiction", 
+  "Soap", "Sports", "Talk", "Thriller", "Time Travel", "Tragedy", "TV Movie", "Uplifting", "War", "Western", "Work"
 ].sort();
 
 let UNIQUE_ALL_GENRES = [...new Set(ALL_GENRES.map(g => g.toLowerCase() === 'si-fi' ? 'Sci-Fi' : g))].sort();
@@ -94,22 +97,22 @@ const ACHIEVEMENTS = [
     { id: 'watched_overall_512', name: 'Cinema Awakening - Elite', description: 'Watch 512 titles.', type: 'total_titles_watched', threshold: 512, icon: 'fas fa-film' },
     { id: 'watched_overall_1024', name: 'Sacred Cinephile - Sage', description: 'Watch 1024 titles.', type: 'total_titles_watched', threshold: 1024, icon: 'fas fa-star-of-david' },
     // True Rewatcher (Distinct Titles Rewatched)
-    { id: 'rewatched_distinct_5', name: 'Déjà Viewer - Rookie', description: 'Rewatch 5 distinct titles.', type: 'distinct_titles_rewatched', threshold: 5, icon: 'fas fa-redo' },
-    { id: 'rewatched_distinct_10', name: 'Repeat Offender - Scout', description: 'Rewatch 10 distinct titles.', type: 'distinct_titles_rewatched', threshold: 10, icon: 'fas fa-history' },
-    { id: 'rewatched_distinct_25', name: 'Familiar Fan - Elite', description: 'Rewatch 25 distinct titles.', type: 'distinct_titles_rewatched', threshold: 25, icon: 'fas fa-check-circle' },
+    { id: 'rewatched_distinct_5', name: 'Déjà Viewer - Rookie', description: 'Rewatch 5 distinct movies.', type: 'distinct_titles_rewatched', threshold: 5, icon: 'fas fa-redo' },
+    { id: 'rewatched_distinct_10', name: 'Repeat Offender - Scout', description: 'Rewatch 10 distinct movies.', type: 'distinct_titles_rewatched', threshold: 10, icon: 'fas fa-history' },
+    { id: 'rewatched_distinct_25', name: 'Familiar Fan - Elite', description: 'Rewatch 25 distinct movies.', type: 'distinct_titles_rewatched', threshold: 25, icon: 'fas fa-check-circle' },
     // Movie Marathoner (Rewatching a Single Specific Movie)
-    { id: 'single_rewatch_3', name: 'Encore!', description: 'Watch the same title 3 times.', type: 'single_title_rewatch_count', threshold: 3, icon: 'fas fa-crosshairs' },
-    { id: 'single_rewatch_5', name: 'Dedicated Viewer', description: 'Watch the same title 5 times.', type: 'single_title_rewatch_count', threshold: 5, icon: 'fas fa-heart' },
-    { id: 'single_rewatch_7', name: 'Ultimate Fan', description: 'Watch the same title 7 times.', type: 'single_title_rewatch_count', threshold: 7, icon: 'fas fa-crown' },
+    { id: 'single_rewatch_3', name: 'Encore!', description: 'Watch the same movie 3 times.', type: 'single_title_rewatch_count', threshold: 3, icon: 'fas fa-crosshairs' },
+    { id: 'single_rewatch_5', name: 'Dedicated Viewer', description: 'Watch the same movie 5 times.', type: 'single_title_rewatch_count', threshold: 5, icon: 'fas fa-heart' },
+    { id: 'single_rewatch_7', name: 'Ultimate Fan', description: 'Watch the same movie 7 times.', type: 'single_title_rewatch_count', threshold: 7, icon: 'fas fa-crown' },
     // II. Category-Specific Achievements
     // Movie Buff
-    { id: 'movie_watched_75', name: 'Movie Goer - Rookie', description: 'Watch 75 Movies.', type: 'category_watched_count', category: 'Movie', threshold: 75, icon: 'fas fa-film' },
+    { id: 'movie_watched_75', name: 'Movie Goer - Rookie', description: 'Watch 75 Movies.', type: 'category_watched_count', category: 'Movie', threshold: 75, icon: 'fas fa-ticket-alt' },
     { id: 'movie_watched_350', name: 'Movie Maniac - Scout', description: 'Watch 350 Movies.', type: 'category_watched_count', category: 'Movie', threshold: 350, icon: 'fas fa-film' },
-    { id: 'movie_watched_750', name: 'Film Fanatic - Elite', description: 'Watch 750 Movies.', type: 'category_watched_count', category: 'Movie', threshold: 750, icon: 'fas fa-film' },
+    { id: 'movie_watched_750', name: 'Film Fanatic - Elite', description: 'Watch 750 Movies.', type: 'category_watched_count', category: 'Movie', threshold: 750, icon: 'fas fa-video' },
     // Series Fan
     { id: 'series_watched_15', name: 'Episode Explorer - Rookie', description: 'Watch 15 Series.', type: 'category_watched_count', category: 'Series', threshold: 15, icon: 'fas fa-tv' },
-    { id: 'series_watched_75', name: 'Binge Watcher - Scout', description: 'Watch 75 Series.', type: 'category_watched_count', category: 'Series', threshold: 75, icon: 'fas fa-tv' },
-    { id: 'series_watched_150', name: 'Series Specialist - Elite', description: 'Watch 150 Series.', type: 'category_watched_count', category: 'Series', threshold: 150, icon: 'fas fa-tv' },
+    { id: 'series_watched_75', name: 'Binge Watcher - Scout', description: 'Watch 75 Series.', type: 'category_watched_count', category: 'Series', threshold: 75, icon: 'fas fa-broadcast-tower' },
+    { id: 'series_watched_150', name: 'Series Specialist - Elite', description: 'Watch 150 Series.', type: 'category_watched_count', category: 'Series', threshold: 150, icon: 'fas fa-satellite-dish' },
     // Series Loyalty (Completing Long Series)
     { id: 'long_series_3', name: 'Commitment Ceremony - Rookie', description: 'Watch 3 long series (3+ seasons or 40+ episodes).', type: 'long_series_watched_count', threshold: 3, minSeasons: 3, minEpisodes: 40, icon: 'fas fa-user-clock' },
     { id: 'long_series_9', name: 'Saga Survivor - Scout', description: 'Watch 9 long series (3+ seasons or 40+ episodes).', type: 'long_series_watched_count', threshold: 9, minSeasons: 3, minEpisodes: 40, icon: 'fas fa-calendar-check' },
@@ -193,27 +196,21 @@ const ACHIEVEMENTS = [
     // VII. Feature Usage & Fun Achievements
     { id: 'sync_25', name: 'Sync Starter - Rookie', description: 'Perform cloud sync 25 times.', type: 'sync_count', threshold: 25, icon: 'fas fa-sync-alt' },
     { id: 'sync_250', name: 'Cloud Connector - Scout', description: 'Perform cloud sync 250 times.', type: 'sync_count', threshold: 250, icon: 'fas fa-cloud-upload-alt' },
-    { id: 'sync_1000', name: 'Sync Sensei - Elite', description: 'Perform cloud sync 1000 times.', type: 'sync_count', threshold: 1000, icon: 'fas fa-server' },
-    { id: 'stats_opened_100', name: 'Data Dabbler - Rookie', description: 'Open any stats/insights modal 100 times.', type: 'stats_modal_opened_count', threshold: 100, icon: 'fas fa-chart-bar' },
-    { id: 'stats_opened_250', name: 'Insight Seeker - Scout', description: 'Open any stats/insights modal 250 times.', type: 'stats_modal_opened_count', threshold: 250, icon: 'fas fa-calculator' },
-    { id: 'stats_opened_500', name: 'Chart Champion - Elite', description: 'Open any stats/insights modal 500 times.', type: 'stats_modal_opened_count', threshold: 500, icon: 'fas fa-chart-pie' },
+    // Removed: Sync Sensei (High Threshold)
+    { id: 'stats_opened_100', name: 'Stats Nerd', description: 'Open any stats/insights modal 100 times.', type: 'stats_modal_opened_count', threshold: 100, icon: 'fas fa-chart-bar' },
     { id: 'night_owl_watch', name: 'Night Owl', description: 'Log a watch instance between 12 AM and 4 AM.', type: 'time_of_day_watch', period: 'night', threshold: 1, icon: 'fas fa-moon' },
     { id: 'early_bird_watch', name: 'Early Bird', description: 'Log a watch instance between 5 AM and 8 AM.', type: 'time_of_day_watch', period: 'early_morning', threshold: 1, icon: 'fas fa-sun' },
-    { id: 'desc_detail_10', name: 'Word Weaver - Rookie', description: 'Write descriptions >30 characters for 10 entries.', type: 'detailed_description_count', minLength: 30, threshold: 10, icon: 'fas fa-file-alt' },
-    { id: 'desc_detail_30', name: 'Story Scribe - Scout', description: 'Write descriptions >30 characters for 30 entries.', type: 'detailed_description_count', minLength: 30, threshold: 30, icon: 'fas fa-pen-fancy' },
-    { id: 'desc_detail_75', name: 'Lore Master - Elite', description: 'Write descriptions >30 characters for 75 entries.', type: 'detailed_description_count', minLength: 30, threshold: 75, icon: 'fas fa-book-reader' },
+    { id: 'desc_detail_10', name: 'Detail Oriented', description: 'Write descriptions >30 characters for 10 entries.', type: 'detailed_description_count', minLength: 30, threshold: 10, icon: 'fas fa-file-alt' },
     { id: 'franchise_3', name: 'Trilogy Tracker - Rookie', description: 'Watch 3 titles from the same TMDB collection.', type: 'tmdb_collection_streak_count', threshold: 3, icon: 'fas fa-project-diagram' },
     { id: 'franchise_5', name: 'Saga Seeker - Scout', description: 'Watch 5 titles from the same TMDB collection.', type: 'tmdb_collection_streak_count', threshold: 5, icon: 'fas fa-sitemap' },
     { id: 'franchise_all_5plus', name: 'Collection Completer - Elite', description: 'Watch all titles from a TMDB collection of 5+ entries.', type: 'tmdb_collection_completed_count', minCollectionSize: 5, threshold: 1, icon: 'fas fa-check-circle' },
     { id: 'director_3', name: 'Director Dabbler - Rookie', description: 'Watch 3 titles by the same director.', type: 'director_streak_count', threshold: 3, icon: 'fas fa-video' },
     { id: 'director_5', name: 'Auteur Admirer - Scout', description: 'Watch 5 titles by the same director.', type: 'director_streak_count', threshold: 5, icon: 'fas fa-user-tie' },
-    { id: 'director_10', name: 'Director Devotee - Elite', description: 'Watch 10 titles by the same director.', type: 'director_streak_count', threshold: 10, icon: 'fas fa-film' },
+    { id: 'director_10', name: 'Director Devotee - Elite', description: 'Watch 10 titles by the same director.', type: 'director_streak_count', threshold: 10, icon: 'fas fa-bullhorn' },
     { id: 'studio_3', name: 'Studio Scout - Rookie', description: 'Watch 3 titles from the same major studio.', type: 'studio_streak_count', threshold: 3, icon: 'fas fa-industry' },
     { id: 'studio_7', name: 'Production Pro - Scout', description: 'Watch 7 titles from the same major studio.', type: 'studio_streak_count', threshold: 7, icon: 'fas fa-building' },
     { id: 'studio_15', name: 'Mogul Monitor - Elite', description: 'Watch 15 titles from the same major studio.', type: 'studio_streak_count', threshold: 15, icon: 'fas fa-city' },
-    { id: 'links_5', name: 'Connector - Rookie', description: 'Manually link 5 pairs of related entries.', type: 'manual_links_count', threshold: 5, icon: 'fas fa-link' },
-    { id: 'links_15', name: 'Networker - Scout', description: 'Manually link 15 pairs of related entries.', type: 'manual_links_count', threshold: 15, icon: 'fas fa-network-wired' },
-    { id: 'links_30', name: 'Web Weaver - Elite', description: 'Manually link 30 pairs of related entries.', type: 'manual_links_count', threshold: 30, icon: 'fas fa-project-diagram' },
+    { id: 'links_5', name: 'Connector', description: 'Manually link 5 pairs of related entries.', type: 'manual_links_count', threshold: 5, icon: 'fas fa-link' },
     { id: 'themed_spree_3', name: 'Themed Spree', description: 'Watch 3 titles of the same specific genre within 7 days.', type: 'genre_streak_short_term', count: 3, days: 7, threshold: 1, icon: 'fas fa-tags' },
     { id: 'hidden_gem_5', name: 'Gem Finder - Rookie', description: 'Watch 5 titles with <1000 TMDB votes but TMDB rating > 7.0.', type: 'hidden_gem_count', tmdbVotesMax: 1000, tmdbRatingMin: 7.0, threshold: 5, icon: 'fas fa-search-dollar' },
     { id: 'hidden_gem_7', name: 'Diamond in Rough - Scout', description: 'Watch 7 titles with <1000 TMDB votes but TMDB rating > 7.0.', type: 'hidden_gem_count', tmdbVotesMax: 1000, tmdbRatingMin: 7.0, threshold: 7, icon: 'fas fa-gem' },
@@ -221,6 +218,9 @@ const ACHIEVEMENTS = [
     { id: 'daily_rec_watched_5', name: 'Daily Dabbler - Rookie', description: 'Watch the Daily Recommendation 5 times.', type: 'daily_recommendation_watched_count', threshold: 5, icon: 'fas fa-gift' },
     { id: 'daily_rec_watched_15', name: 'Picky Pro - Scout', description: 'Watch the Daily Recommendation 15 times.', type: 'daily_recommendation_watched_count', threshold: 15, icon: 'fas fa-calendar-check' },
     { id: 'daily_rec_watched_30', name: 'Suggestion Sovereign - Elite', description: 'Watch the Daily Recommendation 30 times.', type: 'daily_recommendation_watched_count', threshold: 30, icon: 'fas fa-crown' },
+    // Special Title Achievements
+    { id: 'special_your_name', name: 'Destined Encounter', description: 'Watch "Your Name" (Kimi no Na wa). ❤️', type: 'special_title_watch', titleNames: ['Your Name', 'Kimi no Na wa.'], threshold: 1, icon: 'fas fa-comet' },
+
     // VIII. "Meta" Achievements
     { id: 'meta_bronze_15', name: 'Bronze Collector', description: 'Achieve 15 other achievements.', type: 'meta_achievement_count', threshold: 15, icon: 'fas fa-trophy' },
     { id: 'meta_silver_25', name: 'Silver Collector', description: 'Achieve 25 other achievements.', type: 'meta_achievement_count', threshold: 25, icon: 'fas fa-trophy' },

@@ -351,6 +351,7 @@ window.handleQuickUpdateSave = async function(event) {
                 movie.Status = 'Watched';
                 movie.overallRating = document.getElementById('quickUpdateOverallRating').value;
                 movie.Recommendation = document.getElementById('quickUpdateRecommendation').value;
+                movie.personalRecommendation = document.getElementById('quickUpdatePersonalRecommendation').value;
                 if (movie.Status === 'To Watch') logWatchlistActivity('completed');
             } else {
                 movie.Status = 'Continue'; // Ensure status is Continue if it was To Watch
@@ -358,8 +359,9 @@ window.handleQuickUpdateSave = async function(event) {
 
         } else { // It's a Movie/Doc/Special
             movie.Status = 'Watched';
-            movie.overallRating = watchRating; // As per our logic, copy session rating to overall
-            movie.Recommendation = document.getElementById('quickUpdateRecommendation')?.value || ''; // In case it's part of the modal
+            movie.overallRating = document.getElementById('quickUpdateOverallRating').value || watchRating; // Prefer overall selection, fallback to watch rating
+            movie.Recommendation = document.getElementById('quickUpdateRecommendation').value || '';
+            movie.personalRecommendation = document.getElementById('quickUpdatePersonalRecommendation').value || '';
             if (movie.Status === 'To Watch') logWatchlistActivity('completed');
         }
 

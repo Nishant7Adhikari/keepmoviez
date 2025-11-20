@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.0.1 -->
+<!-- KeepMoviEZ  v5.2.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -554,19 +554,20 @@
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 
-                    <!-- NEW: Save buttons for "Add Mode" -->
-                    <div id="addModeButtons" class="btn-group">
-                        <button type="submit" form="entryForm" class="btn btn-primary" id="quickSaveBtn">Quick Save</button>
-                        <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <span class="sr-only">Toggle Dropdown</span>
+                    <!-- NEW: 3 Separate Actions for Better UX -->
+                    <div id="addModeButtons" class="d-flex">
+                        <button type="button" id="saveAndAddAnotherBtn" class="btn btn-success mr-2" title="Save & Add Another">
+                            <i class="fas fa-plus-square"></i> <span class="d-none d-sm-inline">Add New</span>
                         </button>
-                        <div class="dropdown-menu dropdown-menu-right">
-                            <a class="dropdown-item" href="#" id="saveAndAddAnotherBtn">Save & Add Another</a>
-                            <a class="dropdown-item" href="#" id="saveAndEditBtn">Save & Edit Details</a>
-                        </div>
+                        <button type="button" id="saveAndEditBtn" class="btn btn-info mr-2" title="Save & Edit Details">
+                            <i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span>
+                        </button>
+                        <button type="submit" form="entryForm" id="quickSaveBtn" class="btn btn-primary" title="Quick Save">
+                            <i class="fas fa-save"></i> Save
+                        </button>
                     </div>
                     
                     <!-- NEW: Save button for "Edit Mode" -->
@@ -577,7 +578,7 @@
     </div>
 <!-- END REFACTORED CHUNK: Modal - Entry Form (Add/Edit) -->
 
-<!-- NEW CHUNK: Modal - Quick Update -->
+<!-- START CHUNK: Modal - Quick Update -->
     <div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
@@ -611,15 +612,19 @@
                             <select id="quickUpdateRating" class="form-control"><option value="">--Select--</option><option value="1">1 Star</option><option value="2">2 Stars</option><option value="3">3 Stars</option><option value="4">4 Stars</option><option value="5">5 Stars</option></select>
                         </div>
 
-                        <!-- Conditional Fields -->
+                        <!-- Conditional Fields: Shown if Series Finished OR if Movie/Doc/Special -->
                         <div id="quickUpdateConditionalFields" style="display:none;">
                              <div class="form-group">
-                                <label for="quickUpdateOverallRating">My Overall Rating (for the whole series)</label>
+                                <label for="quickUpdateOverallRating">My Overall Rating</label>
                                 <select id="quickUpdateOverallRating" class="form-control"><option value="">--Select--</option><option value="1">1 Star</option><option value="2">2 Stars</option><option value="3">3 Stars</option><option value="4">4 Stars</option><option value="5">5 Stars</option></select>
                             </div>
                             <div class="form-group">
                                 <label for="quickUpdateRecommendation">My Recommendation</label>
                                 <select id="quickUpdateRecommendation" class="form-control"><option value="">-Select-</option><option value="Ignore">Ignore</option><option value="Less Recommended">Less Recommended</option><option value="Recommended">Recommended</option><option value="Highly Recommended">Highly Recommended</option></select>
+                            </div>
+                             <div class="form-group">
+                                <label for="quickUpdatePersonalRecommendation">Watch Preference</label>
+                                <select id="quickUpdatePersonalRecommendation" class="form-control"><option value="">--Select--</option><option value="Watch Alone">Watch Alone</option><option value="Safe to share">Safe to share</option></select>
                             </div>
                         </div>
 
@@ -636,7 +641,7 @@
             </div>
         </div>
     </div>
-<!-- END NEW CHUNK: Modal - Quick Update -->
+<!-- END CHUNK: Modal - Quick Update -->
 
 <!-- START CHUNK: Modal - Details View -->
 <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">

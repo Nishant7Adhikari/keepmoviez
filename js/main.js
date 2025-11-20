@@ -89,10 +89,11 @@ if (menuThemeToggleBtn) {
                 finally { hideLoading(); }
             });
 
-            // Forms - Listeners for NEW save buttons
+            // Forms - Action Button Listeners (Direct Click)
             document.getElementById('quickSaveBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'quickSave'));
             document.getElementById('saveAndAddAnotherBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'saveAndAddAnother'));
             document.getElementById('saveAndEditBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'saveAndEdit'));
+            
             document.getElementById('updateEntryBtn')?.addEventListener('click', (e) => window.handleFormSubmit(e, 'quickSave')); // Edit mode also uses quickSave logic (just save and close)
             document.getElementById('batchEditForm')?.addEventListener('submit', window.handleBatchEditFormSubmit);
             document.getElementById('quickUpdateForm')?.addEventListener('submit', window.handleQuickUpdateSave);
@@ -424,7 +425,7 @@ document.getElementById('sortDirectionToggle')?.addEventListener('click', (e) =>
 
             // Global Listeners
             document.addEventListener('click', () => recordUniqueDateForAchievement('app_usage_dates_achievement'), { once: true, passive: true });
-            window.addEventListener('online', async () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Online'; onlineIndicator.className = 'badge badge-pill badge-success'; } showToast("Connection Restored", "You are back online.", "success"); if (currentSupabaseUser) await comprehensiveSync(true); });
+            window.addEventListener('online', async () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Online'; onlineIndicator.className = 'badge badge-pill badge-success'; } showToast("Connection Restored", "You are back online.", "success"); });
             window.addEventListener('offline', () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Offline'; onlineIndicator.className = 'badge badge-pill badge-danger'; } showToast("Connection Lost", "You are offline. Changes will be synced later.", "warning"); });
 // END CHUNK: 7: Final Event Listener Wiring & Global Listeners 
             

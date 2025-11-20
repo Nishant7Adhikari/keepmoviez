@@ -11,6 +11,8 @@ function calculateAllStatistics(currentMovieData) {
     let toWatchTotalMinutes = 0;
 
     const isWatchedOrContinue = (movie) => movie.Status === 'Watched' || movie.Status === 'Continue';
+    // Helper for strict "Watched" status
+    const isStrictlyWatched = (movie) => movie.Status === 'Watched';
 
     // --- Single Pass Data Aggregation ---
     const categoryCounts = {}, statusCounts = {}, overallRatingCounts = {}, watchInstanceRatingCounts = {};
@@ -28,6 +30,9 @@ function calculateAllStatistics(currentMovieData) {
     const currentYear = new Date().getFullYear();
     const directorWatchCounts = new Map(), studioWatchCounts = new Map();
     const genreWatchesByDate = {}; // For short-term streak
+    
+    // Special Title Trackers
+    let yourNameWatched = false;
 
     currentMovieData.forEach(movie => {
         if (!movie || !movie.id) return;
@@ -70,6 +75,14 @@ function calculateAllStatistics(currentMovieData) {
         if(movie.Description && movie.Description.length > 30) detailedDescriptionCount++;
         if(Array.isArray(movie.relatedEntries)) manualLinksCount += movie.relatedEntries.length;
 
+        // Special Title Checks
+        if (isWatchedOrContinue(movie)) {
+            const titleLower = (movie.Name || '').toLowerCase().trim();
+            if (titleLower === 'your name' || titleLower === 'your name.' || titleLower === 'kimi no na wa' || titleLower === 'kimi no na wa.') {
+                yourNameWatched = true;
+            }
+        }
+
         if (isWatchedOrContinue(movie)) {
             const overallRatingKey = (movie.overallRating && String(movie.overallRating).trim() !== '') ? String(movie.overallRating) : 'N/A';
             if (overallRatingKey !== 'N/A') {
@@ -103,15 +116,21 @@ function calculateAllStatistics(currentMovieData) {
                 });
             }
 
-            if (movie.Country) movie.Country.split(',').map(c => c.trim()).filter(Boolean).forEach(c => { countryCounts[c] = (countryCounts[c] || 0) + 1; uniqueCountriesWatched.add(c); });
-            if (movie.Language) movie.Language.split(',').map(l => l.trim()).filter(Boolean).forEach(l => { languageCounts[l] = (languageCounts[l] || 0) + 1; uniqueLanguagesWatched.add(l); });
+            // Only count countries and languages if status is "Watched" for achievements
+            if (isStrictlyWatched(movie)) {
+                if (movie.Country) movie.Country.split(',').map(c => c.trim()).filter(Boolean).forEach(c => { countryCounts[c] = (countryCounts[c] || 0) + 1; uniqueCountriesWatched.add(c); });
+                if (movie.Language) movie.Language.split(',').map(l => l.trim()).filter(Boolean).forEach(l => { languageCounts[l] = (languageCounts[l] || 0) + 1; uniqueLanguagesWatched.add(l); });
+            }
             
             if (movie.Year) {
                 const yearNum = parseInt(movie.Year, 10);
                 if(!isNaN(yearNum)) {
-                    uniqueDecadesWatched.add(Math.floor(yearNum / 10) * 10);
-                    if(yearNum < 1980) pre1980Count++;
-                    if(yearNum >= currentYear - 5) recent5YearsCount++;
+                    if (isStrictlyWatched(movie)) {
+                         uniqueDecadesWatched.add(Math.floor(yearNum / 10) * 10);
+                         if(yearNum < 1980) pre1980Count++;
+                         // Fixed logic: Recent 5 years calculation
+                         if(yearNum >= (currentYear - 5)) recent5YearsCount++;
+                    }
                 }
             }
             
@@ -137,7 +156,11 @@ function calculateAllStatistics(currentMovieData) {
         }
 
         if (watchHistoryCount > 0) {
-            rewatchCountsPerTitle[movie.id] = watchHistoryCount;
+            // Only count rewatches for Movies (Category not Series)
+            if (movie.Category !== 'Series') {
+                rewatchCountsPerTitle[movie.id] = watchHistoryCount;
+            }
+
             movie.watchHistory.forEach(wh => {
                 if (!wh || !wh.date) return;
                 try {
@@ -241,6 +264,9 @@ function calculateAllStatistics(currentMovieData) {
     }
     achievementData.genre_streak_short_term = themedSpreeCount;
     achievementData.hidden_gem_count = hiddenGemCount;
+    achievementData.special_title_watch = {
+        your_name: yourNameWatched ? 1 : 0
+    };
 
     achievementData.active_days_count = JSON.parse(localStorage.getItem('app_usage_dates_achievement') || '[]').length;
     achievementData.sync_count = parseInt(localStorage.getItem('sync_count_achievement') || '0');
@@ -425,6 +451,9 @@ function checkAchievement(achievement, stats) {
         case 'time_of_day_watch':
             progress = statValue[achievement.period] > 0 ? 1 : 0;
             break;
+        case 'special_title_watch':
+             progress = statValue['your_name'] || 0;
+             break;
         case 'tmdb_collection_completed_count': // This is a complex case, simplified here
         case 'pre_year_watched_count':
         case 'recent_years_watched_count':
