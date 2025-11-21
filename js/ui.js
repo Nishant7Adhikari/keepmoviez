@@ -138,7 +138,6 @@ async function deleteWatchInstanceFromList(watchId) {
 }
 // END CHUNK: Watch History Management (UI)
 
-/* js/ui.js */
 // START CHUNK: Main View Rendering
 
 // State for pagination
