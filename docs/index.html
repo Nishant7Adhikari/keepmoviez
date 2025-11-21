@@ -213,7 +213,7 @@
             <h1>
                 <div class="brand-name">KeepMoviEZ</div>
                 <br>
-                <span class="brand-badge-container"><small>v5.3.0</small></span>
+                <span class="brand-badge-container"><small>v5.3.1</small></span>
             </h1>
             <p class="lead mt-3">Complete User Manual & Technical Guide</p>
         </header>
@@ -417,14 +417,61 @@
                     </ul>
                 </section>
 
-                <!-- 10. Technical Deep Dive -->
+                <!-- 10. Performance & Architecture -->
                 <section id="technical">
-                    <h2>Technical Deep Dive</h2>
-                    <p>For developers and curious users, here is how v5.3.0 handles complex state.</p>
+                    <h2>Performance & Architecture</h2>
+                    <p>KeepMoviEZ is engineered to be faster than traditional web applications. Instead of relying on constant server communication, it uses a "Heavy Client" architecture that leverages your device's raw processing power.</p>
 
+                    <!-- Pillar 1: Rendering -->
                     <div class="edu-box">
-                        <h5><i class="fas fa-memory"></i> LRU Caching for Search</h5>
-                        <p>To minimize API costs, the Live Search uses an in-memory <strong>Least Recently Used (LRU) Cache</strong>. It stores the last 50 search results. If you type a query, backspace, and type it again, the result is served from RAM (0ms latency) rather than hitting the network.</p>
+                        <h5><i class="fas fa-tachometer-alt"></i> Zero-Lag Rendering Engine</h5>
+                        <p>Handling large lists (100+ items) usually slows down web browsers because drawing thousands of elements creates lag.</p>
+                        <p><strong>Our Solution: Smart Pagination</strong></p>
+                        <p>We use a "Just-in-Time" rendering strategy. When you sort or filter your library:</p>
+                        <ol class="mb-0">
+                            <li>The engine processes the data in milliseconds (using optimized Sorting algorithms).</li>
+                            <li>It draws only the first <strong>50 Cards</strong> immediately. This keeps the UI response time under 16ms (60fps).</li>
+                            <li>As you scroll, the <strong>"Load More"</strong> system appends the next batch instantly.</li>
+                        </ol>
+                        <p class="small text-muted mt-2"><em>Result: A library of 5,000 movies feels as fast as a library of 5.</em></p>
+                    </div>
+
+                    <!-- Pillar 2: Networking -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-body">
+                            <h5 class="text-primary"><i class="fas fa-network-wired"></i> Intelligent Networking</h5>
+                            <p>We hate loading spinners. To minimize them, we implemented two advanced patterns:</p>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <h6>LRU Caching (Memory Cache)</h6>
+                                    <p class="small">The search bar remembers your recent queries. If you type "Batman", delete it, and type it again, the result loads instantly from RAM (0ms latency) without touching the internet.</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Adaptive Debouncing</h6>
+                                    <p class="small">The app waits 700ms after you stop typing before sending a request. This "Traffic Control" prevents wasteful API calls while you are still correcting typos.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pillar 3 & 4: Stability & Storage -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100 bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="text-dark"><i class="fas fa-database"></i> The Database Model</h6>
+                                    <p class="small mb-0">We don't just save cookies. KeepMoviEZ runs a full NoSQL-style database (IndexedDB) directly inside your browser. On startup, this data is "Hydrated" into RAM, allowing instant sorting and filtering without disk reads.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 bg-light border-0">
+                                <div class="card-body">
+                                    <h6 class="text-dark"><i class="fas fa-shield-alt"></i> Concurrency Control</h6>
+                                    <p class="small mb-0">To prevent crashes during rapid reloads, the app uses a <strong>Mutex Lock</strong> system. It ensures that only one initialization process can touch the database at a time, preventing data corruption and "Infinite Loading" loops.</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </section>
 

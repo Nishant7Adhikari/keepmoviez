@@ -138,37 +138,62 @@ async function deleteWatchInstanceFromList(watchId) {
 }
 // END CHUNK: Watch History Management (UI)
 
+/* js/ui.js */
 // START CHUNK: Main View Rendering
+
+// State for pagination
+let currentFilteredData = [];
+let renderedCount = 0;
+const BATCH_SIZE = 50;
+
 function renderMovieCards() {
     const cardContainer = document.getElementById('movieCardContainer');
     const initialMessage = document.getElementById('initialMessage');
     if (!cardContainer) { console.error("CRITICAL: movieCardContainer element not found."); return; }
-    cardContainer.innerHTML = '';
+    
+    // 1. Process Data (Filter & Sort)
+    // Note: Sorting happens in-place on movieData before this function is usually called, 
+    // or applyFilters returns a new sorted array if your logic requires it.
+    currentFilteredData = applyFilters(movieData);
 
-    if (!Array.isArray(movieData)) {
-        console.error("movieData is not an array. Cannot render cards.");
-        if (initialMessage) {
-            initialMessage.style.display = 'block';
-            initialMessage.innerHTML = '<p class="text-danger">Error: Movie data is corrupted.</p>';
-        }
-        return;
-    }
-
-    const filteredData = applyFilters(movieData);
-
+    // 2. Handle Empty States
     if (initialMessage) {
-        initialMessage.style.display = (movieData.filter(m => !m.is_deleted).length === 0) ? 'block' : 'none';
+        const hasAnyData = movieData.filter(m => !m.is_deleted).length > 0;
+        initialMessage.style.display = hasAnyData ? 'none' : 'block';
     }
 
-    if (filteredData.length === 0) {
+    // 3. Reset Container
+    cardContainer.innerHTML = '';
+    renderedCount = 0;
+    
+    // Remove existing Load More button if any (it will be re-added if needed)
+    const existingBtn = document.getElementById('loadMoreBtn');
+    if(existingBtn) existingBtn.remove();
+
+    if (currentFilteredData.length === 0) {
         if (movieData.filter(m => !m.is_deleted).length > 0) {
             cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p></div>`;
         }
         return;
     }
 
+    // 4. Render First Batch
+    renderNextBatch();
+}
+
+function renderNextBatch() {
+    const cardContainer = document.getElementById('movieCardContainer');
     const fragment = document.createDocumentFragment();
-    filteredData.forEach(movie => {
+    
+    // Determine range
+    const nextBatch = currentFilteredData.slice(renderedCount, renderedCount + BATCH_SIZE);
+    
+    if (nextBatch.length === 0) {
+        updateLoadMoreVisibility();
+        return;
+    }
+
+    nextBatch.forEach(movie => {
         if (!movie || !movie.id) return;
 
         const latestWatch = getLatestWatchInstance(movie.watchHistory || []);
@@ -182,10 +207,8 @@ function renderMovieCards() {
             card.classList.add('selected');
         }
 
-        // Conditionally add the quick update button
         const showQuickUpdateButton = movie.Status === 'To Watch' || movie.Status === 'Continue';
         
-        // **MODIFIED**: Conditional logic for the last watched info
         let lastWatchedInfo;
         if (movie.Status === 'To Watch' || movie.Status === 'Unwatched') {
             lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
@@ -225,12 +248,40 @@ function renderMovieCards() {
     });
 
     cardContainer.appendChild(fragment);
+    renderedCount += nextBatch.length;
 
-    cardContainer.querySelectorAll('img.lazy').forEach(img => {
+    // Re-observe lazy images
+    cardContainer.querySelectorAll('img.lazy:not(.loaded)').forEach(img => {
         imageObserver.observe(img);
     });
+    
+    updateLoadMoreVisibility();
 }
-// END CHUNK: Main View Rendering 
+
+function updateLoadMoreVisibility() {
+    let loadMoreBtn = document.getElementById('loadMoreBtn');
+    
+    // If all data is shown, hide/remove button
+    if (renderedCount >= currentFilteredData.length) {
+        if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+        return;
+    }
+
+    // If button doesn't exist, create it
+    if (!loadMoreBtn) {
+        loadMoreBtn = document.createElement('button');
+        loadMoreBtn.id = 'loadMoreBtn';
+        loadMoreBtn.className = 'btn btn-block btn-light text-muted mt-3 mb-4 shadow-sm';
+        loadMoreBtn.innerHTML = 'Load More <i class="fas fa-chevron-down ml-1"></i>';
+        loadMoreBtn.onclick = renderNextBatch;
+        // Append OUTSIDE the grid container but inside the wrapper
+        document.querySelector('.table-responsive').appendChild(loadMoreBtn);
+    }
+    
+    loadMoreBtn.style.display = 'block';
+    loadMoreBtn.textContent = `Load More (${currentFilteredData.length - renderedCount} remaining)`;
+}
+// END CHUNK: Main View Rendering
 
 // START CHUNK: Filter Modal UI
 function populateFilterModalOptions() {
