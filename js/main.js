@@ -321,35 +321,66 @@ if (menuThemeToggleBtn) {
             document.getElementById('checkRepairDataBtn')?.addEventListener('click', window.performDataCheckAndRepair);
             document.getElementById('status')?.addEventListener('change', toggleConditionalFields);
             document.getElementById('category')?.addEventListener('change', toggleConditionalFields);
-            document.getElementById('searchTmdbBtn')?.addEventListener('click', () => fetchMovieInfoFromTmdb(formFieldsGlob.name.value, formFieldsGlob.tmdbSearchYear.value));
+            
+            // FIX: Live Search Implementation (Debounced 700ms)
+            formFieldsGlob.name?.addEventListener('input', debounce((e) => {
+                const query = e.target.value.trim();
+                const year = formFieldsGlob.tmdbSearchYear ? formFieldsGlob.tmdbSearchYear.value : '';
+                
+                if (query.length >= 2) {
+                    fetchMovieInfoFromTmdb(query, year);
+                } else {
+                    // Clear results AND Spinner if input is cleared/too short
+                    const resultsEl = document.getElementById('tmdbSearchResults');
+                    const spinner = document.getElementById('liveSearchStatus');
+                    if (resultsEl) { resultsEl.innerHTML = ''; resultsEl.style.display = 'none'; }
+                    if (spinner) spinner.style.display = 'none';
+                }
+            }, 700));
+
+            formFieldsGlob.tmdbSearchYear?.addEventListener('input', debounce(() => {
+                const query = formFieldsGlob.name.value.trim();
+                if (query.length >= 2) {
+                     fetchMovieInfoFromTmdb(query, formFieldsGlob.tmdbSearchYear.value);
+                }
+            }, 700));
             
             formFieldsGlob.relatedEntriesNames?.addEventListener('input', debounce(populateRelatedEntriesSuggestions, 300));
 
-// NEW: Sort Control Listeners
-const abbreviationMap = {
-    Name: 'N',
-    lastModifiedDate: 'M',
-    LastWatchedDate: 'W',
-    Year: 'Y',
-    overallRating: 'R'
-};
-document.querySelectorAll('.dropdown-menu[aria-labelledby="sortColumnDropdown"] .dropdown-item').forEach(item => {
-    item.addEventListener('click', (e) => {
-        e.preventDefault();
-        currentSortColumn = e.target.dataset.sortBy;
-        // MODIFIED: Use the abbreviation map to set the button text
-        document.getElementById('sortColumnDropdown').textContent = abbreviationMap[currentSortColumn] || 'N';
-        sortMovies(currentSortColumn, currentSortDirection);
-        renderMovieCards();
-    });
-});
-document.getElementById('sortDirectionToggle')?.addEventListener('click', (e) => {
-    currentSortDirection = (currentSortDirection === 'asc') ? 'desc' : 'asc';
-    const icon = e.currentTarget.querySelector('i');
-    if (icon) icon.className = `fas fa-arrow-${currentSortDirection === 'asc' ? 'down' : 'up'}`;
-    sortMovies(currentSortColumn, currentSortDirection);
-    renderMovieCards();
-});
+            // NEW: Close Search Results when clicking outside
+            document.addEventListener('click', (event) => {
+                const searchContainer = document.getElementById('tmdbSearchResults');
+                const searchInput = document.getElementById('movieName');
+                // If click is NOT on the results AND NOT on the input
+                if (searchContainer && searchInput && !searchContainer.contains(event.target) && event.target !== searchInput) {
+                    searchContainer.style.display = 'none';
+                }
+            });
+
+            // NEW: Sort Control Listeners
+            const abbreviationMap = {
+                Name: 'N',
+                lastModifiedDate: 'M',
+                LastWatchedDate: 'W',
+                Year: 'Y',
+                overallRating: 'R'
+            };
+            document.querySelectorAll('.dropdown-menu[aria-labelledby="sortColumnDropdown"] .dropdown-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentSortColumn = e.target.dataset.sortBy;
+                    document.getElementById('sortColumnDropdown').textContent = abbreviationMap[currentSortColumn] || 'N';
+                    sortMovies(currentSortColumn, currentSortDirection);
+                    renderMovieCards();
+                });
+            });
+            document.getElementById('sortDirectionToggle')?.addEventListener('click', (e) => {
+                currentSortDirection = (currentSortDirection === 'asc') ? 'desc' : 'asc';
+                const icon = e.currentTarget.querySelector('i');
+                if (icon) icon.className = `fas fa-arrow-${currentSortDirection === 'asc' ? 'down' : 'up'}`;
+                sortMovies(currentSortColumn, currentSortDirection);
+                renderMovieCards();
+            });
 
             // Filter Modal
             document.getElementById('applyFiltersBtn')?.addEventListener('click', () => {
@@ -390,6 +421,10 @@ document.getElementById('sortDirectionToggle')?.addEventListener('click', (e) =>
             document.getElementById('menuImportBtn')?.addEventListener('click', () => { $('#importModal').modal('show'); closeMenu(); });
             document.getElementById('menuExportBtn')?.addEventListener('click', () => { $('#exportModal').modal('show'); closeMenu(); });
             
+            document.getElementById('quickSyncBtn')?.addEventListener('click', () => { comprehensiveSync(false); });
+            document.getElementById('quickImportBtn')?.addEventListener('click', () => { $('#importModal').modal('show'); });
+            document.getElementById('quickAboutBtn')?.addEventListener('click', () => { $('#aboutModal').modal('show'); });
+
             document.getElementById('exportCsvBtn')?.addEventListener('click', () => { generateAndDownloadFile('csv'); $('#exportModal').modal('hide'); });
             document.getElementById('exportJsonBtn')?.addEventListener('click', () => { generateAndDownloadFile('json'); $('#exportModal').modal('hide'); });
             
@@ -427,8 +462,8 @@ document.getElementById('sortDirectionToggle')?.addEventListener('click', (e) =>
             document.addEventListener('click', () => recordUniqueDateForAchievement('app_usage_dates_achievement'), { once: true, passive: true });
             window.addEventListener('online', async () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Online'; onlineIndicator.className = 'badge badge-pill badge-success'; } showToast("Connection Restored", "You are back online.", "success"); });
             window.addEventListener('offline', () => { const onlineIndicator = document.getElementById('menuOnlineStatusIndicator'); if (onlineIndicator) { onlineIndicator.textContent = 'Offline'; onlineIndicator.className = 'badge badge-pill badge-danger'; } showToast("Connection Lost", "You are offline. Changes will be synced later.", "warning"); });
-// END CHUNK: 7: Final Event Listener Wiring & Global Listeners 
-            
+// END CHUNK: 7: Final Event Listener Wiring & Global Listeners
+
 //START CHUNK: 8: Application Initialization
    if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW registered.')).catch(err => console.log('SW reg failed: ', err)); });

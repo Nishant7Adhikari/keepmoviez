@@ -273,18 +273,20 @@ function resetFilters() {
     activeFilters = { category: 'all', country: 'all', language: 'all', genres: [], genreLogic: 'AND' };
     selectedFilterGenres = [];
     filterQuery = '';
-    document.getElementById('filterInputNavbar').value = '';
-    document.getElementById('clearSearchBtn').style.display = 'none';
+    const navInput = document.getElementById('filterInputNavbar');
+    if (navInput) navInput.value = '';
+    
+    // FIX: Null check for clear search button to prevent crash
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+    if (clearSearchBtn) clearSearchBtn.style.display = 'none';
 
     currentSortColumn = 'Name';
     currentSortDirection = 'asc';
     
-    // Update the UI of the new sort controls
     const sortColumnDropdown = document.getElementById('sortColumnDropdown');
     const sortDirectionToggleIcon = document.querySelector('#sortDirectionToggle i');
-    if(sortColumnDropdown) sortColumnDropdown.textContent = 'N'; // Abbreviation for Name
+    if(sortColumnDropdown) sortColumnDropdown.textContent = 'N';
     if(sortDirectionToggleIcon) sortDirectionToggleIcon.className = 'fas fa-arrow-down';
-
 
     const form = document.getElementById('filterSortForm');
     if (form) form.reset();
@@ -411,9 +413,12 @@ window.prepareAddModal = function() {
     renderWatchHistoryUI([]); 
     closeWatchInstanceForm(); 
     
-    // Configure for "Add Mode"
+    // FIX: Robust Toggle for Add Mode
     $('#advancedSectionAccordion').hide();
-    $('#addModeButtons').show();
+    
+    // Show Add Buttons container, remove d-none if present
+    $('#addModeButtons').removeClass('d-none').addClass('d-flex');
+    // Hide Update button
     $('#updateEntryBtn').hide();
     
     toggleConditionalFields();
@@ -485,9 +490,12 @@ window.prepareEditModal = function(id) {
     const tmdbResultsEl = document.getElementById('tmdbSearchResults'); 
     if (tmdbResultsEl) { tmdbResultsEl.innerHTML = ''; tmdbResultsEl.style.display = 'none'; }
     
-    // Configure for "Edit Mode"
+    // FIX: Robust Toggle for Edit Mode
     $('#advancedSectionAccordion').show();
-    $('#addModeButtons').hide();
+    
+    // Hide Add Buttons container (remove d-flex to stop it taking space, add d-none to hide)
+    $('#addModeButtons').removeClass('d-flex').addClass('d-none');
+    // Show Update button
     $('#updateEntryBtn').show();
     
     toggleConditionalFields(); 
@@ -527,7 +535,6 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         } else if (tmdbObject) {
             sourceData = tmdbObject;
             isLocalEntry = false;
-            // **BUG FIX**: Correctly define the variable and pass it in the params object.
             const appendToResponse = 'keywords,credits,external_ids';
             fullDetails = await callTmdbApiDirect(`/${sourceData.media_type}/${sourceData.id}`, { append_to_response: appendToResponse });
             if (!fullDetails) { throw new Error("Could not fetch full TMDB details."); }

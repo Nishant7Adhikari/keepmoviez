@@ -103,7 +103,6 @@ async function processSmartImport() {
     let appendedCount = 0;
     let updatedCount = 0;
     
-    // --- NEW: List of fields eligible for backfilling ---
     const backfillableFields = [
         'runtime', 'keywords', 'tmdb_collection_id', 'tmdb_collection_name', 
         'tmdb_collection_total_parts', 'director_info', 'full_cast', 
@@ -115,16 +114,14 @@ async function processSmartImport() {
         const { fileEntry, existingEntry, matchType } = item;
 
         if (matchType === 'none') {
-            // It's a new entry. Add it with the correct sync state.
             fileEntry._sync_state = 'new';
             fileEntry.is_deleted = false;
             fileEntry.lastModifiedDate = currentTimestamp;
             movieData.push(fileEntry);
             appendedCount++;
         } else {
-            // It's a match, apply the chosen strategy.
             const index = movieData.findIndex(e => e.id === existingEntry.id);
-            if (index === -1) continue; // Should not happen, but a good safeguard
+            if (index === -1) continue;
 
             let entryModified = false;
 
@@ -139,7 +136,6 @@ async function processSmartImport() {
                 movieData[index] = { ...existingEntry, ...fileEntry, id: existingEntry.id };
                 entryModified = true;
             } 
-            // --- NEW: Smart Backfill Logic ---
             else if (strategy === 'backfill_missing') {
                 const targetEntry = movieData[index];
                 let backfilledSomething = false;
@@ -148,7 +144,6 @@ async function processSmartImport() {
                     const existingValue = targetEntry[field];
                     const fileValue = fileEntry[field];
 
-                    // Condition to check if existing value is "empty"
                     const isExistingEmpty = (
                         existingValue === null ||
                         existingValue === undefined ||
@@ -157,7 +152,6 @@ async function processSmartImport() {
                         (typeof existingValue === 'object' && existingValue !== null && Object.keys(existingValue).length === 0)
                     );
                     
-                    // Condition to check if file value has data
                     const isFileValuePresent = (
                         fileValue !== null &&
                         fileValue !== undefined &&
@@ -178,7 +172,6 @@ async function processSmartImport() {
             if (entryModified) {
                 updatedCount++;
                 movieData[index].lastModifiedDate = currentTimestamp;
-                // Don't overwrite 'new' status, otherwise set to 'edited'
                 if (movieData[index]._sync_state !== 'new') {
                     movieData[index]._sync_state = 'edited';
                 }
@@ -190,6 +183,11 @@ async function processSmartImport() {
         recalculateAndApplyAllRelationships();
         sortMovies(currentSortColumn, currentSortDirection);
         await saveToIndexedDB();
+        
+        // FIX: Clear stats cache and update achievements so UI reflects new data immediately
+        if(window.globalStatsData) window.globalStatsData = {};
+        if(typeof checkAndNotifyNewAchievements === 'function') await checkAndNotifyNewAchievements();
+
         renderMovieCards();
         showToast("Import Complete", `${appendedCount} new entries added, ${updatedCount} entries updated. Sync with cloud to save changes.`, "success");
     } else {

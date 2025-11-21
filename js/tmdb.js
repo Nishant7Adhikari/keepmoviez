@@ -1,4 +1,5 @@
-/* tmdb.js */
+/* js/tmdb.js */
+// START CHUNK: TMDB API Wrapper
 async function callTmdbApiDirect(endpoint, params = {}) {
     if (!window.supabaseClient) {
         throw new Error("Supabase client is not available.");
@@ -32,18 +33,41 @@ async function callTmdbApiDirect(endpoint, params = {}) {
     }
 }
 // END CHUNK: TMDB API Wrapper
+
+// START CHUNK: TMDB Media Search
+// Cache configuration
+const tmdbSearchCache = new Map();
+const MAX_CACHE_SIZE = 50;
+
 async function fetchMovieInfoFromTmdb(query, searchYear) {
-    if (!query) {
-        if (typeof showToast === 'function') showToast("Input Needed", "Enter movie/series name to search.", "info");
-        if (typeof hideLoading === 'function') hideLoading();
+    if (!query) return;
+
+    const tmdbResultsEl = document.getElementById('tmdbSearchResults');
+    const spinnerEl = document.getElementById('liveSearchStatus'); // Get the spinner element
+
+    if (tmdbResultsEl) {
+        tmdbResultsEl.style.display = 'block';
+    }
+
+    // 1. Generate Key
+    const normalizedQuery = query.trim().toLowerCase();
+    const cacheKey = `${normalizedQuery}_${searchYear || 'all'}`;
+
+    // 2. Check Cache
+    if (tmdbSearchCache.has(cacheKey)) {
+        console.log(`[Cache Hit] Serving results for: "${normalizedQuery}"`);
+        // IMPORTANT: Do NOT show spinner here. Immediate render.
+        if(spinnerEl) spinnerEl.style.display = 'none'; // Ensure it's hidden
+        const cachedResults = tmdbSearchCache.get(cacheKey);
+        displayTmdbResults(cachedResults);
         return;
     }
 
-    const tmdbResultsEl = document.getElementById('tmdbSearchResults');
-    if (tmdbResultsEl) {
-        tmdbResultsEl.innerHTML = '<div class="list-group-item text-muted"><i>Searching TMDB...</i></div>';
-        tmdbResultsEl.style.display = 'block';
-    }
+    // 3. Cache Miss - Network Request
+    console.log(`[API Call] Fetching live results for: "${normalizedQuery}"`);
+    
+    // ONLY show spinner now that we know we are making a request
+    if (spinnerEl) spinnerEl.style.display = 'inline-block';
 
     let results = [];
 
@@ -56,17 +80,25 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
         const multiData = await callTmdbApiDirect('/search/multi', searchParams);
         results = multiData.results || [];
         
+        // 4. Save to Cache
+        if (tmdbSearchCache.size >= MAX_CACHE_SIZE) {
+            const oldestKey = tmdbSearchCache.keys().next().value;
+            tmdbSearchCache.delete(oldestKey);
+        }
+        tmdbSearchCache.set(cacheKey, results);
+        
         displayTmdbResults(results);
 
     } catch (error) {
         console.error("Error fetching from TMDB (proxy search):", error);
-        if (tmdbResultsEl) tmdbResultsEl.innerHTML = `<div class="list-group-item text-danger">Search Error: ${error.message}</div>`;
-        if (typeof showToast === 'function') showToast("TMDB Search Error", `Failed: ${error.message}`, "error");
+        if (tmdbResultsEl) tmdbResultsEl.innerHTML = `<div class="list-group-item text-danger small">Search Error: ${error.message}</div>`;
     } finally {
-        if (typeof hideLoading === 'function') hideLoading();
+        // Hide spinner after API call completes
+        if (spinnerEl) spinnerEl.style.display = 'none';
     }
 }
 // END CHUNK: TMDB Media Search
+
 function displayTmdbResults(results) {
     const tmdbResultsDiv = document.getElementById('tmdbSearchResults');
     if (!tmdbResultsDiv) return;

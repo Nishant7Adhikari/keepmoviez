@@ -1,4 +1,4 @@
-/* indexeddb.js*/
+/* js/indexeddb.js */
 // START CHUNK: Open IndexedDB Database
 async function openDatabase() {
     return new Promise((resolve, reject) => {
@@ -7,6 +7,13 @@ async function openDatabase() {
             showToast("Browser Incompatible", "Local data storage (IndexedDB) is not supported. App may not work correctly.", "error");
             return reject("IndexedDB not supported.");
         }
+
+        // FIX: Reuse existing connection to prevent deadlock on reload/re-init
+        if (db) {
+            resolve(db);
+            return;
+        }
+
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {

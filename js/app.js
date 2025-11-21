@@ -1,4 +1,5 @@
-/* app.js */
+
+/* js/app.js */
 // START CHUNK: Card Interaction and Multi-Select
 window.handleCardClick = function(event) {
     if (longPressOccurred) {
@@ -202,6 +203,34 @@ window.handleFormSubmit = async function(event, saveAction = 'quickSave') {
         if (countryInput.length > 3) { for (const [code, name] of Object.entries(countryCodeToNameMap)) { if (name.toLowerCase() === countryInput.toLowerCase()) { countryCodeToStore = code; break; } } }
         
         const editId = document.getElementById('editEntryId').value;
+        const newTmdbId = document.getElementById('tmdbId').value || null;
+
+        // FIX: STRICT CONFLICT CHECKING (TMDB ID & Title/Year)
+        if (newTmdbId) {
+            // Check if another entry (not the one we are editing) has this TMDB ID
+            const exactTmdbMatch = movieData.find(m => m.tmdbId == newTmdbId && m.id !== editId && !m.is_deleted);
+            if (exactTmdbMatch) {
+                showToast("Data Conflict", `Entry "${exactTmdbMatch.Name}" already exists with this TMDB ID. Please use search in Edit Mode instead.`, "error", 6000);
+                hideLoading();
+                return; // Hard block
+            }
+        }
+
+        // Check for Name + Year conflict (Soft Block)
+        const isDuplicateNameYear = movieData.some(m => 
+            m.id !== editId && 
+            !m.is_deleted && 
+            m.Name.toLowerCase() === nameValue.toLowerCase() && 
+            m.Year == yearVal
+        );
+
+        if (isDuplicateNameYear) {
+             // We use a specialized confirmation modal logic, or native confirm for simplicity in this chunk
+             if(!confirm(`Possible Duplicate: "${nameValue}" (${yearVal}) already exists. Do you want to save it anyway?`)) {
+                 hideLoading();
+                 return;
+             }
+        }
 
         const entry = {
             Name: nameValue, Category: formFieldsGlob.category.value, Genre: Array.isArray(selectedGenres) ? selectedGenres.join(', ') : '', Status: formFieldsGlob.status.value,
@@ -213,7 +242,7 @@ window.handleFormSubmit = async function(event, saveAction = 'quickSave') {
             Description: formFieldsGlob.description.value.trim(), 'Poster URL': formFieldsGlob.posterUrl.value.trim(), 
             watchHistory: JSON.parse(document.getElementById('currentWatchHistory').value || '[]'), relatedEntries: [...new Set(directRelatedEntriesIds)],
             lastModifiedDate: new Date().toISOString(), doNotRecommendDaily: false,
-            tmdbId: document.getElementById('tmdbId').value || null, tmdbMediaType: document.getElementById('tmdbMediaType').value || null,
+            tmdbId: newTmdbId, tmdbMediaType: document.getElementById('tmdbMediaType').value || null,
             ...cachedTmdbData,
             is_deleted: false,
             _sync_state: editId ? 'edited' : 'new'
@@ -233,8 +262,9 @@ window.handleFormSubmit = async function(event, saveAction = 'quickSave') {
 
         if (editId) { const existingEntry = movieData.find(m => m && m.id === editId); if (existingEntry) entry.doNotRecommendDaily = existingEntry.doNotRecommendDaily; }
         
-        const isDuplicate = movieData.some(m => m && m.Name && String(m.Name).toLowerCase() === entry.Name.toLowerCase() && m.id !== editId && !m.is_deleted);
-        if (isDuplicate) {
+        // Fallback simple name check for confirm modal (legacy support)
+        const isDuplicateNameOnly = movieData.some(m => m && m.Name && String(m.Name).toLowerCase() === entry.Name.toLowerCase() && m.id !== editId && !m.is_deleted && !isDuplicateNameYear); // Skip if we already confirmed Name+Year
+        if (isDuplicateNameOnly) {
             pendingEntryForConfirmation = entry; pendingEditIdForConfirmation = editId;
             $('#duplicateNameConfirmModal').modal('show');
             hideLoading(); return;
@@ -359,7 +389,7 @@ window.handleQuickUpdateSave = async function(event) {
 
         } else { // It's a Movie/Doc/Special
             movie.Status = 'Watched';
-            movie.overallRating = document.getElementById('quickUpdateOverallRating').value || watchRating; // Prefer overall selection, fallback to watch rating
+            movie.overallRating = watchRating; // Prefer overall selection, fallback to watch rating
             movie.Recommendation = document.getElementById('quickUpdateRecommendation').value || '';
             movie.personalRecommendation = document.getElementById('quickUpdatePersonalRecommendation').value || '';
             if (movie.Status === 'To Watch') logWatchlistActivity('completed');

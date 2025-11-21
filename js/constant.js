@@ -259,7 +259,10 @@ try {
 
 window.supabaseClient = supabase;
 
-// Global variables for app state
+// Global variables for app state (Moved to top level for global access)
+window.movieData = []; // Explicitly window.movieData to ensure global access
+var movieData = window.movieData; // Alias for local usage
+
 let selectedEntryIds = [];
 var isMultiSelectMode = false;
 let longPressTimer = null;
@@ -284,7 +287,6 @@ let formFieldsGlob = {};
 let watchInstanceFormFields = {};
 
 // Data stores
-let movieData = [];
 let currentSortColumn = 'Name';
 let currentSortDirection = 'asc';
 let filterQuery = '';
@@ -300,7 +302,8 @@ let pendingEditIdForConfirmation = null;
 
 // Stats related
 const chartInstances = {};
-let globalStatsData = {};
+window.globalStatsData = {}; // Explicitly global
+var globalStatsData = window.globalStatsData;
 
 // IndexedDB
 let db;

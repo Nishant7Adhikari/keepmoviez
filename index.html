@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.2.0 -->
+<!-- KeepMoviEZ  v5.3.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -299,11 +299,49 @@
 
 <!-- START CHUNK: Main Content Display Area -->
         <div class="container-fluid mt-4">
-            <div id="initialMessage" class="initial-upload-section text-center p-4 rounded shadow-sm">
-                <h4>Welcome to KeepMoviEZ !</h4>
-                <p>Your movie log is currently empty. Add your first entry using the '+' button below, or upload an existing collection using the "CSV/JSON" button in the menu.</p>
-                <p class="text-info small mt-3"><strong>Tip:</strong>
-                    You can find a demo CSV file here: <a href="https://drive.google.com/file/d/1Q_qiQuJfY030fOUcv2tdezAh4qPUgZPh/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Demo CSV</a>.
+            <div id="initialMessage" class="initial-upload-section text-center p-4 rounded shadow-sm" style="display:none;">
+                <h4 class="mb-3">Welcome to KeepMoviEZ!</h4>
+                <p class="text-muted mb-4">Your library is currently empty. Choose how you want to start:</p>
+
+                <div class="row justify-content-center">
+                    <div class="col-md-8 col-lg-6">
+                        <!-- Cloud Sync Button -->
+                        <button id="quickSyncBtn" class="btn btn-outline-primary btn-block mb-3 p-3 text-left d-flex align-items-center">
+                            <i class="fas fa-cloud-download-alt fa-2x mr-3 ml-2"></i>
+                            <div>
+                                <strong>Sync from Cloud</strong>
+                                <div class="small">Restore data from your account</div>
+                            </div>
+                        </button>
+
+                        <!-- Local Import Button -->
+                        <button id="quickImportBtn" class="btn btn-outline-info btn-block mb-3 p-3 text-left d-flex align-items-center">
+                            <i class="fas fa-file-import fa-2x mr-3 ml-2"></i>
+                            <div>
+                                <strong>Import Backup</strong>
+                                <div class="small">Upload a CSV or JSON file</div>
+                            </div>
+                        </button>
+
+                        <!-- Help & Docs -->
+                        <div class="d-flex justify-content-center mt-2 mb-3">
+                            <button style="color: var(--warning-color)" id="quickAboutBtn" class="btn btn-sm btn-light mr-2 border">
+                                <i class="fas fa-info-circle text-info"></i> First time?
+                            </button>
+                            <a style="color: var(--warning-color)" href="docs/index.html" target="_blank" class="btn btn-sm btn-light border">
+                                <i class="fas fa-book text-secondary"></i> Documentation
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="w-50 my-4">
+
+                <p class="mb-2">Or start fresh by adding your first entry below.</p>
+                <i class="fas fa-arrow-down text-muted mb-3"></i>
+
+                <p class="text-muted small mt-2">
+                    <strong>Tip:</strong> You can find a demo CSV file here: <a href="https://drive.google.com/file/d/1Q_qiQuJfY030fOUcv2tdezAh4qPUgZPh/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Demo CSV</a>.
                 </p>
             </div>
 
@@ -446,7 +484,7 @@
     </div>
 <!-- END CHUNK: Modal - Smart Import -->
 
-<!-- REFACTORED CHUNK: Modal - Entry Form (Add/Edit) -->
+<!-- START CHUNK: Modal - Entry Form (Add/Edit) -->
     <div class="modal fade" id="entryModal" tabindex="-1" role="dialog" aria-labelledby="entryModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
@@ -456,30 +494,36 @@
                 </div>
                 <div class="modal-body">
                     <form id="entryForm" novalidate>
-                        <!-- Hidden fields remain at the top for easy access by JS -->
+                        <!-- Hidden fields -->
                         <input type="hidden" id="editEntryId"> <input type="hidden" id="posterUrl">
                         <input type="hidden" id="tmdbId"> <input type="hidden" id="tmdbMediaType">
                         <input type="hidden" id="currentWatchHistory" value="[]"> <input type="hidden" id="editingWatchId">
 
                         <!-- SECTION 1: PRIMARY VISIBLE INFO -->
-                        <div class="form-group">
-                            <label for="movieName">Name</label>
-                            <input type="text" class="form-control" id="movieName" required placeholder="e.g., The Matrix">
-                        </div>
-                        <div class="form-group">
-                            <label>Search TMDB</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control tmdb-year-input" id="tmdbSearchYear" placeholder="Year (Optional)" min="1888" max="2100">
-                                <div class="input-group-append"><button type="button" class="btn btn-info" id="searchTmdbBtn"><i class="fas fa-search"></i> Search & Autofill</button></div>
+                        <div class="form-row">
+                            <div class="form-group col-md-8 position-relative">
+                                <label for="movieName">Name 
+                                    <small class="text-muted ml-2" id="liveSearchStatus" style="display:none;">
+                                        <i class="fas fa-spinner fa-spin"></i> Searching TMDB...
+                                    </small>
+                                </label>
+                                <input type="text" class="form-control" id="movieName" required placeholder="Type title to auto-search..." autocomplete="off">
+                                <!-- Live Search Results Dropdown -->
+                                <div id="tmdbSearchResults" class="list-group shadow" style="position: absolute; top: 100%; left: 5px; right: 5px; z-index: 1000; max-height: 300px; overflow-y: auto; display: none;"></div>
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label for="tmdbSearchYear">Year <small class="text-muted">(Optional)</small></label>
+                                <input type="number" class="form-control" id="tmdbSearchYear" placeholder="YYYY" min="1888" max="2100">
                             </div>
                         </div>
-                        <div id="tmdbSearchResults" class="list-group mb-3" style="max-height: 200px; overflow-y: auto; display: none;"></div>
+
+                        <!-- Standard Fields -->
                         <div class="form-row">
                             <div class="form-group col-md-6"><label for="category">Category</label><select id="category" class="form-control"><option value="Movie">Movie</option><option value="Series">Series</option><option value="Documentary">Documentary</option><option value="Special">Special</option></select></div>
                             <div class="form-group col-md-6"><label for="status">Status</label><select id="status" class="form-control"><option value="To Watch">To Watch</option><option value="Watched">Watched</option><option value="Continue">Continue</option><option value="Unwatched">Unwatched</option></select></div>
                         </div>
 
-                        <!-- SECTION 2: CONDITIONALLY VISIBLE FIELDS (Ratings, Progress, History) -->
+                        <!-- SECTION 2: CONDITIONALLY VISIBLE FIELDS -->
                         <div id="seriesContinueGroup" class="form-row" style="display: none;">
                             <div class="form-group col-6"><label for="seasonsCompleted">Seasons Completed</label><input type="number" class="form-control form-control-sm" id="seasonsCompleted" min="0"></div>
                             <div class="form-group col-6"><label for="currentSeasonEpisodesWatched">Episode <small> (this season)</small></label><input type="number" class="form-control form-control-sm" id="currentSeasonEpisodesWatched" placeholder="Current Season" min="0"></div>
@@ -557,7 +601,6 @@
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 
-                    <!-- NEW: 3 Separate Actions for Better UX -->
                     <div id="addModeButtons" class="d-flex">
                         <button type="button" id="saveAndAddAnotherBtn" class="btn btn-success mr-2" title="Save & Add Another">
                             <i class="fas fa-plus-square"></i> <span class="d-none d-sm-inline">Add New</span>
@@ -570,13 +613,12 @@
                         </button>
                     </div>
                     
-                    <!-- NEW: Save button for "Edit Mode" -->
                     <button type="submit" form="entryForm" class="btn btn-primary" id="updateEntryBtn" style="display:none;"><i class="fas fa-save"></i> Update Entry</button>
                 </div>
             </div>
         </div>
     </div>
-<!-- END REFACTORED CHUNK: Modal - Entry Form (Add/Edit) -->
+<!-- END CHUNK: Modal - Entry Form (Add/Edit) -->
 
 <!-- START CHUNK: Modal - Quick Update -->
     <div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel" aria-hidden="true">
@@ -614,10 +656,7 @@
 
                         <!-- Conditional Fields: Shown if Series Finished OR if Movie/Doc/Special -->
                         <div id="quickUpdateConditionalFields" style="display:none;">
-                             <div class="form-group">
-                                <label for="quickUpdateOverallRating">My Overall Rating</label>
-                                <select id="quickUpdateOverallRating" class="form-control"><option value="">--Select--</option><option value="1">1 Star</option><option value="2">2 Stars</option><option value="3">3 Stars</option><option value="4">4 Stars</option><option value="5">5 Stars</option></select>
-                            </div>
+                             
                             <div class="form-group">
                                 <label for="quickUpdateRecommendation">My Recommendation</label>
                                 <select id="quickUpdateRecommendation" class="form-control"><option value="">-Select-</option><option value="Ignore">Ignore</option><option value="Less Recommended">Less Recommended</option><option value="Recommended">Recommended</option><option value="Highly Recommended">Highly Recommended</option></select>
@@ -1272,122 +1311,182 @@
 <!-- END CHUNK: Modal - Batch Edit -->
 
 <!-- START CHUNK: Modal - About -->
-    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content fade-up">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="aboutModalLabel">About KeepMoviEZ</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>
-                </div>
-                <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    
-                    <div class="about-hero">
-                        <i class="fas fa-film about-hero-icon"></i>
-                        <p>KeepMoviEZ is your personal companion for tracking every step of your cinematic journey. The name itself comes from our core mission: to make <strong>keep</strong>ing track of <strong>movi</strong>es <strong>e</strong>a<strong>z</strong>y.</p>
-                        <p class="text-muted">At our core is a deep respect for your privacy. The app works perfectly offline, and with optional cloud sync, your data is always yours—never analyzed, shared, or sold. You are always in control.</p>
-                    </div>
-
-                    <hr>
-
-                    <h4>Key Features</h4>
-                    <div class="features-list">
-                        <div class="feature-item">
-                            <i class="fas fa-pencil-alt"></i>
-                            <div><strong>Log Everything</strong><small>Track movies, series, and specials with detailed progress, ratings, and personal notes.</small></div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-database"></i>
-                            <div><strong>Powerful Data Enrichment</strong><small>Automatically fetch rich details like posters, cast, crew, and more from TMDB.</small></div>
-                        </div>
-                         <div class="feature-item">
-                            <i class="fas fa-chart-pie"></i>
-                            <div><strong>Discover Your Story</strong><small>Uncover insights with detailed stats, visual charts, and unlock fun achievements.</small></div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-magic"></i>
-                            <div><strong>Intelligent Suggestions</strong><small>Explore the "Engine Suggestions" hub to find similar content based on your favorites.</small></div>
-                        </div>
-                        <div class="feature-item">
-                            <i class="fas fa-tasks"></i>
-                            <div><strong>Effortless Management</strong><small>Use powerful search, filtering, and batch editing tools to manage your library with ease.</small></div>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <h4>Credits & Technologies</h4>
-                    <p class="text-muted small">This application would not be possible without the incredible work of others. We are deeply grateful to the following services and communities:</p>
-                    <div class="credits-grid">
-                        <div class="credit-item">
-                            <div class="credit-icon tmdb-color">  
-                                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 190.24 81.52"><defs><style>.cls-1{fill:url(#linear-gradient);}</style><linearGradient id="linear-gradient" y1="40.76" x2="190.24" y2="40.76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#90cea1"/><stop offset="0.56" stop-color="#3cbec9"/><stop offset="1" stop-color="#00b3e5"/></linearGradient></defs><title>Asset 2</title><g id="Layer_2" data-name="Layer 2"><g id="Layer_1-2" data-name="Layer 1"><path class="cls-1" d="M105.67,36.06h66.9A17.67,17.67,0,0,0,190.24,18.4h0A17.67,17.67,0,0,0,172.57.73h-66.9A17.67,17.67,0,0,0,88,18.4h0A17.67,17.67,0,0,0,105.67,36.06Zm-88,45h76.9A17.67,17.67,0,0,0,112.24,63.4h0A17.67,17.67,0,0,0,94.57,45.73H17.67A17.67,17.67,0,0,0,0,63.4H0A17.67,17.67,0,0,0,17.67,81.06ZM10.41,35.42h7.8V6.92h10.1V0H.31v6.9h10.1Zm28.1,0h7.8V8.25h.1l9,27.15h6l9.3-27.15h.1V35.4h7.8V0H66.76l-8.2,23.1h-.1L50.31,0H38.51ZM152.43,55.67a15.07,15.07,0,0,0-4.52-5.52,18.57,18.57,0,0,0-6.68-3.08,33.54,33.54,0,0,0-8.07-1h-11.7v35.4h12.75a24.58,24.58,0,0,0,7.55-1.15A19.34,19.34,0,0,0,148.11,77a16.27,16.27,0,0,0,4.37-5.5,16.91,16.91,0,0,0,1.63-7.58A18.5,18.5,0,0,0,152.43,55.67ZM145,68.6A8.8,8.8,0,0,1,142.36,72a10.7,10.7,0,0,1-4,1.82,21.57,21.57,0,0,1-5,.55h-4.05v-21h4.6a17,17,0,0,1,4.67.63,11.66,11.66,0,0,1,3.88,1.87A9.14,9.14,0,0,1,145,59a9.87,9.87,0,0,1,1,4.52A11.89,11.89,0,0,1,145,68.6Zm44.63-.13a8,8,0,0,0-1.58-2.62A8.38,8.38,0,0,0,185.63,64a10.31,10.31,0,0,0-3.17-1v-.1a9.22,9.22,0,0,0,4.42-2.82,7.43,7.43,0,0,0,1.68-5,8.42,8.42,0,0,0-1.15-4.65,8.09,8.09,0,0,0-3-2.72,12.56,12.56,0,0,0-4.18-1.3,32.84,32.84,0,0,0-4.62-.33h-13.2v35.4h14.5a22.41,22.41,0,0,0,4.72-.5,13.53,13.53,0,0,0,4.28-1.65,9.42,9.42,0,0,0,3.1-3,8.52,8.52,0,0,0,1.2-4.68A9.39,9.39,0,0,0,189.66,68.47ZM170.21,52.72h5.3a10,10,0,0,1,1.85.18,6.18,6.18,0,0,1,1.7.57,3.39,3.39,0,0,1,1.22,1.13,3.22,3.22,0,0,1,.48,1.82,3.63,3.63,0,0,1-.43,1.8,3.4,3.4,0,0,1-1.12,1.2,4.92,4.92,0,0,1-1.58.65,7.51,7.51,0,0,1-1.77.2h-5.65Zm11.72,20a3.9,3.9,0,0,1-1.22,1.3,4.64,4.64,0,0,1-1.68.7,8.18,8.18,0,0,1-1.82.2h-7v-8h5.9a15.35,15.35,0,0,1,2,.15,8.47,8.47,0,0,1,2.05.55,4,4,0,0,1,1.57,1.18,3.11,3.11,0,0,1,.63,2A3.71,3.71,0,0,1,181.93,72.72Z"/></g></g></svg>
-                            </div>
-                            <div class="credit-text">
-                                <strong>The Movie Database (TMDB)</strong>
-                                <small>The primary source for all movie, series, and person data.<br>
-                                <b><i style="color: var(--warning-color)">This product uses the TMDB API but is not endorsed or certified by TMDB.</i></b> 
-                                </small>
-                            </div>
-                        </div>
-                        <div class="credit-item">
-                            <div class="credit-icon supabase-color"><i class="fas fa-bolt"></i></div>
-                            <div class="credit-text">
-                                <strong>Supabase</strong>
-                                <small>Provides the incredible open-source backend for our secure cloud sync features.</small>
-                            </div>
-                        </div>
-                        <div class="credit-item">
-                            <div class="credit-icon bootstrap-color"><i class="fab fa-bootstrap"></i></div>
-                            <div class="credit-text"><strong>Bootstrap</strong><small>For the responsive UI framework.</small></div>
-                        </div>
-                        <div class="credit-item">
-                            <div class="credit-icon chartjs-color"><i class="fas fa-chart-bar"></i></div>
-                            <div class="credit-text"><strong>Chart.js</strong><small>For creating beautiful data visualizations.</small></div>
-                        </div>
-                         <div class="credit-item">
-                            <div class="credit-icon"><i class="fab fa-font-awesome-flag"></i></div>
-                            <div class="credit-text"><strong>Font Awesome</strong><small>For the extensive icon library.</small></div>
-                        </div>
-                         <div class="credit-item">
-                            <div class="credit-icon jquery-color"><i class="fas fa-code"></i></div>
-                            <div class="credit-text"><strong>jQuery</strong><small>For simplifying DOM manipulation.</small></div>
-                        </div>
-                        <div class="credit-item">
-                            <div class="credit-icon"><i class="fas fa-file-csv"></i></div>
-                            <div class="credit-text"><strong>PapaParse</strong><small>For robust in-browser CSV parsing.</small></div>
-                        </div>
-                    </div>
-
-                    <h5 class="mt-4">External Service Links</h5>
-                    <div class="credits-grid">
-                        <div class="credit-item">
-                            <div class="credit-icon youtube-color"><i class="fab fa-youtube"></i></div>
-                            <div class="credit-text"><strong>YouTube</strong><small>For trailer search functionality.</small></div>
-                        </div>
-                        <div class="credit-item">
-                            <div class="credit-icon imdb-color"><i class="fab fa-imdb"></i></div>
-                            <div class="credit-text"><strong>IMDb</strong><small>For parental guide lookups.</small></div>
-                        </div>
-                         <div class="credit-item">
-                            <div class="credit-icon"><i class="fas fa-play-circle"></i></div>
-                            <div class="credit-text"><strong>JustWatch</strong><small>For streaming availability links.</small></div>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    <div class="creator-section">
-                        <p class="mb-1">Crafted with ❤️ by Nishant Adhikari.</p>
-                        <a href="https://nishantadhikari.info.np" target="_blank" rel="noopener noreferrer">Website</a> | 
-                        <a href="https://www.instagram.com/nishant060211" target="_blank" rel="noopener noreferrer">Instagram</a>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                </div>
+<div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content fade-up">
+            <div class="modal-header">
+                <h5 class="modal-title" id="aboutModalLabel">About KeepMoviEZ</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"> 
+                    <span aria-hidden="true">&times;</span> 
+                </button>
             </div>
+
+            <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
+                
+                <div class="about-hero">
+                    <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ"></img>
+                    <p>KeepMoviEZ is built to give you full control over your movie and series tracking—fast, structured, and distraction-free. The name reflects exactly what it delivers: keeping your movies easy to manage.</p>
+                    <p class="text-muted">The app is offline-first by design. All core features work without an internet connection. Cloud sync is optional, and when enabled, your data stays yours—never monitored, analyzed, or sold.</p>
+                </div>
+
+                <hr>
+
+                <h4>Key Features</h4>
+                <div class="features-list">
+                    <div class="feature-item">
+                        <i class="fas fa-pencil-alt"></i>
+                        <div>
+                            <strong>Log Everything</strong>
+                            <small>Track movies, series, specials, progress, ratings, and notes with precision.</small>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-database"></i>
+                        <div>
+                            <strong>Data Enrichment</strong>
+                            <small>Posters, cast, crew, and metadata fetched automatically from TMDB.</small>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-chart-pie"></i>
+                        <div>
+                            <strong>Stats & Insights</strong>
+                            <small>Charts, trends, viewing history, and achievement milestones.</small>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-magic"></i>
+                        <div>
+                            <strong>Engine Suggestions</strong>
+                            <small>Recommendations based on your favorites and viewing patterns.</small>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <i class="fas fa-tasks"></i>
+                        <div>
+                            <strong>Efficient Management</strong>
+                            <small>Search, filters, and batch tools that scale with large collections.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <h4>Credits & Technologies</h4>
+                <p class="text-muted small">This app stands on the work of open-source projects and public APIs. We acknowledge and appreciate the following services:</p>
+
+                <div class="credits-grid">
+
+                    <div class="credit-item">
+                        <div class="credit-icon tmdb-color">
+                            <!-- TMDB SVG stays unchanged -->
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190.24 81.52"><defs><style>.cls-1{fill:url(#linear-gradient);}</style><linearGradient id="linear-gradient" y1="40.76" x2="190.24" y2="40.76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#90cea1"/><stop offset="0.56" stop-color="#3cbec9"/><stop offset="1" stop-color="#00b3e5"/></linearGradient></defs><path class="cls-1" d="M105.67,36.06h66.9A17.67,17.67,0,0,0,190.24,18.4h0A17.67,17.67,0,0,0,172.57.73h-66.9A17.67,17.67,0,0,0,88,18.4h0A17.67,17.67,0,0,0,105.67,36.06Zm-88,45h76.9A17.67,17.67,0,0,0,112.24,63.4h0A17.67,17.67,0,0,0,94.57,45.73H17.67A17.67,17.67,0,0,0,0,63.4H0A17.67,17.67,0,0,0,17.67,81.06ZM10.41,35.42h7.8V6.92h10.1V0H.31v6.9h10.1Zm28.1,0h7.8V8.25h.1l9,27.15h6l9.3-27.15h.1V35.4h7.8V0H66.76l-8.2,23.1h-.1L50.31,0H38.51ZM152.43,55.67a15.07,15.07,0,0,0-4.52-5.52,18.57,18.57,0,0,0-6.68-3.08,33.54,33.54,0,0,0-8.07-1h-11.7v35.4h12.75a24.58,24.58,0,0,0,7.55-1.15A19.34,19.34,0,0,0,148.11,77a16.27,16.27,0,0,0,4.37-5.5,16.91,16.91,0,0,0,1.63-7.58A18.5,18.5,0,0,0,152.43,55.67ZM145,68.6a8.8,8.8,0,0,1-2.64,3.4,10.7,10.7,0,0,1-4,1.82,21.57,21.57,0,0,1-5,.55h-4.05v-21h4.6a17,17,0,0,1,4.67.63,11.66,11.66,0,0,1,3.88,1.87A9.14,9.14,0,0,1,145,59a9.87,9.87,0,0,1,1,4.52A11.89,11.89,0,0,1,145,68.6Zm44.63-.13a8,8,0,0,0-1.58-2.62A8.38,8.38,0,0,0,185.63,64a10.31,10.31,0,0,0-3.17-1v-.1a9.22,9.22,0,0,0,4.42-2.82,7.43,7.43,0,0,0,1.68-5,8.42,8.42,0,0,0-1.15-4.65,8.09,8.09,0,0,0-3-2.72,12.56,12.56,0,0,0-4.18-1.3,32.84,32.84,0,0,0-4.62-.33h-13.2v35.4h14.5a22.41,22.41,0,0,0,4.72-.5,13.53,13.53,0,0,0,4.28-1.65,9.42,9.42,0,0,0,3.1-3,8.52,8.52,0,0,0,1.2-4.68A9.39,9.39,0,0,0,189.66,68.47ZM170.21,52.72h5.3a10,10,0,0,1,1.85.18,6.18,6.18,0,0,1,1.7.57,3.39,3.39,0,0,1,1.22,1.13,3.22,3.22,0,0,1,.48,1.82,3.63,3.63,0,0,1-.43,1.8,3.4,3.4,0,0,1-1.12,1.2,4.92,4.92,0,0,1-1.58.65,7.51,7.51,0,0,1-1.77.2h-5.65Zm11.72,20a3.9,3.9,0,0,1-1.22,1.3,4.64,4.64,0,0,1-1.68.7,8.18,8.18,0,0,1-1.82.2h-7v-8h5.9a15.35,15.35,0,0,1,2,.15,8.47,8.47,0,0,1,2.05.55,4,4,0,0,1,1.57,1.18,3.11,3.11,0,0,1,.63,2A3.71,3.71,0,0,1,181.93,72.72Z"/></svg>
+                        </div>
+                        <div class="credit-text">
+                            <strong>The Movie Database (TMDB)</strong>
+                            <small>The primary source for metadata.<br>
+                            <b><i style="color: var(--warning-color)">This product uses the TMDB API but is not endorsed or certified by TMDB.</i></b></small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon supabase-color"><i class="fas fa-bolt"></i></div>
+                        <div class="credit-text">
+                            <strong>Supabase</strong>
+                            <small>Provides the open-source backend for cloud sync.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon bootstrap-color"><i class="fab fa-bootstrap"></i></div>
+                        <div class="credit-text">
+                            <strong>Bootstrap</strong>
+                            <small>Responsive UI framework.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon chartjs-color"><i class="fas fa-chart-bar"></i></div>
+                        <div class="credit-text">
+                            <strong>Chart.js</strong>
+                            <small>Data visualization library.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon"><i class="fab fa-font-awesome-flag"></i></div>
+                        <div class="credit-text">
+                            <strong>Font Awesome</strong>
+                            <small>Icon library.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon jquery-color"><i class="fas fa-code"></i></div>
+                        <div class="credit-text">
+                            <strong>jQuery</strong>
+                            <small>DOM manipulation utilities.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon"><i class="fas fa-file-csv"></i></div>
+                        <div class="credit-text">
+                            <strong>PapaParse</strong>
+                            <small>In-browser CSV parsing.</small>
+                        </div>
+                    </div>
+
+                </div>
+
+                <h5 class="mt-4">External Service Links</h5>
+                <div class="credits-grid">
+                    <div class="credit-item">
+                        <div class="credit-icon youtube-color"><i class="fab fa-youtube"></i></div>
+                        <div class="credit-text">
+                            <strong>YouTube</strong>
+                            <small>Trailer search functionality.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon imdb-color"><i class="fab fa-imdb"></i></div>
+                        <div class="credit-text">
+                            <strong>IMDb</strong>
+                            <small>Parental guide lookups.</small>
+                        </div>
+                    </div>
+
+                    <div class="credit-item">
+                        <div class="credit-icon"><i class="fas fa-play-circle"></i></div>
+                        <div class="credit-text">
+                            <strong>JustWatch</strong>
+                            <small>Streaming availability links.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="creator-section">
+                    <p class="mb-1">Built by Nishant Adhikari.</p>
+                    <a href="https://nishantadhikari.info.np" target="_blank" rel="noopener noreferrer">Website</a> | 
+                    <a href="https://www.instagram.com/nishant060211" target="_blank" rel="noopener noreferrer">Instagram</a>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+
         </div>
     </div>
+</div>
 <!-- END CHUNK: Modal - About -->
 
 <!-- START CHUNK: Toast Notification Component -->
