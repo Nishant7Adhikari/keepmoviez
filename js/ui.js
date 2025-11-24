@@ -635,7 +635,7 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         if (genres.length > 0) genres.forEach(g => genreContainer.append(`<span class="genre-pill">${g}</span>`));
         
         const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(title + ' ' + year + ' trailer')}`;
-        const streamingUrl = `https://www.justwatch.com/us/search/${encodeURIComponent(title)}`;
+        const streamingUrl = `https://www.justwatch.com/us/search?q=${encodeURIComponent(title)}`;
         modal.find('#detailsTrailerBtn').attr('href', trailerUrl);
         modal.find('#detailsStreamingBtn').attr('href', streamingUrl);
 
