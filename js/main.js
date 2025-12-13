@@ -315,7 +315,7 @@ if (menuThemeToggleBtn) {
 
     } else { console.warn("jQuery not loaded. Some features may not work."); }
 // END CHUNK: 6: jQuery-Dependent Event Listeners 
-
+            
 //START CHUNK: 7: Final Event Listener Wiring & Global Listeners
             document.getElementById('confirmEraseDataBtn')?.addEventListener('click', window.eraseAllData);
             document.getElementById('checkRepairDataBtn')?.addEventListener('click', window.performDataCheckAndRepair);
@@ -422,6 +422,28 @@ if (menuThemeToggleBtn) {
             document.getElementById('menuExportBtn')?.addEventListener('click', () => { $('#exportModal').modal('show'); closeMenu(); });
             
             document.getElementById('quickSyncBtn')?.addEventListener('click', () => { comprehensiveSync(false); });
+            // NEW: Listener for Reload Local Data
+            document.getElementById('quickReloadLocalBtn')?.addEventListener('click', async () => { 
+                showLoading("Scanning local storage...");
+                try {
+                    await openDatabase(); // Ensure DB connection
+                    movieData = await loadFromIndexedDB(); // Force reload
+                    if (movieData.length > 0) {
+                        recalculateAndApplyAllRelationships();
+                        sortMovies(currentSortColumn, currentSortDirection);
+                        renderMovieCards();
+                        showToast("Success", `Found ${movieData.length} entries in local storage.`, "success");
+                    } else {
+                        showToast("Empty", "No data found in local storage.", "warning");
+                    }
+                } catch(e) {
+                    showToast("Error", "Failed to reload local data.", "error");
+                    console.error(e);
+                } finally {
+                    hideLoading();
+                }
+            });
+
             document.getElementById('quickImportBtn')?.addEventListener('click', () => { $('#importModal').modal('show'); });
             document.getElementById('quickAboutBtn')?.addEventListener('click', () => { $('#aboutModal').modal('show'); });
 

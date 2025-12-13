@@ -1,7 +1,5 @@
 // constant.js
 // START CHUNK: API and Database Keys
-
-
 const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co';
 // MODIFIED: Removed comment from key for professionalism
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqbmp0dmxreGhkYmRibmdkYWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNDM5NjAsImV4cCI6MjA2MzgxOTk2MH0.g1sD1xeJ05lHncxDDMUrhEiPGD8bYdyHWFJoDpq6aHs';
@@ -238,11 +236,14 @@ try {
         SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
 
         if (window.supabase && typeof window.supabase.createClient === 'function') {
+            // FIX: Explicitly set storage to localStorage to prevent session storage fallback
+            // This ensures login persists across browser closes/refreshes
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
                 auth: {
                     autoRefreshToken: true,
                     persistSession: true,
-                    detectSessionInUrl: true
+                    detectSessionInUrl: true,
+                    storage: window.localStorage 
                 }
             });
             console.log("Supabase client initialized successfully.");

@@ -372,13 +372,13 @@ async function initAuth() {
             }
         });
 
-        // FIX: TIMEOUT RACE CONDITION
-        // If getSession hangs (network issue), we don't want to block the UI forever.
+        // FIX: TIMEOUT RACE CONDITION & LOCAL FALLBACK
+        // If getSession hangs, default to local mode immediately rather than waiting forever or crashing.
         const sessionPromise = window.supabaseClient.auth.getSession();
         const timeoutPromise = new Promise((resolve) => {
             setTimeout(() => {
-                console.log("Auth check timed out. Assuming offline/logged out.");
-                resolve({ data: { session: null }, error: null }); // Resolve as no session
+                console.log("Auth check timed out. Defaulting to local mode.");
+                resolve({ data: { session: null }, error: null }); 
             }, 2000); // 2 second timeout
         });
 
@@ -389,13 +389,17 @@ async function initAuth() {
             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
             await handleUserSession(session.user);
         } else {
-            // Explicitly ensure loading is hidden if no session is found initially
-            await resetAppForLogout("Please log in to continue.");
+            // FIX: If not logged in (or offline), attempt to load local data anyway
+            // instead of showing login screen with no data.
+            console.log("No session found or offline. Loading local data...");
+            await openDatabase(); // Ensure DB is open
+            await initializeApp(); 
         }
 
     } catch (error) {
         console.error("Authentication initialization failed:", error);
-        await resetAppForLogout(`Auth init failed: ${error.message}`);
+        // Fallback to local on error
+        await initializeApp();
     }
 }
 
@@ -444,10 +448,25 @@ async function resetAppForLogout(message) {
     if (currentSupabaseUser) {
         sessionStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
     }
-    movieData = [];
+    
+    // FIX: DO NOT CLEAR MOVIE DATA FROM MEMORY OR DISK ON LOGOUT
+    // movieData = []; 
     currentSupabaseUser = null;
-    if (typeof clearLocalMovieCache === 'function') await clearLocalMovieCache();
+    
+    // FIX: CRITICAL - COMMENTED OUT TO PREVENT DATA LOSS FOR OFFLINE USERS
+    // if (typeof clearLocalMovieCache === 'function') await clearLocalMovieCache(); 
+
     if (typeof destroyCharts === 'function') destroyCharts(chartInstances);
+    
+    // If we have data, stay in "Offline/Guest" mode rather than showing login screen
+    if (movieData && movieData.length > 0) {
+        showToast("Logged Out", "You are now working in local/offline mode.", "info");
+        document.getElementById('menuLoggedInUserEmail').textContent = "Not logged in (Local Mode)";
+        if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
+        hideLoading();
+        return; 
+    }
+
     if (window.isMultiSelectMode && typeof window.disableMultiSelectMode === 'function') window.disableMultiSelectMode();
     if (typeof $ !== 'undefined' && $.fn.modal) $('.modal.show').modal('hide');
     document.getElementById('appMenu')?.classList.remove('show');
@@ -466,7 +485,6 @@ async function resetAppForLogout(message) {
     // FORCE loading overlay to hide
     hideLoading();
     
-    // Optional: Show toast only if it's a specific message, to avoid spam on load
     if (message !== "Please log in to continue.") {
         showToast("Session Ended", message, "info");
     }

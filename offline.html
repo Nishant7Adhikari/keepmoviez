@@ -1,47 +1,582 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Offline - KeepMovizEZ</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            text-align: center;
-            padding: 50px 20px;
-            background-color: #2C3E50;
-            color: #F0F0F0;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-        .container {
-            max-width: 600px;
-        }
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 600;
-            color: #e5001c;
-        }
-        p {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            color: #DDDDDD;
-        }
-    </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Offline • KeepMovizEZ</title>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap">
+
+<style>
+/* ---- Base / Layout ---- */
+:root{
+  --accent:#e5001c;
+  --card-bg: rgba(8,10,12,0.55);
+  --glass: rgba(255,255,255,0.06);
+  --text-light:#F5F5F7;
+  --muted:#DCDCDC;
+  --shadow: 0 12px 30px rgba(0,0,0,0.45);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+body{
+  background: linear-gradient(180deg,#9fd6f9 0%, #cbe8cc 45%, #dff3ff 100%);
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  position:relative;
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+
+/* ---- Parallax layers ---- */
+.bg-image{
+  position:fixed; inset:0; z-index:-4;
+  background-image: url('https://images.unsplash.com/photo-1503264116251-35a269479413?auto=format&fit=crop&w=1950&q=80');
+  background-size:cover; background-position:center;
+  transform: translateZ(0);
+  will-change:transform;
+  filter: saturate(0.95) contrast(1.02);
+}
+
+/* Cloud sprite layer (repeat-x) */
+.clouds {
+  position:fixed; inset:0; z-index:-3; pointer-events:none;
+  background-image: url('https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1950&q=80');
+  background-repeat:repeat-x;
+  background-size: auto 120%;
+  opacity:0.62;
+  animation:cloudMove linear infinite;
+}
+@keyframes cloudMove { from{background-position-x:0} to{background-position-x:-2000px} }
+
+/* sun */
+.sun {
+  position:fixed; width:120px; height:120px; border-radius:999px; z-index:-2;
+  top:8%; right:8%;
+  background: radial-gradient(circle at 35% 35%, rgba(255,245,200,0.95) 0%, rgba(255,200,60,0.85) 35%, rgba(255,200,60,0.06) 70%);
+  filter: blur(3px); transform:translateZ(0); box-shadow:0 0 50px rgba(255,200,60,0.18);
+  animation:sunPulse 6s ease-in-out infinite;
+}
+@keyframes sunPulse { 0%{transform:scale(0.98)} 100%{transform:scale(1.03)} }
+
+/* birds and leaves */
+.bird, .leaf { position:fixed; z-index:-1; pointer-events:none; will-change:transform,opacity; }
+
+/* water reflection bottom */
+.water {
+  position:fixed; left:0; right:0; bottom:0; height:14vh; z-index:-2;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.08));
+  backdrop-filter: blur(2px);
+}
+
+/* ---- Main card ---- */
+.card {
+  width:100%; max-width:720px; border-radius:16px; padding:28px; text-align:center;
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,0.04);
+  position:relative; z-index:2;
+  overflow:hidden;
+}
+
+/* header */
+.title { font-size:28px; font-weight:600; color:var(--accent); margin:0 0 8px;}
+.lead { color:var(--text-light); font-size:15px; margin:0 0 14px; line-height:1.5;}
+
+/* status line + last seen */
+.status-line { font-size:13px; color:var(--muted); margin-top:6px;}
+.last-seen { font-size:12px; color:rgba(255,255,255,0.5); margin-top:6px;}
+
+/* control row */
+.controls { display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap; margin-top:18px;}
+.btn {
+  background:var(--accent); color:#fff; padding:10px 16px; border-radius:10px; font-weight:600; cursor:pointer;
+  border:none; min-width:140px; display:inline-block; text-decoration:none; text-align:center;
+  transition:transform .15s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 20px rgba(229,0,28,0.18);
+}
+.btn:active{transform:translateY(1px)}
+.btn.ghost { background:transparent; border:1px solid rgba(255,255,255,0.08); color:var(--text-light); box-shadow:none; min-width:120px;}
+
+/* small action menu */
+.small { font-size:13px; padding:8px 12px; min-width:120px;}
+
+/* cloud indicator */
+.cloud-indicator { display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:999px; background:rgba(0,0,0,0.24); color:var(--text-light); font-size:13px; }
+.status-dot { width:10px; height:10px; border-radius:999px; display:inline-block; }
+
+/* progress overlay */
+.overlay {
+  position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:9999; pointer-events:none; opacity:0; transition:opacity .18s ease;
+}
+.overlay.show{ pointer-events:auto; opacity:1 }
+.loader {
+  min-width:160px; padding:16px 20px; border-radius:12px; background:rgba(0,0,0,0.6); color:#fff; text-align:center; box-shadow:0 8px 30px rgba(0,0,0,0.6);
+}
+
+/* toast stack */
+.toast-wrap { position:fixed; left:50%; transform:translateX(-50%); top:18px; z-index:99999; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; width:calc(100% - 40px); max-width:720px; }
+.toast {
+  pointer-events:auto;
+  background: rgba(18,18,18,0.88); color:#fff; padding:10px 14px; border-radius:10px; box-shadow:0 8px 20px rgba(0,0,0,0.45);
+  font-size:13px; display:flex; gap:10px; align-items:center; justify-content:space-between;
+}
+.toast.success{ border-left:4px solid #35b46a }
+.toast.warn{ border-left:4px solid #ffb020 }
+.toast.error{ border-left:4px solid #ff5c6c }
+
+/* small utility */
+.kv { font-size:12px; color:rgba(255,255,255,0.7); margin-top:8px; }
+.center-row { display:flex; gap:10px; align-items:center; justify-content:center; flex-wrap:wrap; }
+
+/* responsive */
+@media (max-width:480px){
+  .card { padding:18px; border-radius:12px; }
+  .title { font-size:20px; }
+  .btn { min-width:100px; padding:10px 12px; }
+  .sun { width:88px; height:88px; top:6%; right:4%; }
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>You are Currently Offline</h1>
-        <p>
-            It looks like you've lost your internet connection. KeepMovizEZ needs a connection to start up,
-            but you can continue to use the app if it's already loaded.
-        </p>
-        <p>Please check your connection and try again.</p>
+
+<!-- Parallax + decorative layers -->
+<div class="bg-image" aria-hidden="true"></div>
+<div class="clouds" id="clouds" aria-hidden="true" style="animation-duration:110s;"></div>
+<div class="sun" aria-hidden="true"></div>
+<div class="water" aria-hidden="true"></div>
+
+<!-- Floating birds/leaves: inserted by JS for randomized motion -->
+<!-- Main content -->
+<main class="card" role="main" aria-labelledby="offlineTitle">
+  <h1 id="offlineTitle" class="title">You are Currently Offline. ⚠️Caution :given features are currently under development, so may not work as intended.</h1>
+  <p class="lead">
+    KeepMovizEZ could not connect to the network. The app requires an initial online load to fetch cloud data.
+    If you previously signed in on this device, you can continue offline — local data will open but cloud features (search, updates) will be unavailable.
+  </p>
+
+  <div class="center-row">
+    <div id="cloudStatus" class="cloud-indicator" aria-live="polite">
+      <span id="statusDot" class="status-dot" style="background:#f39c12"></span>
+      <span id="statusText">Checking connection…</span>
     </div>
+  </div>
+
+  <div class="controls" style="margin-top:14px;">
+    <button id="continueBtn" class="btn">Try Again</button>
+    <button id="continueOfflineBtn" class="btn ghost" style="display:none">Continue Offline</button>
+    <button id="forceSyncBtn" class="btn small" title="Sync when online">Force Sync</button>
+    <button id="exportBtn" class="btn small" title="Export local DB">Export JSON</button>
+  </div>
+
+  <div class="status-line" id="offlineMessage" style="min-height:20px;"></div>
+  <div class="last-seen" id="lastSeen"></div>
+
+  <div style="margin-top:14px" class="kv" id="extraHints">Tip: connect to internet to enable search, posters, and recommendations.</div>
+</main>
+
+<!-- overlay for loaders -->
+<div id="overlay" class="overlay" aria-hidden="true">
+  <div id="loader" class="loader" role="status" aria-live="polite" style="display:none">Working…</div>
+</div>
+
+<!-- toasts -->
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<!-- Link to your modular logic (do not change this) -->
+<script src="/js/supabase.js"></script>
+
+<script>
+/* ---- Small defensive helpers to integrate with supabase.js ----
+   We intentionally provide stable, minimal implementations for
+   showToast, showLoading, hideLoading and a couple of safe no-op
+   async functions used by supabase.js so the file can run without errors.
+   These are designed to be non-invasive and safe to call from supabase.js.
+*/
+
+/* Toast system (stacked, auto-dismiss) */
+(function(){
+  const container = document.getElementById('toastWrap');
+  let idCounter = 0;
+  window.showToast = function(title, message = '', type = 'info', duration = 4500) {
+    try {
+      const id = ++idCounter;
+      const node = document.createElement('div');
+      node.className = 'toast ' + (type === 'success' ? 'success' : type === 'warning' || type === 'warn' ? 'warn' : (type === 'error' ? 'error' : ''));
+      node.innerHTML = `<div style="flex:1; text-align:left;"><strong style="display:block;margin-bottom:2px">${title}</strong><div style="opacity:0.95;font-size:13px">${message}</div></div>`
+      node.style.opacity = '0';
+      container.appendChild(node);
+      // entrance
+      requestAnimationFrame(()=> node.style.opacity = '1');
+      // dismiss
+      const dismiss = () => {
+        node.style.transition = 'opacity .22s ease, transform .22s ease';
+        node.style.opacity = '0';
+        node.style.transform = 'translateY(-6px)';
+        setTimeout(()=> container.removeChild(node), 220);
+      };
+      if (duration !== 0) {
+        setTimeout(dismiss, duration);
+      }
+      // manual dismiss on click
+      node.addEventListener('click', dismiss);
+      return id;
+    } catch(e) { console.error('showToast error', e); }
+  };
+})();
+
+/* Loading overlay */
+(function(){
+  const overlay = document.getElementById('overlay');
+  const loader = document.getElementById('loader');
+  let loadCount = 0;
+  window.showLoading = function(message = 'Loading…') {
+    loadCount++;
+    loader.textContent = message;
+    loader.style.display = 'block';
+    overlay.classList.add('show');
+  };
+  window.hideLoading = function(force = false) {
+    loadCount = Math.max(0, loadCount - 1);
+    if (force) loadCount = 0;
+    if (loadCount <= 0) {
+      overlay.classList.remove('show');
+      loader.style.display = 'none';
+    }
+  };
+})();
+
+/* Safe async stubs for functions that supabase.js might call if app is simplified.
+   If your full app provides real implementations (e.g. saveToIndexedDB), they will be used;
+   otherwise these safe fallbacks prevent runtime errors.
+*/
+window.saveToIndexedDB = window.saveToIndexedDB || (async function(){ return Promise.resolve(true); });
+window.loadFromIndexedDB = window.loadFromIndexedDB || (async function(){ 
+  // If app exposes movieData then return it; otherwise empty array
+  return (window.movieData && Array.isArray(window.movieData)) ? window.movieData : [];
+});
+window.renderMovieCards = window.renderMovieCards || (function(){ /* no-op safe fallback */ });
+window.checkAndNotifyNewAchievements = window.checkAndNotifyNewAchievements || (async function(){ return; });
+window.recalculateAndApplyAllRelationships = window.recalculateAndApplyAllRelationships || (function(){});
+window.sortMovies = window.sortMovies || (function(){});
+window.clearLocalMovieCache = window.clearLocalMovieCache || (async function(){ movieData = []; return; });
+
+/* ---- Visual/UX logic + features (no placeholders) ---- */
+
+/* Elements */
+const statusDot = document.getElementById('statusDot');
+const statusText = document.getElementById('statusText');
+const offlineMessageEl = document.getElementById('offlineMessage');
+const lastSeenEl = document.getElementById('lastSeen');
+const continueBtn = document.getElementById('continueBtn');
+const continueOfflineBtn = document.getElementById('continueOfflineBtn');
+const forceSyncBtn = document.getElementById('forceSyncBtn');
+const exportBtn = document.getElementById('exportBtn');
+
+/* Offline queue for user actions (simple implementation) */
+const offlineQueue = [];
+window.enqueueOfflineAction = function(action) {
+  if (typeof action === 'function') offlineQueue.push(action);
+  return offlineQueue.length;
+};
+window.flushOfflineQueue = async function() {
+  if (!navigator.onLine) return false;
+  while (offlineQueue.length) {
+    const fn = offlineQueue.shift();
+    try { await fn(); } catch(e) { console.error('offlineQueue item failed', e); }
+  }
+  return true;
+};
+
+/* Connection handling */
+function refreshConnectionUI() {
+  const online = navigator.onLine;
+  if (online) {
+    statusDot.style.background = '#2ecc71';
+    statusText.textContent = 'Online (cloud available)';
+  } else {
+    statusDot.style.background = '#f39c12';
+    statusText.textContent = 'Offline (limited)';
+  }
+  // last connected
+  const last = localStorage.getItem('km_last_online');
+  lastSeenEl.textContent = last ? `Last connected: ${last}` : '';
+}
+window.addEventListener('online', async ()=> {
+  localStorage.setItem('km_last_online', new Date().toLocaleString());
+  refreshConnectionUI();
+  showToast('Back online', 'Cloud features are available again.', 'success', 3000);
+  // attempt to flush queue and optionally sync if functions available
+  await flushOfflineQueue();
+  if (typeof comprehensiveSync === 'function') {
+    try { await comprehensiveSync(true); } catch(e){ console.warn('auto sync failed', e); }
+  }
+});
+window.addEventListener('offline', ()=> {
+  refreshConnectionUI();
+  showToast('Offline', 'You are now offline. Some features disabled.', 'warning', 3000);
+});
+refreshConnectionUI();
+
+/* Prevent page-level horizontal scroll on small screens by ensuring body fits */
+(function ensureNoOverflow(){
+  document.documentElement.style.overflowX = 'hidden';
+  document.body.style.overflowX = 'hidden';
+})();
+
+/* Responsive decorative elements: spawn some birds/leaves with randomized motion */
+(function spawnDecoratives(){
+  const container = document.body;
+  // birds (3)
+  for (let i=0;i<3;i++){
+    const b = document.createElement('div');
+    b.className = 'bird';
+    b.style.width = (32 + Math.round(Math.random()*32))+'px';
+    b.style.height = 'auto';
+    b.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/616/616408.png')";
+    b.style.backgroundSize = 'contain';
+    b.style.left = (-20 - Math.random()*20) + '%';
+    const top = 15 + Math.random()*50;
+    b.style.top = top + '%';
+    const duration = 12 + Math.random()*12;
+    b.style.transition = `transform ${duration}s linear`;
+    setTimeout(()=> { b.style.transform = `translateX(${140 + Math.random()*60}vw)`; }, 200 + i*900);
+    container.appendChild(b);
+    // loop: reposition and re-run
+    (function loopBird(el, dur){
+      setInterval(()=> {
+        el.style.transition = 'none';
+        el.style.transform = 'translateX(0)';
+        el.style.left = (-20 - Math.random()*20) + '%';
+        el.style.top = (15 + Math.random()*50) + '%';
+        setTimeout(()=> {
+          el.style.transition = `transform ${dur + Math.random()*8}s linear`;
+          el.style.transform = `translateX(${140 + Math.random()*60}vw)`;
+        }, 200);
+      }, (dur+6)*1000 );
+    })(b, duration);
+  }
+  // leaves (4)
+  for (let i=0;i<4;i++){
+    const l = document.createElement('div');
+    l.className = 'leaf';
+    l.style.width = (18 + Math.round(Math.random()*18))+'px';
+    l.style.height = 'auto';
+    l.style.backgroundImage = "url('https://cdn-icons-png.flaticon.com/512/415/415733.png')";
+    l.style.backgroundSize = 'contain';
+    l.style.left = (5 + Math.random()*85) + '%';
+    l.style.top = (-5 - Math.random()*20) + '%';
+    l.style.opacity = 0.9;
+    const dur = 10 + Math.random()*10;
+    l.style.transition = `transform ${dur}s linear, opacity ${dur/2}s linear`;
+    setTimeout(()=> {
+      l.style.transform = `translateY(${110 + Math.random()*30}vh) rotate(${Math.random()*720}deg)`;
+      l.style.opacity = 0.6;
+    }, 200 + i*400);
+    document.body.appendChild(l);
+    (function loopLeaf(el, dur){
+      setInterval(()=> {
+        el.style.transition = 'none';
+        el.style.transform = 'translateY(-10vh) rotate(0deg)';
+        el.style.left = (5 + Math.random()*85) + '%';
+        el.style.opacity = 1;
+        setTimeout(()=> {
+          el.style.transition = `transform ${dur + Math.random()*6}s linear, opacity ${dur/2}s linear`;
+          el.style.transform = `translateY(${110 + Math.random()*30}vh) rotate(${Math.random()*720}deg)`;
+          el.style.opacity = 0.6;
+        }, 120);
+      }, (dur+6)*1000 );
+    })(l,dur);
+  }
+})();
+
+/* ---- Core offline / auth-aware behavior ---- */
+
+/* Wait for supabase.js to potentially set currentSupabaseUser.
+   Check repeatedly for up to ~3s; then decide flow.
+*/
+async function decideOfflineFlow() {
+  // small wait for supabase.js init
+  const start = Date.now();
+  while (typeof currentSupabaseUser === 'undefined' && Date.now() - start < 3000) {
+    await new Promise(r => setTimeout(r, 160));
+  }
+
+  // If supabase client set the user, show Continue Offline and message
+  if (currentSupabaseUser) {
+    offlineMessageEl.textContent = 'Search and cloud-based features will not work unless you are "$6@002&#11$4)(14"';
+    continueOfflineBtn.style.display = 'inline-block';
+    // clicking continue offline should load local data via initializeApp if available
+    continueOfflineBtn.onclick = async function() {
+      showLoading('Loading local data…');
+      try {
+        if (typeof initializeApp === 'function') {
+          await initializeApp();
+        } else {
+          // Try loadFromIndexedDB -> render
+          const local = await (typeof loadFromIndexedDB === 'function' ? loadFromIndexedDB() : (window.movieData || []));
+          window.movieData = local;
+          if (typeof recalculateAndApplyAllRelationships === 'function') recalculateAndApplyAllRelationships();
+          if (typeof sortMovies === 'function') sortMovies(window.currentSortColumn, window.currentSortDirection);
+          if (typeof renderMovieCards === 'function') renderMovieCards();
+        }
+        showToast('Offline Mode', 'Local data loaded. Cloud features disabled.', 'info', 4200);
+      } catch(e){
+        console.error('continueOffline error', e);
+        showToast('Error', 'Could not load local data.', 'error', 6000);
+      } finally { hideLoading(true); }
+    };
+  } else {
+    offlineMessageEl.textContent = 'Not signed in on this device. You can try to reconnect or sign in when online.';
+    continueOfflineBtn.style.display = 'none';
+  }
+}
+
+/* 'Try Again' behavior: simply reload the page and let main app attempt session check */
+continueBtn.addEventListener('click', ()=> {
+  if (navigator.onLine) {
+    showLoading('Re-checking connection…');
+    setTimeout(()=> { hideLoading(true); location.reload(); }, 900);
+  } else {
+    showToast('Still offline', 'Connect to the internet and try again.', 'warning', 3000);
+  }
+});
+
+/* Force sync button: call comprehensiveSync if available; otherwise explain */
+forceSyncBtn.addEventListener('click', async ()=> {
+  if (!navigator.onLine) {
+    enqueueOfflineAction(()=> showToast('Queued', 'Sync will run when online.', 'info', 3500));
+    showToast('Offline', 'Sync queued until online.', 'warning', 3000);
+    return;
+  }
+  if (typeof comprehensiveSync === 'function') {
+    showLoading('Running sync…');
+    try {
+      const res = await comprehensiveSync(false);
+      showToast('Sync', res && res.summary ? res.summary : 'Sync attempted', 'success', 4000);
+    } catch (err) {
+      console.error('comprehensiveSync error', err);
+      showToast('Sync Failed', err.message || String(err), 'error', 7000);
+    } finally { hideLoading(true); }
+  } else {
+    showToast('Unavailable', 'Sync function not present on this page.', 'warning', 3500);
+  }
+});
+
+/* Export local DB -> JSON download */
+exportBtn.addEventListener('click', async ()=> {
+  showLoading('Preparing export…');
+  try {
+    const data = (typeof loadFromIndexedDB === 'function') ? await loadFromIndexedDB() : (window.movieData || []);
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `keepmoviez-local-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Exported', 'Local collection exported as JSON.', 'success', 3500);
+  } catch (e) {
+    console.error('export error', e);
+    showToast('Export failed', e.message || String(e), 'error', 6000);
+  } finally { hideLoading(true); }
+});
+
+/* Pull-to-refresh (mobile): simple implementation using touch */
+(function enablePullToRefresh(){
+  let startY = 0, pulling=false, threshold=70;
+  window.addEventListener('touchstart', e => { if (document.scrollingElement.scrollTop === 0) startY = e.touches[0].clientY; else startY = -1; }, {passive:true});
+  window.addEventListener('touchmove', e => {
+    const y = e.touches[0].clientY;
+    if (startY > 0 && y - startY > 10) pulling = true;
+  }, {passive:true});
+  window.addEventListener('touchend', async e => {
+    if (!pulling) return; pulling=false;
+    const yEnd = e.changedTouches ? e.changedTouches[0].clientY : 0;
+    if (yEnd - startY > threshold) {
+      // trigger refresh
+      showLoading('Refreshing…');
+      if (navigator.onLine && typeof comprehensiveSync === 'function') {
+        try { await comprehensiveSync(false); showToast('Refreshed', 'Cloud sync completed.', 'success', 3000); }
+        catch(err){ showToast('Refresh failed', err.message||String(err), 'error', 5000); }
+      } else {
+        showToast('Offline', 'Cannot refresh while offline.', 'warning', 3000);
+      }
+      hideLoading(true);
+    }
+  }, {passive:true});
+})();
+
+/* Dark mode toggle (persisted) */
+(function initDarkMode(){
+  const darkKey = 'km_dark_mode';
+  const stored = localStorage.getItem(darkKey);
+  if (stored === '1') document.documentElement.style.filter = 'brightness(.95) saturate(.9)';
+  // small toggle added to bottom-left via small floating element
+  const toggle = document.createElement('button');
+  toggle.className = 'btn small';
+  toggle.style.position = 'fixed';
+  toggle.style.left = '14px';
+  toggle.style.bottom = '14px';
+  toggle.style.zIndex = 9999;
+  toggle.style.padding = '8px 12px';
+  toggle.textContent = stored === '1' ? 'Light' : 'Dark';
+  toggle.onclick = function(){
+    const on = localStorage.getItem(darkKey) !== '1';
+    if (on) {
+      document.documentElement.style.filter = 'brightness(.86) saturate(.92)';
+      toggle.textContent = 'Light';
+      localStorage.setItem(darkKey,'1');
+    } else {
+      document.documentElement.style.filter = '';
+      toggle.textContent = 'Dark';
+      localStorage.removeItem(darkKey);
+    }
+  };
+  document.body.appendChild(toggle);
+})();
+
+/* Cloud status / indicator hooks: updates every 3s to check ability to reach cloud (lightweight) */
+(async function cloudProbeLoop(){
+  async function probe() {
+    if (!navigator.onLine) { refreshConnectionUI(); return; }
+    // Lightweight probe: if supabase client exists, do a harmless request
+    if (window.supabaseClient && typeof window.supabaseClient.auth !== 'undefined') {
+      try {
+        // quick "ping" to auth endpoint via getSession if available
+        if (typeof window.supabaseClient.auth.getSession === 'function') {
+          const p = await window.supabaseClient.auth.getSession();
+          refreshConnectionUI();
+          return;
+        }
+      } catch(e){ /* ignore */ }
+    }
+    // fallback: try fetch to root
+    try {
+      await fetch('/', {method:'HEAD', cache:'no-store', mode:'no-cors'});
+      refreshConnectionUI();
+    } catch(e){
+      statusDot.style.background = '#f39c12';
+      statusText.textContent = 'Limited connectivity';
+    }
+  }
+  await probe();
+  setInterval(probe, 3000);
+})();
+
+/* final initialization */
+decideOfflineFlow();
+
+/* expose some debug utilities for the page */
+window.kmDebug = {
+  getOfflineQueue: ()=> offlineQueue.slice(),
+  clearOfflineQueue: ()=> { offlineQueue.length=0; return true; }
+};
+</script>
 </body>
 </html>

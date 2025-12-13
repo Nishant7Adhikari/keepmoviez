@@ -13,7 +13,7 @@
     <meta name="description" content="KeepMoviEZ is your personal smart movie and series tracking app.">
     <meta name="keywords" content="KeepMoviEZ, movie tracker, media collection">
     <meta name="robots" content="index, follow">
-    <meta name="author" content="KeepMoviEZ Team">
+    <meta name="author" content="Nishant Adhikari">
     <link rel="canonical" href="keepmoviez.nishantadhikari.info.np">
 
     <!-- Local Libraries (CSS) -->
@@ -32,7 +32,7 @@
     <!-- Critical Local JS Libraries -->
     <script src="libs/js/crypto-js.min.js"></script>
     <script src="libs/js/supabase.min.js"></script>
-
+</head>
 <!-- END CHUNK: Document Head and Core Dependencies -->
 <body>
     
@@ -311,6 +311,15 @@
                             <div>
                                 <strong>Sync from Cloud</strong>
                                 <div class="small">Restore data from your account</div>
+                            </div>
+                        </button>
+
+                        <!-- NEW: Reload Local Data Button -->
+                        <button id="quickReloadLocalBtn" class="btn btn-outline-success btn-block mb-3 p-3 text-left d-flex align-items-center">
+                            <i class="fas fa-hdd fa-2x mr-3 ml-2"></i>
+                            <div>
+                                <strong>Reload Local Data</strong>
+                                <div class="small">Scan device storage for lost entries</div>
                             </div>
                         </button>
 

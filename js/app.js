@@ -1,4 +1,3 @@
-
 /* js/app.js */
 // START CHUNK: Card Interaction and Multi-Select
 window.handleCardClick = function(event) {
