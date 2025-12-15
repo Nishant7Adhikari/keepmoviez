@@ -309,6 +309,8 @@ var globalStatsData = window.globalStatsData;
 // IndexedDB
 let db;
 
+window.isExplicitLogout = false;
+
 function initializeDOMElements() {
     loadingOverlay = document.getElementById('loadingOverlay');
     themeTransitionOverlay = document.getElementById('themeTransitionOverlay');

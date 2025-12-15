@@ -294,27 +294,21 @@ async function forcePushToSupabase() {
 
 // START CHUNK: 3: Authentication and Application State
 let currentSupabaseUser = null;
-let isAppInitializing = false; // Global flag to prevent race conditions
+let isAppInitializing = false; 
 
 async function initAuth() {
     showLoading("Initializing...");
     try {
         if (!window.supabaseClient) {
-            await resetAppForLogout("Cloud service is not available. Running in offline mode.");
+            // No Supabase configured = Offline Mode (No wipe)
+            await resetAppForLogout("Cloud service is not available. Running in offline mode.", false);
             return;
         }
 
         const handleUserSession = async (user) => {
-            // Prevent double-initialization if already running
-            if (isAppInitializing) {
-                console.log("Initialization in progress. Skipping duplicate trigger.");
-                return;
-            }
-
-            // If user is already loaded and UI visible, do nothing (prevents reload loops)
-            if (user?.id === currentSupabaseUser?.id && appContent.style.display === 'block') {
-                return;
-            }
+            if (isAppInitializing) return;
+            // If user is already loaded and UI visible, do nothing to prevent loops
+            if (user?.id === currentSupabaseUser?.id && appContent.style.display === 'block') return;
 
             if (user) {
                 try {
@@ -323,15 +317,17 @@ async function initAuth() {
                     await initializeApp();
                 } catch (dbError) {
                     console.error("CRITICAL: Could not open IndexedDB.", dbError);
-                    await resetAppForLogout(`Failed to connect to local database: ${dbError.message}`);
+                    // DB Error = Fallback to empty state, no wipe needed really, but safe to fail gracefully
+                    await resetAppForLogout(`Failed to connect to local database: ${dbError.message}`, false);
                 } finally {
                     isAppInitializing = false; // Unlock
                 }
             } else {
-                await resetAppForLogout("Your session has ended. Please log in.");
+                // No user object = Logged out state logic handled below in the else block of session check
             }
         };
         
+        // Check for Password Recovery Token in URL
         let recoveryToken = null;
         if (window.location.hash.includes('type=recovery')) {
              const params = new URLSearchParams(window.location.hash.substring(1));
@@ -348,7 +344,7 @@ async function initAuth() {
             return; 
         }
 
-        // Listener for future state changes
+        // Listener for future state changes (Logout, Login, Token Refresh)
         window.supabaseClient.auth.onAuthStateChange(async (event, session) => {
             if (window.location.hash) {
                 window.history.replaceState(null, null, window.location.pathname + window.location.search);
@@ -360,26 +356,30 @@ async function initAuth() {
             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
 
             if (event === 'SIGNED_OUT') {
-                await resetAppForLogout("You have been logged out.");
+                // HERE IS THE CORE LOGIC: 
+                // If isExplicitLogout is true (button clicked), we WIPE (true).
+                // If not (timeout/token expired), we SAVE (false).
+                // Note: window.isExplicitLogout must be defined in constant.js or main.js
+                const shouldWipe = window.isExplicitLogout === true;
+                await resetAppForLogout("You have been logged out.", shouldWipe);
+                window.isExplicitLogout = false; // Reset flag
             } else if (event === 'PASSWORD_RECOVERY') {
                 document.getElementById('supabaseAuthForm').style.display = 'block';
                 document.getElementById('passwordSetupSection').style.display = 'none';
                 showToast("Success", "Your password has been updated. Please log in.", "success");
             } else if (user && user.id !== previousUserId) {
-                // Only trigger if the user CHANGED. 
-                // The initial load is handled by the explicit check below.
                 await handleUserSession(user);
             }
         });
 
-        // FIX: TIMEOUT RACE CONDITION & LOCAL FALLBACK
-        // If getSession hangs, default to local mode immediately rather than waiting forever or crashing.
+        // Initial Load Check with Timeout
+        // If Supabase hangs (offline), we default to local mode after 2 seconds
         const sessionPromise = window.supabaseClient.auth.getSession();
         const timeoutPromise = new Promise((resolve) => {
             setTimeout(() => {
-                console.log("Auth check timed out. Defaulting to local mode.");
+                console.log("Auth check timed out. Defaulting to local mode check.");
                 resolve({ data: { session: null }, error: null }); 
-            }, 2000); // 2 second timeout
+            }, 2000); 
         });
 
         const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
@@ -389,36 +389,37 @@ async function initAuth() {
             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
             await handleUserSession(session.user);
         } else {
-            // FIX: If not logged in (or offline), attempt to load local data anyway
-            // instead of showing login screen with no data.
-            console.log("No session found or offline. Loading local data...");
-            await openDatabase(); // Ensure DB is open
-            await initializeApp(); 
+            console.log("No session found or offline. Checking local data...");
+            await openDatabase(); 
+            // Load local data to see if we have anything (Privacy/Offline User)
+            const localData = await loadFromIndexedDB();
+            
+            if (localData && localData.length > 0) {
+                // Case: Not logged in, but we have data -> Load App in Guest Mode
+                movieData = localData;
+                await initializeApp();
+            } else {
+                // Case: Not logged in, No data (First time user) -> Show Login
+                await resetAppForLogout("Please log in to continue.", false); 
+            }
         }
 
     } catch (error) {
         console.error("Authentication initialization failed:", error);
-        // Fallback to local on error
+        // Fallback to trying to load the app locally
         await initializeApp();
     }
 }
 
-
+// Logic to load the app UI (used by both authenticated and offline flows)
 async function initializeApp() {
     showLoading("Loading your collection...");
     try {
-        // 1. Load data from IndexedDB (fast local load)
-        movieData = await loadFromIndexedDB();
-        console.log(`Loaded ${movieData.length} entries from local cache.`);
-        
-        // STRICT SYNC POLICY:
-        // No auto-sync on load. 
-        // The app will rely entirely on the local IndexedDB cache until the user clicks "Sync".
-        if (currentSupabaseUser) {
-             console.log("User logged in. Ready for manual sync.");
+        if (!movieData || movieData.length === 0) {
+             movieData = await loadFromIndexedDB();
         }
-
-        // 2. Process and Render UI
+        console.log(`Loaded ${movieData.length} entries.`);
+        
         if (typeof recalculateAndApplyAllRelationships === 'function') recalculateAndApplyAllRelationships();
         sortMovies(currentSortColumn, currentSortDirection);
         if (typeof renderMovieCards === 'function') renderMovieCards();
@@ -430,70 +431,91 @@ async function initializeApp() {
             await migrateVeryOldLocalStorageData();
         }
 
-        // 3. Show the main UI
+        // Always show content if we reach here
         if (authContainer) authContainer.style.display = 'none';
         if (appContent) appContent.style.display = 'block';
 
+        // Update UI for offline/guest state if needed
+        if (!currentSupabaseUser) {
+             const emailEl = document.getElementById('menuLoggedInUserEmail');
+             if(emailEl) emailEl.textContent = "Guest (Local Mode)";
+             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
+        }
+
     } catch (error) {
-        console.error("Critical error during app initialization:", error);
-        showToast("Application Start Failed", `Error: ${error.message}`, "error", 0);
-        await resetAppForLogout(`Failed to start: ${error.message}`);
+        console.error("App init error:", error);
+        showToast("Start Failed", error.message, "error");
     } finally {
         hideLoading();
     }
 }
 
-async function resetAppForLogout(message) {
-    console.warn("Resetting application UI. Message:", message); 
+/**
+ * Handles Logging Out or Session Expiry
+ * @param {string} message - Toast message to show
+ * @param {boolean} wipeData - TRUE = Security Wipe (Logout button), FALSE = Privacy Keep (Timeout/Offline)
+ */
+async function resetAppForLogout(message, wipeData = false) {
+    console.warn(`Resetting App. Reason: ${message}. Wiping Data: ${wipeData}`); 
+    
     if (currentSupabaseUser) {
         sessionStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
     }
-    
-    // FIX: DO NOT CLEAR MOVIE DATA FROM MEMORY OR DISK ON LOGOUT
-    // movieData = []; 
     currentSupabaseUser = null;
-    
-    // FIX: CRITICAL - COMMENTED OUT TO PREVENT DATA LOSS FOR OFFLINE USERS
-    // if (typeof clearLocalMovieCache === 'function') await clearLocalMovieCache(); 
 
-    if (typeof destroyCharts === 'function') destroyCharts(chartInstances);
-    
-    // If we have data, stay in "Offline/Guest" mode rather than showing login screen
-    if (movieData && movieData.length > 0) {
-        showToast("Logged Out", "You are now working in local/offline mode.", "info");
-        document.getElementById('menuLoggedInUserEmail').textContent = "Not logged in (Local Mode)";
-        if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
-        hideLoading();
-        return; 
+    if (wipeData) {
+        // --- EXPLICIT LOGOUT: SECURITY WIPE ---
+        movieData = [];
+        if (typeof clearLocalMovieCache === 'function') await clearLocalMovieCache();
+        
+        // Full UI Reset to Login Screen
+        if (typeof destroyCharts === 'function') destroyCharts(chartInstances);
+        if (window.isMultiSelectMode && typeof window.disableMultiSelectMode === 'function') window.disableMultiSelectMode();
+        if (typeof $ !== 'undefined' && $.fn.modal) $('.modal.show').modal('hide');
+        document.getElementById('appMenu')?.classList.remove('show');
+        document.getElementById('appMenuBackdrop')?.classList.remove('show');
+        
+        if (appContent) appContent.style.display = 'none';
+        if (authContainer) authContainer.style.display = 'flex';
+        
+        const passwordInput = document.getElementById('supabasePassword');
+        if (passwordInput) passwordInput.value = '';
+        
+        showToast("Logged Out", "Your local data has been cleared for security.", "info");
+    } else {
+        // --- IMPLICIT LOGOUT: PRESERVE DATA (Offline Mode) ---
+        // If we are already viewing data, just update the UI to show we are offline/guest
+        if (appContent.style.display === 'block') {
+            const emailEl = document.getElementById('menuLoggedInUserEmail');
+            if(emailEl) emailEl.textContent = "Guest (Local Mode)";
+            
+            if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
+            
+            // Only show toast if it's an actual session expiry event, not just initial load
+            if (message !== "Please log in to continue.") {
+                showToast("Session Ended", "Switched to local mode. Data preserved.", "warning");
+            }
+        } else {
+            // If we are at the login screen and have no data, stay there.
+            if (authContainer) authContainer.style.display = 'flex';
+            if (appContent) appContent.style.display = 'none';
+        }
     }
 
-    if (window.isMultiSelectMode && typeof window.disableMultiSelectMode === 'function') window.disableMultiSelectMode();
-    if (typeof $ !== 'undefined' && $.fn.modal) $('.modal.show').modal('hide');
-    document.getElementById('appMenu')?.classList.remove('show');
-    document.getElementById('appMenuBackdrop')?.classList.remove('show');
-    if (typeof renderMovieCards === 'function') renderMovieCards();
-    if (appContent) appContent.style.display = 'none';
-    if (authContainer) authContainer.style.display = 'flex';
-    
+    // Always reset error messages
     const authMessageEl = document.getElementById('authMessage');
     if (authMessageEl) authMessageEl.textContent = message;
-    const passwordInput = document.getElementById('supabasePassword');
-    if (passwordInput) passwordInput.value = '';
     const authErrorDiv = document.getElementById('authError');
     if (authErrorDiv) { authErrorDiv.textContent = ''; authErrorDiv.style.display = 'none'; }
 
     // FORCE loading overlay to hide
     hideLoading();
-    
-    if (message !== "Please log in to continue.") {
-        showToast("Session Ended", message, "info");
-    }
 }
 // END CHUNK: 3: Authentication and Application State
 
 // START CHUNK: 4: User Authentication Actions
 
-// NEW: Helper function for client-side auth validation
+// Helper function for client-side auth validation
 function validateAuthForm(email, password, isSignUp = false) {
     const authErrorDiv = document.getElementById('authError');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -518,15 +540,15 @@ function validateAuthForm(email, password, isSignUp = false) {
     return true;
 }
 
-
 async function supabaseSignInUser(email, password) {
     const authErrorDiv = document.getElementById('authError');
-    if (!validateAuthForm(email, password)) return; // MODIFIED: Added validation
+    if (!validateAuthForm(email, password)) return; 
     
     showLoading("Signing in...");
     try {
         const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // Success handled by onAuthStateChange
     } catch (error) {
         console.error("Sign in error:", error);
         if (authErrorDiv) { authErrorDiv.textContent = error.message; authErrorDiv.style.display = 'block'; }
@@ -539,7 +561,6 @@ async function supabaseSignInUser(email, password) {
 async function supabaseSignInWithGoogle() {
     showLoading("Redirecting to Google...");
     try {
-        // MODIFIED: Use a clean redirect URL without the hash
         const cleanRedirectTo = window.location.origin + window.location.pathname;
         const { error } = await window.supabaseClient.auth.signInWithOAuth({
             provider: 'google',
@@ -557,7 +578,7 @@ async function supabaseSignInWithGoogle() {
 
 async function supabaseSignUpUser(email, password) {
     const authErrorDiv = document.getElementById('authError');
-    if (!validateAuthForm(email, password, true)) return; // MODIFIED: Added validation
+    if (!validateAuthForm(email, password, true)) return;
     
     showLoading("Creating account...");
     try {
@@ -574,23 +595,32 @@ async function supabaseSignUpUser(email, password) {
         hideLoading();
     }
 }
+
 async function supabaseSignOutUser() {
     showLoading("Signing out...");
     try {
+        // SET THE FLAG: This tells resetAppForLogout to WIPE data because user explicitly clicked logout.
+        window.isExplicitLogout = true; 
+        
         const { error } = await window.supabaseClient.auth.signOut();
         if (error && error.name !== 'AuthSessionMissingError') throw error;
+        
+        // Usually onAuthStateChange handles the rest.
     } catch (error) {
         console.error("Sign out error:", error);
-        showToast("Logout Error", error.message, "error");
+        // Force manual reset if the event listener doesn't fire due to network error
+        await resetAppForLogout("Logged out (Force).", true);
+        window.isExplicitLogout = false;
+        showToast("Logout Error", "Logged out locally, but network error occurred.", "warning");
     } finally {
         hideLoading();
     }
 }
+
 async function supabaseSendPasswordResetEmail(email) {
     const authErrorDiv = document.getElementById('authError');
     authErrorDiv.style.display = 'none';
 
-    // NEW: Client-side validation for the email field
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
          authErrorDiv.textContent = "Please enter a valid email address.";
          authErrorDiv.style.display = 'block';
@@ -599,7 +629,6 @@ async function supabaseSendPasswordResetEmail(email) {
     
     showLoading("Sending reset link...");
     try {
-        // MODIFIED: Use a clean redirect URL without the hash
         const cleanRedirectTo = window.location.origin + window.location.pathname;
         const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, { redirectTo: cleanRedirectTo });
         if (error) throw error;
@@ -632,7 +661,7 @@ async function supabaseUpdateUserPassword(newPassword) {
         hideLoading();
     }
 }
-// END CHUNK: 4
+// END CHUNK: 4: User Authentication Actions
 
 //START CHUNK: 5: High-Level Data Actions (REWRITTEN)
 async function eraseAllData() {
