@@ -238,7 +238,7 @@
                 <div class="nav-header">Data & Sync</div>
                 <ul class="nav flex-column">
                     <li class="nav-item"><a class="nav-link" href="#architecture">Local-First Architecture</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#sync-guide">Manual Sync Guide</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#sync-guide">Sync & Privacy Settings</a></li>
                     <li class="nav-item"><a class="nav-link" href="#import-export">Backup & Import</a></li>
                 </ul>
 
@@ -374,21 +374,43 @@
 
                 <!-- 7. Sync Guide -->
                 <section id="sync-guide">
-                    <h2>Strict Manual Sync</h2>
-                    <p>To protect your local data from being overwritten by accidental cloud changes, <strong>KeepMoviEZ never syncs automatically</strong>.</p>
+                    <h2>Sync & Privacy Settings</h2>
+                    <p>KeepMoviEZ now offers flexible synchronization options accessible via the new <strong><i class="fas fa-cog"></i> Settings</strong> menu.</p>
 
-                    <h4>The Workflow</h4>
-                    <ol>
-                        <li><strong>Make Changes:</strong> Add movies or update ratings on your device. These are marked locally as <code>edited</code> or <code>new</code>.</li>
-                        <li><strong>Click Sync:</strong> Go to Menu > Sync with Cloud.</li>
-                        <li><strong>Processing:</strong>
-                            <ul>
-                                <li>The app sends your local changes to the cloud (<strong>Push</strong>).</li>
-                                <li>The app asks the cloud for any newer data from other devices (<strong>Pull</strong>).</li>
-                                <li>The app saves the result and recalculates your stats (<strong>Merge</strong>).</li>
-                            </ul>
-                        </li>
-                    </ol>
+                    <h4>Sync Modes</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card h-100 border-info">
+                                <div class="card-body">
+                                    <h5 class="text-info"><i class="fas fa-sync"></i> Normal (Auto)</h5>
+                                    <p class="small">Synchronizes automatically in the background whenever you make a change. Ideal for multi-device users.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-secondary">
+                                <div class="card-body">
+                                    <h5 class="text-secondary"><i class="fas fa-hand-pointer"></i> Manual</h5>
+                                    <p class="small">The classic behavior. Changes stay local until you explicitly click <strong>"Sync with Cloud"</strong>.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card h-100 border-dark">
+                                <div class="card-body">
+                                    <h5 class="text-dark"><i class="fas fa-user-shield"></i> Strict Privacy</h5>
+                                    <p class="small">Disables all cloud features. The "Sync" button is hidden to prevent accidental uploads.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h4 class="mt-4">Advanced Data Controls</h4>
+                    <p>Inside the Settings menu, you will also find powerful data management tools:</p>
+                    <ul>
+                        <li><strong>Force Pull (Cloud → Device):</strong> Discards local changes and replaces them with the cloud backup.</li>
+                        <li><strong>Force Push (Device → Cloud):</strong> Wipes the cloud backup and uploads your current local data.</li>
+                    </ul>
                 </section>
 
                 <!-- 8. Import/Export -->
@@ -665,35 +687,26 @@
                 </section>
                 <!-- 12. Local-Only Workflow -->
                 <section id="local-only">
-                    <h2>For the Ultra-Private: Local-Only Mode</h2>
-                    <p>We designed KeepMoviEZ with a modern, secure cloud architecture where <strong>you</strong> own your data. However, we understand that some users prefer to keep their digital footprint strictly on their physical device.</p>
+                    <h2>For the Ultra-Private: Strict Privacy Mode</h2>
+                    <p>We designed KeepMoviEZ with a modern, secure cloud architecture where <strong>you</strong> own your data. However, for users who prefer to keep their digital footprint strictly on their physical device, we introduced <strong>Strict Privacy Mode</strong>.</p>
 
                     <div class="alert alert-secondary border-secondary">
-                        <h5><i class="fas fa-comments"></i> A Gentle Reality Check</h5>
-                        <p class="mb-2"><strong>Is this necessary? Honestly, probably not.</strong></p>
-                        <p class="small mb-0">
-                            We live in the cloud age. Our sync features are secure, private, and incredibly convenient for keeping your phone and laptop in harmony. By avoiding the cloud, you aren't gaining much security (since your local data is unencrypted on your device anyway), but you <em>are</em> losing the safety net of automatic backups. It's like buying a smartphone and refusing to connect it to Wi-Fi—you can do it, but you're missing out on the best parts.
-                        </p>
+                        <h5><i class="fas fa-shield-alt"></i> How to Enable</h5>
+                        <ol class="mb-0">
+                            <li>Open the <strong>Menu</strong> > <strong>Settings</strong>.</li>
+                            <li>Select <strong>Strict Privacy</strong>.</li>
+                            <li>The app is now locked to your device. Cloud sync features are disabled.</li>
+                        </ol>
                     </div>
 
-                    <p>If you still wish to proceed with a <strong>Device-Only</strong> workflow, follow these strict rules:</p>
+                    <p>In this mode, the application software actively blocks any attempt to communicate with the synchronization server.</p>
 
                     <div class="card bg-light mb-3">
                         <div class="card-body">
-                            <ol class="mb-0 font-weight-bold text-dark">
-                                <li class="mb-3">
-                                    <span class="text-primary">Initial Login is Mandatory:</span>
-                                    <br><span class="font-weight-normal small">You must log in once to initialize the app's encryption keys. This requires internet.</span>
-                                </li>
-                                <li class="mb-3">
-                                    <span class="text-danger">The "Forbidden" Buttons:</span>
-                                    <br><span class="font-weight-normal small">Never click <strong>"Sync with Cloud"</strong>, <strong>"Force Push"</strong>, or <strong>"Force Pull"</strong>. These are the bridges to the outside world. Pretend they don't exist.</span>
-                                </li>
-                                <li>
-                                    <span class="text-success">You are your own Cloud:</span>
-                                    <br><span class="font-weight-normal small">Since you aren't syncing, if you lose your phone, you lose your movies. You <strong>MUST</strong> regularly go to <code>Menu > Export</code> and save the JSON file to a safe place (like a USB drive or... ironically... Google Drive).</span>
-                                </li>
-                            </ol>
+                            <h5 class="text-dark"><i class="fas fa-exclamation-triangle"></i> Important Note on Backups</h5>
+                            <p class="small mb-0">
+                                Since you aren't syncing to the cloud, if you lose your phone, you lose your movies. You <strong>MUST</strong> regularly go to <code>Menu > Export</code> and save the JSON file to a safe place (like a USB drive).
+                            </p>
                         </div>
                     </div>
                 </section>

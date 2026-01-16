@@ -6,8 +6,8 @@ async function saveToIndexedDB() {
         try {
             await openDatabase();
             if (!db) {
-                 showToast("Local Save Failed", "Cannot connect to local database. Changes not saved locally.", "error");
-                 return;
+                showToast("Local Save Failed", "Cannot connect to local database. Changes not saved locally.", "error");
+                return;
             }
         } catch (e) {
             showToast("Local Save Failed", `Error connecting to local database: ${e.message}. Changes not saved.`, "error");
@@ -28,6 +28,21 @@ async function saveToIndexedDB() {
 
         return new Promise((resolve, reject) => {
             request.onsuccess = () => {
+                // --- MODIFIED: Auto-Sync Hook ---
+                const currentSyncMode = localStorage.getItem('keepmoviez_sync_mode');
+                const isOnline = navigator.onLine;
+
+                if (currentSyncMode === 'normal' && isOnline && !window.isSyncingInProgress) {
+                    console.log("Auto-Sync Triggered after local save.");
+                    // Debounce/Throttle this slightly to avoid rapid-fire syncs on batch edits
+                    if (window.autoSyncTimer) clearTimeout(window.autoSyncTimer);
+                    window.autoSyncTimer = setTimeout(() => {
+                        if (typeof comprehensiveSync === 'function') {
+                            comprehensiveSync(true); // true = silent mode
+                        }
+                    }, 2000); // 2 second delay to let user finish typing or batch operations finish
+                }
+
                 resolve();
             };
             request.onerror = (event) => {
@@ -81,17 +96,17 @@ async function loadFromIndexedDB() {
                     } catch (e) {
                         console.error("Error parsing cached data from IndexedDB:", e);
                         showToast(
-                            "CRITICAL: Local Cache Corrupted", 
-                            "Your local data was unreadable and has been cleared to prevent further issues. Please sync with the cloud to restore your data.", 
-                            "error", 
+                            "CRITICAL: Local Cache Corrupted",
+                            "Your local data was unreadable and has been cleared to prevent further issues. Please sync with the cloud to restore your data.",
+                            "error",
                             0,
                             null
                         );
-                        
+
                         const writeTransaction = db.transaction([STORE_NAME], 'readwrite');
                         const writeStore = writeTransaction.objectStore(STORE_NAME);
                         writeStore.delete(IDB_USER_DATA_KEY);
-                        
+
                         resolve([]);
                     }
                 } else {
@@ -183,9 +198,9 @@ function recalculateAndApplyAllRelationships() {
         visited.add(movie.id);
 
         let head = 0;
-        while(head < queue.length) {
+        while (head < queue.length) {
             const nodeId = queue[head++];
-            if(!nodeId) continue;
+            if (!nodeId) continue;
             currentComponent.add(nodeId);
 
             const neighbors = adj.get(nodeId) || new Set();

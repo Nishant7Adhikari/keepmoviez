@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.3.3 -->
+<!-- KeepMoviEZ  v5.4.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -103,20 +103,28 @@
             <div class="user-section p-3 border-bottom">
                 <span id="menuLoggedInUserEmail" class="d-block mb-1 small text-muted">Not logged in</span>
                 <span id="menuOnlineStatusIndicator" class="badge badge-pill badge-danger" title="Online Status">Offline</span>
-            </div>
+                <span id="menuSyncModeBadge" class="badge badge-pill badge-secondary ml-1" title="Sync Mode">Manual</span>
+                <!-- NEW: Last Synced Indicator -->
+                <small id="lastSyncedText" class="d-block mt-1 text-muted" style="font-size: 0.75em;"></small>
+                </div> <!-- Close user-section (re-adding this because I am editing inside it) -->
             <div class="list-group list-group-flush">
                 <button id="menuThemeToggleBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-sun mr-2"></i> Theme
                 </button>
-                <!-- NEW Import/Pull Button -->
+                <!-- NEW Settings Button -->
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#settingsModal" data-dismiss-menu="true">
+                    <i class="fas fa-cog mr-2"></i> Settings
+                </button>
+                
+                <!-- NEW Import/Pull Button (Cleaned) -->
                 <button id="menuImportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-cloud-download-alt mr-2"></i> Import
                 </button>
-                <!-- NEW Export/Push Button -->
+                <!-- NEW Export/Push Button (Cleaned) -->
                 <button id="menuExportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-cloud-upload-alt mr-2"></i> Export
                 </button>
-                <!-- Standard Sync Button -->
+                <!-- Standard Sync Button (Hidden by default in Normal/Strict Modes) -->
                 <button id="menuSyncDataBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-sync-alt mr-2"></i> Sync with Cloud
                 </button>
@@ -166,9 +174,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <h6>Force Pull from Cloud</h6>
-                    <p class="small text-muted">This will erase all local data on this device and replace it with your data from the cloud. This is useful for syncing a new device or resolving major data conflicts.</p>
-                    <button class="btn btn-warning btn-block" id="forcePullTriggerBtn"><i class="fas fa-cloud-download-alt"></i> Force Pull from Cloud</button>
+                    <!-- REMOVED Force Pull logic -->
                     <hr>
                     <h6>Import from File</h6>
                     <p class="small text-muted">Upload a CSV or JSON file to add or update your collection. You will be guided by the Smart Import Assistant.</p>
@@ -185,6 +191,61 @@
     </div>
 <!-- END CHUNK: Import / Pull -->
 
+<!-- START CHUNK: Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="settingsModalLabel"><i class="fas fa-cog"></i> Settings</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="mb-3">Sync Preferences</h6>
+                    <form id="syncSettingsForm">
+                        <div class="custom-control custom-radio mb-2">
+                            <input type="radio" id="syncModeManual" name="syncMode" class="custom-control-input" value="manual" checked>
+                            <label class="custom-control-label" for="syncModeManual">
+                                <strong>Manual Mode</strong> (Default)
+                                <small class="d-block text-muted">Sync only when you click the button.</small>
+                            </label>
+                        </div>
+                        <div class="custom-control custom-radio mb-2">
+                            <input type="radio" id="syncModeNormal" name="syncMode" class="custom-control-input" value="normal">
+                            <label class="custom-control-label" for="syncModeNormal">
+                                <strong>Normal Mode</strong> (Auto-Sync)
+                                <small class="d-block text-muted">Automatically syncs changes to the cloud.</small>
+                            </label>
+                        </div>
+                        <div class="custom-control custom-radio mb-3">
+                            <input type="radio" id="syncModeStrict" name="syncMode" class="custom-control-input" value="strict_privacy">
+                            <label class="custom-control-label" for="syncModeStrict">
+                                <strong>Strict Privacy Mode</strong>
+                                <small class="d-block text-muted">Disables all cloud synchronization. Only local data is used. TMDB lookup still works.</small>
+                            </label>
+                        </div>
+                    </form>
+
+                    <hr>
+                    <h6 class="mb-3 text-danger">Advanced Data Management</h6>
+                    
+                    <button class="btn btn-outline-warning btn-block mb-2" id="forcePullTriggerBtn">
+                        <i class="fas fa-cloud-download-alt"></i> Force Pull from Cloud
+                    </button>
+                    <p class="small text-muted mb-3">Replace local data with cloud backup.</p>
+
+                    <button class="btn btn-outline-danger btn-block mb-2" id="forcePushTriggerBtn">
+                        <i class="fas fa-cloud-upload-alt"></i> Force Push to Cloud
+                    </button>
+                    <p class="small text-muted">Overwrite cloud backup with local data.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+<!-- END CHUNK: Settings Modal -->
+
 <!-- START CHUNK: Export / Push -->
     <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
@@ -194,9 +255,7 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <h6>Force Push to Cloud</h6>
-                    <p class="small text-danger"><strong>Warning:</strong> This will completely overwrite your cloud data with the data from this device. Any changes made on other devices since your last sync will be lost.</p>
-                    <button class="btn btn-danger btn-block" id="forcePushTriggerBtn"><i class="fas fa-cloud-upload-alt"></i> Force Push to Cloud</button>
+                    <!-- REMOVED Force Push logic -->
                     <hr>
                     <h6>Export as File</h6>
                     <p class="small text-muted">Download a local backup of your collection in either CSV or JSON format.</p>

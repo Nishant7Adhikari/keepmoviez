@@ -302,7 +302,7 @@ window.proceedWithEntrySave = async function(entryToSave, idToEdit, saveAction) 
             } else {
                 showToast("Update Error", "Entry to update not found.", "error"); hideLoading(); return;
             }
-            showToast("Entry Updated", `"${entryToSave.Name}" updated locally.`, "success", undefined, DO_NOT_SHOW_AGAIN_KEYS.ENTRY_UPDATED);
+            showToast("Entry Updated", `"${entryToSave.Name}" updated.`, "success", undefined, DO_NOT_SHOW_AGAIN_KEYS.ENTRY_UPDATED);
         }
         recalculateAndApplyAllRelationships();
         sortMovies(currentSortColumn, currentSortDirection);

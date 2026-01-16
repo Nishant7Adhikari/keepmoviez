@@ -1,15 +1,15 @@
 // sw.js
-const CACHE_NAME = 'keepmoviez-local-v5.3.3'; // Version bumped to force update
-const OFFLINE_URL = 'offline.html'; 
-const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co'; 
+const CACHE_NAME = 'keepmoviez-local-v5.4.0'; // Version bumped to force update
+const OFFLINE_URL = 'offline.html';
+const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co';
 
 const CORE_ASSETS = [
   './',
   './index.html',
   './offline.html',
-  './style.css',  
+  './style.css',
   './manifest.json',
-  
+
   // Local CSS
   './libs/css/bootstrap.min.css',
   './libs/css/all.min.css',
@@ -18,7 +18,7 @@ const CORE_ASSETS = [
   './libs/webfonts/fa-solid-900.woff2',
   './libs/webfonts/fa-brands-400.woff2',
   './libs/webfonts/fa-regular-400.woff2',
-  
+
   // Local JS Libraries
   './libs/js/crypto-js.min.js',
   './libs/js/supabase.min.js',
@@ -46,7 +46,7 @@ const CORE_ASSETS = [
   './js/app.js',
   './js/supabase.js',
   './js/main.js',
-  
+
   // Icons
   './icons/icon-192x192.png',
   './icons/icon-512x512.png'
@@ -133,14 +133,14 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(request).then((response) => {
         return response || fetch(request).then((networkResponse) => {
-            // Only cache valid responses
-            if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
-              const responseToCache = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => {
-                cache.put(request, responseToCache);
-              });
-            }
-            return networkResponse;
+          // Only cache valid responses
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseToCache);
+            });
+          }
+          return networkResponse;
         });
       })
     );

@@ -2,21 +2,21 @@
 // START CHUNK: 1: Supabase Data Transformation Helpers
 function localEntryToSupabaseFormat(localEntry, userId) {
     if (!localEntry || !localEntry.id || !userId) { console.error("Invalid input to localEntryToSupabaseFormat", { localEntry, userId }); return null; }
-    
+
     const entryToFormat = { ...localEntry };
     delete entryToFormat._sync_state;
 
     let lastModified = entryToFormat.lastModifiedDate || new Date().toISOString();
     try { const dateObj = new Date(lastModified); if (isNaN(dateObj.getTime())) throw new Error(`Invalid date: ${lastModified}`); lastModified = dateObj.toISOString(); }
     catch (e) { console.warn(`Invalid lastModifiedDate for ${entryToFormat.id}, using current. Original: ${entryToFormat.lastModifiedDate}. Error: ${e.message}`); lastModified = new Date().toISOString(); }
-    
+
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
     const watchHistoryWithUUIDs = (entryToFormat.watchHistory || []).map(wh => {
         if (!wh || typeof wh !== 'object') return null;
         const ratingValue = (wh.rating !== null && wh.rating !== undefined && String(wh.rating).trim() !== '') ? parseFloat(wh.rating) : null;
         return { ...wh, watchId: (wh.watchId && uuidRegex.test(wh.watchId)) ? wh.watchId : generateUUID(), rating: isNaN(ratingValue) ? null : ratingValue };
     }).filter(Boolean);
-    
+
     const parseNumeric = (value, isFloat = false) => { if (value === null || value === undefined || String(value).trim() === '') return null; const num = isFloat ? parseFloat(value) : parseInt(value, 10); return isNaN(num) ? null : num; };
     const runtimeValue = (typeof entryToFormat.runtime === 'object' || typeof entryToFormat.runtime === 'number') ? entryToFormat.runtime : parseNumeric(entryToFormat.runtime);
 
@@ -82,6 +82,20 @@ async function comprehensiveSync(silent = false) {
         if (!silent) showToast("Offline", "You are offline. Sync will resume when you reconnect.", "warning");
         return { success: false, error: "Offline" };
     }
+    // --- NEW: Strict Privacy Mode Guard ---
+    const currentSyncMode = localStorage.getItem('keepmoviez_sync_mode');
+    if (currentSyncMode === 'strict_privacy') {
+        if (!silent) showToast("Privacy Mode Enabled", "Sync is disabled in Strict Privacy Mode.", "info");
+        return { success: false, error: "Privacy Locked" };
+    }
+
+    // --- NEW: Sync Lock to prevent loops ---
+    if (window.isSyncingInProgress) {
+        console.warn("Sync already in progress. Skipping.");
+        return { success: false, error: "Locked" };
+    }
+    window.isSyncingInProgress = true;
+
     if (!silent) showLoading("Syncing with cloud...");
 
     try {
@@ -143,7 +157,7 @@ async function comprehensiveSync(silent = false) {
                 .eq('user_id', currentSupabaseUser.id)
                 .eq('is_deleted', false);
             if (pullError) throw new Error(`Downloading remote entries failed: ${pullError.message}`);
-            
+
             pulledCount = entriesToPullData.length;
             changesMade = true;
 
@@ -157,19 +171,34 @@ async function comprehensiveSync(silent = false) {
         if (changesMade) {
             movieData = movieData.filter(e => !e.is_deleted);
             movieData.forEach(e => e._sync_state = 'synced');
-            
+
             recalculateAndApplyAllRelationships();
             sortMovies(currentSortColumn, currentSortDirection);
             await saveToIndexedDB();
-            
+
             // FIX: Clear stats cache and update achievements so UI reflects new data
-            if(window.globalStatsData) window.globalStatsData = {};
-            if(typeof checkAndNotifyNewAchievements === 'function') await checkAndNotifyNewAchievements();
+            if (window.globalStatsData) window.globalStatsData = {};
+            if (typeof checkAndNotifyNewAchievements === 'function') await checkAndNotifyNewAchievements();
 
             if (!silent) renderMovieCards();
         }
-        
+
         const summary = `Pulled: ${pulledCount}, Pushed: ${pushedCount}, Deleted: ${deletedCount}`;
+
+        // --- NEW: Update Last Synced Time on Success ---
+        const now = new Date().toISOString();
+        localStorage.setItem('last_synced_time', now);
+
+        // Update UI Text if function exists (reusing logic from main.js implicitly via event or direct DOM manip if needed, 
+        // but main.js handles onload. We should try to update it live.)
+        const lastSyncedText = document.getElementById('lastSyncedText');
+        if (lastSyncedText) {
+            const dateObj = new Date(now);
+            const dateStr = dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+            const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+            lastSyncedText.textContent = `Last Synced: ${dateStr}, ${timeStr}`;
+        }
+
         if (changesMade) {
             showToast("Sync Complete", summary, "success");
         } else if (!silent) {
@@ -184,17 +213,26 @@ async function comprehensiveSync(silent = false) {
         if (!silent) showToast("Sync Failed", `${error.message}`, "error", 10000);
         return { success: false, error: error.message };
     } finally {
+        window.isSyncingInProgress = false; // Release Lock
         if (!silent) hideLoading();
     }
 }
 // END CHUNK: 2
 
 // START CHUNK: Force Pull
+// START CHUNK: Force Pull
 async function forcePullFromSupabase() {
     if (!window.supabaseClient || !currentSupabaseUser) {
         showToast("Not Logged In", "Please log in to perform this action.", "error");
         return;
     }
+
+    // Guard: Strict Privacy
+    if (localStorage.getItem('keepmoviez_sync_mode') === 'strict_privacy') {
+        showToast("Privacy Mode Enabled", "Disable Strict Privacy Mode to use this feature.", "error");
+        return;
+    }
+
     showLoading("Force Pulling... Erasing local data...");
 
     try {
@@ -204,25 +242,22 @@ async function forcePullFromSupabase() {
             .select('*')
             .eq('user_id', currentSupabaseUser.id)
             .eq('is_deleted', false);
-        
+
         if (fetchError) throw new Error(`Could not fetch cloud data: ${fetchError.message}`);
-        
+
         showLoading(`Found ${cloudData.length} entries in cloud. Replacing local data...`);
 
-        // Step 2: Transform the cloud data into the local format
         const newLocalData = cloudData.map(entry => supabaseEntryToLocalFormat(entry));
 
-        // Step 3: Completely replace the local movieData array
         movieData = newLocalData;
-
-        // Step 4: Ensure graph integrity and save to IndexedDB
         recalculateAndApplyAllRelationships();
         sortMovies(currentSortColumn, currentSortDirection);
+        movieData.forEach(e => e._sync_state = 'synced');
         await saveToIndexedDB();
 
         // FIX: Clear stats cache and update achievements
-        if(window.globalStatsData) window.globalStatsData = {};
-        if(typeof checkAndNotifyNewAchievements === 'function') await checkAndNotifyNewAchievements();
+        if (window.globalStatsData) window.globalStatsData = {};
+        if (typeof checkAndNotifyNewAchievements === 'function') await checkAndNotifyNewAchievements();
 
         // Step 5: Re-render the UI and provide feedback
         renderMovieCards();
@@ -243,11 +278,18 @@ async function forcePushToSupabase() {
         showToast("Not Logged In", "Please log in to perform this action.", "error");
         return;
     }
+
+    // Guard: Strict Privacy
+    if (localStorage.getItem('keepmoviez_sync_mode') === 'strict_privacy') {
+        showToast("Privacy Mode Enabled", "Disable Strict Privacy Mode to use this feature.", "error");
+        return;
+    }
+
     showLoading("Force Pushing... Deleting cloud data...");
 
     try {
         const userId = currentSupabaseUser.id;
-        
+
         // Step 1: Delete all existing records for this user in Supabase.
         const { error: deleteError } = await window.supabaseClient
             .from('movie_entries')
@@ -294,7 +336,7 @@ async function forcePushToSupabase() {
 
 // START CHUNK: 3: Authentication and Application State
 let currentSupabaseUser = null;
-let isAppInitializing = false; 
+let isAppInitializing = false;
 
 async function initAuth() {
     showLoading("Initializing...");
@@ -326,12 +368,12 @@ async function initAuth() {
                 // No user object = Logged out state logic handled below in the else block of session check
             }
         };
-        
+
         // Check for Password Recovery Token in URL
         let recoveryToken = null;
         if (window.location.hash.includes('type=recovery')) {
-             const params = new URLSearchParams(window.location.hash.substring(1));
-             recoveryToken = params.get('access_token');
+            const params = new URLSearchParams(window.location.hash.substring(1));
+            recoveryToken = params.get('access_token');
         }
 
         if (recoveryToken) {
@@ -341,7 +383,7 @@ async function initAuth() {
             document.getElementById('authContainer').style.display = 'flex';
             document.getElementById('appContent').style.display = 'none';
             hideLoading();
-            return; 
+            return;
         }
 
         // Listener for future state changes (Logout, Login, Token Refresh)
@@ -359,7 +401,7 @@ async function initAuth() {
                 // HERE IS THE CORE LOGIC: 
                 // If isExplicitLogout is true (button clicked), we WIPE (true).
                 // If not (timeout/token expired), we SAVE (false).
-                // Note: window.isExplicitLogout must be defined in constant.js or main.js
+                // Note: window.isExplicitLogout must be defined in constant.js
                 const shouldWipe = window.isExplicitLogout === true;
                 await resetAppForLogout("You have been logged out.", shouldWipe);
                 window.isExplicitLogout = false; // Reset flag
@@ -378,8 +420,8 @@ async function initAuth() {
         const timeoutPromise = new Promise((resolve) => {
             setTimeout(() => {
                 console.log("Auth check timed out. Defaulting to local mode check.");
-                resolve({ data: { session: null }, error: null }); 
-            }, 2000); 
+                resolve({ data: { session: null }, error: null });
+            }, 2000);
         });
 
         const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
@@ -390,17 +432,17 @@ async function initAuth() {
             await handleUserSession(session.user);
         } else {
             console.log("No session found or offline. Checking local data...");
-            await openDatabase(); 
+            await openDatabase();
             // Load local data to see if we have anything (Privacy/Offline User)
             const localData = await loadFromIndexedDB();
-            
+
             if (localData && localData.length > 0) {
                 // Case: Not logged in, but we have data -> Load App in Guest Mode
                 movieData = localData;
                 await initializeApp();
             } else {
                 // Case: Not logged in, No data (First time user) -> Show Login
-                await resetAppForLogout("Please log in to continue.", false); 
+                await resetAppForLogout("Please log in to continue.", false);
             }
         }
 
@@ -416,15 +458,15 @@ async function initializeApp() {
     showLoading("Loading your collection...");
     try {
         if (!movieData || movieData.length === 0) {
-             movieData = await loadFromIndexedDB();
+            movieData = await loadFromIndexedDB();
         }
         console.log(`Loaded ${movieData.length} entries.`);
-        
+
         if (typeof recalculateAndApplyAllRelationships === 'function') recalculateAndApplyAllRelationships();
         sortMovies(currentSortColumn, currentSortDirection);
         if (typeof renderMovieCards === 'function') renderMovieCards();
         if (typeof populateGenreDropdown === 'function') populateGenreDropdown();
-        
+
         await window.checkAndNotifyNewAchievements(true);
 
         if (typeof migrateVeryOldLocalStorageData === 'function') {
@@ -437,9 +479,9 @@ async function initializeApp() {
 
         // Update UI for offline/guest state if needed
         if (!currentSupabaseUser) {
-             const emailEl = document.getElementById('menuLoggedInUserEmail');
-             if(emailEl) emailEl.textContent = "Guest (Local Mode)";
-             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
+            const emailEl = document.getElementById('menuLoggedInUserEmail');
+            if (emailEl) emailEl.textContent = "Guest (Local Mode)";
+            if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
         }
 
     } catch (error) {
@@ -456,8 +498,8 @@ async function initializeApp() {
  * @param {boolean} wipeData - TRUE = Security Wipe (Logout button), FALSE = Privacy Keep (Timeout/Offline)
  */
 async function resetAppForLogout(message, wipeData = false) {
-    console.warn(`Resetting App. Reason: ${message}. Wiping Data: ${wipeData}`); 
-    
+    console.warn(`Resetting App. Reason: ${message}. Wiping Data: ${wipeData}`);
+
     if (currentSupabaseUser) {
         sessionStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
     }
@@ -467,30 +509,30 @@ async function resetAppForLogout(message, wipeData = false) {
         // --- EXPLICIT LOGOUT: SECURITY WIPE ---
         movieData = [];
         if (typeof clearLocalMovieCache === 'function') await clearLocalMovieCache();
-        
+
         // Full UI Reset to Login Screen
         if (typeof destroyCharts === 'function') destroyCharts(chartInstances);
         if (window.isMultiSelectMode && typeof window.disableMultiSelectMode === 'function') window.disableMultiSelectMode();
         if (typeof $ !== 'undefined' && $.fn.modal) $('.modal.show').modal('hide');
         document.getElementById('appMenu')?.classList.remove('show');
         document.getElementById('appMenuBackdrop')?.classList.remove('show');
-        
+
         if (appContent) appContent.style.display = 'none';
         if (authContainer) authContainer.style.display = 'flex';
-        
+
         const passwordInput = document.getElementById('supabasePassword');
         if (passwordInput) passwordInput.value = '';
-        
+
         showToast("Logged Out", "Your local data has been cleared for security.", "info");
     } else {
         // --- IMPLICIT LOGOUT: PRESERVE DATA (Offline Mode) ---
         // If we are already viewing data, just update the UI to show we are offline/guest
         if (appContent.style.display === 'block') {
             const emailEl = document.getElementById('menuLoggedInUserEmail');
-            if(emailEl) emailEl.textContent = "Guest (Local Mode)";
-            
+            if (emailEl) emailEl.textContent = "Guest (Local Mode)";
+
             if (typeof updateSyncButtonState === 'function') updateSyncButtonState();
-            
+
             // Only show toast if it's an actual session expiry event, not just initial load
             if (message !== "Please log in to continue.") {
                 showToast("Session Ended", "Switched to local mode. Data preserved.", "warning");
@@ -535,15 +577,15 @@ function validateAuthForm(email, password, isSignUp = false) {
         authErrorDiv.style.display = 'block';
         return false;
     }
-    
+
     authErrorDiv.style.display = 'none';
     return true;
 }
 
 async function supabaseSignInUser(email, password) {
     const authErrorDiv = document.getElementById('authError');
-    if (!validateAuthForm(email, password)) return; 
-    
+    if (!validateAuthForm(email, password)) return;
+
     showLoading("Signing in...");
     try {
         const { error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
@@ -565,7 +607,7 @@ async function supabaseSignInWithGoogle() {
         const { error } = await window.supabaseClient.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: cleanRedirectTo, 
+                redirectTo: cleanRedirectTo,
             },
         });
         if (error) throw error;
@@ -579,7 +621,7 @@ async function supabaseSignInWithGoogle() {
 async function supabaseSignUpUser(email, password) {
     const authErrorDiv = document.getElementById('authError');
     if (!validateAuthForm(email, password, true)) return;
-    
+
     showLoading("Creating account...");
     try {
         const { error } = await window.supabaseClient.auth.signUp({ email, password });
@@ -600,11 +642,11 @@ async function supabaseSignOutUser() {
     showLoading("Signing out...");
     try {
         // SET THE FLAG: This tells resetAppForLogout to WIPE data because user explicitly clicked logout.
-        window.isExplicitLogout = true; 
-        
+        window.isExplicitLogout = true;
+
         const { error } = await window.supabaseClient.auth.signOut();
         if (error && error.name !== 'AuthSessionMissingError') throw error;
-        
+
         // Usually onAuthStateChange handles the rest.
     } catch (error) {
         console.error("Sign out error:", error);
@@ -622,11 +664,11 @@ async function supabaseSendPasswordResetEmail(email) {
     authErrorDiv.style.display = 'none';
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-         authErrorDiv.textContent = "Please enter a valid email address.";
-         authErrorDiv.style.display = 'block';
-         return;
+        authErrorDiv.textContent = "Please enter a valid email address.";
+        authErrorDiv.style.display = 'block';
+        return;
     }
-    
+
     showLoading("Sending reset link...");
     try {
         const cleanRedirectTo = window.location.origin + window.location.pathname;
@@ -677,7 +719,7 @@ async function eraseAllData() {
     }
 
     let message = "", eraseLocalCache = false, eraseCloudData = false;
-    
+
     switch (scope) {
         case 'local':
             message = "Erasing local cache...";

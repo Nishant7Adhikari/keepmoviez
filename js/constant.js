@@ -86,13 +86,13 @@ const ACHIEVEMENTS = [
     // I. Core Milestones
     // Entry Addition
     { id: 'entry_add_50', name: 'The Collector - Rookie', description: 'Add 50 entries.', type: 'total_entries', threshold: 50, icon: 'fas fa-database' },
-    { id: 'entry_add_300', name: 'The Archivist - Scout', description: 'Add 300 entries.', type: 'total_entries', threshold: 300, icon: 'fas fa-database' },
-    { id: 'entry_add_999', name: 'The Hoarder - Elite', description: 'Add 999 entries.', type: 'total_entries', threshold: 999, icon: 'fas fa-database' },
-    { id: 'entry_add_1500', name: 'Legendary Librarian - Sage', description: 'Add 1500 entries.', type: 'total_entries', threshold: 1500, icon: 'fas fa-database' },
+    { id: 'entry_add_300', name: 'The Collector - Scout', description: 'Add 300 entries.', type: 'total_entries', threshold: 300, icon: 'fas fa-database' },
+    { id: 'entry_add_999', name: 'The Collector - Elite', description: 'Add 999 entries.', type: 'total_entries', threshold: 999, icon: 'fas fa-database' },
+    { id: 'entry_add_1500', name: 'The Collector - Sage', description: 'Add 1500 entries.', type: 'total_entries', threshold: 1500, icon: 'fas fa-database' },
     // Titles Watched (Overall)
-    { id: 'watched_overall_64', name: 'Getting Started - Rookie', description: 'Watch 64 titles. ', type: 'total_titles_watched', threshold: 64, icon: 'fas fa-play-circle' },
-    { id: 'watched_overall_256', name: 'Couch Potato - Scout', description: 'Watch 256 titles.', type: 'total_titles_watched', threshold: 256, icon: 'fas fa-couch' },
-    { id: 'watched_overall_512', name: 'Cinema Awakening - Elite', description: 'Watch 512 titles.', type: 'total_titles_watched', threshold: 512, icon: 'fas fa-film' },
+    { id: 'watched_overall_64', name: 'Sacred Cinephile - Rookie', description: 'Watch 64 titles. ', type: 'total_titles_watched', threshold: 64, icon: 'fas fa-play-circle' },
+    { id: 'watched_overall_256', name: 'Sacred Cinephile - Scout', description: 'Watch 256 titles.', type: 'total_titles_watched', threshold: 256, icon: 'fas fa-couch' },
+    { id: 'watched_overall_512', name: 'Sacred Cinephile - Elite', description: 'Watch 512 titles.', type: 'total_titles_watched', threshold: 512, icon: 'fas fa-film' },
     { id: 'watched_overall_1024', name: 'Sacred Cinephile - Sage', description: 'Watch 1024 titles.', type: 'total_titles_watched', threshold: 1024, icon: 'fas fa-star-of-david' },
     // True Rewatcher (Distinct Titles Rewatched)
     { id: 'rewatched_distinct_5', name: 'Déjà Viewer - Rookie', description: 'Rewatch 5 distinct movies.', type: 'distinct_titles_rewatched', threshold: 5, icon: 'fas fa-redo' },
