@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = 'keepmoviez-local-v5.4.0'; // Version bumped to force update
+const CACHE_NAME = 'keepmoviez-local-v5.4.2'; // Version bumped to force update
 const OFFLINE_URL = 'offline.html';
 const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co';
 
@@ -124,7 +124,10 @@ self.addEventListener('fetch', (event) => {
     // Strategy: Network-First for main page navigation.
     event.respondWith(
       fetch(request).catch(() => {
-        return caches.match(OFFLINE_URL) || caches.match('./index.html');
+        // FIXED: Try to serve the App Shell (index.html) first!
+        // This ensures the PWA loads and runs from IndexedDB when offline.
+        // Fallback to offline.html only if index.html is missing (unlikely).
+        return caches.match('./index.html') || caches.match(OFFLINE_URL);
       })
     );
 

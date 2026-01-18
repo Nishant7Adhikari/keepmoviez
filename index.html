@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.4.0 -->
+<!-- KeepMoviEZ  v5.4.2 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -216,6 +216,26 @@
                                 <small class="d-block text-muted">Automatically syncs changes to the cloud.</small>
                             </label>
                         </div>
+                        <!-- Custom Mode  -->
+                        <div class="custom-control custom-radio mb-2">
+                            <input type="radio" id="syncModeCustom" name="syncMode" class="custom-control-input" value="custom">
+                            <label class="custom-control-label" for="syncModeCustom">
+                                <strong class="text-success"><i class="fas fa-star" style="font-size: 0.8em;"></i> Custom Mode</strong> (Recommended)
+                                <small class="d-block text-muted">Syncs after a set number of changes to save data/battery.</small>
+                            </label>
+                        </div>
+                        <!-- Custom Mode Settings Panel -->
+                        <div id="customSyncSettingsPanel" class="ml-4 pl-2 border-left mt-2 mb-2" style="display: none;">
+                            <div class="form-group mb-1">
+                                <label for="customSyncThresholdRange" class="small font-weight-bold">Sync Threshold: <span id="customSyncThresholdValue" class="text-primary">5</span> items</label>
+                                <input type="range" class="custom-range" id="customSyncThresholdRange" min="2" max="20" step="1" value="5">
+                                <small class="form-text text-muted">Cloud sync will trigger after you modify <span id="customSyncThresholdDisplay">5</span> distinct entries.</small>
+                            </div>
+                            <div class="alert alert-light border small p-2 mt-2">
+                                <strong>Pending Changes:</strong> <span id="pendingChangesCounter" class="badge badge-warning">0</span> / <span id="pendingChangesTarget">5</span>
+                            </div>
+                        </div>
+
                         <div class="custom-control custom-radio mb-3">
                             <input type="radio" id="syncModeStrict" name="syncMode" class="custom-control-input" value="strict_privacy">
                             <label class="custom-control-label" for="syncModeStrict">
@@ -636,6 +656,25 @@
                                 <div id="advancedCollapse" class="collapse" aria-labelledby="advancedHeading" data-parent="#advancedSectionAccordion">
                                     <div class="card-body">
                                         <!-- All the detailed fields now live inside here -->
+                                        
+                                        <!-- NEW: Poster URL Field -->
+                                        <div class="form-group">
+                                            <label for="editPosterUrl">Poster URL <small class="text-muted">(Custom image link)</small></label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="editPosterUrl" placeholder="https://example.com/image.jpg">
+                                                <div class="input-group-append">
+                                                    <span class="input-group-text" id="lockedIndicator" title="Locked (Custom URL)" style="display:none; cursor: pointer;">
+                                                        <i class="fas fa-lock text-warning"></i>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <small class="form-text text-muted">Paste a direct image link (ending in .jpg, .png). It will be locked and protected from auto-updates.</small>
+                                            
+                                            <div id="editPosterPreviewContainer" class="mt-2 text-center p-2 border rounded bg-light" style="display:none;">
+                                                <img id="editPosterPreview" src="" alt="Poster Preview" style="max-height: 200px; max-width: 100%; border-radius: 8px;">
+                                            </div>
+                                        </div>
+
                                         <div class="form-group">
                                             <label for="genreSearchInput">Genre</label>
                                             <div id="genreInputContainer" tabindex="0"><input id="genreSearchInput" type="text" placeholder="Click to add genres..."></div>
@@ -1583,20 +1622,21 @@
     <script src="libs/js/jspdf.plugin.autotable.min.js"></script>
 
    <!-- Custom JS modules  -->
-    <script src="js/constant.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/indexeddb.js"></script>
-    <script src="js/data.js"></script>
-    <script src="js/io1.js"></script>
-    <script src="js/io2.js"></script>
-    <script src="js/tmdb.js"></script>
-    <script src="js/genre.js"></script>
-    <script src="js/analysis.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/reporting.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/supabase.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/constant.js?v=1"></script>
+    <script src="js/utils.js?v=1"></script>
+    <script src="js/indexeddb.js?v=1"></script>
+    <script src="js/data.js?v=1"></script>
+    <script src="js/io1.js?v=1"></script>
+    <script src="js/io2.js?v=1"></script>
+    <script src="js/tmdb.js?v=1"></script>
+    <script src="js/genre.js?v=1"></script>
+    <script src="js/analysis.js?v=5.3.4?v=1"></script>
+    <script src="js/ui.js?v=1"></script>
+    <script src="js/reporting.js?v=1"></script>
+    <script src="js/app.js?v=1"></script>
+    <script src="js/supabase.js?v=1"></script>
+    <script src="js/backfill.js?v=1"></script>
+    <script src="js/main.js?v=1"></script>
 <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
 </body>

@@ -196,7 +196,14 @@ function renderNextBatch() {
         if (!movie || !movie.id) return;
 
         const latestWatch = getLatestWatchInstance(movie.watchHistory || []);
-        const posterUrl = movie['Poster URL'] || 'icons/placeholder-poster.png';
+        
+        // FIX: Strip quotes if present
+        let rawPoster = movie['Poster URL'];
+        if (rawPoster && rawPoster.startsWith('"') && rawPoster.endsWith('"')) {
+            rawPoster = rawPoster.slice(1, -1);
+        }
+        const posterUrl = rawPoster || 'icons/placeholder-poster.png';
+        
         const statusClass = `status-${String(movie.Status || 'unwatched').toLowerCase().replace(/\s+/g, '-')}`;
         
         const card = document.createElement('div');
@@ -435,6 +442,50 @@ function populateFilterGenreDropdown() {
 // END CHUNK: Filter Modal UI
 
 // START CHUNK: Modal Preparation and Display Logic
+// START CHUNK: Poster URL Handling
+window.handlePosterUrlInput = function(forceLockedState = null) {
+    const input = document.getElementById('editPosterUrl');
+    const previewContainer = document.getElementById('editPosterPreviewContainer');
+    const previewImg = document.getElementById('editPosterPreview');
+    const lockIcon = document.getElementById('lockedIndicator');
+    
+    if (!input || !previewImg) return;
+
+    const url = input.value.trim();
+    
+    // Logic: If forceLockedState is provided, use it.
+    // Otherwise, if the user is typing, we assume they want to verify it.
+    // We don't necessarily lock it just by typing, lock happens on SAVE.
+    // But we show the lock icon if it WAS locked (forceLockedState=true).
+    
+    if (url) {
+        previewImg.src = url;
+        previewContainer.style.display = 'block';
+        previewImg.onerror = () => { 
+            // Optional: fallback or hide
+            // previewimg.src = 'placeholder.png'; 
+        };
+    } else {
+        previewContainer.style.display = 'none';
+        previewImg.src = '';
+    }
+
+    if (forceLockedState !== null && lockIcon) {
+         lockIcon.style.display = forceLockedState ? 'flex' : 'none';
+    }
+    
+    // NEW: Source Tracking
+    // If this function is called via Event Listener (forceLockedState is null), it's a Manual User Edit.
+    if (forceLockedState === null && input) {
+        input.dataset.source = 'manual';
+    }
+    // Note: If user manually changes it, we don't show lock icon immediately?
+    // User requested: "enclose it in double quote... so if there is an url with "" do not overwrite it"
+    // Visual feedback: If user types, maybe show an "Unsaved Custom URL" indicator?
+    // For now, simple is best. Lock icon only appears if we loaded a locked URL.
+}
+// END CHUNK: Poster URL Handling
+
 window.prepareAddModal = function() {
     const entryModal = $('#entryModal');
     entryModal.find('.modal-title').text('Add New Entry');
@@ -471,6 +522,12 @@ window.prepareAddModal = function() {
     // Hide Update button
     $('#updateEntryBtn').hide();
     
+    // NEW: Reset Poster URL & Preview
+    if(formFieldsGlob.posterUrl) {
+         formFieldsGlob.posterUrl.value = '';
+         handlePosterUrlInput(); // Clear preview
+    }
+
     toggleConditionalFields();
     entryModal.modal('show');
     entryModal.one('shown.bs.modal', () => formFieldsGlob.name.focus());
@@ -500,7 +557,22 @@ window.prepareEditModal = function(id) {
     formFieldsGlob.year.value = movie.Year || ''; 
     formFieldsGlob.country.value = movie.Country || '';
     formFieldsGlob.description.value = movie.Description || ''; 
-    formFieldsGlob.posterUrl.value = movie['Poster URL'] || '';
+    formFieldsGlob.country.value = movie.Country || '';
+    formFieldsGlob.description.value = movie.Description || ''; 
+
+    // NEW: Handle Custom Poster URL (Locked/Quoted)
+    let rawPosterUrl = movie['Poster URL'] || '';
+    let isLocked = false;
+    if (rawPosterUrl.startsWith('"') && rawPosterUrl.endsWith('"')) {
+        isLocked = true;
+        rawPosterUrl = rawPosterUrl.slice(1, -1); // Strip quotes for display
+        formFieldsGlob.posterUrl.dataset.source = 'manual'; // It was already custom
+    } else {
+        formFieldsGlob.posterUrl.dataset.source = 'tmdb'; // It was likely TMDB (unlocked)
+    }
+    formFieldsGlob.posterUrl.value = rawPosterUrl;
+    // Trigger preview update explicitly
+    handlePosterUrlInput(isLocked);
     formFieldsGlob.tmdbSearchYear.value = '';
     
     if (movie.Category === 'Series' && typeof movie.runtime === 'object' && movie.runtime) {
@@ -598,7 +670,11 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         const toggle = (selector, condition) => modal.find(selector).toggle(!!condition);
 
         // 2. POPULATE POSTER
-        const posterUrl = fullDetails['Poster URL'] || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w780${fullDetails.poster_path}` : null);
+        let rawPoster = fullDetails['Poster URL'];
+        if (rawPoster && rawPoster.startsWith('"') && rawPoster.endsWith('"')) {
+            rawPoster = rawPoster.slice(1, -1);
+        }
+        const posterUrl = rawPoster || (fullDetails.poster_path ? `${TMDB_IMAGE_BASE_URL}w780${fullDetails.poster_path}` : null);
         toggle('#detailsPoster', !!posterUrl);
         toggle('#noPosterMessage', !posterUrl);
         if (posterUrl) modal.find('#detailsPoster').attr('src', posterUrl);
@@ -607,12 +683,15 @@ window.openDetailsModal = async function(id = null, tmdbObject = null) {
         const title = fullDetails.Name || fullDetails.title || fullDetails.name;
         setText('#detailsName', title);
 
-        const year = fullDetails.Year || (fullDetails.release_date || fullDetails.first_air_date || '').substring(0, 4);
+        const releaseDate = fullDetails.tmdb_release_date || fullDetails.release_date || fullDetails.first_air_date;
+        const year = releaseDate ? new Date(releaseDate).getFullYear().toString() : (fullDetails.Year || '');
+        const formattedReleaseDate = releaseDate ? new Date(releaseDate).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : year;
+
         const lang = fullDetails.Language || (fullDetails.spoken_languages?.[0]?.english_name);
         const country = fullDetails.Country ? getCountryFullName(fullDetails.Country) : (fullDetails.production_countries?.[0]?.name);
         const mediaType = fullDetails.tmdbMediaType || fullDetails.media_type || fullDetails.Category;
 
-        let metaLineParts = [year, lang, country].filter(Boolean);
+        let metaLineParts = [formattedReleaseDate, lang, country].filter(Boolean);
         
         if ((mediaType === 'Series' || mediaType === 'tv') && isLocalEntry) {
             const seasons = fullDetails.runtime?.seasons ?? fullDetails.number_of_seasons;

@@ -29,10 +29,24 @@ function calculateAllStatistics(currentMovieData) {
     let pre1980Count = 0, recent5YearsCount = 0, detailedDescriptionCount = 0, manualLinksCount = 0, hiddenGemCount = 0;
     const currentYear = new Date().getFullYear();
     const directorWatchCounts = new Map(), studioWatchCounts = new Map();
+    const tmdbCollectionMovieIds = new Map(); // Track distinct movie IDs per collection
     const genreWatchesByDate = {}; // For short-term streak
     
-    // Special Title Trackers
-    let yourNameWatched = false;
+    const productionCompanyNormalizationMap = {
+        "Marvel Entertainment": "Marvel Studios",
+        "Kevin Feige Productions": "Marvel Studios",
+        "Warner Bros. Pictures": "Warner Bros.",
+        "Warner Bros. Animation": "Warner Bros.",
+        "Warner Bros. Television": "Warner Bros.",
+        "DC Entertainment": "DC Films",
+        "DC Comics": "DC Films",
+    };
+
+    // Special Title Trackers (Dynamic mapping from achievement definitions)
+    const specialTitleStatus = {};
+    ACHIEVEMENTS.forEach(ach => {
+        if (ach.type === 'special_title_watch') specialTitleStatus[ach.id] = false;
+    });
 
     currentMovieData.forEach(movie => {
         if (!movie || !movie.id) return;
@@ -77,10 +91,26 @@ function calculateAllStatistics(currentMovieData) {
 
         // Special Title Checks
         if (isWatchedOrContinue(movie)) {
-            const titleLower = (movie.Name || '').toLowerCase().trim();
-            if (titleLower === 'your name' || titleLower === 'your name.' || titleLower === 'kimi no na wa' || titleLower === 'kimi no na wa.') {
-                yourNameWatched = true;
-            }
+            ACHIEVEMENTS.forEach(ach => {
+                if (ach.type === 'special_title_watch') {
+                    // 1. Precise Match (ID)
+                    const idMatch = (ach.tmdbId && movie.tmdbId == ach.tmdbId) || (ach.imdbId && movie.imdb_id == ach.imdbId);
+                    
+                    // 2. Fallback Match (Name - Case Insensitive)
+                    let nameMatch = false;
+                    if (!idMatch && Array.isArray(ach.titleNames)) {
+                        const titleLower = (movie.Name || '').toLowerCase().trim().replace(/\.$/, '');
+                        nameMatch = ach.titleNames.some(target => {
+                            const targetLower = target.toLowerCase().trim().replace(/\.$/, '');
+                            return titleLower === targetLower;
+                        });
+                    }
+
+                    if (idMatch || nameMatch) {
+                        specialTitleStatus[ach.id] = true;
+                    }
+                }
+            });
         }
 
         if (isWatchedOrContinue(movie)) {
@@ -141,16 +171,22 @@ function calculateAllStatistics(currentMovieData) {
             }
             if (Array.isArray(movie.production_companies)) movie.production_companies.slice(0, 5).forEach(c => {
                 if (c && c.name) {
-                    productionCompanyCounts[c.name] = (productionCompanyCounts[c.name] || 0) + 1;
-                    studioWatchCounts.set(c.name, (studioWatchCounts.get(c.name) || 0) + 1);
+                    const normalizedName = productionCompanyNormalizationMap[c.name] || c.name;
+                    productionCompanyCounts[normalizedName] = (productionCompanyCounts[normalizedName] || 0) + 1;
+                    studioWatchCounts.set(normalizedName, (studioWatchCounts.get(normalizedName) || 0) + 1);
                     if (overallRatingKey !== 'N/A') {
-                        studioRatingsSum[c.name] = (studioRatingsSum[c.name] || 0) + parseFloat(movie.overallRating);
-                        studioRatedEntriesCount[c.name] = (studioRatedEntriesCount[c.name] || 0) + 1;
+                        studioRatingsSum[normalizedName] = (studioRatingsSum[normalizedName] || 0) + parseFloat(movie.overallRating);
+                        studioRatedEntriesCount[normalizedName] = (studioRatedEntriesCount[normalizedName] || 0) + 1;
                     }
                 }
             });
 
-            if(movie.tmdb_collection_id) tmdbCollectionCounts[movie.tmdb_collection_id] = (tmdbCollectionCounts[movie.tmdb_collection_id] || 0) + 1;
+            if(movie.tmdb_collection_id) {
+                if (!tmdbCollectionMovieIds.has(movie.tmdb_collection_id)) {
+                    tmdbCollectionMovieIds.set(movie.tmdb_collection_id, new Set());
+                }
+                tmdbCollectionMovieIds.get(movie.tmdb_collection_id).add(movie.id);
+            }
             if (movie.tmdb_vote_count < 1000 && movie.tmdb_vote_average > 7.0) hiddenGemCount++;
             overallRatingCounts[overallRatingKey] = (overallRatingCounts[overallRatingKey] || 0) + 1;
         }
@@ -242,10 +278,10 @@ function calculateAllStatistics(currentMovieData) {
     achievementData.language_variety_count = uniqueLanguagesWatched.size;
     achievementData.time_of_day_watch = {
         night: allWatchInstances.filter(wi => wi.time >= 0 && wi.time < 4).length,
-        early_morning: allWatchInstances.filter(wi => wi.time >= 5 && wi.time < 8).length,
+        early_morning: allWatchInstances.filter(wi => wi.time >= 4 && wi.time < 9).length,
     };
     achievementData.detailed_description_count = detailedDescriptionCount;
-    achievementData.tmdb_collection_streak_count = Math.max(0, ...Object.values(tmdbCollectionCounts));
+    achievementData.tmdb_collection_streak_count = tmdbCollectionMovieIds.size > 0 ? Math.max(0, ...Array.from(tmdbCollectionMovieIds.values()).map(s => s.size)) : 0;
     achievementData.director_streak_count = Math.max(0, ...directorWatchCounts.values());
     achievementData.studio_streak_count = Math.max(0, ...studioWatchCounts.values());
     achievementData.manual_links_count = Math.floor(manualLinksCount / 2);
@@ -254,19 +290,24 @@ function calculateAllStatistics(currentMovieData) {
     for(const genre in genreWatchesByDate) {
         const dates = Array.from(genreWatchesByDate[genre]).sort();
         if(dates.length < 3) continue;
+        let hasValidStreak = false;
         for(let i=0; i <= dates.length - 3; i++) {
             const firstDate = new Date(dates[i]);
             const thirdDate = new Date(dates[i+2]);
-            if((thirdDate - firstDate) / (1000 * 3600 * 24) <= 7) {
-                themedSpreeCount++; break;
+            const daysDifference = (thirdDate - firstDate) / (1000 * 3600 * 24);
+            if(daysDifference <= 7) {
+                hasValidStreak = true;
+                break;
             }
         }
+        if(hasValidStreak) themedSpreeCount = 1;
     }
     achievementData.genre_streak_short_term = themedSpreeCount;
     achievementData.hidden_gem_count = hiddenGemCount;
-    achievementData.special_title_watch = {
-        your_name: yourNameWatched ? 1 : 0
-    };
+    achievementData.special_title_watch = {};
+    Object.keys(specialTitleStatus).forEach(key => {
+        achievementData.special_title_watch[key] = specialTitleStatus[key] ? 1 : 0;
+    });
 
     achievementData.active_days_count = JSON.parse(localStorage.getItem('app_usage_dates_achievement') || '[]').length;
     achievementData.sync_count = parseInt(localStorage.getItem('sync_count_achievement') || '0');
@@ -449,10 +490,10 @@ function checkAchievement(achievement, stats) {
             progress = statValue[achievement.recommendation] || 0;
             break;
         case 'time_of_day_watch':
-            progress = statValue[achievement.period] > 0 ? 1 : 0;
+            progress = statValue[achievement.period] || 0;
             break;
         case 'special_title_watch':
-             progress = statValue['your_name'] || 0;
+             progress = statValue[achievement.id] || 0;
              break;
         case 'tmdb_collection_completed_count': // This is a complex case, simplified here
         case 'pre_year_watched_count':

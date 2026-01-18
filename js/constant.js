@@ -11,6 +11,8 @@ const DB_NAME = 'KeepMovieZ_UserCacheDB_v2';
 const DB_VERSION = 1;
 const STORE_NAME = 'movieEntries';
 const IDB_USER_DATA_KEY = 'userMovieData';
+const CUSTOM_SYNC_THRESHOLD_KEY = 'customSyncThreshold'; // Stores user pref (2-20)
+const MODIFIED_ENTRIES_LIST_KEY = 'modifiedEntriesList'; // Stores Array of IDs changed since last sync
 // END CHUNK: API and Database Keys
 
 // START CHUNK: Application Feature Constants
@@ -45,7 +47,7 @@ const CSV_HEADERS = [
     "id", "Name", "Category", "Genre", "Status", "seasonsCompleted", "currentSeasonEpisodesWatched", "Recommendation", "overallRating", "personalRecommendation",
     "Language", "Year", "Country", "Description", "Poster URL",
     "watchHistory", "relatedEntries", "Last Watched Date", "Last Watch Rating", "lastModifiedDate",
-    "tmdbId", "tmdbMediaType", "keywords", "tmdb_collection_id", "tmdb_collection_name",
+    "tmdbId", "tmdbMediaType", "tmdb_release_date", "keywords", "tmdb_collection_id", "tmdb_collection_name",
     "director_info", "full_cast", "production_companies", "tmdb_vote_average", "tmdb_vote_count", "runtime", "imdb_id"
 ];
 
@@ -196,12 +198,11 @@ const ACHIEVEMENTS = [
     { id: 'sync_250', name: 'Cloud Connector - Scout', description: 'Perform cloud sync 250 times.', type: 'sync_count', threshold: 250, icon: 'fas fa-cloud-upload-alt' },
     // Removed: Sync Sensei (High Threshold)
     { id: 'stats_opened_100', name: 'Stats Nerd', description: 'Open any stats/insights modal 100 times.', type: 'stats_modal_opened_count', threshold: 100, icon: 'fas fa-chart-bar' },
-    { id: 'night_owl_watch', name: 'Night Owl', description: 'Log a watch instance between 12 AM and 4 AM.', type: 'time_of_day_watch', period: 'night', threshold: 1, icon: 'fas fa-moon' },
-    { id: 'early_bird_watch', name: 'Early Bird', description: 'Log a watch instance between 5 AM and 8 AM.', type: 'time_of_day_watch', period: 'early_morning', threshold: 1, icon: 'fas fa-sun' },
+    { id: 'night_owl_watch', name: 'Night Owl', description: 'Log a watch instance between 12:00 AM and 3:59 AM.', type: 'time_of_day_watch', period: 'night', threshold: 1, icon: 'fas fa-moon' },
+    { id: 'early_bird_watch', name: 'Early Bird', description: 'Log a watch instance between 4:00 AM and 8:59 AM.', type: 'time_of_day_watch', period: 'early_morning', threshold: 1, icon: 'fas fa-sun' },
     { id: 'desc_detail_10', name: 'Detail Oriented', description: 'Write descriptions >30 characters for 10 entries.', type: 'detailed_description_count', minLength: 30, threshold: 10, icon: 'fas fa-file-alt' },
     { id: 'franchise_3', name: 'Trilogy Tracker - Rookie', description: 'Watch 3 titles from the same TMDB collection.', type: 'tmdb_collection_streak_count', threshold: 3, icon: 'fas fa-project-diagram' },
     { id: 'franchise_5', name: 'Saga Seeker - Scout', description: 'Watch 5 titles from the same TMDB collection.', type: 'tmdb_collection_streak_count', threshold: 5, icon: 'fas fa-sitemap' },
-    { id: 'franchise_all_5plus', name: 'Collection Completer - Elite', description: 'Watch all titles from a TMDB collection of 5+ entries.', type: 'tmdb_collection_completed_count', minCollectionSize: 5, threshold: 1, icon: 'fas fa-check-circle' },
     { id: 'director_3', name: 'Director Dabbler - Rookie', description: 'Watch 3 titles by the same director.', type: 'director_streak_count', threshold: 3, icon: 'fas fa-video' },
     { id: 'director_5', name: 'Auteur Admirer - Scout', description: 'Watch 5 titles by the same director.', type: 'director_streak_count', threshold: 5, icon: 'fas fa-user-tie' },
     { id: 'director_10', name: 'Director Devotee - Elite', description: 'Watch 10 titles by the same director.', type: 'director_streak_count', threshold: 10, icon: 'fas fa-bullhorn' },
@@ -217,7 +218,7 @@ const ACHIEVEMENTS = [
     { id: 'daily_rec_watched_15', name: 'Picky Pro - Scout', description: 'Watch the Daily Recommendation 15 times.', type: 'daily_recommendation_watched_count', threshold: 15, icon: 'fas fa-calendar-check' },
     { id: 'daily_rec_watched_30', name: 'Suggestion Sovereign - Elite', description: 'Watch the Daily Recommendation 30 times.', type: 'daily_recommendation_watched_count', threshold: 30, icon: 'fas fa-crown' },
     // Special Title Achievements
-    { id: 'special_your_name', name: 'Destined Encounter', description: 'Watch "Your Name" (Kimi no Na wa). ❤️', type: 'special_title_watch', titleNames: ['Your Name', 'Kimi no Na wa.'], threshold: 1, icon: 'fas fa-comet' },
+    { id: 'special_your_name', name: 'Destined Encounter', description: 'Watch "Your Name" (Kimi no Na wa). ❤️', type: 'special_title_watch', titleNames: ['Your Name', 'Kimi no Na wa.', 'Your Name.'], tmdbId: 372058, imdbId: 'tt5311514', threshold: 1, icon: 'fas fa-meteor' },
 
     // VIII. "Meta" Achievements
     { id: 'meta_bronze_15', name: 'Bronze Collector', description: 'Achieve 15 other achievements.', type: 'meta_achievement_count', threshold: 15, icon: 'fas fa-trophy' },
@@ -346,7 +347,7 @@ function initializeDOMElements() {
         language: document.getElementById('language'),
         year: document.getElementById('year'),
         country: document.getElementById('country'),
-        posterUrl: document.getElementById('posterUrl'),
+        posterUrl: document.getElementById('editPosterUrl'),
         tmdbId: document.getElementById('tmdbId'),
         tmdbMediaType: document.getElementById('tmdbMediaType'),
         tmdbSearchYear: document.getElementById('tmdbSearchYear'),

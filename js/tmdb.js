@@ -241,7 +241,21 @@ async function applyTmdbSelection(item) {
     formFieldsGlob.year.value = year;
     formFieldsGlob.country.value = tmdbCountryISO;
     formFieldsGlob.language.value = tmdbLanguage;
-    formFieldsGlob.posterUrl.value = tmdbPosterPath;
+
+    // NEW: Overwrite Protection for Poster URL
+    const existingPosterVal = formFieldsGlob.posterUrl.value.trim();
+    if (existingPosterVal.startsWith('"') && existingPosterVal.endsWith('"')) {
+        console.log("Skipping Poster URL update (Locked by User).");
+        // Keep existing, do nothing
+    } else {
+        formFieldsGlob.posterUrl.value = tmdbPosterPath;
+        // Also update preview
+        if(typeof window.handlePosterUrlInput === 'function') {
+            window.handlePosterUrlInput(false); // False = Not locked (it's from TMDB)
+        }
+        formFieldsGlob.posterUrl.dataset.source = 'tmdb'; // Track source
+    }
+    
     if (item.overview) formFieldsGlob.description.value = item.overview;
 
     document.getElementById('tmdbId').value = item.id;
@@ -273,7 +287,8 @@ async function applyTmdbSelection(item) {
             tmdb_collection_id: tmdbCollectionId,
             tmdb_collection_name: tmdbCollectionName, 
             tmdb_collection_total_parts: tmdbCollectionTotalParts,
-            imdb_id: detailData.external_ids?.imdb_id || null
+            imdb_id: detailData.external_ids?.imdb_id || null,
+            tmdb_release_date: releaseDate || null
         };
     }
     if (typeof showToast === 'function') showToast("Info Applied", `${item.title || item.name} details pre-filled. Review and save.`, "info", 3000);

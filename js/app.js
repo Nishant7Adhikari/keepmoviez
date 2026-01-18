@@ -238,7 +238,18 @@ window.handleFormSubmit = async function(event, saveAction = 'quickSave') {
             Recommendation: (formFieldsGlob.status.value === 'Watched' || formFieldsGlob.status.value === 'Continue') ? formFieldsGlob.recommendation.value : '',
             overallRating: (formFieldsGlob.status.value === 'Watched' || formFieldsGlob.status.value === 'Continue') ? formFieldsGlob.overallRating.value : '',
             personalRecommendation: formFieldsGlob.personalRecommendation.value, Language: formFieldsGlob.language.value.trim(), Year: yearVal, Country: countryCodeToStore,
-            Description: formFieldsGlob.description.value.trim(), 'Poster URL': formFieldsGlob.posterUrl.value.trim(), 
+            Description: formFieldsGlob.description.value.trim(), 
+            // NEW: Custom Logic for Poster URL (Quote if Manual/Custom)
+            'Poster URL': (() => {
+                 const rawVal = formFieldsGlob.posterUrl.value.trim();
+                 if (!rawVal) return '';
+                 const source = formFieldsGlob.posterUrl.dataset.source;
+                 // If source is TMDB (from search/original unquoted), save generic.
+                 // If source is Manual (user edit/original quoted), save Quoted (if not already).
+                 if (source === 'tmdb') return rawVal;
+                 if (rawVal.startsWith('"') && rawVal.endsWith('"')) return rawVal;
+                 return `"${rawVal}"`; // Quote it
+            })(),
             watchHistory: JSON.parse(document.getElementById('currentWatchHistory').value || '[]'), relatedEntries: [...new Set(directRelatedEntriesIds)],
             lastModifiedDate: new Date().toISOString(), doNotRecommendDaily: false,
             tmdbId: newTmdbId, tmdbMediaType: document.getElementById('tmdbMediaType').value || null,
@@ -308,6 +319,9 @@ window.proceedWithEntrySave = async function(entryToSave, idToEdit, saveAction) 
         sortMovies(currentSortColumn, currentSortDirection);
         renderMovieCards();
         await saveToIndexedDB();
+
+        // NEW: Track Modification for Custom Sync Mode
+        if (typeof trackModification === 'function') trackModification(savedEntryId);
         
         // Handle post-save actions
         switch(saveAction) {
@@ -437,7 +451,13 @@ window.performDeleteEntry = async function() {
         
         recalculateAndApplyAllRelationships();
         renderMovieCards();
+        recalculateAndApplyAllRelationships();
+        renderMovieCards();
         await saveToIndexedDB();
+        
+        // NEW: Track Modification (Deletion)
+        if (typeof trackModification === 'function' && movieIdToDelete) trackModification(movieIdToDelete);
+
         showToast("Entry Deleted", `${movieName} removed locally. Sync with cloud to finalize.`, "warning", undefined, DO_NOT_SHOW_AGAIN_KEYS.ENTRY_DELETED);
 
     } catch (error) { console.error("Error deleting entry:", error); showToast("Delete Failed", `Error: ${error.message}`, "error", 7000);
@@ -476,6 +496,10 @@ window.performBatchDelete = async function() {
         if (changesMade) {
             recalculateAndApplyAllRelationships();
             await saveToIndexedDB();
+            
+            // NEW: Track Batch Deletions
+            if (typeof trackModification === 'function') trackModification(idsToDelete);
+            
             renderMovieCards();
             showToast("Local Deletion", `${numToDelete} entries removed locally. Sync with cloud to finalize.`, "warning");
         }
@@ -556,7 +580,13 @@ window.handleBatchEditFormSubmit = async function(event) {
             if (entryModified) { entry.lastModifiedDate = currentLMD; if (entry._sync_state !== 'new') entry._sync_state = 'edited'; changesMadeCount++; }
         });
 
-        if (changesMadeCount > 0) { await saveToIndexedDB(); renderMovieCards(); showToast("Batch Edit Complete", `${changesMadeCount} of ${selectedEntryIds.length} entries updated locally.`, "success"); }
+        if (changesMadeCount > 0) { 
+            await saveToIndexedDB(); 
+            // NEW: Batch Edits
+            if (typeof trackModification === 'function') trackModification(selectedEntryIds);
+            renderMovieCards(); 
+            showToast("Batch Edit Complete", `${changesMadeCount} of ${selectedEntryIds.length} entries updated locally.`, "success"); 
+        }
         else { showToast("No Changes Applied", "Entries already had the specified values.", "info"); }
         $('#batchEditModal').modal('hide');
         disableMultiSelectMode();

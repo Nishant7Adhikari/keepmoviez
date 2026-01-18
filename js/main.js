@@ -105,6 +105,90 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     };
+
+    // START CHUNK: Custom Sync Mode Logic
+    // Load Custom Threshold
+    let customSyncThreshold = parseInt(localStorage.getItem(CUSTOM_SYNC_THRESHOLD_KEY) || '5');
+    if (isNaN(customSyncThreshold) || customSyncThreshold < 2) customSyncThreshold = 5;
+
+    // Load Pending Changes
+    let modifiedEntriesList = new Set();
+    try {
+        const storedList = JSON.parse(localStorage.getItem(MODIFIED_ENTRIES_LIST_KEY) || '[]');
+        if (Array.isArray(storedList)) modifiedEntriesList = new Set(storedList);
+    } catch (e) { console.error("Error loading modified entries list", e); }
+
+    // Update Custom Mode UI
+    const updateCustomSyncUI = () => {
+        const panel = document.getElementById('customSyncSettingsPanel');
+        if (currentSyncMode === 'custom') {
+            if (panel) panel.style.display = 'block';
+            // Update Threshold Slider/Text
+            const rangeInput = document.getElementById('customSyncThresholdRange');
+            const valDisplay = document.getElementById('customSyncThresholdValue');
+            const textDisplay = document.getElementById('customSyncThresholdDisplay');
+            if (rangeInput) {
+                rangeInput.value = customSyncThreshold;
+                rangeInput.oninput = (e) => {
+                    customSyncThreshold = parseInt(e.target.value);
+                    localStorage.setItem(CUSTOM_SYNC_THRESHOLD_KEY, customSyncThreshold);
+                    if (valDisplay) valDisplay.textContent = customSyncThreshold;
+                    if (textDisplay) textDisplay.textContent = customSyncThreshold;
+                    updateCustomSyncUI(); // Re-check threshold logic immediately if lowered
+                };
+            }
+            if (valDisplay) valDisplay.textContent = customSyncThreshold;
+            if (textDisplay) textDisplay.textContent = customSyncThreshold;
+
+            // Update Counter
+            const countBadge = document.getElementById('pendingChangesCounter');
+            const targetBadge = document.getElementById('pendingChangesTarget');
+            if (countBadge) countBadge.textContent = modifiedEntriesList.size;
+            if (targetBadge) targetBadge.textContent = customSyncThreshold;
+        } else {
+            if (panel) panel.style.display = 'none';
+        }
+    };
+
+    // Global Tracker Function (Exposed for app.js)
+    window.trackModification = function(entryIds) {
+        if (currentSyncMode !== 'custom') return;
+
+        const ids = Array.isArray(entryIds) ? entryIds : [entryIds];
+        let added = false;
+        ids.forEach(id => {
+            if (id && !modifiedEntriesList.has(id)) {
+                modifiedEntriesList.add(id);
+                added = true;
+            }
+        });
+
+        if (added) {
+            localStorage.setItem(MODIFIED_ENTRIES_LIST_KEY, JSON.stringify([...modifiedEntriesList]));
+            updateCustomSyncUI();
+        }
+
+        // Check Threshold
+        if (modifiedEntriesList.size >= customSyncThreshold) {
+            console.log(`Custom Sync Threshold Met (${modifiedEntriesList.size}/${customSyncThreshold}). Triggering Sync...`);
+            if (typeof comprehensiveSync === 'function') {
+                comprehensiveSync(true).then(() => {
+                   // Success clearing is handled in comprehensiveSync's success path or callback 
+                });
+            }
+        }
+    };
+    
+    // Global Clearer (Called by comprehensiveSync on success)
+    window.clearModifiedEntriesList = function() {
+        modifiedEntriesList.clear();
+        localStorage.setItem(MODIFIED_ENTRIES_LIST_KEY, '[]');
+        updateCustomSyncUI();
+    };
+
+    // Initialize UI immediately
+    updateSyncUI();
+    updateCustomSyncUI(); // Init Custom UI
     const closeMenu = () => {
         if (!appMenu || !appMenuBackdrop) return;
         appMenu.classList.remove('show');
@@ -460,8 +544,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // Confirmation Modals
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => { if (isMultiSelectMode) await window.performBatchDelete(); else await window.performDeleteEntry(); });
     document.getElementById('confirmDuplicateSaveBtn')?.addEventListener('click', async () => { if (pendingEntryForConfirmation) await window.proceedWithEntrySave(pendingEntryForConfirmation, pendingEditIdForConfirmation, 'quickSave'); $('#duplicateNameConfirmModal').modal('hide'); });
+    document.getElementById('confirmDuplicateSaveBtn')?.addEventListener('click', async () => { if (pendingEntryForConfirmation) await window.proceedWithEntrySave(pendingEntryForConfirmation, pendingEditIdForConfirmation, 'quickSave'); $('#duplicateNameConfirmModal').modal('hide'); });
     document.getElementById('cancelDuplicateSaveBtn')?.addEventListener('click', () => { pendingEntryForConfirmation = null; pendingEditIdForConfirmation = null; });
     document.getElementById('exportStatsPdfBtn')?.addEventListener('click', () => exportStatsAsPdf());
+    
+    // NEW: Poster URL Preview Listener
+    document.getElementById('editPosterUrl')?.addEventListener('input', () => {
+        if (typeof window.handlePosterUrlInput === 'function') {
+            window.handlePosterUrlInput(null); // Pass null to keep current lock state or just update preview
+        }
+    });
 
     // Auth, Sync, and Data Management
     document.getElementById('supabaseLoginBtn')?.addEventListener('click', () => supabaseSignInUser(document.getElementById('supabaseEmail').value, document.getElementById('supabasePassword').value));
@@ -495,7 +587,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentSyncMode = newMode;
                 localStorage.setItem(SYNC_MODE_KEY, newMode);
                 updateSyncUI(); // Update Badge and Buttons
-
+                if (typeof updateCustomSyncUI === 'function') updateCustomSyncUI();
+                
                 showToast("Settings Saved", `Active Mode: ${newMode.replace('_', ' ').toUpperCase()}`, "success");
 
                 // Trigger actions on switch

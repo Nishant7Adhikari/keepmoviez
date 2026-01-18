@@ -27,7 +27,7 @@ function localEntryToSupabaseFormat(localEntry, userId) {
         personal_recommendation: entryToFormat.personalRecommendation || null, language: entryToFormat.Language || null, year: parseNumeric(entryToFormat.Year), country: entryToFormat.Country || null,
         description: entryToFormat.Description || null, poster_url: entryToFormat['Poster URL'] || null, watch_history: watchHistoryWithUUIDs,
         related_entries: Array.isArray(entryToFormat.relatedEntries) ? entryToFormat.relatedEntries : [], do_not_recommend_daily: entryToFormat.doNotRecommendDaily || false,
-        last_modified_date: lastModified, tmdb_id: parseNumeric(entryToFormat.tmdbId), tmdb_media_type: entryToFormat.tmdbMediaType || null,
+        last_modified_date: lastModified, tmdb_id: parseNumeric(entryToFormat.tmdbId), tmdb_release_date: entryToFormat.tmdb_release_date || null, tmdb_media_type: entryToFormat.tmdbMediaType || null,
         keywords: Array.isArray(entryToFormat.keywords) ? entryToFormat.keywords : [], tmdb_collection_id: parseNumeric(entryToFormat.tmdb_collection_id),
         tmdb_collection_name: entryToFormat.tmdb_collection_name || null, tmdb_collection_total_parts: parseNumeric(entryToFormat.tmdb_collection_total_parts), director_info: entryToFormat.director_info || null,
         full_cast: Array.isArray(entryToFormat.full_cast) ? entryToFormat.full_cast : [], production_companies: Array.isArray(entryToFormat.production_companies) ? entryToFormat.production_companies : [],
@@ -56,7 +56,7 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
         Country: supabaseEntry.country || '', Description: supabaseEntry.description || '', 'Poster URL': supabaseEntry.poster_url || '',
         watchHistory: watchHistoryWithUUIDs, relatedEntries: Array.isArray(supabaseEntry.related_entries) ? supabaseEntry.related_entries : [],
         doNotRecommendDaily: supabaseEntry.do_not_recommend_daily || false, lastModifiedDate: supabaseEntry.last_modified_date ? new Date(supabaseEntry.last_modified_date).toISOString() : new Date(0).toISOString(),
-        tmdbId: formatNumericToString(supabaseEntry.tmdb_id), tmdbMediaType: supabaseEntry.tmdb_media_type || null,
+        tmdbId: formatNumericToString(supabaseEntry.tmdb_id), tmdb_release_date: supabaseEntry.tmdb_release_date || null, tmdbMediaType: supabaseEntry.tmdb_media_type || null,
         keywords: Array.isArray(supabaseEntry.keywords) ? supabaseEntry.keywords : [],
         tmdb_collection_id: supabaseEntry.tmdb_collection_id !== null ? supabaseEntry.tmdb_collection_id : null,
         tmdb_collection_name: supabaseEntry.tmdb_collection_name || null, tmdb_collection_total_parts: supabaseEntry.tmdb_collection_total_parts, director_info: supabaseEntry.director_info || null,
@@ -178,7 +178,6 @@ async function comprehensiveSync(silent = false) {
 
             // FIX: Clear stats cache and update achievements so UI reflects new data
             if (window.globalStatsData) window.globalStatsData = {};
-            if (typeof checkAndNotifyNewAchievements === 'function') await checkAndNotifyNewAchievements();
 
             if (!silent) renderMovieCards();
         }
@@ -206,6 +205,10 @@ async function comprehensiveSync(silent = false) {
         }
 
         incrementLocalStorageCounter('sync_count_achievement');
+        
+        // Clear Pending Changes List
+        if (typeof clearModifiedEntriesList === 'function') clearModifiedEntriesList();
+
         return { success: true, summary };
 
     } catch (error) {

@@ -105,7 +105,7 @@ async function processSmartImport() {
     
     const backfillableFields = [
         'runtime', 'keywords', 'tmdb_collection_id', 'tmdb_collection_name', 
-        'tmdb_collection_total_parts', 'director_info', 'full_cast', 
+        'tmdb_collection_total_parts', 'tmdb_release_date', 'director_info', 'full_cast', 
         'production_companies', 'tmdb_vote_average', 'tmdb_vote_count', 
         'relatedEntries', 'Genre', 'Country', 'Language'
     ];
@@ -234,6 +234,7 @@ function normalizeImportedRow(row) {
         lastModifiedDate: row.lastModifiedDate || new Date().toISOString(),
         tmdbId: String(row.tmdbId || '').trim() || null,
         tmdbMediaType: row.tmdbMediaType || null,
+        tmdb_release_date: row.tmdb_release_date || null,
         imdb_id: String(row.imdb_id || '').trim() || null,
         runtime: (typeof row.runtime === 'string' && row.runtime.startsWith('{')) ? JSON.parse(row.runtime) : (row.runtime || null),
         keywords: (typeof row.keywords === 'string' && row.keywords.startsWith('[')) ? JSON.parse(row.keywords) : (Array.isArray(row.keywords) ? row.keywords : []),

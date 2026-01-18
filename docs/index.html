@@ -1,731 +1,1143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KeepMoviEZ Documentation</title>
-    
+
     <!-- Dependencies -->
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <link
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/x-icon" href="favicon.png" />
     <style>
-        :root {
-            --primary-color: #007b8a; /* Teal */
-            --primary-hover: #00636e;
-            --secondary-color: #d72462; /* Magenta */
-            --light-bg: #f8f9fa;
-            --dark-text: #2c3e50;
-            --light-text: #546e7a;
-            --border-color: #e9ecef;
-            --code-bg: #f1f3f5;
-        }
+      :root {
+        --primary-color: #007b8a; /* Teal */
+        --primary-hover: #00636e;
+        --secondary-color: #d72462; /* Magenta */
+        --light-bg: #f8f9fa;
+        --dark-text: #2c3e50;
+        --light-text: #546e7a;
+        --border-color: #e9ecef;
+        --code-bg: #f1f3f5;
+      }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            color: var(--dark-text);
-            background-color: #fff;
-            line-height: 1.7;
-        }
+      body {
+        font-family: "Poppins", sans-serif;
+        color: var(--dark-text);
+        background-color: #fff;
+        line-height: 1.7;
+      }
 
-        /* --- Layout --- */
-        .container {
-            padding-top: 3rem;
-            padding-bottom: 5rem;
-        }
+      /* --- Layout --- */
+      .container {
+        padding-top: 3rem;
+        padding-bottom: 5rem;
+      }
 
-        /* --- Header --- */
-        .doc-header {
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 2rem;
-            margin-bottom: 3rem;
-        }
-        .doc-header h1 {
-            color: var(--primary-color);
-            font-weight: 700;
-            letter-spacing: -1px;
-            display: flex;
-            align-items: center;
-        }
-        /* The requested Red Box style */
-        .brand-badge-container {
-            background-color: #dc3545; /* Bootstrap Danger Red */
-            color: white;
-            
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .brand-name {
-            font-weight: 700;
-            margin-right: 10px;
-            border-right: 1px solid rgba(255,255,255,0.4);
-            padding-right: 10px;
-        }
-        .version-number {
-            font-weight: 400;
-            font-family: monospace;
-            font-size: 0.9em;
-        }
+      /* --- Header --- */
+      .doc-header {
+        border-bottom: 2px solid var(--border-color);
+        padding-bottom: 2rem;
+        margin-bottom: 3rem;
+      }
+      .doc-header h1 {
+        color: var(--primary-color);
+        font-weight: 700;
+        letter-spacing: -1px;
+        display: flex;
+        align-items: center;
+      }
+      /* The requested Red Box style */
+      .brand-badge-container {
+        background-color: #dc3545; /* Bootstrap Danger Red */
+        color: white;
 
-        /* --- Sidebar Navigation --- */
-        #toc {
-            position: sticky;
-            top: 20px;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
-            padding-right: 15px;
-            border-right: 1px solid var(--border-color);
-        }
-        #toc .nav-link {
-            color: var(--light-text);
-            font-weight: 500;
-            padding: 0.4rem 1rem;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            border-radius: 4px;
-        }
-        #toc .nav-link:hover {
-            color: var(--primary-color);
-            background-color: var(--light-bg);
-        }
-        #toc .nav-link.active {
-            color: var(--primary-color);
-            font-weight: 700;
-            background-color: rgba(0, 123, 138, 0.1);
-        }
-        #toc .nav-header {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: #999;
-            margin-top: 1.5rem;
-            margin-bottom: 0.5rem;
-            padding-left: 1rem;
-            font-weight: 700;
-        }
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .brand-name {
+        font-weight: 700;
+        margin-right: 10px;
+        border-right: 1px solid rgba(255, 255, 255, 0.4);
+        padding-right: 10px;
+      }
+      .version-number {
+        font-weight: 400;
+        font-family: monospace;
+        font-size: 0.9em;
+      }
 
-        /* --- Main Content --- */
-        #main-content section {
-            padding-top: 3rem;
-            margin-top: -2rem; /* Offset for anchor scrolling */
-            margin-bottom: 3rem;
-            border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 2rem;
-        }
-        #main-content section:last-child {
-            border-bottom: none;
-        }
-        h2 {
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 1.25rem;
-            font-size: 1.8rem;
-        }
-        h4 {
-            font-weight: 600;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
-            color: #34495e;
-            font-size: 1.3rem;
-        }
-        
-        /* --- Educational Components --- */
-        .edu-box {
-            background-color: #f0f7ff;
-            border-left: 4px solid #007bff;
-            padding: 1.5rem;
-            border-radius: 0 8px 8px 0;
-            margin: 1.5rem 0;
-        }
-        .edu-box h5 { color: #0056b3; font-weight: 700; margin-top: 0; }
-        
-        .tech-box {
-            background-color: #2c3e50;
-            color: #ecf0f1;
-            padding: 1.5rem;
-            border-radius: 8px;
-            margin: 1.5rem 0;
-            font-family: monospace;
-            font-size: 0.9rem;
-        }
-        .tech-box h5 { color: #3498db; margin-top:0; }
+      /* --- Sidebar Navigation --- */
+      #toc {
+        position: sticky;
+        top: 20px;
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+        padding-right: 15px;
+        border-right: 1px solid var(--border-color);
+      }
+      #toc .nav-link {
+        color: var(--light-text);
+        font-weight: 500;
+        padding: 0.4rem 1rem;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        border-radius: 4px;
+      }
+      #toc .nav-link:hover {
+        color: var(--primary-color);
+        background-color: var(--light-bg);
+      }
+      #toc .nav-link.active {
+        color: var(--primary-color);
+        font-weight: 700;
+        background-color: rgba(0, 123, 138, 0.1);
+      }
+      #toc .nav-header {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #999;
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+        padding-left: 1rem;
+        font-weight: 700;
+      }
 
-        .pro-tip {
-            background-color: #fff8e1;
-            border: 1px solid #ffe082;
-            border-radius: 8px;
-            padding: 1rem;
-            font-size: 0.95rem;
-            color: #5d4037;
-            display: flex;
-            align-items: start;
-            margin-top: 1rem;
-        }
-        .pro-tip i {
-            color: #ffb300;
-            font-size: 1.2rem;
-            margin-right: 12px;
-            margin-top: 3px;
-        }
+      /* --- Main Content --- */
+      #main-content section {
+        padding-top: 3rem;
+        margin-top: -2rem; /* Offset for anchor scrolling */
+        margin-bottom: 3rem;
+        border-bottom: 1px dashed var(--border-color);
+        padding-bottom: 2rem;
+      }
+      #main-content section:last-child {
+        border-bottom: none;
+      }
+      h2 {
+        font-weight: 700;
+        color: var(--primary-color);
+        margin-bottom: 1.25rem;
+        font-size: 1.8rem;
+      }
+      h4 {
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #34495e;
+        font-size: 1.3rem;
+      }
 
-        /* --- FAQ Styling --- */
-        .card {
-            border: 1px solid var(--border-color);
-            border-radius: 8px !important;
-            margin-bottom: 0.75rem;
-            box-shadow: none;
-        }
-        .card-header {
-            background-color: #fff;
-            border: none;
-            padding: 0;
-        }
-        .card-header .btn-link {
-            width: 100%;
-            text-align: left;
-            text-decoration: none;
-            color: var(--dark-text);
-            font-weight: 600;
-            padding: 1rem 1.25rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .card-header .btn-link:hover { background-color: var(--light-bg); }
-        .card-header .btn-link i { transition: transform 0.3s ease; }
-        .card-header .btn-link:not(.collapsed) i { transform: rotate(180deg); }
+      /* --- Educational Components --- */
+      .edu-box {
+        background-color: #f0f7ff;
+        border-left: 4px solid #007bff;
+        padding: 1.5rem;
+        border-radius: 0 8px 8px 0;
+        margin: 1.5rem 0;
+      }
+      .edu-box h5 {
+        color: #0056b3;
+        font-weight: 700;
+        margin-top: 0;
+      }
 
-        /* Definitions List */
-        dt { color: var(--primary-color); margin-top: 1rem; }
-        dd { margin-bottom: 0.5rem; margin-left: 1rem; }
+      .tech-box {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin: 1.5rem 0;
+        font-family: monospace;
+        font-size: 0.9rem;
+      }
+      .tech-box h5 {
+        color: #3498db;
+        margin-top: 0;
+      }
 
+      .pro-tip {
+        background-color: #fff8e1;
+        border: 1px solid #ffe082;
+        border-radius: 8px;
+        padding: 1rem;
+        font-size: 0.95rem;
+        color: #5d4037;
+        display: flex;
+        align-items: start;
+        margin-top: 1rem;
+      }
+      .pro-tip i {
+        color: #ffb300;
+        font-size: 1.2rem;
+        margin-right: 12px;
+        margin-top: 3px;
+      }
+
+      /* --- FAQ Styling --- */
+      .card {
+        border: 1px solid var(--border-color);
+        border-radius: 8px !important;
+        margin-bottom: 0.75rem;
+        box-shadow: none;
+      }
+      .card-header {
+        background-color: #fff;
+        border: none;
+        padding: 0;
+      }
+      .card-header .btn-link {
+        width: 100%;
+        text-align: left;
+        text-decoration: none;
+        color: var(--dark-text);
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .card-header .btn-link:hover {
+        background-color: var(--light-bg);
+      }
+      .card-header .btn-link i {
+        transition: transform 0.3s ease;
+      }
+      .card-header .btn-link:not(.collapsed) i {
+        transform: rotate(180deg);
+      }
+
+      /* Definitions List */
+      dt {
+        color: var(--primary-color);
+        margin-top: 1rem;
+      }
+      dd {
+        margin-bottom: 0.5rem;
+        margin-left: 1rem;
+      }
     </style>
-</head>
+  </head>
 
-<body data-spy="scroll" data-target="#toc" data-offset="100">
-
+  <body data-spy="scroll" data-target="#toc" data-offset="100">
     <div class="container">
-        <header class="doc-header">
-            <h1>
-                <div class="brand-name">KeepMoviEZ</div>
-                <br>
-                <span class="brand-badge-container"><small>v5.3.1</small></span>
-            </h1>
-            <p class="lead mt-3">Complete User Manual & Technical Guide</p>
-        </header>
+      <header class="doc-header">
+        <h1>
+          <div class="brand-name">KeepMoviEZ</div>
+          <br />
+          <span class="brand-badge-container"><small>v5.4.2</small></span>
+        </h1>
+        <p class="lead mt-3">Complete User Manual & Technical Guide</p>
+      </header>
 
-        <div class="row">
-            <!-- Navigation Sidebar -->
-            <nav id="toc" class="col-md-3 d-none d-lg-block">
-                <div class="nav-header">Core Concepts</div>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="#overview">What is KeepMoviEZ?</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#library-structure">Understanding the Library</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#ratings-system">The Rating System</a></li>
-                </ul>
-                
-                <div class="nav-header">Workflows</div>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="#adding-entries">Adding & Live Search</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#tracking-progress">Tracking Series</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#management">Bulk Management</a></li>
-                </ul>
+      <div class="row">
+        <!-- Navigation Sidebar -->
+        <nav id="toc" class="col-md-3 d-none d-lg-block">
+          <div class="nav-header">Core Concepts</div>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="#overview">What is KeepMoviEZ?</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#library-structure"
+                >Understanding the Library</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#ratings-system">The Rating System</a>
+            </li>
+          </ul>
 
-                <div class="nav-header">Data & Sync</div>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="#architecture">Local-First Architecture</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#sync-guide">Sync & Privacy Settings</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#import-export">Backup & Import</a></li>
-                </ul>
+          <div class="nav-header">Workflows</div>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="#adding-entries"
+                >Adding & Live Search</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#tracking-progress">Tracking Series</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#management">Bulk Management</a>
+            </li>
+          </ul>
 
-                <div class="nav-header">Advanced</div>
-                <ul class="nav flex-column">
-                    <li class="nav-item"><a class="nav-link" href="#discovery">Engine & Stats</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#technical">Technical Deep Dive</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
-                </ul>
-            </nav>
+          <div class="nav-header">Data & Sync</div>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="#architecture"
+                >Local-First Architecture</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#sync-guide">Sync & Privacy Settings</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#import-export">Backup & Import</a>
+            </li>
+          </ul>
 
-            <!-- Main Content Area -->
-            <div id="main-content" class="col-lg-9 col-md-12">
+          <div class="nav-header">Advanced</div>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="#discovery">Engine & Stats</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#technical">Technical Deep Dive</a>
+            </li>
+            <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+          </ul>
+        </nav>
 
-                <!-- 1. Overview -->
-                <section id="overview">
-                    <h2>What is KeepMoviEZ?</h2>
-                    <p>KeepMoviEZ is a private, offline-capable media tracker designed for cinephiles and binge-watchers who want total control over their data.</p>
-                    <p>Unlike commercial platforms where your data is the product, KeepMoviEZ stores your collection directly on your device. <span class="brand-badge-container">It offers a cloud sync feature strictly for backup and multi-device usage</span>, but the application is fully functional without it.</p>
-                </section>
+        <!-- Main Content Area -->
+        <div id="main-content" class="col-lg-9 col-md-12">
+          <!-- 1. Overview -->
+          <section id="overview">
+            <h2>What is KeepMoviEZ?</h2>
+            <p>
+              KeepMoviEZ is a private, offline-capable media tracker designed
+              for cinephiles and binge-watchers who want total control over
+              their data.
+            </p>
+            <p>
+              Unlike commercial platforms where your data is the product,
+              KeepMoviEZ stores your collection directly on your device.
+              <span class="brand-badge-container"
+                >It offers a cloud sync feature strictly for backup and
+                multi-device usage</span
+              >, but the application is fully functional without it.
+            </p>
+          </section>
 
-                <!-- 2. Library Structure -->
-                <section id="library-structure">
-                    <h2>Understanding the Library</h2>
-                    <p>Every entry in your log is defined by three primary attributes. Understanding these ensures accurate statistics.</p>
+          <!-- 2. Library Structure -->
+          <section id="library-structure">
+            <h2>Understanding the Library</h2>
+            <p>
+              Every entry in your log is defined by three primary attributes.
+              Understanding these ensures accurate statistics.
+            </p>
 
-                    <h4>Categories</h4>
-                    <dl>
-                        <dt>Movie</dt>
-                        <dd>A standalone film. Duration contributes to your total watch time based on the runtime × watch count.</dd>
-                        <dt>Series</dt>
-                        <dd>A TV show with Seasons and Episodes. Progress is tracked granularly (see <a href="#tracking-progress">Tracking Series</a>).</dd>
-                        <dt>Documentary / Special</dt>
-                        <dd>Non-fiction or one-off events. These behave similarly to movies in statistics.</dd>
-                    </dl>
+            <h4>Categories</h4>
+            <dl>
+              <dt>Movie</dt>
+              <dd>
+                A standalone film. Duration contributes to your total watch time
+                based on the runtime × watch count.
+              </dd>
+              <dt>Series</dt>
+              <dd>
+                A TV show with Seasons and Episodes. Progress is tracked
+                granularly (see
+                <a href="#tracking-progress">Tracking Series</a>).
+              </dd>
+              <dt>Documentary / Special</dt>
+              <dd>
+                Non-fiction or one-off events. These behave similarly to movies
+                in statistics.
+              </dd>
+            </dl>
 
-                    <h4>Statuses</h4>
-                    <dl>
-                        <dt><span class="badge badge-warning">To Watch</span></dt>
-                        <dd>Your backlog. Items you plan to see. These appear in the "Daily Recommendation" pool.</dd>
-                        <dt><span class="badge badge-success">Watched</span></dt>
-                        <dd>Completed items. These contribute to your "Completed" statistics and achievements.</dd>
-                        <dt><span class="badge badge-info">Continue</span></dt>
-                        <dd>Specifically for Series you are currently watching, or Movies you paused halfway. These are prioritized on your dashboard.</dd>
-                        <dt><span class="badge badge-secondary">Unwatched</span></dt>
-                        <dd>Items you own or have listed but aren't actively planning to watch soon (archive).</dd>
-                    </dl>
-                </section>
+            <h4>Statuses</h4>
+            <dl>
+              <dt><span class="badge badge-warning">To Watch</span></dt>
+              <dd>
+                Your backlog. Items you plan to see. These appear in the "Daily
+                Recommendation" pool.
+              </dd>
+              <dt><span class="badge badge-success">Watched</span></dt>
+              <dd>
+                Completed items. These contribute to your "Completed" statistics
+                and achievements.
+              </dd>
+              <dt><span class="badge badge-info">Continue</span></dt>
+              <dd>
+                Specifically for Series you are currently watching, or Movies
+                you paused halfway. These are prioritized on your dashboard.
+              </dd>
+              <dt><span class="badge badge-secondary">Unwatched</span></dt>
+              <dd>
+                Items you own or have listed but aren't actively planning to
+                watch soon (archive).
+              </dd>
+            </dl>
+          </section>
 
-                <!-- 3. Ratings System -->
-                <section id="ratings-system">
-                    <h2>The Dual Rating System</h2>
-                    <p>KeepMoviEZ distinguishes between how good a movie is overall versus how you felt watching it on a specific day.</p>
+          <!-- 3. Ratings System -->
+          <section id="ratings-system">
+            <h2>The Dual Rating System</h2>
+            <p>
+              KeepMoviEZ distinguishes between how good a movie is overall
+              versus how you felt watching it on a specific day.
+            </p>
 
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5><i class="fas fa-star text-warning"></i> Overall Rating</h5>
-                                    <p class="small">The definitive score (1-5 stars) for the title. This is used for sorting your library and calculating your taste profile.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <h5><i class="fas fa-history text-info"></i> Watch Instance Rating</h5>
-                                    <p class="small">A rating specific to a single viewing date. You might rate a classic movie 5 stars overall, but a specific re-watch only 3 stars if you weren't in the mood.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 4. Adding Entries -->
-                <section id="adding-entries">
-                    <h2>Adding Entries & Live Search</h2>
-                    <p>To add a title, click the <i style="color:#007b8a" class="fas fa-plus-circle"></i> button. You do not need to type everything manually.</p>
-
-                    <h4>How Live Search Works</h4>
-                    <ol>
-                        <li>Type the name in the <strong>Name</strong> field.</li>
-                        <li>The app waits for you to stop typing.</li>
-                        <li>A dropdown will appear with results from TMDB (The Movie Database).</li>
-                        <li>Select a result to auto-fill the Poster, Year, Description, Runtime, and Genres.</li>
-                    </ol>
-
-                    <div class="edu-box">
-                        <h5><i class="fas fa-shield-alt"></i> Duplicate Defense System</h5>
-                        <p>The app actively prevents you from adding the same movie twice to keep your stats clean.</p>
-                        <ul>
-                            <li><strong>Hard Block:</strong> If you try to add a movie with a TMDB ID that already exists in your library, the save is blocked.</li>
-                            <li><strong>Soft Warn:</strong> If you add a movie with the same Name and Year (but no ID), the app asks for confirmation, assuming it might be a different edition.</li>
-                        </ul>
-                    </div>
-                </section>
-
-                <!-- 5. Tracking Progress -->
-                <section id="tracking-progress">
-                    <h2>Tracking Series Progress</h2>
-                    <p>For accurate "Time Watched" statistics, Series must be tracked using the specific progress fields.</p>
-
-                    <div class="alert alert-info">
-                        <strong>The Golden Rule:</strong> Only log fully completed seasons in the "Seasons" box.
-                    </div>
-
-                    <p><strong>Example:</strong> You are watching <em>Stranger Things</em>. You have finished Season 1 and Season 2, and you just watched Episode 4 of Season 3.</p>
-                    <ul>
-                        <li><strong>Seasons Completed:</strong> Enter <code>2</code> (S1 and S2 are done).</li>
-                        <li><strong>Episodes (Current Season):</strong> Enter <code>4</code> (The episodes watched in S3).</li>
-                    </ul>
-                    <p>The app calculates: <code>(Seasons × Avg Ep Count) + Current Episodes</code> to estimate total hours watched.</p>
-                    
-                    <div class="pro-tip">
-                        <i class="fas fa-magic"></i>
-                        <div>
-                            <strong>Quick Update:</strong> You don't need to open the full Edit form. Click the small <i class="fas fa-calendar-plus text-success"></i> icon on the card to quickly increment episodes or log a re-watch.
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 6. Architecture -->
-                <section id="architecture">
-                    <h2>Local-First Architecture</h2>
-                    <p>This is the defining technical feature of KeepMoviEZ. </p>
-                    
-                    <div class="tech-box">
-                        <h5><i class="fas fa-database"></i> IndexedDB & RAM</h5>
-                        <p>When you open the app, your entire collection is loaded from <strong>IndexedDB</strong> (the browser's internal hard drive) into <strong>RAM</strong>. </p>
-                        <p>This means searching, filtering, and sorting happens instantly because the app isn't talking to a server—it's just scanning memory. It also means the app works 100% offline.</p>
-                    </div>
-                </section>
-
-                <!-- 7. Sync Guide -->
-                <section id="sync-guide">
-                    <h2>Sync & Privacy Settings</h2>
-                    <p>KeepMoviEZ now offers flexible synchronization options accessible via the new <strong><i class="fas fa-cog"></i> Settings</strong> menu.</p>
-
-                    <h4>Sync Modes</h4>
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="card h-100 border-info">
-                                <div class="card-body">
-                                    <h5 class="text-info"><i class="fas fa-sync"></i> Normal (Auto)</h5>
-                                    <p class="small">Synchronizes automatically in the background whenever you make a change. Ideal for multi-device users.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100 border-secondary">
-                                <div class="card-body">
-                                    <h5 class="text-secondary"><i class="fas fa-hand-pointer"></i> Manual</h5>
-                                    <p class="small">The classic behavior. Changes stay local until you explicitly click <strong>"Sync with Cloud"</strong>.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card h-100 border-dark">
-                                <div class="card-body">
-                                    <h5 class="text-dark"><i class="fas fa-user-shield"></i> Strict Privacy</h5>
-                                    <p class="small">Disables all cloud features. The "Sync" button is hidden to prevent accidental uploads.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <h4 class="mt-4">Advanced Data Controls</h4>
-                    <p>Inside the Settings menu, you will also find powerful data management tools:</p>
-                    <ul>
-                        <li><strong>Force Pull (Cloud → Device):</strong> Discards local changes and replaces them with the cloud backup.</li>
-                        <li><strong>Force Push (Device → Cloud):</strong> Wipes the cloud backup and uploads your current local data.</li>
-                    </ul>
-                </section>
-
-                <!-- 8. Import/Export -->
-                <section id="import-export">
-                    <h2>Smart Import & Export</h2>
-                    <p>Your data is yours. You can export a JSON backup at any time via the Menu.</p>
-
-                    <h4>Restoring & Enriching Data</h4>
-                    <p>When importing a file, you will see options. The most powerful one is <strong>"Smart Backfill"</strong>.</p>
-                    <p>Use this if you have an old list of movies (just names) and want to upgrade them. If the import file contains extra data (like runtime or director) for a movie you already have, "Backfill" will update the empty fields <em>without</em> overwriting your existing ratings or notes.</p>
-                </section>
-
-                <!-- 9. Discovery -->
-                <section id="discovery">
-                    <h2>Discovery & Visual Data</h2>
-                    
-                    <h4>Visual Data (Charts)</h4>
-                    <p>Access via <strong>Menu > Visual Data</strong>. This dashboard visualizes your viewing habits using interactive graphs, showing your favorite genres, viewing activity over years, and rating distribution.</p>
-
-                    <h4>Suggestion Engine</h4>
-                    <p>The engine uses a <strong>Seed-Based Algorithm</strong>. It picks a highly-rated movie from your own collection and queries the database to find:</p>
-                    <ul>
-                        <li>Similar movies (Content Based).</li>
-                        <li>Other works by the same Director.</li>
-                        <li>Movies belonging to the same Collection/Franchise.</li>
-                    </ul>
-                </section>
-
-                <!-- 10. Performance & Architecture -->
-                <section id="technical">
-                    <h2>Performance & Architecture</h2>
-                    <p>KeepMoviEZ is engineered to be faster than traditional web applications. Instead of relying on constant server communication, it uses a "Heavy Client" architecture that leverages your device's raw processing power.</p>
-
-                    <!-- Pillar 1: Rendering -->
-                    <div class="edu-box">
-                        <h5><i class="fas fa-tachometer-alt"></i> Zero-Lag Rendering Engine</h5>
-                        <p>Handling large lists (100+ items) usually slows down web browsers because drawing thousands of elements creates lag.</p>
-                        <p><strong>Our Solution: Smart Pagination</strong></p>
-                        <p>We use a "Just-in-Time" rendering strategy. When you sort or filter your library:</p>
-                        <ol class="mb-0">
-                            <li>The engine processes the data in milliseconds (using optimized Sorting algorithms).</li>
-                            <li>It draws only the first <strong>50 Cards</strong> immediately. This keeps the UI response time under 16ms (60fps).</li>
-                            <li>As you scroll, the <strong>"Load More"</strong> system appends the next batch instantly.</li>
-                        </ol>
-                        <p class="small text-muted mt-2"><em>Result: A library of 5,000 movies feels as fast as a library of 5.</em></p>
-                    </div>
-
-                    <!-- Pillar 2: Networking -->
-                    <div class="card mb-4 border-primary">
-                        <div class="card-body">
-                            <h5 class="text-primary"><i class="fas fa-network-wired"></i> Intelligent Networking</h5>
-                            <p>We hate loading spinners. To minimize them, we implemented two advanced patterns:</p>
-                            <div class="row mt-3">
-                                <div class="col-md-6">
-                                    <h6>LRU Caching (Memory Cache)</h6>
-                                    <p class="small">The search bar remembers your recent queries. If you type "Batman", delete it, and type it again, the result loads instantly from RAM (0ms latency) without touching the internet.</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Adaptive Debouncing</h6>
-                                    <p class="small">The app waits 700ms after you stop typing before sending a request. This "Traffic Control" prevents wasteful API calls while you are still correcting typos.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pillar 3 & 4: Stability & Storage -->
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card h-100 bg-light border-0">
-                                <div class="card-body">
-                                    <h6 class="text-dark"><i class="fas fa-database"></i> The Database Model</h6>
-                                    <p class="small mb-0">We don't just save cookies. KeepMoviEZ runs a full NoSQL-style database (IndexedDB) directly inside your browser. On startup, this data is "Hydrated" into RAM, allowing instant sorting and filtering without disk reads.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card h-100 bg-light border-0">
-                                <div class="card-body">
-                                    <h6 class="text-dark"><i class="fas fa-shield-alt"></i> Concurrency Control</h6>
-                                    <p class="small mb-0">To prevent crashes during rapid reloads, the app uses a <strong>Mutex Lock</strong> system. It ensures that only one initialization process can touch the database at a time, preventing data corruption and "Infinite Loading" loops.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- 11. FAQ -->
-                <section id="faq">
-                    <h2>Frequently Asked Questions (FAQ)</h2>
-                    <div class="accordion" id="faqAccordion">
-                        
-                        <!-- GROUP: GENERAL & SEARCH -->
-                        <div class="card">
-                            <div class="card-header" id="h1">
-                                <button class="btn btn-link" data-toggle="collapse" data-target="#c1">
-                                    <span class="font-weight-bold text-primary">Why isn't the search working immediately?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c1" class="collapse show" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    <strong>It's the "Smart Delay".</strong> In v5.3.0, we introduced a 700ms delay. The app waits for you to <em>stop typing</em> before it talks to the server. This saves your data plan and prevents the list from jumping around while you type. Just type the name and wait a split second!
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h2">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c2">
-                                    <span>Can I use the app offline?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c2" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    <strong>Yes, 100%.</strong> Once you have logged in for the first time, the entire database lives on your device. You can add, edit, and view your collection without any internet connection. You only need internet to Search TMDB or Sync.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h3">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c3">
-                                    <span>I see "Data Conflict" when trying to save. Why?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c3" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    This is the <strong>Duplicate Defense System</strong> in action. You are trying to add a movie that already exists in your library (matching TMDB ID). Instead of creating a duplicate, please find the existing entry and edit it.
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- GROUP: SYNC & DATA -->
-                        <div class="card">
-                            <div class="card-header" id="h4">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c4">
-                                    <span class="font-weight-bold text-danger">Why doesn't it sync automatically?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c4" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    <strong>Privacy & Safety.</strong> Automatic syncing in background often leads to accidental data overwrites, especially with poor connections. We believe data should never leave your device without your explicit consent. You have full control over when updates are pushed or pulled.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h5">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c5">
-                                    <span>I logged out and my movies disappeared!</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c5" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    Don't panic! For security, logging out clears the <strong>Local Cache</strong> on that specific device. As long as you clicked "Sync" before logging out, your data is safe in the cloud. Simply log back in and click <strong>Sync from Cloud</strong> to restore everything.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h6">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c6">
-                                    <span>What is the difference between "Force Push" and "Sync"?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c6" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    <ul>
-                                        <li><strong>Sync (Recommended):</strong> Smartly merges changes. It uploads your new edits and downloads updates from other devices.</li>
-                                        <li><strong>Force Push (Danger):</strong> Erases your Cloud backup entirely and replaces it with what is currently on your device. Use only if your cloud data is corrupted.</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- GROUP: EDITING & CONTENT -->
-                        <div class="card">
-                            <div class="card-header" id="h7">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c7">
-                                    <span>Can I use my own movie posters?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c7" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    <strong>Yes.</strong> In the Edit form (Advanced Details), look for the "Poster URL" field. You can paste any direct image link (ending in .jpg or .png) to override the default TMDB poster.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h8">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c8">
-                                    <span>How do I track TV Shows correctly?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c8" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    Use the <strong>Seasons Completed</strong> field for full seasons you've finished. Use <strong>Episode (Current)</strong> for where you are in the <em>current</em> season.
-                                    <br><em>Example:</em> If you finished Season 1 and are on Episode 5 of Season 2, enter <strong>1</strong> for Seasons and <strong>5</strong> for Episodes.
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- GROUP: TROUBLESHOOTING -->
-                        <div class="card">
-                            <div class="card-header" id="h9">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c9">
-                                    <span>The app gets stuck on "Loading..." when I refresh.</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c9" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    This was a rare race condition fixed in v5.3.0. However, if it happens, we added a <strong>5-second failsafe</strong>. If the app doesn't load within 5 seconds, it will automatically reset the connection. Just wait a moment, or close the tab and reopen it.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h10">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c10">
-                                    <span>I imported a file but my Stats show "0".</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c10" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    The statistics engine runs on a cache to save battery. After a large import, sometimes the cache isn't invalidated immediately. Simply <strong>Refresh the Page</strong> to force a full recalculation of your charts and achievements.
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h11">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c11">
-                                    <span>Why isn't the "Find Similar" button showing?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c11" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    The Suggestion Engine requires two things:
-                                    <ol class="mb-0 pl-3">
-                                        <li>The movie must have a <strong>TMDB ID</strong> (added via search).</li>
-                                        <li>You must have marked it as <strong>Watched</strong> or <strong>Continue</strong>.</li>
-                                    </ol>
-                                    We can't suggest similar movies if we don't know what the movie is!
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <div class="card-header" id="h12">
-                                <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#c12">
-                                    <span>Can I reset my password?</span>
-                                    <i class="fas fa-chevron-down"></i>
-                                </button>
-                            </div>
-                            <div id="c12" class="collapse" data-parent="#faqAccordion">
-                                <div class="card-body">
-                                    Yes. On the login screen, type your email and click <strong>Forgot Password?</strong>. A secure reset link will be sent to your inbox. Note: This requires an active internet connection.
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </section>
-                <!-- 12. Local-Only Workflow -->
-                <section id="local-only">
-                    <h2>For the Ultra-Private: Strict Privacy Mode</h2>
-                    <p>We designed KeepMoviEZ with a modern, secure cloud architecture where <strong>you</strong> own your data. However, for users who prefer to keep their digital footprint strictly on their physical device, we introduced <strong>Strict Privacy Mode</strong>.</p>
-
-                    <div class="alert alert-secondary border-secondary">
-                        <h5><i class="fas fa-shield-alt"></i> How to Enable</h5>
-                        <ol class="mb-0">
-                            <li>Open the <strong>Menu</strong> > <strong>Settings</strong>.</li>
-                            <li>Select <strong>Strict Privacy</strong>.</li>
-                            <li>The app is now locked to your device. Cloud sync features are disabled.</li>
-                        </ol>
-                    </div>
-
-                    <p>In this mode, the application software actively blocks any attempt to communicate with the synchronization server.</p>
-
-                    <div class="card bg-light mb-3">
-                        <div class="card-body">
-                            <h5 class="text-dark"><i class="fas fa-exclamation-triangle"></i> Important Note on Backups</h5>
-                            <p class="small mb-0">
-                                Since you aren't syncing to the cloud, if you lose your phone, you lose your movies. You <strong>MUST</strong> regularly go to <code>Menu > Export</code> and save the JSON file to a safe place (like a USB drive).
-                            </p>
-                        </div>
-                    </div>
-                </section>
-
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5>
+                      <i class="fas fa-star text-warning"></i> Overall Rating
+                    </h5>
+                    <p class="small">
+                      The definitive score (1-5 stars) for the title. This is
+                      used for sorting your library and calculating your taste
+                      profile.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h5>
+                      <i class="fas fa-history text-info"></i> Watch Instance
+                      Rating
+                    </h5>
+                    <p class="small">
+                      A rating specific to a single viewing date. You might rate
+                      a classic movie 5 stars overall, but a specific re-watch
+                      only 3 stars if you weren't in the mood.
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
+          </section>
+
+          <!-- 4. Adding Entries -->
+          <section id="adding-entries">
+            <h2>Adding Entries & Live Search</h2>
+            <p>
+              To add a title, click the
+              <i style="color: #007b8a" class="fas fa-plus-circle"></i> button.
+              You do not need to type everything manually.
+            </p>
+
+            <h4>How Live Search Works</h4>
+            <ol>
+              <li>Type the name in the <strong>Name</strong> field.</li>
+              <li>The app waits for you to stop typing.</li>
+              <li>
+                A dropdown will appear with results from TMDB (The Movie
+                Database).
+              </li>
+              <li>
+                Select a result to auto-fill the Poster, Year, Description,
+                Runtime, and Genres.
+              </li>
+            </ol>
+
+            <div class="edu-box">
+              <h5>
+                <i class="fas fa-shield-alt"></i> Duplicate Defense System
+              </h5>
+              <p>
+                The app actively prevents you from adding the same movie twice
+                to keep your stats clean.
+              </p>
+              <ul>
+                <li>
+                  <strong>Hard Block:</strong> If you try to add a movie with a
+                  TMDB ID that already exists in your library, the save is
+                  blocked.
+                </li>
+                <li>
+                  <strong>Soft Warn:</strong> If you add a movie with the same
+                  Name and Year (but no ID), the app asks for confirmation,
+                  assuming it might be a different edition.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- 5. Tracking Progress -->
+          <section id="tracking-progress">
+            <h2>Tracking Series Progress</h2>
+            <p>
+              For accurate "Time Watched" statistics, Series must be tracked
+              using the specific progress fields.
+            </p>
+
+            <div class="alert alert-info">
+              <strong>The Golden Rule:</strong> Only log fully completed seasons
+              in the "Seasons" box.
+            </div>
+
+            <p>
+              <strong>Example:</strong> You are watching
+              <em>Stranger Things</em>. You have finished Season 1 and Season 2,
+              and you just watched Episode 4 of Season 3.
+            </p>
+            <ul>
+              <li>
+                <strong>Seasons Completed:</strong> Enter <code>2</code> (S1 and
+                S2 are done).
+              </li>
+              <li>
+                <strong>Episodes (Current Season):</strong> Enter
+                <code>4</code> (The episodes watched in S3).
+              </li>
+            </ul>
+            <p>
+              The app calculates:
+              <code>(Seasons × Avg Ep Count) + Current Episodes</code> to
+              estimate total hours watched.
+            </p>
+
+            <div class="pro-tip">
+              <i class="fas fa-magic"></i>
+              <div>
+                <strong>Quick Update:</strong> You don't need to open the full
+                Edit form. Click the small
+                <i class="fas fa-calendar-plus text-success"></i> icon on the
+                card to quickly increment episodes or log a re-watch.
+              </div>
+            </div>
+          </section>
+
+          <!-- 6. Architecture -->
+          <section id="architecture">
+            <h2>Local-First Architecture</h2>
+            <p>This is the defining technical feature of KeepMoviEZ.</p>
+
+            <div class="tech-box">
+              <h5><i class="fas fa-database"></i> IndexedDB & RAM</h5>
+              <p>
+                When you open the app, your entire collection is loaded from
+                <strong>IndexedDB</strong> (the browser's internal hard drive)
+                into <strong>RAM</strong>.
+              </p>
+              <p>
+                This means searching, filtering, and sorting happens instantly
+                because the app isn't talking to a server—it's just scanning
+                memory. It also means the app works 100% offline.
+              </p>
+            </div>
+          </section>
+
+          <!-- 7. Sync Guide -->
+          <section id="sync-guide">
+            <h2>Sync & Privacy Settings</h2>
+            <p>
+              KeepMoviEZ offers flexible synchronization options accessible via
+              the <strong><i class="fas fa-cog"></i> Settings</strong> menu.
+            </p>
+
+            <h4>Sync Modes</h4>
+            <div class="row">
+              <!-- Custom Mode (Recommended) -->
+              <div class="col-md-6 mb-3">
+                <div class="card h-100 border-success">
+                  <div class="card-body">
+                    <h5 class="text-success">
+                      <i class="fas fa-star"></i> Custom Mode (Recommended)
+                    </h5>
+                    <p class="small">
+                      <strong>The Smart Choice.</strong> Syncs automatically
+                      after a set number of changes (e.g., every 5 items). Saves
+                      battery and data by batching your updates instead of
+                      syncing constantly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Normal Mode -->
+              <div class="col-md-6 mb-3">
+                <div class="card h-100 border-info">
+                  <div class="card-body">
+                    <h5 class="text-info">
+                      <i class="fas fa-sync"></i> Normal (Auto)
+                    </h5>
+                    <p class="small">
+                      Synchronizes automatically in the background whenever you
+                      make a change. Ideal if you switch devices instantly.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Manual Mode -->
+              <div class="col-md-6 mb-3">
+                <div class="card h-100 border-secondary">
+                  <div class="card-body">
+                    <h5 class="text-secondary">
+                      <i class="fas fa-hand-pointer"></i> Manual
+                    </h5>
+                    <p class="small">
+                      The classic behavior. Changes stay local until you
+                      explicitly click <strong>"Sync with Cloud"</strong>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Privacy Mode -->
+              <div class="col-md-6 mb-3">
+                <div class="card h-100 border-dark">
+                  <div class="card-body">
+                    <h5 class="text-dark">
+                      <i class="fas fa-user-shield"></i> Strict Privacy
+                    </h5>
+                    <p class="small">
+                      Disables all cloud features. The "Sync" button is disabled
+                      to prevent accidental uploads.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h4 class="mt-4">Advanced Data Controls</h4>
+            <p>
+              Inside the Settings menu, you will also find powerful data
+              management tools:
+            </p>
+            <ul>
+              <li>
+                <strong>Force Pull (Cloud → Device):</strong> Discards local
+                changes and replaces them with the cloud backup.
+              </li>
+              <li>
+                <strong>Force Push (Device → Cloud):</strong> Wipes the cloud
+                backup and uploads your current local data.
+              </li>
+            </ul>
+          </section>
+
+          <!-- 8. Import/Export -->
+          <section id="import-export">
+            <h2>Smart Import & Export</h2>
+            <p>
+              Your data is yours. You can export a JSON or a CSV file backup at
+              any time <strong>Menu > Export</strong>.
+            </p>
+
+            <h4>Restoring & Enriching Data</h4>
+            <p>
+              When importing a file, you will see options. The most powerful one
+              is <strong>"Smart Backfill"</strong>.
+            </p>
+            <p>
+              Use this if you have an old list of movies (just names) and want
+              to upgrade them. If the import file contains extra data (like
+              runtime or director) for a movie you already have, "Backfill" will
+              update the empty fields <em>without</em> overwriting your existing
+              ratings or notes.
+            </p>
+          </section>
+
+          <!-- 9. Discovery -->
+          <section id="discovery">
+            <h2>Discovery & Visual Data</h2>
+
+            <h4>Visual Data (Charts)</h4>
+            <p>
+              Access via <strong>Menu > Visual Data</strong>. This dashboard
+              visualizes your viewing habits using interactive graphs, showing
+              your favorite genres, viewing activity over years, and rating
+              distribution.
+            </p>
+
+            <h4>Suggestion Engine</h4>
+            <p>
+              The engine uses a <strong>Seed-Based Algorithm</strong>. It picks
+              a highly-rated movie from your own collection and queries the
+              database to find:
+            </p>
+            <ul>
+              <li>Similar movies (Content Based).</li>
+              <li>Other works by the same Director.</li>
+              <li>Movies belonging to the same Collection/Franchise.</li>
+            </ul>
+          </section>
+
+          <!-- 10. Performance & Architecture -->
+          <section id="technical">
+            <h2>Performance & Architecture</h2>
+            <p>
+              KeepMoviEZ is engineered to be faster than traditional web
+              applications. Instead of relying on constant server communication,
+              it uses a "Heavy Client" architecture that leverages your device's
+              raw processing power.
+            </p>
+
+            <!-- Pillar 1: Rendering -->
+            <div class="edu-box">
+              <h5>
+                <i class="fas fa-tachometer-alt"></i> Zero-Lag Rendering Engine
+              </h5>
+              <p>
+                Handling large lists (100+ items) usually slows down web
+                browsers because drawing thousands of elements creates lag.
+              </p>
+              <p><strong>Our Solution: Smart Pagination</strong></p>
+              <p>
+                We use a "Just-in-Time" rendering strategy. When you sort or
+                filter your library:
+              </p>
+              <ol class="mb-0">
+                <li>
+                  The engine processes the data in milliseconds (using optimized
+                  Sorting algorithms).
+                </li>
+                <li>
+                  It draws only the first <strong>50 Cards</strong> immediately.
+                  This keeps the UI response time under 16ms (60fps).
+                </li>
+                <li>
+                  As you scroll, the <strong>"Load More"</strong> system appends
+                  the next batch instantly.
+                </li>
+              </ol>
+              <p class="small text-muted mt-2">
+                <em
+                  >Result: A library of 5,000 movies feels as fast as a library
+                  of 50.</em
+                >
+              </p>
+            </div>
+
+            <!-- Pillar 2: Networking -->
+            <div class="card mb-4 border-primary">
+              <div class="card-body">
+                <h5 class="text-primary">
+                  <i class="fas fa-network-wired"></i> Intelligent Networking
+                </h5>
+                <p>
+                  We hate loading spinners. To minimize them, we implemented two
+                  advanced patterns:
+                </p>
+                <div class="row mt-3">
+                  <div class="col-md-6">
+                    <h6>LRU Caching (Memory Cache)</h6>
+                    <p class="small">
+                      The search bar remembers your recent queries. If you type
+                      "Batman", delete it, and type it again, the result loads
+                      instantly from RAM (0ms latency) without touching the
+                      internet.
+                    </p>
+                  </div>
+                  <div class="col-md-6">
+                    <h6>Adaptive Debouncing</h6>
+                    <p class="small">
+                      The app waits 700ms after you stop typing before sending a
+                      request. This "Traffic Control" prevents wasteful API
+                      calls while you are still correcting typos.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pillar 3 & 4: Stability & Storage -->
+            <div class="row">
+              <div class="col-md-6">
+                <div class="card h-100 bg-light border-0">
+                  <div class="card-body">
+                    <h6 class="text-dark">
+                      <i class="fas fa-database"></i> The Database Model
+                    </h6>
+                    <p class="small mb-0">
+                      We don't just save cookies. KeepMoviEZ runs a full
+                      NoSQL-style database (IndexedDB) directly inside your
+                      browser. On startup, this data is "Hydrated" into RAM,
+                      allowing instant sorting and filtering without disk reads.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="card h-100 bg-light border-0">
+                  <div class="card-body">
+                    <h6 class="text-dark">
+                      <i class="fas fa-shield-alt"></i> Concurrency Control
+                    </h6>
+                    <p class="small mb-0">
+                      To prevent crashes during rapid reloads, the app uses a
+                      <strong>Mutex Lock</strong> system. It ensures that only
+                      one initialization process can touch the database at a
+                      time, preventing data corruption and "Infinite Loading"
+                      loops.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 11. Local-Only Workflow -->
+          <section id="local-only">
+            <h2>For the Ultra-Private: Strict Privacy Mode</h2>
+            <p>
+              We designed KeepMoviEZ with a modern, secure cloud architecture
+              where <strong>you</strong> own your data. However, for users who
+              prefer to keep their digital footprint strictly on their physical
+              device, we introduced <strong>Strict Privacy Mode</strong>.
+            </p>
+
+            <div class="alert alert-secondary border-secondary">
+              <h5><i class="fas fa-shield-alt"></i> How to Enable</h5>
+              <ol class="mb-0">
+                <li>
+                  Open the <strong>Menu</strong> > <strong>Settings</strong>.
+                </li>
+                <li>Select <strong>Strict Privacy</strong>.</li>
+                <li>
+                  The app is now locked to your device. Cloud sync features are
+                  disabled.
+                </li>
+              </ol>
+            </div>
+
+            <p>
+              In this mode, the application software actively blocks any attempt
+              to communicate with the synchronization server.
+            </p>
+
+            <div class="card bg-light mb-3">
+              <div class="card-body">
+                <h5 class="text-dark">
+                  <i class="fas fa-exclamation-triangle"></i> Important Note on
+                  Backups
+                </h5>
+                <p class="small mb-0">
+                  Since you aren't syncing to the cloud, if you lose your phone,
+                  you lose your movies. You <strong>MUST</strong> regularly go
+                  to <code>Menu > Export</code> and save the JSON file to a safe
+                  place (like a USB drive).
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- 12. FAQ -->
+          <section id="faq">
+            <h2>Frequently Asked Questions (FAQ)</h2>
+            <div class="accordion" id="faqAccordion">
+              <!-- GROUP: GENERAL & SEARCH -->
+              <div class="card">
+                <div class="card-header" id="h1">
+                  <button
+                    class="btn btn-link"
+                    data-toggle="collapse"
+                    data-target="#c1"
+                  >
+                    <span class="font-weight-bold text-primary"
+                      >Why isn't the search working immediately?</span
+                    >
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c1" class="collapse show" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    <strong>It's the "Smart Delay".</strong> In v5.3.0, we
+                    introduced a 700ms delay. The app waits for you to
+                    <em>stop typing</em> before it talks to the server. This
+                    saves your data plan and prevents the list from jumping
+                    around while you type. Just type the name and wait a split
+                    second!
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h2">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c2"
+                  >
+                    <span>Can I use the app offline?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c2" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    <strong>Yes, 100%.</strong> Once you have logged in for the
+                    first time, the entire database lives on your device. You
+                    can add, edit, and view your collection without any internet
+                    connection. You only need internet to Search TMDB or Sync.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h3">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c3"
+                  >
+                    <span>I see "Data Conflict" when trying to save. Why?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c3" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    This is the <strong>Duplicate Defense System</strong> in
+                    action. You are trying to add a movie that already exists in
+                    your library (matching TMDB ID). Instead of creating a
+                    duplicate, please find the existing entry and edit it.
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP: SYNC & DATA -->
+              <div class="card">
+                <div class="card-header" id="h4">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c4"
+                  >
+                    <span class="font-weight-bold text-primary"
+                      >Does it sync automatically?</span
+                    >
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c4" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    <strong>It's your choice!</strong> By default, we use
+                    <strong>Manual Mode</strong> to give you full control.
+                    However, you can enable <strong>Auto-Sync</strong> (Normal
+                    Mode) in the new <i class="fas fa-cog"></i>
+                    <strong>Settings</strong> menu. This will automatically back
+                    up your changes to the cloud whenever you save.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h5">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c5"
+                  >
+                    <span>I logged out and my movies disappeared!</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c5" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    Don't panic! For security, logging out clears the
+                    <strong>Local Cache</strong> on that specific device. As
+                    long as you clicked "Sync" before logging out, your data is
+                    safe in the cloud. Simply log back in and click
+                    <strong>Sync from Cloud</strong> to restore everything.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h6">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c6"
+                  >
+                    <span
+                      >What is the difference between "Force Push" and
+                      "Sync"?</span
+                    >
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c6" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    <ul>
+                      <li>
+                        <strong>Sync (Recommended):</strong> Smartly merges
+                        changes. It uploads your new edits and downloads updates
+                        from other devices.
+                      </li>
+                      <li>
+                        <strong>Force Push (Danger):</strong> Erases your Cloud
+                        backup entirely and replaces it with what is currently
+                        on your device. Use only if your cloud data is
+                        corrupted.
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP: EDITING & CONTENT -->
+              <div class="card">
+                <div class="card-header" id="h7">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c7"
+                  >
+                    <span>Can I use my own movie posters?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c7" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    <strong>Yes.</strong> In the Edit form (Advanced Details),
+                    look for the "Poster URL" field. You can paste any direct
+                    image link (ending in .jpg or .png) to override the default
+                    TMDB poster.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h8">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c8"
+                  >
+                    <span>How do I track TV Shows correctly?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c8" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    Use the <strong>Seasons Completed</strong> field for full
+                    seasons you've finished. Use
+                    <strong>Episode (Current)</strong> for where you are in the
+                    <em>current</em> season. <br /><em>Example:</em> If you
+                    finished Season 1 and are on Episode 5 of Season 2, enter
+                    <strong>1</strong> for Seasons and <strong>5</strong> for
+                    Episodes.
+                  </div>
+                </div>
+              </div>
+
+              <!-- GROUP: TROUBLESHOOTING -->
+              <div class="card">
+                <div class="card-header" id="h9">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c9"
+                  >
+                    <span
+                      >The app gets stuck on "Loading..." when I refresh.</span
+                    >
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c9" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    This was a rare race condition fixed in v5.3.0. However, if
+                    it happens, we added a <strong>5-second failsafe</strong>.
+                    If the app doesn't load within 5 seconds, it will
+                    automatically reset the connection. Just wait a moment, or
+                    close the tab and reopen it.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h10">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c10"
+                  >
+                    <span>I imported a file but my Stats show "0".</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c10" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    The statistics engine runs on a cache to save battery. After
+                    a large import, sometimes the cache isn't invalidated
+                    immediately. Simply <strong>Refresh the Page</strong> to
+                    force a full recalculation of your charts and achievements.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h11">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c11"
+                  >
+                    <span>Why isn't the "Find Similar" button showing?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c11" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    The Suggestion Engine requires two things:
+                    <ol class="mb-0 pl-3">
+                      <li>
+                        The movie must have a <strong>TMDB ID</strong> (added
+                        via search).
+                      </li>
+                      <li>
+                        You must have marked it as <strong>Watched</strong> or
+                        <strong>Continue</strong>.
+                      </li>
+                    </ol>
+                    We can't suggest similar movies if we don't know what the
+                    movie is!
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h12">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c12"
+                  >
+                    <span>Can I reset my password?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c12" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    Yes. On the login screen, type your email and click
+                    <strong>Forgot Password?</strong>. A secure reset link will
+                    be sent to your inbox. Note: This requires an active
+                    internet connection.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
+      </div>
     </div>
-    
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $('body').scrollspy({ target: '#toc', offset: 100 });
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({ behavior: 'smooth' });
-            });
+      $("body").scrollspy({ target: "#toc", offset: 100 });
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener("click", function (e) {
+          e.preventDefault();
+          document
+            .querySelector(this.getAttribute("href"))
+            .scrollIntoView({ behavior: "smooth" });
         });
+      });
     </script>
-</body>
+  </body>
 </html>
