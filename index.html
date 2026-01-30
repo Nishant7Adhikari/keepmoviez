@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.4.2 -->
+<!-- KeepMoviEZ  v5.4.3 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -118,19 +118,15 @@
                 
                 <!-- NEW Import/Pull Button (Cleaned) -->
                 <button id="menuImportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
-                    <i class="fas fa-cloud-download-alt mr-2"></i> Import
+                    <i class="fas fa-cloud-download-alt mr-2"></i> Load Data
                 </button>
                 <!-- NEW Export/Push Button (Cleaned) -->
                 <button id="menuExportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
-                    <i class="fas fa-cloud-upload-alt mr-2"></i> Export
+                    <i class="fas fa-cloud-upload-alt mr-2"></i> Export Data
                 </button>
                 <!-- Standard Sync Button (Hidden by default in Normal/Strict Modes) -->
                 <button id="menuSyncDataBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-sync-alt mr-2"></i> Sync with Cloud
-                </button>
-                <!-- Erase Data Button -->
-                <button id="menuEraseDataBtn" class="list-group-item list-group-item-action d-flex align-items-center text-danger">
-                    <i class="fas fa-eraser mr-2"></i> Erase Data
                 </button>
             </div>
             <div class="mt-3 mb-2 px-3 small text-muted">Insights & Stats</div>
@@ -174,7 +170,6 @@
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <!-- REMOVED Force Pull logic -->
                     <hr>
                     <h6>Import from File</h6>
                     <p class="small text-muted">Upload a CSV or JSON file to add or update your collection. You will be guided by the Smart Import Assistant.</p>
@@ -247,16 +242,25 @@
 
                     <hr>
                     <h6 class="mb-3 text-danger">Advanced Data Management</h6>
-                    
-                    <button class="btn btn-outline-warning btn-block mb-2" id="forcePullTriggerBtn">
+                    <button class="btn btn-warning btn-block mb-2" id="forcePullTriggerBtn">
                         <i class="fas fa-cloud-download-alt"></i> Force Pull from Cloud
                     </button>
                     <p class="small text-muted mb-3">Replace local data with cloud backup.</p>
-
-                    <button class="btn btn-outline-danger btn-block mb-2" id="forcePushTriggerBtn">
+                    <button class="btn btn-danger btn-block mb-2" id="forcePushTriggerBtn">
                         <i class="fas fa-cloud-upload-alt"></i> Force Push to Cloud
                     </button>
-                    <p class="small text-muted">Overwrite cloud backup with local data.</p>
+                    <p class="small text-muted mb-3">Overwrite cloud backup with local data.</p>
+                    
+                    <hr>
+                    <h6 class="mb-3">Data Utilities</h6>
+                    <button class="btn btn-success btn-block mb-2" id="settingsBackfillBtn">
+                        <i class="fas fa-fill-drip"></i> Backfill Missing Data
+                    </button>
+                    <p class="small text-muted mb-3">Fill in missing fields for your entries.</p>
+                    <button class="btn btn-danger btn-block mb-2" id="settingsEraseDataBtn">
+                        <i class="fas fa-eraser"></i> Erase All Data
+                    </button>
+                    <p class="small text-muted">Permanently delete all local data.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -331,6 +335,68 @@
         </div>
     </div>
 <!-- END CHUNK: Confirm Force Push -->
+
+<!-- START CHUNK: Backfill Modal -->
+<div class="modal fade" id="backfillModal" tabindex="-1" role="dialog" aria-labelledby="backfillModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="backfillModalLabel">
+                    <i class="fas fa-fill-drip"></i> Backfill Missing Data
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Progress Bar -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small class="text-muted">Progress</small>
+                        <span id="backfillProgress" class="badge badge-primary">0 / 0</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div id="backfillProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <!-- Entry Card -->
+                <div class="card mb-3">
+                    <div class="card-body text-center">
+                        <h4 id="backfillEntryName" class="mb-1">Loading...</h4>
+                        <p id="backfillEntryMeta" class="text-muted small mb-0">Category · Year</p>
+                    </div>
+                </div>
+
+                <!-- Field to Fill -->
+                <div class="mb-3">
+                    <label id="backfillFieldLabel" class="font-weight-bold h5 mb-3 d-block text-center">Field Name</label>
+                    <div id="backfillInputContainer">
+                        <!-- Input rendered dynamically -->
+                    </div>
+                    <small id="backfillHelperText" class="form-text text-muted mt-2" style="display:none;"></small>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" id="backfillGoogleBtn">
+                    <i class="fab fa-google"></i> Google It
+                </button>
+                <div>
+                    <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
+                        <i class="fas fa-cloud-download-alt"></i> Auto-Fetch
+                    </button>
+                    <button type="button" class="btn btn-secondary mr-2" onclick="skipCurrentField()">
+                        <i class="fas fa-forward"></i> Skip
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="saveAndNext()">
+                        <i class="fas fa-check"></i> Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END CHUNK: Backfill Modal -->
 
 <!-- START CHUNK: Main App Layout & Top Navigation Bar -->
 <div id="appContent" style="display: none;">
@@ -595,7 +661,7 @@
                                         <i class="fas fa-spinner fa-spin"></i> Searching TMDB...
                                     </small>
                                 </label>
-                                <input type="text" class="form-control" id="movieName" required placeholder="Type title to auto-search..." autocomplete="off">
+                                <input type="text" class="form-control" id="movieName" required placeholder="Type title or TMDB ID..." autocomplete="off">
                                 <!-- Live Search Results Dropdown -->
                                 <div id="tmdbSearchResults" class="list-group shadow" style="position: absolute; top: 100%; left: 5px; right: 5px; z-index: 1000; max-height: 300px; overflow-y: auto; display: none;"></div>
                             </div>
@@ -1636,6 +1702,7 @@
     <script src="js/app.js?v=1"></script>
     <script src="js/supabase.js?v=1"></script>
     <script src="js/backfill.js?v=1"></script>
+    <script src="js/backfill-ui.js?v=1"></script>
     <script src="js/main.js?v=1"></script>
 <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 

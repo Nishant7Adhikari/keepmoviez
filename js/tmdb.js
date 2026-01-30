@@ -72,13 +72,59 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
     let results = [];
 
     try {
-        const searchParams = { query };
-        if (searchYear) {
-            searchParams.query = `${query} ${searchYear}`;
+        // Detect and Handle TMDB ID Search ---
+        const idMatch = query.match(/^(?:id:|tmdb:)?(\d{1,10})$/i);
+        if (idMatch) {
+            const tmdbId = idMatch[1];
+            console.log(`[ID Search] Attempting direct fetch for TMDB ID: ${tmdbId}`);
+            
+            // Try fetching as both movie and tv since we don't know the type
+            const [movieRes, tvRes] = await Promise.allSettled([
+                callTmdbApiDirect(`/movie/${tmdbId}`),
+                callTmdbApiDirect(`/tv/${tmdbId}`)
+            ]);
+
+            let idResults = [];
+            if (movieRes.status === 'fulfilled' && movieRes.value && !movieRes.value.status_message) {
+                movieRes.value.media_type = 'movie';
+                idResults.push(movieRes.value);
+            }
+            if (tvRes.status === 'fulfilled' && tvRes.value && !tvRes.value.status_message) {
+                tvRes.value.media_type = 'tv';
+                idResults.push(tvRes.value);
+            }
+
+            if (idResults.length > 0) {
+                results = idResults;
+                // Cache and display immediately
+                tmdbSearchCache.set(cacheKey, results);
+                displayTmdbResults(results);
+                return;
+            }
+            // If ID search yielded nothing, fall back to normal search (it might be a title like "1917")
+            console.log(`[ID Search] No direct match for ${tmdbId}, falling back to text search.`);
         }
-        
-        const multiData = await callTmdbApiDirect('/search/multi', searchParams);
-        results = multiData.results || [];
+        // --- END ID Search Logic ---
+
+        if (searchYear) {
+            // FIX: Use specific search endpoints when year is provided for much better accuracy
+            // search/multi does NOT officially support year parameters
+            const [movieData, tvData] = await Promise.all([
+                callTmdbApiDirect('/search/movie', { query, primary_release_year: searchYear }),
+                callTmdbApiDirect('/search/tv', { query, first_air_date_year: searchYear })
+            ].map(p => p.catch(e => ({ results: [] })))); // Graceful failure for one type
+
+            const movieResults = (movieData.results || []).map(r => ({ ...r, media_type: 'movie' }));
+            const tvResults = (tvData.results || []).map(r => ({ ...r, media_type: 'tv' }));
+            
+            results = [...movieResults, ...tvResults];
+            // Sort combined results by popularity
+            results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
+        } else {
+            // Standard multi-search when no year is provided
+            const multiData = await callTmdbApiDirect('/search/multi', { query });
+            results = multiData.results || [];
+        }
         
         // 4. Save to Cache
         if (tmdbSearchCache.size >= MAX_CACHE_SIZE) {
