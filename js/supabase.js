@@ -358,7 +358,8 @@ async function comprehensiveSync(silent = false) {
       // FIX: Clear stats cache and update achievements so UI reflects new data
       if (window.globalStatsData) window.globalStatsData = {};
 
-      if (!silent) renderMovieCards();
+      // Always render if data actually changed, even if sync was 'silent'
+      renderMovieCards();
     }
 
     const summary = `Pulled: ${pulledCount}, Pushed: ${pushedCount}, Deleted: ${deletedCount}`;
@@ -714,6 +715,33 @@ async function initializeApp() {
     // Always show content if we reach here
     if (authContainer) authContainer.style.display = "none";
     if (appContent) appContent.style.display = "block";
+
+    // --- NEW: Trigger Auto-Sync on App Reopen/Reload ---
+    const SYNC_MODE_KEY = "keepmoviez_sync_mode";
+    const currentSyncMode = localStorage.getItem(SYNC_MODE_KEY);
+
+    if (currentSupabaseUser && currentSyncMode === "normal") {
+      console.log(
+        `[Sync] Auto-Sync (Normal Mode) detected. Preparing startup sync...`,
+      );
+      // Add a slight delay to ensure UI and listeners are fully ready
+      setTimeout(() => {
+        if (window.isSyncingInProgress) {
+          console.log(
+            "[Sync] Startup sync delayed: Another sync already in progress.",
+          );
+          return;
+        }
+        console.log(
+          `[Sync] Starting comprehensive sync for ${currentSupabaseUser.email}...`,
+        );
+        comprehensiveSync(true); // Silent sync
+      }, 1000);
+    } else {
+      console.log(
+        `[Sync] Skipping startup sync. User: ${currentSupabaseUser ? "Logged In" : "Guest"}, Mode: ${currentSyncMode || "manual"}`,
+      );
+    }
 
     // Update UI for offline/guest state if needed
     if (!currentSupabaseUser) {
