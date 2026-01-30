@@ -721,13 +721,6 @@ async function initializeApp() {
       if (emailEl) emailEl.textContent = "Guest (Local Mode)";
       if (typeof updateSyncButtonState === "function") updateSyncButtonState();
     }
-
-    // NEW: Auto-Sync on Load
-    const syncMode = localStorage.getItem("keepmoviez_sync_mode");
-    if (syncMode === "normal" && currentSupabaseUser) {
-      console.log("Auto-Sync enabled: Triggering comprehensive sync on load.");
-      comprehensiveSync(true); // Silent sync
-    }
   } catch (error) {
     console.error("App init error:", error);
     showToast("Start Failed", error.message, "error");
