@@ -176,6 +176,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Global Tracker Function (Exposed for app.js)
   window.trackModification = function (entryIds) {
+    if (currentSyncMode === "strict_privacy") return;
+
+    // Normal mode: Trigger auto-sync with debounce
+    if (currentSyncMode === "normal") {
+      if (typeof comprehensiveSync === "function" && currentSupabaseUser) {
+        clearTimeout(window.autoSyncTimer);
+        window.autoSyncTimer = setTimeout(() => {
+          console.log("Auto-Sync (Normal Mode) Triggered...");
+          comprehensiveSync(true);
+        }, 3000); // 3 second delay
+      }
+      return;
+    }
+
     if (currentSyncMode !== "custom") return;
 
     const ids = Array.isArray(entryIds) ? entryIds : [entryIds];
@@ -201,9 +215,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `Custom Sync Threshold Met (${modifiedEntriesList.size}/${customSyncThreshold}). Triggering Sync...`,
       );
       if (typeof comprehensiveSync === "function") {
-        comprehensiveSync(true).then(() => {
-          // Success clearing is handled in comprehensiveSync's success path or callback
-        });
+        comprehensiveSync(true);
       }
     }
   };

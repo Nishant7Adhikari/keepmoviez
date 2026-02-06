@@ -642,6 +642,7 @@ window.handleQuickUpdateSave = async function (event) {
     }
 
     await saveToIndexedDB();
+    if (typeof trackModification === "function") trackModification(entryId);
     renderMovieCards();
     await checkAndNotifyNewAchievements();
 

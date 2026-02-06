@@ -290,8 +290,12 @@ async function comprehensiveSync(silent = false) {
           .upsert(supabaseFormatted);
         if (error)
           throw new Error(`Uploading changes failed: ${error.message}`);
-        pushedCount = entriesToUpsert.length;
+        pushedCount = supabaseFormatted.length;
         changesMade = true;
+      } else {
+        console.warn(
+          "comprehensiveSync: No valid entries found to push after formatting.",
+        );
       }
     }
 

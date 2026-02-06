@@ -73,10 +73,16 @@ function prepareAddWatchInstanceForm() {
   if (watchInstanceFormTitleEl)
     watchInstanceFormTitleEl.textContent = "Add New Watch Record";
   if (watchInstanceFormFields) {
-    if (watchInstanceFormFields.date)
-      watchInstanceFormFields.date.value = new Date()
-        .toISOString()
-        .split("T")[0];
+    if (watchInstanceFormFields.date) {
+      const now = new Date();
+      const localDate =
+        now.getFullYear() +
+        "-" +
+        String(now.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(now.getDate()).padStart(2, "0");
+      watchInstanceFormFields.date.value = localDate;
+    }
     if (watchInstanceFormFields.rating)
       watchInstanceFormFields.rating.value = "";
     if (watchInstanceFormFields.notes) watchInstanceFormFields.notes.value = "";
@@ -166,7 +172,14 @@ async function saveOrUpdateWatchInstance() {
     if (watchInstanceFormFields.date) watchInstanceFormFields.date.focus();
     return;
   }
-  if (new Date(watchDate) > new Date()) {
+  const now = new Date();
+  const today =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(now.getDate()).padStart(2, "0");
+  if (watchDate > today) {
     showToast(
       "Validation Error",
       "Watch Date cannot be in the future.",
@@ -1740,7 +1753,14 @@ window.prepareQuickUpdateModal = function (id) {
     );
   }
 
-  $("#quickUpdateDate").val(new Date().toISOString().split("T")[0]);
+  const now = new Date();
+  const localDate =
+    now.getFullYear() +
+    "-" +
+    String(now.getMonth() + 1).padStart(2, "0") +
+    "-" +
+    String(now.getDate()).padStart(2, "0");
+  $("#quickUpdateDate").val(localDate);
 
   modal.modal("show");
 };
