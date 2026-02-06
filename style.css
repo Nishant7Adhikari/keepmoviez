@@ -506,7 +506,8 @@ p {
 
 .card-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  /* MODIFIED: Use 24% min-width to ensure max 4 columns (100/24 ~ 4.1) while maintaining responsive min-width */
+  grid-template-columns: repeat(auto-fill, minmax(max(250px, 24%), 1fr));
   gap: 1rem;
   padding-bottom: 1rem;
 }
@@ -1438,9 +1439,9 @@ a:hover {
   #addNewEntryBtn {
     margin-top: 5px;
   }
-  .modal-dialog {
+  /* .modal-dialog {
     margin: 0.5rem;
-  }
+  } */
   .col-md-6,
   .col-md-4,
   .col-md-8,
@@ -1558,6 +1559,43 @@ a:hover {
   .navbar-toggler {
     display: block !important; /* Force menu button visible on large screens for offcanvas */
   }
+}
+
+@media (min-width: 992px) {
+  /* MODIFIED: Custom widths for larger screens (User Request: 60-70%) */
+  .modal-lg, .modal-dialog.modal-lg {
+    max-width: 60vw;
+  }
+  .modal-xl, .modal-dialog.modal-xl {
+    max-width: 70vw;
+  }
+
+  /* Details Modal Side-by-Side Layout */
+  .details-modal-container {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    height: 80vh; 
+    overflow: hidden;
+  }
+  .details-poster-panel {
+    width: 35%;
+    height: 100%;
+    margin-bottom: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--table-border-color);
+  }
+  .details-info-panel {
+    width: 65%; 
+    height: 100%;
+    overflow-y: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+@media (min-width: 1200px) {
+  /* Inherits percentage from above */
 }
 /* END CHUNK: 11: Responsive Design */
 
@@ -1793,6 +1831,11 @@ a:hover {
 /* END CHUNK: 12: Miscellaneous Specific Styles */
 
 /*START CHUNK: 13: Achievement Badge Component*/
+/* Limiting Achievement Grid to max 5 columns */
+#achievementBadgesModal {
+  max-width: 750px;
+  margin: 0 auto;
+}
 .achievement-badge {
   display: flex;
   flex-direction: column;
@@ -2296,13 +2339,35 @@ a:hover {
 }
 
 /* --- Responsive Split Layout --- */
+
+/* Mobile Details Poster Presentation Fix */
+@media (max-width: 767.98px) {
+  .details-poster-panel {
+    height: auto;
+    padding: 0.5rem;
+    text-align: center;
+    background: linear-gradient(to bottom, var(--table-header-bg), var(--card-bg));
+  }
+  .details-poster-img {
+    width: auto;
+    height: auto;
+    max-width: 100%; /* Allow full width */
+    max-height: 75vh; /* Increase vertical space significantly */
+    margin: 0 auto;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    display: inline-block;
+  }
+}
+
 @media (min-width: 768px) {
   .details-modal-container {
     flex-direction: row;
     overflow: hidden; /* <<< FIX #3: Disable container scrolling on desktop */
   }
   .details-poster-panel {
-    width: 420px;
+    flex: 0 0 40%; /* Take 40% of space, don't grow or shrink */
+    max-width: 420px; /* But don't get larger than 420px */
     height: 100%; /* Poster takes full height of the column */
   }
   .details-info-panel {
@@ -2493,7 +2558,7 @@ a:hover {
   background-color: var(--card-bg);
   border: 1px solid var(--card-border-color);
   border-radius: var(--border-radius-sm);
-  box-shadow: 0 -4px 12px rgba(0,0,0,0.15); /* Shadow upwards */
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15); /* Shadow upwards */
   display: none;
 }
 .genre-backfill-container .remove-genre {
@@ -2533,7 +2598,9 @@ a:hover {
   border-radius: var(--border-radius-sm);
   background-color: var(--input-bg);
   cursor: text;
-  transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  transition:
+    background-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
   min-height: calc(1.5em + 1.5rem);
 }
 #backfillGenreContainer:focus-within {

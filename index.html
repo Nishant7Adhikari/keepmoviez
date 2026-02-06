@@ -1,7 +1,8 @@
-<!-- KeepMoviEZ  v5.4.3 -->
+<!-- KeepMoviEZ  v5.4.5 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
@@ -19,9 +20,10 @@
     <!-- Local Libraries (CSS) -->
     <link href="libs/css/bootstrap.min.css" rel="stylesheet">
     <link href="libs/css/all.min.css" rel="stylesheet"> <!-- Font Awesome -->
-    
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap" rel="stylesheet">
-    
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
+        rel="stylesheet">
+
     <link rel="stylesheet" href="style.css">
 
     <!-- PWA Manifest and Theme -->
@@ -34,17 +36,18 @@
     <script src="libs/js/supabase.min.js"></script>
 </head>
 <!-- END CHUNK: Document Head and Core Dependencies -->
+
 <body>
-    
-<!-- START CHUNK: Overlays -->
+
+    <!-- START CHUNK: Overlays -->
     <div id="loadingOverlay" class="loading-overlay">
         <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
         <p class="mt-3 text-white ">Loading...</p>
     </div>
     <div id="themeTransitionOverlay" class="theme-transition-overlay"></div>
-<!-- END CHUNK: Overlays -->
+    <!-- END CHUNK: Overlays -->
 
-<!-- START CHUNK: Authentication Form -->
+    <!-- START CHUNK: Authentication Form -->
     <div id="authContainer" class="auth-container">
         <div class="auth-card">
             <h4 id="authTitle" class="text-center mb-4">Welcome to KeepMoviEZ !</h4>
@@ -57,7 +60,8 @@
                 </div>
                 <div class="form-group">
                     <label for="supabasePassword">Password</label>
-                    <input type="password" id="supabasePassword" class="form-control" placeholder="Your password" required>
+                    <input type="password" id="supabasePassword" class="form-control" placeholder="Your password"
+                        required>
                 </div>
                 <div id="authError" class="alert alert-danger mt-2" style="display:none;"></div>
                 <button id="supabaseLoginBtn" class="btn btn-primary btn-block mt-3">Login</button>
@@ -66,7 +70,8 @@
                 <div class="text-center my-3 text-muted">OR</div>
 
                 <button id="supabaseGoogleSignInBtn" class="btn btn-light btn-block border">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" style="height: 18px; margin-right: 10px;">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo"
+                        style="height: 18px; margin-right: 10px;">
                 </button>
 
                 <button id="supabasePasswordResetBtn" class="btn btn-link btn-block mt-2">Forgot Password?</button>
@@ -74,23 +79,26 @@
 
             <div id="passwordSetupSection" style="display:none;">
                 <h5 class="text-center mb-3">Set a New Password</h5>
-                <p class="text-muted text-center small mb-3">You have been redirected from a password reset link. Please enter and confirm your new password.</p>
+                <p class="text-muted text-center small mb-3">You have been redirected from a password reset link. Please
+                    enter and confirm your new password.</p>
                 <div class="form-group">
                     <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" class="form-control" placeholder="Enter new password" required>
+                    <input type="password" id="newPassword" class="form-control" placeholder="Enter new password"
+                        required>
                 </div>
-                 <div class="form-group">
+                <div class="form-group">
                     <label for="confirmNewPassword">Confirm New Password</label>
-                    <input type="password" id="confirmNewPassword" class="form-control" placeholder="Confirm new password" required>
+                    <input type="password" id="confirmNewPassword" class="form-control"
+                        placeholder="Confirm new password" required>
                 </div>
                 <div id="passwordResetError" class="alert alert-danger mt-2" style="display:none;"></div>
                 <button id="updatePasswordBtn" class="btn btn-primary btn-block mt-3">Update Password</button>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Authentication Form -->
+    <!-- END CHUNK: Authentication Form -->
 
-<!-- START CHUNK: Off-Canvas Application Menu -->
+    <!-- START CHUNK: Off-Canvas Application Menu -->
     <div id="appMenuBackdrop" class="offcanvas-backdrop"></div>
     <div id="appMenu" class="offcanvas-menu shadow-lg">
         <div class="offcanvas-header d-flex justify-content-between align-items-center p-3 border-bottom">
@@ -102,25 +110,29 @@
         <div class="offcanvas-body p-0">
             <div class="user-section p-3 border-bottom">
                 <span id="menuLoggedInUserEmail" class="d-block mb-1 small text-muted">Not logged in</span>
-                <span id="menuOnlineStatusIndicator" class="badge badge-pill badge-danger" title="Online Status">Offline</span>
-                <span id="menuSyncModeBadge" class="badge badge-pill badge-secondary ml-1" title="Sync Mode">Manual</span>
-                <!-- NEW: Last Synced Indicator -->
+                <span id="menuOnlineStatusIndicator" class="badge badge-pill badge-danger"
+                    title="Online Status">Offline</span>
+                <span id="menuSyncModeBadge" class="badge badge-pill badge-secondary ml-1"
+                    title="Sync Mode">Manual</span>
+                <!-- Last Synced Indicator -->
                 <small id="lastSyncedText" class="d-block mt-1 text-muted" style="font-size: 0.75em;"></small>
-                </div> <!-- Close user-section (re-adding this because I am editing inside it) -->
+            </div> <!-- Close user-section (re-adding this because I am editing inside it) -->
             <div class="list-group list-group-flush">
-                <button id="menuThemeToggleBtn" class="list-group-item list-group-item-action d-flex align-items-center">
+                <button id="menuThemeToggleBtn"
+                    class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-sun mr-2"></i> Theme
                 </button>
-                <!-- NEW Settings Button -->
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#settingsModal" data-dismiss-menu="true">
+                <!-- Settings Button -->
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#settingsModal" data-dismiss-menu="true">
                     <i class="fas fa-cog mr-2"></i> Settings
                 </button>
-                
-                <!-- NEW Import/Pull Button (Cleaned) -->
+
+                <!-- Import/Pull Button (Cleaned) -->
                 <button id="menuImportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-cloud-download-alt mr-2"></i> Load Data
                 </button>
-                <!-- NEW Export/Push Button (Cleaned) -->
+                <!-- Export/Push Button (Cleaned) -->
                 <button id="menuExportBtn" class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-cloud-upload-alt mr-2"></i> Export Data
                 </button>
@@ -131,48 +143,59 @@
             </div>
             <div class="mt-3 mb-2 px-3 small text-muted">Insights & Stats</div>
             <div class="list-group list-group-flush">
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#dailyRecommendationModal" data-dismiss-menu="true">
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#dailyRecommendationModal" data-dismiss-menu="true">
                     <i class="fas fa-calendar-day mr-2"></i> Daily Recommendation
                 </button>
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#personalizedSuggestionsModal" data-dismiss-menu="true">
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#personalizedSuggestionsModal" data-dismiss-menu="true">
                     <i class="fas fa-magic mr-2"></i>Engine Suggestions
                 </button>
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#achievementsModal" data-dismiss-menu="true">
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#achievementsModal" data-dismiss-menu="true">
                     <i class="fas fa-trophy mr-2"></i> Achievements
                 </button>
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#chartsModal" data-dismiss-menu="true">
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#chartsModal" data-dismiss-menu="true">
                     <i class="fas fa-chart-pie mr-2"></i> Visual Data
                 </button>
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#detailedStatsModal" data-dismiss-menu="true">
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#detailedStatsModal" data-dismiss-menu="true">
                     <i class="fas fa-table mr-2"></i>Stats
                 </button>
-                <!-- MODIFIED: Added About and Docs links -->
-                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal" data-target="#aboutModal" data-dismiss-menu="true">
+                <!-- About and Docs links -->
+                <button class="list-group-item list-group-item-action d-flex align-items-center" data-toggle="modal"
+                    data-target="#aboutModal" data-dismiss-menu="true">
                     <i class="fas fa-info-circle mr-2"></i> About
                 </button>
-                <a href="docs/index.html" target="_blank" class="list-group-item list-group-item-action d-flex align-items-center">
+                <a href="docs/index.html" target="_blank"
+                    class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-book mr-2"></i> Documentation
                 </a>
             </div>
             <div class="offcanvas-footer p-3 mt-auto border-top">
-            <button id="menuSupabaseLogoutBtn" class="btn btn-outline-warning btn-block"><i class="fas fa-sign-in-alt"></i></button>
-        </div>
+                <button id="menuSupabaseLogoutBtn" class="btn btn-outline-warning btn-block"><i
+                        class="fas fa-sign-in-alt"></i></button>
+            </div>
         </div>
     </div>
-<!-- END CHUNK: Off-Canvas Application Menu -->
+    <!-- END CHUNK: Off-Canvas Application Menu -->
 
-<!-- START CHUNK: Import / Pull -->
-    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Import / Pull -->
+    <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="importModalLabel">Import Data</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <hr>
                     <h6>Import from File</h6>
-                    <p class="small text-muted">Upload a CSV or JSON file to add or update your collection. You will be guided by the Smart Import Assistant.</p>
+                    <p class="small text-muted">Upload a CSV or JSON file to add or update your collection. You will be
+                        guided by the Smart Import Assistant.</p>
                     <div class="custom-file">
                         <input type="file" class="custom-file-input" id="menuCsvFileUploader" accept=".csv,.json">
                         <label class="custom-file-label" for="menuCsvFileUploader">Choose CSV/JSON file...</label>
@@ -184,28 +207,32 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Import / Pull -->
+    <!-- END CHUNK: Import / Pull -->
 
-<!-- START CHUNK: Settings Modal -->
-    <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Settings Modal -->
+    <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="settingsModalLabel"><i class="fas fa-cog"></i> Settings</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <h6 class="mb-3">Sync Preferences</h6>
                     <form id="syncSettingsForm">
                         <div class="custom-control custom-radio mb-2">
-                            <input type="radio" id="syncModeManual" name="syncMode" class="custom-control-input" value="manual" checked>
+                            <input type="radio" id="syncModeManual" name="syncMode" class="custom-control-input"
+                                value="manual" checked>
                             <label class="custom-control-label" for="syncModeManual">
                                 <strong>Manual Mode</strong> (Default)
                                 <small class="d-block text-muted">Sync only when you click the button.</small>
                             </label>
                         </div>
                         <div class="custom-control custom-radio mb-2">
-                            <input type="radio" id="syncModeNormal" name="syncMode" class="custom-control-input" value="normal">
+                            <input type="radio" id="syncModeNormal" name="syncMode" class="custom-control-input"
+                                value="normal">
                             <label class="custom-control-label" for="syncModeNormal">
                                 <strong>Normal Mode</strong> (Auto-Sync)
                                 <small class="d-block text-muted">Automatically syncs changes to the cloud.</small>
@@ -213,29 +240,39 @@
                         </div>
                         <!-- Custom Mode  -->
                         <div class="custom-control custom-radio mb-2">
-                            <input type="radio" id="syncModeCustom" name="syncMode" class="custom-control-input" value="custom">
+                            <input type="radio" id="syncModeCustom" name="syncMode" class="custom-control-input"
+                                value="custom">
                             <label class="custom-control-label" for="syncModeCustom">
-                                <strong class="text-success"><i class="fas fa-star" style="font-size: 0.8em;"></i> Custom Mode</strong> (Recommended)
-                                <small class="d-block text-muted">Syncs after a set number of changes to save data/battery.</small>
+                                <strong class="text-success"><i class="fas fa-star" style="font-size: 0.8em;"></i>
+                                    Custom Mode</strong> (Recommended)
+                                <small class="d-block text-muted">Syncs after a set number of changes to save
+                                    data/battery.</small>
                             </label>
                         </div>
                         <!-- Custom Mode Settings Panel -->
-                        <div id="customSyncSettingsPanel" class="ml-4 pl-2 border-left mt-2 mb-2" style="display: none;">
+                        <div id="customSyncSettingsPanel" class="ml-4 pl-2 border-left mt-2 mb-2"
+                            style="display: none;">
                             <div class="form-group mb-1">
-                                <label for="customSyncThresholdRange" class="small font-weight-bold">Sync Threshold: <span id="customSyncThresholdValue" class="text-primary">5</span> items</label>
-                                <input type="range" class="custom-range" id="customSyncThresholdRange" min="2" max="20" step="1" value="5">
-                                <small class="form-text text-muted">Cloud sync will trigger after you modify <span id="customSyncThresholdDisplay">5</span> distinct entries.</small>
+                                <label for="customSyncThresholdRange" class="small font-weight-bold">Sync Threshold:
+                                    <span id="customSyncThresholdValue" class="text-primary">5</span> items</label>
+                                <input type="range" class="custom-range" id="customSyncThresholdRange" min="2" max="20"
+                                    step="1" value="5">
+                                <small class="form-text text-muted">Cloud sync will trigger after you modify <span
+                                        id="customSyncThresholdDisplay">5</span> distinct entries.</small>
                             </div>
                             <div class="alert alert-light border small p-2 mt-2">
-                                <strong>Pending Changes:</strong> <span id="pendingChangesCounter" class="badge badge-warning">0</span> / <span id="pendingChangesTarget">5</span>
+                                <strong>Pending Changes:</strong> <span id="pendingChangesCounter"
+                                    class="badge badge-warning">0</span> / <span id="pendingChangesTarget">5</span>
                             </div>
                         </div>
 
                         <div class="custom-control custom-radio mb-3">
-                            <input type="radio" id="syncModeStrict" name="syncMode" class="custom-control-input" value="strict_privacy">
+                            <input type="radio" id="syncModeStrict" name="syncMode" class="custom-control-input"
+                                value="strict_privacy">
                             <label class="custom-control-label" for="syncModeStrict">
                                 <strong>Strict Privacy Mode</strong>
-                                <small class="d-block text-muted">Disables all cloud synchronization. Only local data is used. TMDB lookup still works.</small>
+                                <small class="d-block text-muted">Disables all cloud synchronization. Only local data is
+                                    used. TMDB lookup still works.</small>
                             </label>
                         </div>
                     </form>
@@ -250,7 +287,7 @@
                         <i class="fas fa-cloud-upload-alt"></i> Force Push to Cloud
                     </button>
                     <p class="small text-muted mb-3">Overwrite cloud backup with local data.</p>
-                    
+
                     <hr>
                     <h6 class="mb-3">Data Utilities</h6>
                     <button class="btn btn-success btn-block mb-2" id="settingsBackfillBtn">
@@ -268,24 +305,29 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Settings Modal -->
+    <!-- END CHUNK: Settings Modal -->
 
-<!-- START CHUNK: Export / Push -->
-    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Export / Push -->
+    <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="exportModalLabel">Export Data</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <!-- REMOVED Force Push logic -->
                     <hr>
                     <h6>Export as File</h6>
-                    <p class="small text-muted">Download a local backup of your collection in either CSV or JSON format.</p>
+                    <p class="small text-muted">Download a local backup of your collection in either CSV or JSON format.
+                    </p>
                     <div class="d-flex justify-content-around">
-                        <button class="btn btn-primary" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Download CSV</button>
-                        <button class="btn btn-info" id="exportJsonBtn"><i class="fas fa-file-code"></i> Download JSON</button>
+                        <button class="btn btn-primary" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Download
+                            CSV</button>
+                        <button class="btn btn-info" id="exportJsonBtn"><i class="fas fa-file-code"></i> Download
+                            JSON</button>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -294,18 +336,20 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Export / Push -->
+    <!-- END CHUNK: Export / Push -->
 
-<!-- START CHUNK: Confirm Force Pull -->
+    <!-- START CHUNK: Confirm Force Pull -->
     <div class="modal fade" id="confirmForcePullModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
                     <h5 class="modal-title">Confirm Force Pull</h5>
-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure? This will **permanently delete** all local data on this device and replace it with your current cloud backup. This action cannot be undone.</p>
+                    <p>Are you sure? This will **permanently delete** all local data on this device and replace it with
+                        your current cloud backup. This action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -314,18 +358,21 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Confirm Force Pull -->
+    <!-- END CHUNK: Confirm Force Pull -->
 
-<!-- START CHUNK: Confirm Force Push -->
+    <!-- START CHUNK: Confirm Force Push -->
     <div class="modal fade" id="confirmForcePushModal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">Confirm Force Push</h5>
-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>DANGER:</strong> Are you absolutely sure? This will **permanently overwrite** your entire cloud backup with the data currently on this device. Any entries or changes on other devices will be lost forever.</p>
+                    <p><strong>DANGER:</strong> Are you absolutely sure? This will **permanently overwrite** your entire
+                        cloud backup with the data currently on this device. Any entries or changes on other devices
+                        will be lost forever.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -334,199 +381,216 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Confirm Force Push -->
+    <!-- END CHUNK: Confirm Force Push -->
 
-<!-- START CHUNK: Backfill Modal -->
-<div class="modal fade" id="backfillModal" tabindex="-1" role="dialog" aria-labelledby="backfillModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="backfillModalLabel">
-                    <i class="fas fa-fill-drip"></i> Backfill Missing Data
-                </h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <!-- Progress Bar -->
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <small class="text-muted">Progress</small>
-                        <span id="backfillProgress" class="badge badge-primary">0 / 0</span>
+    <!-- START CHUNK: Backfill Modal -->
+    <div class="modal fade" id="backfillModal" tabindex="-1" role="dialog" aria-labelledby="backfillModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="backfillModalLabel">
+                        <i class="fas fa-fill-drip"></i> Backfill Missing Data
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Progress Bar -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <small class="text-muted">Progress</small>
+                            <span id="backfillProgress" class="badge badge-primary">0 / 0</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div id="backfillProgressBar" class="progress-bar" role="progressbar" style="width: 0%">
+                            </div>
+                        </div>
                     </div>
-                    <div class="progress" style="height: 6px;">
-                        <div id="backfillProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+
+                    <!-- Entry Card -->
+                    <div class="card mb-3">
+                        <div class="card-body text-center">
+                            <h4 id="backfillEntryName" class="mb-1">Loading...</h4>
+                            <p id="backfillEntryMeta" class="text-muted small mb-0">Category · Year</p>
+                        </div>
+                    </div>
+
+                    <!-- Field to Fill -->
+                    <div class="mb-3">
+                        <label id="backfillFieldLabel" class="font-weight-bold h5 mb-3 d-block text-center">Field
+                            Name</label>
+                        <div id="backfillInputContainer">
+                            <!-- Input rendered dynamically -->
+                        </div>
+                        <small id="backfillHelperText" class="form-text text-muted mt-2" style="display:none;"></small>
                     </div>
                 </div>
-
-                <!-- Entry Card -->
-                <div class="card mb-3">
-                    <div class="card-body text-center">
-                        <h4 id="backfillEntryName" class="mb-1">Loading...</h4>
-                        <p id="backfillEntryMeta" class="text-muted small mb-0">Category · Year</p>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" id="backfillGoogleBtn">
+                        <i class="fab fa-google"></i> Google It
+                    </button>
+                    <div>
+                        <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
+                            <i class="fas fa-cloud-download-alt"></i> Auto-Fetch
+                        </button>
+                        <button type="button" class="btn btn-secondary mr-2" onclick="skipCurrentField()">
+                            <i class="fas fa-forward"></i> Skip
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="saveAndNext()">
+                            <i class="fas fa-check"></i> Next
+                        </button>
                     </div>
-                </div>
-
-                <!-- Field to Fill -->
-                <div class="mb-3">
-                    <label id="backfillFieldLabel" class="font-weight-bold h5 mb-3 d-block text-center">Field Name</label>
-                    <div id="backfillInputContainer">
-                        <!-- Input rendered dynamically -->
-                    </div>
-                    <small id="backfillHelperText" class="form-text text-muted mt-2" style="display:none;"></small>
-                </div>
-            </div>
-            <div class="modal-footer d-flex justify-content-between">
-                <button type="button" class="btn btn-outline-secondary" id="backfillGoogleBtn">
-                    <i class="fab fa-google"></i> Google It
-                </button>
-                <div>
-                    <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
-                        <i class="fas fa-cloud-download-alt"></i> Auto-Fetch
-                    </button>
-                    <button type="button" class="btn btn-secondary mr-2" onclick="skipCurrentField()">
-                        <i class="fas fa-forward"></i> Skip
-                    </button>
-                    <button type="button" class="btn btn-success" onclick="saveAndNext()">
-                        <i class="fas fa-check"></i> Next
-                    </button>
                 </div>
             </div>
         </div>
     </div>
-</div>
-<!-- END CHUNK: Backfill Modal -->
+    <!-- END CHUNK: Backfill Modal -->
 
-<!-- START CHUNK: Main App Layout & Top Navigation Bar -->
-<div id="appContent" style="display: none;">
-    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
-        <button class="navbar-toggler mr-2" type="button" data-toggle="offcanvas" data-target="#appMenu" aria-controls="appMenu" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+    <!-- START CHUNK: Main App Layout & Top Navigation Bar -->
+    <div id="appContent" style="display: none;">
+        <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+            <button class="navbar-toggler mr-2" type="button" data-toggle="offcanvas" data-target="#appMenu"
+                aria-controls="appMenu" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-        <a id="Brand" class="navbar-brand" href="#">
-            <strong id="fthis" class="d-none d-sm-inline-block">KeepMoviEZ</strong>
-        </a>
+            <a id="Brand" class="navbar-brand" href="#">
+                <strong id="fthis" class="d-none d-sm-inline-block">KeepMoviEZ</strong>
+            </a>
 
-        <div class="ml-auto d-flex align-items-center">
-            <form id="navbarSearchForm" class="form-inline my-2 my-lg-0 mr-2">
-                <div class="input-group">
-                    <input type="text" id="filterInputNavbar" class="form-control form-control-sm" placeholder="Search...">
-                    <button id="sortDirectionToggle" class="btn" type="button" title="Toggle Sort Direction">
-                        <i class="fas fa-arrow-down"></i>
-                    </button>
-                </div>
-            </form>
-
-            <div class="d-flex align-items-center">
-                <div class="dropdown mr-2">
-                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortColumnDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        N
-                    </button>
-                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="sortColumnDropdown">
-                        <a class="dropdown-item" href="#" data-sort-by="Name">Name</a>
-                        <a class="dropdown-item" href="#" data-sort-by="lastModifiedDate">Last Modified</a>
-                        <a class="dropdown-item" href="#" data-sort-by="LastWatchedDate">Last Watched</a>
-                        <a class="dropdown-item" href="#" data-sort-by="Year">Year</a>
-                        <a class="dropdown-item" href="#" data-sort-by="overallRating">Rating</a>
+            <div class="ml-auto d-flex align-items-center">
+                <form id="navbarSearchForm" class="form-inline my-2 my-lg-0 mr-2">
+                    <div class="input-group">
+                        <input type="text" id="filterInputNavbar" class="form-control form-control-sm"
+                            placeholder="Search...">
+                        <button id="sortDirectionToggle" class="btn" type="button" title="Toggle Sort Direction">
+                            <i class="fas fa-arrow-down"></i>
+                        </button>
                     </div>
-                </div>
+                </form>
 
-                <button id="filterBtn" class="btn btn-sm btn-outline-info" data-toggle="modal" data-target="#filterSortModal" title="Filter Collection">
-                    <i class="fas fa-filter"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
-</div>
-<!-- END CHUNK: Main App Layout & Top Navigation Bar -->
-
-<!-- START CHUNK: Main Content Display Area -->
-        <div class="container-fluid mt-4">
-            <div id="initialMessage" class="initial-upload-section text-center p-4 rounded shadow-sm" style="display:none;">
-                <h4 class="mb-3">Welcome to KeepMoviEZ!</h4>
-                <p class="text-muted mb-4">Your library is currently empty. Choose how you want to start:</p>
-
-                <div class="row justify-content-center">
-                    <div class="col-md-8 col-lg-6">
-                        <!-- Cloud Sync Button -->
-                        <button id="quickSyncBtn" class="btn btn-outline-primary btn-block mb-3 p-3 text-left d-flex align-items-center">
-                            <i class="fas fa-cloud-download-alt fa-2x mr-3 ml-2"></i>
-                            <div>
-                                <strong>Sync from Cloud</strong>
-                                <div class="small">Restore data from your account</div>
-                            </div>
+                <div class="d-flex align-items-center">
+                    <div class="dropdown mr-2">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
+                            id="sortColumnDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            N
                         </button>
-
-                        <!-- NEW: Reload Local Data Button -->
-                        <button id="quickReloadLocalBtn" class="btn btn-outline-success btn-block mb-3 p-3 text-left d-flex align-items-center">
-                            <i class="fas fa-hdd fa-2x mr-3 ml-2"></i>
-                            <div>
-                                <strong>Reload Local Data</strong>
-                                <div class="small">Scan device storage for lost entries</div>
-                            </div>
-                        </button>
-
-                        <!-- Local Import Button -->
-                        <button id="quickImportBtn" class="btn btn-outline-info btn-block mb-3 p-3 text-left d-flex align-items-center">
-                            <i class="fas fa-file-import fa-2x mr-3 ml-2"></i>
-                            <div>
-                                <strong>Import Backup</strong>
-                                <div class="small">Upload a CSV or JSON file</div>
-                            </div>
-                        </button>
-
-                        <!-- Help & Docs -->
-                        <div class="d-flex justify-content-center mt-2 mb-3">
-                            <button style="color: var(--warning-color)" id="quickAboutBtn" class="btn btn-sm btn-light mr-2 border">
-                                <i class="fas fa-info-circle text-info"></i> First time?
-                            </button>
-                            <a style="color: var(--warning-color)" href="docs/index.html" target="_blank" class="btn btn-sm btn-light border">
-                                <i class="fas fa-book text-secondary"></i> Documentation
-                            </a>
+                        <div class="dropdown-menu dropdown-menu-right" aria-labelledby="sortColumnDropdown">
+                            <a class="dropdown-item" href="#" data-sort-by="Name">Name</a>
+                            <a class="dropdown-item" href="#" data-sort-by="lastModifiedDate">Last Modified</a>
+                            <a class="dropdown-item" href="#" data-sort-by="LastWatchedDate">Last Watched</a>
+                            <a class="dropdown-item" href="#" data-sort-by="Year">Year</a>
+                            <a class="dropdown-item" href="#" data-sort-by="overallRating">Rating</a>
                         </div>
                     </div>
+
+                    <button id="filterBtn" class="btn btn-sm btn-outline-info" data-toggle="modal"
+                        data-target="#filterSortModal" title="Filter Collection">
+                        <i class="fas fa-filter"></i>
+                    </button>
                 </div>
+            </div>
+        </nav>
+    </div>
+    <!-- END CHUNK: Main App Layout & Top Navigation Bar -->
 
-                <hr class="w-50 my-4">
+    <!-- START CHUNK: Main Content Display Area -->
+    <div class="container-fluid mt-4">
+        <div id="initialMessage" class="initial-upload-section text-center p-4 rounded shadow-sm" style="display:none;">
+            <h4 class="mb-3">Welcome to KeepMoviEZ!</h4>
+            <p class="text-muted mb-4">Your library is currently empty. Choose how you want to start:</p>
 
-                <p class="mb-2">Or start fresh by adding your first entry below.</p>
-                <i class="fas fa-arrow-down text-muted mb-3"></i>
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6">
+                    <!-- Cloud Sync Button -->
+                    <button id="quickSyncBtn"
+                        class="btn btn-outline-primary btn-block mb-3 p-3 text-left d-flex align-items-center">
+                        <i class="fas fa-cloud-download-alt fa-2x mr-3 ml-2"></i>
+                        <div>
+                            <strong>Sync from Cloud</strong>
+                            <div class="small">Restore data from your account</div>
+                        </div>
+                    </button>
 
-                <p class="text-muted small mt-2">
-                    <strong>Tip:</strong> You can find a demo CSV file here: <a href="https://drive.google.com/file/d/1Q_qiQuJfY030fOUcv2tdezAh4qPUgZPh/view?usp=drivesdk" target="_blank" rel="noopener noreferrer">Demo CSV</a>.
-                </p>
+                    <!-- NEW: Reload Local Data Button -->
+                    <button id="quickReloadLocalBtn"
+                        class="btn btn-outline-success btn-block mb-3 p-3 text-left d-flex align-items-center">
+                        <i class="fas fa-hdd fa-2x mr-3 ml-2"></i>
+                        <div>
+                            <strong>Reload Local Data</strong>
+                            <div class="small">Scan device storage for lost entries</div>
+                        </div>
+                    </button>
+
+                    <!-- Local Import Button -->
+                    <button id="quickImportBtn"
+                        class="btn btn-outline-info btn-block mb-3 p-3 text-left d-flex align-items-center">
+                        <i class="fas fa-file-import fa-2x mr-3 ml-2"></i>
+                        <div>
+                            <strong>Import Backup</strong>
+                            <div class="small">Upload a CSV or JSON file</div>
+                        </div>
+                    </button>
+
+                    <!-- Help & Docs -->
+                    <div class="d-flex justify-content-center mt-2 mb-3">
+                        <button style="color: var(--warning-color)" id="quickAboutBtn"
+                            class="btn btn-sm btn-light mr-2 border">
+                            <i class="fas fa-info-circle text-info"></i> First time?
+                        </button>
+                        <a style="color: var(--warning-color)" href="docs/index.html" target="_blank"
+                            class="btn btn-sm btn-light border">
+                            <i class="fas fa-book text-secondary"></i> Documentation
+                        </a>
+                    </div>
+                </div>
             </div>
 
-            <div class="table-responsive" tabindex="0">
-                <div id="movieCardContainer" class="card-container">
-                    <!-- Movie cards will be dynamically injected here -->
-                </div>
+            <hr class="w-50 my-4">
+
+            <p class="mb-2">Or start fresh by adding your first entry below.</p>
+            <i class="fas fa-arrow-down text-muted mb-3"></i>
+
+            <p class="text-muted small mt-2">
+                <strong>Tip:</strong> You can find a demo CSV file here: <a
+                    href="https://drive.google.com/file/d/1Q_qiQuJfY030fOUcv2tdezAh4qPUgZPh/view?usp=drivesdk"
+                    target="_blank" rel="noopener noreferrer">Demo CSV</a>.
+            </p>
+        </div>
+
+        <div class="table-responsive" tabindex="0">
+            <div id="movieCardContainer" class="card-container">
+                <!-- Movie cards will be dynamically injected here -->
             </div>
         </div>
-<!-- END CHUNK: Main Content Display Area -->
+    </div>
+    <!-- END CHUNK: Main Content Display Area -->
 
-<!-- START CHUNK: Bottom Navigation & Action Bar -->
-        <nav id="bottomNav" class="navbar fixed-bottom-nav center-add-btn">
-            <div id="multiSelectActionsBar" class="multi-select-actions-bar" style="display: none;">
-                <button id="batchEditSelectedBtn" class="btn btn-info"><i class="fas fa-edit"></i> Edit</button>
-                <button id="batchDeleteSelectedBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
-                <button id="cancelMultiSelectBtn" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
-                <span id="multiSelectCount" class="text-white ml-2 small">0</span>
-            </div>
-            <button id="addNewEntryBtn" class="btn btn-primary" data-toggle="modal" data-target="#entryModal"> <i class="fas fa-plus-circle"></i> </button>
-        </nav>
+    <!-- START CHUNK: Bottom Navigation & Action Bar -->
+    <nav id="bottomNav" class="navbar fixed-bottom-nav center-add-btn">
+        <div id="multiSelectActionsBar" class="multi-select-actions-bar" style="display: none;">
+            <button id="batchEditSelectedBtn" class="btn btn-info"><i class="fas fa-edit"></i> Edit</button>
+            <button id="batchDeleteSelectedBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
+            <button id="cancelMultiSelectBtn" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
+            <span id="multiSelectCount" class="text-white ml-2 small">0</span>
+        </div>
+        <button id="addNewEntryBtn" class="btn btn-primary" data-toggle="modal" data-target="#entryModal"> <i
+                class="fas fa-plus-circle"></i> </button>
+    </nav>
     </div> <!-- This closes #appContent -->
-<!-- END CHUNK: Bottom Navigation & Action Bar -->
+    <!-- END CHUNK: Bottom Navigation & Action Bar -->
 
-<!-- START CHUNK: Modal - Filter (Previously Filter & Sort) -->
-    <div class="modal fade" id="filterSortModal" tabindex="-1" role="dialog" aria-labelledby="filterSortModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Filter (Previously Filter & Sort) -->
+    <div class="modal fade" id="filterSortModal" tabindex="-1" role="dialog" aria-labelledby="filterSortModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="filterSortModalLabel">Filter Collection</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body">
                     <form id="filterSortForm">
@@ -543,7 +607,7 @@
                                     <select id="filterCountry" class="form-control form-control-sm"></select>
                                 </div>
                             </div>
-                             <div class="form-row">
+                            <div class="form-row">
                                 <div class="form-group col-md-6">
                                     <label for="filterLanguage">Language</label>
                                     <select id="filterLanguage" class="form-control form-control-sm"></select>
@@ -554,16 +618,20 @@
                                 <div class="d-flex justify-content-start align-items-center mb-2">
                                     <small class="mr-2">Match:</small>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="filterGenreLogic" id="filterGenreLogicAnd" value="AND" checked>
+                                        <input class="form-check-input" type="radio" name="filterGenreLogic"
+                                            id="filterGenreLogicAnd" value="AND" checked>
                                         <label class="form-check-label small" for="filterGenreLogicAnd">All</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="filterGenreLogic" id="filterGenreLogicOr" value="OR">
+                                        <input class="form-check-input" type="radio" name="filterGenreLogic"
+                                            id="filterGenreLogicOr" value="OR">
                                         <label class="form-check-label small" for="filterGenreLogicOr">Any</label>
                                     </div>
                                 </div>
-                                <div id="filterGenreContainer" aria-label="Selected genres and add control" tabindex="0">
-                                    <input id="filterGenreSearchInput" type="text" placeholder="Click to add genres..." aria-label="Search or add genres to filter by">
+                                <div id="filterGenreContainer" aria-label="Selected genres and add control"
+                                    tabindex="0">
+                                    <input id="filterGenreSearchInput" type="text" placeholder="Click to add genres..."
+                                        aria-label="Search or add genres to filter by">
                                 </div>
                                 <div id="filterGenreDropdown">
                                     <div id="filterGenreItemsContainer" class="list-group mt-1"></div>
@@ -579,10 +647,11 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Filter -->
+    <!-- END CHUNK: Modal - Filter -->
 
-<!-- START CHUNK: Modal - Smart Import -->
-    <div class="modal fade" id="smartImportModal" tabindex="-1" role="dialog" aria-labelledby="smartImportModalLabel" aria-hidden="true" data-backdrop="static" data-keyboard="false">
+    <!-- START CHUNK: Modal - Smart Import -->
+    <div class="modal fade" id="smartImportModal" tabindex="-1" role="dialog" aria-labelledby="smartImportModalLabel"
+        aria-hidden="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -596,174 +665,278 @@
                     <h6>Choose Your Import Strategy:</h6>
                     <div class="form-group">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyAppendNew" value="append_new" checked>
+                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyAppendNew"
+                                value="append_new" checked>
                             <label class="form-check-label" for="strategyAppendNew">
                                 <strong>Append New Entries Only</strong> (Safest)
-                                <small class="d-block text-muted">Only adds titles that are not found in your library. Ignores all potential matches and duplicates.</small>
+                                <small class="d-block text-muted">Only adds titles that are not found in your library.
+                                    Ignores all potential matches and duplicates.</small>
                             </label>
                         </div>
 
                         <!-- ## NEWLY ADDED SECTION START ## -->
                         <div class="form-check mt-2">
-                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyBackfill" value="backfill_missing">
+                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyBackfill"
+                                value="backfill_missing">
                             <label class="form-check-label" for="strategyBackfill">
                                 <strong>Smart Backfill Missing Data</strong> (Recommended for Recovery)
-                                <small class="d-block text-muted">Adds new entries and for existing entries, it ONLY fills in fields that are currently empty (like runtime, related entries etc.). It will not overwrite any existing data.</small>
+                                <small class="d-block text-muted">Adds new entries and for existing entries, it ONLY
+                                    fills in fields that are currently empty (like runtime, related entries etc.). It
+                                    will not overwrite any existing data.</small>
                             </label>
                         </div>
                         <!-- ## NEWLY ADDED SECTION END ## -->
 
                         <div class="form-check mt-2">
-                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyUpdate" value="update_matches">
+                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyUpdate"
+                                value="update_matches">
                             <label class="form-check-label" for="strategyUpdate">
                                 <strong>Append New & Update Matches</strong>
-                                <small class="d-block text-muted">Adds new titles and updates existing entries if the imported version is newer (based on `lastModifiedDate`).</small>
+                                <small class="d-block text-muted">Adds new titles and updates existing entries if the
+                                    imported version is newer (based on `lastModifiedDate`).</small>
                             </label>
                         </div>
-                         <div class="form-check mt-2">
-                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyOverwrite" value="overwrite_all">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="radio" name="importStrategy" id="strategyOverwrite"
+                                value="overwrite_all">
                             <label class="form-check-label" for="strategyOverwrite">
                                 <strong>Overwrite All Matches</strong> (Advanced)
-                                <small class="d-block text-danger">For every match found, the version from the file will completely replace your existing data for that entry.</small>
+                                <small class="d-block text-danger">For every match found, the version from the file will
+                                    completely replace your existing data for that entry.</small>
                             </label>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal" id="cancelImportBtn">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                        id="cancelImportBtn">Cancel</button>
                     <button type="button" class="btn btn-primary" id="confirmImportBtn">Process Import</button>
                 </div>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Smart Import -->
+    <!-- END CHUNK: Modal - Smart Import -->
 
-<!-- START CHUNK: Modal - Entry Form (Add/Edit) -->
-    <div class="modal fade" id="entryModal" tabindex="-1" role="dialog" aria-labelledby="entryModalLabel" aria-hidden="true" data-backdrop="static">
+    <!-- START CHUNK: Modal - Entry Form (Add/Edit) -->
+    <div class="modal fade" id="entryModal" tabindex="-1" role="dialog" aria-labelledby="entryModalLabel"
+        aria-hidden="true" data-backdrop="static">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="entryModalLabel">Add New Entry</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">X</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">X</span> </button>
                 </div>
                 <div class="modal-body">
                     <form id="entryForm" novalidate>
                         <!-- Hidden fields -->
                         <input type="hidden" id="editEntryId"> <input type="hidden" id="posterUrl">
                         <input type="hidden" id="tmdbId"> <input type="hidden" id="tmdbMediaType">
-                        <input type="hidden" id="currentWatchHistory" value="[]"> <input type="hidden" id="editingWatchId">
+                        <input type="hidden" id="currentWatchHistory" value="[]"> <input type="hidden"
+                            id="editingWatchId">
 
                         <!-- SECTION 1: PRIMARY VISIBLE INFO -->
                         <div class="form-row">
                             <div class="form-group col-md-8 position-relative">
-                                <label for="movieName">Name 
+                                <label for="movieName">Name
                                     <small class="text-muted ml-2" id="liveSearchStatus" style="display:none;">
                                         <i class="fas fa-spinner fa-spin"></i> Searching TMDB...
                                     </small>
                                 </label>
-                                <input type="text" class="form-control" id="movieName" required placeholder="Type title or TMDB ID..." autocomplete="off">
+                                <input type="text" class="form-control" id="movieName" required
+                                    placeholder="Type title or TMDB ID..." autocomplete="off">
                                 <!-- Live Search Results Dropdown -->
-                                <div id="tmdbSearchResults" class="list-group shadow" style="position: absolute; top: 100%; left: 5px; right: 5px; z-index: 1000; max-height: 300px; overflow-y: auto; display: none;"></div>
+                                <div id="tmdbSearchResults" class="list-group shadow"
+                                    style="position: absolute; top: 100%; left: 5px; right: 5px; z-index: 1000; max-height: 300px; overflow-y: auto; display: none;">
+                                </div>
                             </div>
                             <div class="form-group col-md-4">
                                 <label for="tmdbSearchYear">Year <small class="text-muted">(Optional)</small></label>
-                                <input type="number" class="form-control" id="tmdbSearchYear" placeholder="YYYY" min="1888" max="2100">
+                                <input type="number" class="form-control" id="tmdbSearchYear" placeholder="YYYY"
+                                    min="1888" max="2100">
                             </div>
                         </div>
 
                         <!-- Standard Fields -->
                         <div class="form-row">
-                            <div class="form-group col-md-6"><label for="category">Category</label><select id="category" class="form-control"><option value="Movie">Movie</option><option value="Series">Series</option><option value="Documentary">Documentary</option><option value="Special">Special</option></select></div>
-                            <div class="form-group col-md-6"><label for="status">Status</label><select id="status" class="form-control"><option value="To Watch">To Watch</option><option value="Watched">Watched</option><option value="Continue">Continue</option><option value="Unwatched">Unwatched</option></select></div>
+                            <div class="form-group col-md-6"><label for="category">Category</label><select id="category"
+                                    class="form-control">
+                                    <option value="Movie">Movie</option>
+                                    <option value="Series">Series</option>
+                                    <option value="Documentary">Documentary</option>
+                                    <option value="Special">Special</option>
+                                </select></div>
+                            <div class="form-group col-md-6"><label for="status">Status</label><select id="status"
+                                    class="form-control">
+                                    <option value="To Watch">To Watch</option>
+                                    <option value="Watched">Watched</option>
+                                    <option value="Continue">Continue</option>
+                                    <option value="Unwatched">Unwatched</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- SECTION 2: CONDITIONALLY VISIBLE FIELDS -->
                         <div id="seriesContinueGroup" class="form-row" style="display: none;">
-                            <div class="form-group col-6"><label for="seasonsCompleted">Seasons Completed</label><input type="number" class="form-control form-control-sm" id="seasonsCompleted" min="0"></div>
-                            <div class="form-group col-6"><label for="currentSeasonEpisodesWatched">Episode <small> (this season)</small></label><input type="number" class="form-control form-control-sm" id="currentSeasonEpisodesWatched" placeholder="Current Season" min="0"></div>
+                            <div class="form-group col-6"><label for="seasonsCompleted">Seasons Completed</label><input
+                                    type="number" class="form-control form-control-sm" id="seasonsCompleted" min="0">
+                            </div>
+                            <div class="form-group col-6"><label for="currentSeasonEpisodesWatched">Episode <small>
+                                        (this season)</small></label><input type="number"
+                                    class="form-control form-control-sm" id="currentSeasonEpisodesWatched"
+                                    placeholder="Current Season" min="0"></div>
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group col-md-6" id="overallRatingGroup" style="display: none;"><label for="overallRating">My Overall Rating</label><select id="overallRating" class="form-control"><option value="">--Select--</option><option value="1">1 Star</option><option value="2">2 Stars</option><option value="3">3 Stars</option><option value="4">4 Stars</option><option value="5">5 Stars</option></select></div>
-                            <div class="form-group col-md-6" id="recommendationGroup" style="display: none;"><label for="recommendation">My Recommendation</label><select id="recommendation" class="form-control"><option value="">-Select-</option><option value="Ignore">Ignore</option><option value="Less Recommended">Less Recommended</option><option value="Recommended">Recommended</option><option value="Highly Recommended">Highly Recommended</option></select></div>
+                            <div class="form-group col-md-6" id="overallRatingGroup" style="display: none;"><label
+                                    for="overallRating">My Overall Rating</label><select id="overallRating"
+                                    class="form-control">
+                                    <option value="">--Select--</option>
+                                    <option value="1">1 Star</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="5">5 Stars</option>
+                                </select></div>
+                            <div class="form-group col-md-6" id="recommendationGroup" style="display: none;">
+                                <label for="recommendation">My Recommendation</label>
+                                <select id="recommendation" class="form-control">
+                                    <option value="">-Select-</option>
+                                    <option value="Ignore">Ignore</option>
+                                    <option value="Less Recommended">Less Recommended</option>
+                                    <option value="Recommended">Recommended</option>
+                                    <option value="Highly Recommended">Highly Recommended</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group" id="personalRecommendationGroup">
-                            <label for="personalRecommendation">Watch Preference</label><select id="personalRecommendation" class="form-control"><option value="">--Select--</option><option value="Watch Alone">Watch Alone</option><option value="Safe to share">Safe to Share</option></select>
+                            <label for="personalRecommendation">Watch Preference</label><select
+                                id="personalRecommendation" class="form-control">
+                                <option value="">--Select--</option>
+                                <option value="Watch Alone">Watch Alone</option>
+                                <option value="Safe to share">Safe to Share</option>
+                            </select>
                         </div>
-                        
+
                         <div id="watchHistorySection" style="display: none;">
                             <hr>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h6>Watch Records</h6>
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="toggleAddWatchInstanceFormBtn"><i class="fas fa-plus"></i> Add Record</button>
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    id="toggleAddWatchInstanceFormBtn"><i class="fas fa-plus"></i> Add Record</button>
                             </div>
                             <div id="addWatchInstanceForm" class="p-3 border rounded mb-3" style="display:none;">
                                 <h6 id="watchInstanceFormTitle" class="mb-3">Add Watch Record</h6>
                                 <div class="form-row">
-                                    <div class="form-group col-md-6"><label for="watchDate">Date</label><input type="date" class="form-control" id="watchDate"></div>
-                                    <div class="form-group col-md-6"><label for="watchRating">Rating</label><select id="watchRating" class="form-control"><option value="">--Select--</option><option value="1">1 Star</option><option value="2">2 Stars</option><option value="3">3 Stars</option><option value="4">4 Stars</option><option value="5">5 Stars</option></select></div>
+                                    <div class="form-group col-md-6"><label for="watchDate">Date</label><input
+                                            type="date" class="form-control" id="watchDate"></div>
+                                    <div class="form-group col-md-6"><label for="watchRating">Rating</label><select
+                                            id="watchRating" class="form-control">
+                                            <option value="">--Select--</option>
+                                            <option value="1">1 Star</option>
+                                            <option value="2">2 Stars</option>
+                                            <option value="3">3 Stars</option>
+                                            <option value="4">4 Stars</option>
+                                            <option value="5">5 Stars</option>
+                                        </select></div>
                                 </div>
-                                <div class="form-group"><label for="watchNotes">Notes</label><textarea class="form-control" id="watchNotes" rows="2"></textarea></div>
-                                <button type="button" class="btn btn-success btn-sm mr-2" id="saveWatchInstanceBtn">Save</button><button type="button" class="btn btn-secondary btn-sm" id="cancelWatchInstanceBtn">Cancel</button>
+                                <div class="form-group"><label for="watchNotes">Notes</label><textarea
+                                        class="form-control" id="watchNotes" rows="2"></textarea></div>
+                                <button type="button" class="btn btn-success btn-sm mr-2"
+                                    id="saveWatchInstanceBtn">Save</button><button type="button"
+                                    class="btn btn-secondary btn-sm" id="cancelWatchInstanceBtn">Cancel</button>
                             </div>
                             <div id="watchHistoryList"></div>
                         </div>
-                        
+
                         <!-- SECTION 3: COLLAPSIBLE ADVANCED SECTION (For Edit Mode) -->
-                        <div class="accordion entry-form-accordion mt-3" id="advancedSectionAccordion" style="display:none;">
-                             <div class="card">
+                        <div class="accordion entry-form-accordion mt-3" id="advancedSectionAccordion"
+                            style="display:none;">
+                            <div class="card">
                                 <div class="card-header" id="advancedHeading">
                                     <h5 class="mb-0">
-                                        <button type="button" class="btn btn-link" data-toggle="collapse" data-target="#advancedCollapse" aria-expanded="true" aria-controls="advancedCollapse">
-                                             Advanced Details
+                                        <button type="button" class="btn btn-link" data-toggle="collapse"
+                                            data-target="#advancedCollapse" aria-expanded="true"
+                                            aria-controls="advancedCollapse">
+                                            Advanced Details
                                         </button>
                                     </h5>
                                 </div>
-                                <div id="advancedCollapse" class="collapse" aria-labelledby="advancedHeading" data-parent="#advancedSectionAccordion">
+                                <div id="advancedCollapse" class="collapse" aria-labelledby="advancedHeading"
+                                    data-parent="#advancedSectionAccordion">
                                     <div class="card-body">
                                         <!-- All the detailed fields now live inside here -->
-                                        
+
                                         <!-- NEW: Poster URL Field -->
                                         <div class="form-group">
-                                            <label for="editPosterUrl">Poster URL <small class="text-muted">(Custom image link)</small></label>
+                                            <label for="editPosterUrl">Poster URL <small class="text-muted">(Custom
+                                                    image link)</small></label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="editPosterUrl" placeholder="https://example.com/image.jpg">
+                                                <input type="text" class="form-control" id="editPosterUrl"
+                                                    placeholder="https://example.com/image.jpg">
                                                 <div class="input-group-append">
-                                                    <span class="input-group-text" id="lockedIndicator" title="Locked (Custom URL)" style="display:none; cursor: pointer;">
+                                                    <span class="input-group-text" id="lockedIndicator"
+                                                        title="Locked (Custom URL)"
+                                                        style="display:none; cursor: pointer;">
                                                         <i class="fas fa-lock text-warning"></i>
                                                     </span>
                                                 </div>
                                             </div>
-                                            <small class="form-text text-muted">Paste a direct image link (ending in .jpg, .png). It will be locked and protected from auto-updates.</small>
-                                            
-                                            <div id="editPosterPreviewContainer" class="mt-2 text-center p-2 border rounded bg-light" style="display:none;">
-                                                <img id="editPosterPreview" src="" alt="Poster Preview" style="max-height: 200px; max-width: 100%; border-radius: 8px;">
+                                            <small class="form-text text-muted">Paste a direct image link (ending in
+                                                .jpg, .png). It will be locked and protected from auto-updates.</small>
+
+                                            <div id="editPosterPreviewContainer"
+                                                class="mt-2 text-center p-2 border rounded bg-light"
+                                                style="display:none;">
+                                                <img id="editPosterPreview" src="" alt="Poster Preview"
+                                                    style="max-height: 200px; max-width: 100%; border-radius: 8px;">
                                             </div>
                                         </div>
 
                                         <div class="form-group">
                                             <label for="genreSearchInput">Genre</label>
-                                            <div id="genreInputContainer" tabindex="0"><input id="genreSearchInput" type="text" placeholder="Click to add genres..."></div>
-                                            <div id="genreDropdown"><div id="genreItemsContainer" class="list-group mt-1"></div></div>
-                                        </div>
-                                        <div class="form-row">
-                                            <div class="form-group col-md-4"><label for="year">Year</label><input type="number" class="form-control" id="year" min="1888" max="2100"></div>
-                                            <div class="form-group col-md-4"><label for="language">Language</label><input type="text" class="form-control" id="language"></div>
-                                            <div class="form-group col-md-4"><label for="country">Country</label><input type="text" class="form-control" id="country" placeholder="e.g., US, IN"></div>
-                                        </div>
-                                        <div id="runtimeSection">
-                                            <div id="movieRuntimeGroup" class="form-group" style="display: none;"><label for="runtimeMovie">Runtime (minutes)</label><input type="number" class="form-control" id="runtimeMovie" min="0"></div>
-                                            <div id="seriesRuntimeGroup" class="form-row" style="display: none;">
-                                                <div class="form-group col-md-4"><label for="runtimeSeriesSeasons">Total Seasons</label><input type="number" class="form-control" id="runtimeSeriesSeasons" min="0"></div>
-                                                <div class="form-group col-md-4"><label for="runtimeSeriesEpisodes">Total Episodes</label><input type="number" class="form-control" id="runtimeSeriesEpisodes" min="0"></div>
-                                                <div class="form-group col-md-4"><label for="runtimeSeriesAvgEp">Avg. Ep. (min)</label><input type="number" class="form-control" id="runtimeSeriesAvgEp" min="0"></div>
+                                            <div id="genreInputContainer" tabindex="0"><input id="genreSearchInput"
+                                                    type="text" placeholder="Click to add genres..."></div>
+                                            <div id="genreDropdown">
+                                                <div id="genreItemsContainer" class="list-group mt-1"></div>
                                             </div>
                                         </div>
-                                        <div class="form-group"><label for="description">Description</label><textarea class="form-control" id="description" rows="3"></textarea></div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-4"><label for="year">Year</label><input
+                                                    type="number" class="form-control" id="year" min="1888" max="2100">
+                                            </div>
+                                            <div class="form-group col-md-4"><label
+                                                    for="language">Language</label><input type="text"
+                                                    class="form-control" id="language"></div>
+                                            <div class="form-group col-md-4"><label for="country">Country</label><input
+                                                    type="text" class="form-control" id="country"
+                                                    placeholder="e.g., US, IN"></div>
+                                        </div>
+                                        <div id="runtimeSection">
+                                            <div id="movieRuntimeGroup" class="form-group" style="display: none;"><label
+                                                    for="runtimeMovie">Runtime (minutes)</label><input type="number"
+                                                    class="form-control" id="runtimeMovie" min="0"></div>
+                                            <div id="seriesRuntimeGroup" class="form-row" style="display: none;">
+                                                <div class="form-group col-md-4"><label for="runtimeSeriesSeasons">Total
+                                                        Seasons</label><input type="number" class="form-control"
+                                                        id="runtimeSeriesSeasons" min="0"></div>
+                                                <div class="form-group col-md-4"><label
+                                                        for="runtimeSeriesEpisodes">Total Episodes</label><input
+                                                        type="number" class="form-control" id="runtimeSeriesEpisodes"
+                                                        min="0"></div>
+                                                <div class="form-group col-md-4"><label for="runtimeSeriesAvgEp">Avg.
+                                                        Ep. (min)</label><input type="number" class="form-control"
+                                                        id="runtimeSeriesAvgEp" min="0"></div>
+                                            </div>
+                                        </div>
+                                        <div class="form-group"><label for="description">Description</label><textarea
+                                                class="form-control" id="description" rows="3"></textarea></div>
                                         <div class="form-group">
                                             <label for="relatedEntriesNames">Link to Other Entries in Your Log</label>
-                                            <input type="text" class="form-control" id="relatedEntriesNames" placeholder="Start typing a title...">
-                                            <div id="relatedEntriesSuggestions" class="list-group mt-1" style="display: none; max-height: 150px; overflow-y: auto;"></div>
+                                            <input type="text" class="form-control" id="relatedEntriesNames"
+                                                placeholder="Start typing a title...">
+                                            <div id="relatedEntriesSuggestions" class="list-group mt-1"
+                                                style="display: none; max-height: 150px; overflow-y: auto;"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -775,46 +948,57 @@
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
 
                     <div id="addModeButtons" class="d-flex">
-                        <button type="button" id="saveAndAddAnotherBtn" class="btn btn-success mr-2" title="Save & Add Another">
+                        <button type="button" id="saveAndAddAnotherBtn" class="btn btn-success mr-2"
+                            title="Save & Add Another">
                             <i class="fas fa-plus-square"></i> <span class="d-none d-sm-inline">Add New</span>
                         </button>
                         <button type="button" id="saveAndEditBtn" class="btn btn-info mr-2" title="Save & Edit Details">
                             <i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span>
                         </button>
-                        <button type="submit" form="entryForm" id="quickSaveBtn" class="btn btn-primary" title="Quick Save">
+                        <button type="submit" form="entryForm" id="quickSaveBtn" class="btn btn-primary"
+                            title="Quick Save">
                             <i class="fas fa-save"></i> Save
                         </button>
                     </div>
-                    
-                    <button type="submit" form="entryForm" class="btn btn-primary" id="updateEntryBtn" style="display:none;"><i class="fas fa-save"></i> Update Entry</button>
+
+                    <button type="submit" form="entryForm" class="btn btn-primary" id="updateEntryBtn"
+                        style="display:none;"><i class="fas fa-save"></i> Update Entry</button>
                 </div>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Entry Form (Add/Edit) -->
+    <!-- END CHUNK: Modal - Entry Form (Add/Edit) -->
 
-<!-- START CHUNK: Modal - Quick Update -->
-    <div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel" aria-hidden="true" data-backdrop="static">
+    <!-- START CHUNK: Modal - Quick Update -->
+    <div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel"
+        aria-hidden="true" data-backdrop="static">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="quickUpdateModalLabel">Update Progress</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <form id="quickUpdateForm">
                         <input type="hidden" id="quickUpdateEntryId">
 
                         <!-- For Series: "Finished?" Toggle -->
-                        <div class="form-group custom-control custom-switch" id="quickUpdateFinishedToggleWrapper" style="display:none;">
+                        <div class="form-group custom-control custom-switch" id="quickUpdateFinishedToggleWrapper"
+                            style="display:none;">
                             <input type="checkbox" class="custom-control-input" id="quickUpdateFinishedToggle">
-                            <label class="custom-control-label" for="quickUpdateFinishedToggle">Finished the series?</label>
+                            <label class="custom-control-label" for="quickUpdateFinishedToggle">Finished the
+                                series?</label>
                         </div>
-                        
+
                         <!-- For Series: Progress Fields -->
                         <div id="quickUpdateSeriesProgress" class="form-row" style="display:none;">
-                            <div class="form-group col-6"><label for="quickUpdateSeasons">Seasons Completed</label><input type="number" class="form-control form-control-sm" id="quickUpdateSeasons" min="0"></div>
-                            <div class="form-group col-6"><label for="quickUpdateEpisodes">Episode<small> (this season)</small></label><input type="number" class="form-control form-control-sm" id="quickUpdateEpisodes" placeholder="Current Season" min="0"></div>
+                            <div class="form-group col-6"><label for="quickUpdateSeasons">Seasons
+                                    Completed</label><input type="number" class="form-control form-control-sm"
+                                    id="quickUpdateSeasons" min="0"></div>
+                            <div class="form-group col-6"><label for="quickUpdateEpisodes">Episode<small> (this
+                                        season)</small></label><input type="number" class="form-control form-control-sm"
+                                    id="quickUpdateEpisodes" placeholder="Current Season" min="0"></div>
                         </div>
 
                         <!-- For All: Watch Record Fields -->
@@ -824,19 +1008,36 @@
                         </div>
                         <div class="form-group">
                             <label for="quickUpdateRating">Rating (for this session)</label>
-                            <select id="quickUpdateRating" class="form-control"><option value="">--Select--</option><option value="1">1 Star</option><option value="2">2 Stars</option><option value="3">3 Stars</option><option value="4">4 Stars</option><option value="5">5 Stars</option></select>
+                            <select id="quickUpdateRating" class="form-control">
+                                <option value="">--Select--</option>
+                                <option value="1">1 Star</option>
+                                <option value="2">2 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="5">5 Stars</option>
+                            </select>
                         </div>
 
                         <!-- Conditional Fields: Shown if Series Finished OR if Movie/Doc/Special -->
                         <div id="quickUpdateConditionalFields" style="display:none;">
-                             
+
                             <div class="form-group">
                                 <label for="quickUpdateRecommendation">My Recommendation</label>
-                                <select id="quickUpdateRecommendation" class="form-control"><option value="">-Select-</option><option value="Ignore">Ignore</option><option value="Less Recommended">Less Recommended</option><option value="Recommended">Recommended</option><option value="Highly Recommended">Highly Recommended</option></select>
+                                <select id="quickUpdateRecommendation" class="form-control">
+                                    <option value="">-Select-</option>
+                                    <option value="Ignore">Ignore</option>
+                                    <option value="Less Recommended">Less Recommended</option>
+                                    <option value="Recommended">Recommended</option>
+                                    <option value="Highly Recommended">Highly Recommended</option>
+                                </select>
                             </div>
-                             <div class="form-group">
+                            <div class="form-group">
                                 <label for="quickUpdatePersonalRecommendation">Watch Preference</label>
-                                <select id="quickUpdatePersonalRecommendation" class="form-control"><option value="">--Select--</option><option value="Watch Alone">Watch Alone</option><option value="Safe to share">Safe to share</option></select>
+                                <select id="quickUpdatePersonalRecommendation" class="form-control">
+                                    <option value="">--Select--</option>
+                                    <option value="Watch Alone">Watch Alone</option>
+                                    <option value="Safe to share">Safe to share</option>
+                                </select>
                             </div>
                         </div>
 
@@ -853,169 +1054,201 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Quick Update -->
+    <!-- END CHUNK: Modal - Quick Update -->
 
-<!-- START CHUNK: Modal - Details View -->
-<div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
-        <div class="modal-content details-modal-content">
-            <button type="button" class="close details-modal-close-btn" data-dismiss="modal" aria-label="Close">
-                <span aria-hidden="true">&times;</span>
-            </button>
-            <div class="modal-body p-0">
-                <div class="details-modal-container">
-                    <!-- LEFT/TOP: POSTER PANEL (Cleaned) -->
-                    <div class="details-poster-panel">
-                        <img id="detailsPoster" class="details-poster-img" alt="Poster">
-                        <div id="noPosterMessage" class="no-poster-message">No Poster Available</div>
-                    </div>
+    <!-- START CHUNK: Modal - Details View -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+            <div class="modal-content details-modal-content">
+                <button type="button" class="close details-modal-close-btn" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <div class="modal-body p-0">
+                    <div class="details-modal-container">
+                        <!-- LEFT/TOP: POSTER PANEL (Cleaned) -->
+                        <div class="details-poster-panel">
+                            <img id="detailsPoster" class="details-poster-img" alt="Poster">
+                            <div id="noPosterMessage" class="no-poster-message">No Poster Available</div>
+                        </div>
 
-                    <!-- RIGHT/BOTTOM: INFO PANEL -->
-                    <div class="details-info-panel">
-                        <div class="details-info-scroll-container">
-                            <!-- Header Info (Moved Here) -->
-                            <h3 id="detailsName" class="details-title"></h3>
-                            <p id="detailsMeta" class="details-meta-line">
-                                <span id="detailsYear"></span> &bull; <span id="detailsLanguage"></span> &bull; <span id="detailsCountry"></span> &bull; <span id="detailsRuntime"></span>
-                            </p>
-                            <div class="details-genre-container-wrapper">
-                                <div id="detailsGenre" class="details-genre-container"></div>
-                            </div>
-                            
-                            <!-- Primary Actions -->
-                            <div class="details-actions-container">
-                                <a id="detailsTrailerBtn" class="btn details-action-btn youtube" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube"></i> Trailer</a>
-                                <a id="detailsStreamingBtn" class="btn details-action-btn stream" target="_blank" rel="noopener noreferrer"><i class="fas fa-play-circle"></i> Watch Here</a>
-                            
-                                <!-- Parents Guide Component -->
-                                <div id="detailsParentalGuideSection" style="display:none;">
-                                    <!-- Movie Version -->
-                                    <a id="imdbParentalGuideBtnMovie" class="btn details-action-btn parental-blue" target="_blank" rel="noopener noreferrer" style="display:none;">
-                                        <i class="fas fa-book-open"></i> Parents Guide
-                                    </a>
-                                    <!-- Series Version -->
-                                    <div id="imdbParentalGuideBtnSeries" class="details-action-group parental-blue" style="display:none;">
-                                        <div class="input-group-series-guide">
-                                            <button class="btn btn-sm btn-pg-stepper" type="button" data-target="pgSeasonInput" data-step="-1">&minus;</button>
-                                            <input type="number" class="form-control form-control-sm pg-input" id="pgSeasonInput" value="1" min="1" placeholder="S">
-                                            <button class="btn btn-sm btn-pg-stepper" type="button" data-target="pgSeasonInput" data-step="1">&plus;</button>
-                                        </div>
-                                        <div class="input-group-series-guide">
-                                            <button class="btn btn-sm btn-pg-stepper" type="button" data-target="pgEpisodeInput" data-step="-1">&minus;</button>
-                                            <input type="number" class="form-control form-control-sm pg-input" id="pgEpisodeInput" value="0" min="0" placeholder="E">
-                                            <button class="btn btn-sm btn-pg-stepper" type="button" data-target="pgEpisodeInput" data-step="1">&plus;</button>
-                                        </div>
-                                        <a id="imdbEpisodeParentalGuideBtn" class="pg-book-icon" href="#" target="_blank" rel="noopener noreferrer" title="View Parents Guide">
-                                            <i class="fas fa-book-open"></i>
+                        <!-- RIGHT/BOTTOM: INFO PANEL -->
+                        <div class="details-info-panel">
+                            <div class="details-info-scroll-container">
+                                <!-- Header Info (Moved Here) -->
+                                <h3 id="detailsName" class="details-title"></h3>
+                                <p id="detailsMeta" class="details-meta-line">
+                                    <span id="detailsYear"></span> &bull; <span id="detailsLanguage"></span> &bull;
+                                    <span id="detailsCountry"></span> &bull; <span id="detailsRuntime"></span>
+                                </p>
+                                <div class="details-genre-container-wrapper">
+                                    <div id="detailsGenre" class="details-genre-container"></div>
+                                </div>
+
+                                <!-- Primary Actions -->
+                                <div class="details-actions-container">
+                                    <a id="detailsTrailerBtn" class="btn details-action-btn youtube" target="_blank"
+                                        rel="noopener noreferrer"><i class="fab fa-youtube"></i> Trailer</a>
+                                    <a id="detailsStreamingBtn" class="btn details-action-btn stream" target="_blank"
+                                        rel="noopener noreferrer"><i class="fas fa-play-circle"></i> Watch Here</a>
+
+                                    <!-- Parents Guide Component -->
+                                    <div id="detailsParentalGuideSection" style="display:none;">
+                                        <!-- Movie Version -->
+                                        <a id="imdbParentalGuideBtnMovie" class="btn details-action-btn parental-blue"
+                                            target="_blank" rel="noopener noreferrer" style="display:none;">
+                                            <i class="fas fa-book-open"></i> Parents Guide
                                         </a>
+                                        <!-- Series Version -->
+                                        <div id="imdbParentalGuideBtnSeries" class="details-action-group parental-blue"
+                                            style="display:none;">
+                                            <div class="input-group-series-guide">
+                                                <button class="btn btn-sm btn-pg-stepper" type="button"
+                                                    data-target="pgSeasonInput" data-step="-1">&minus;</button>
+                                                <input type="number" class="form-control form-control-sm pg-input"
+                                                    id="pgSeasonInput" value="1" min="1" placeholder="S">
+                                                <button class="btn btn-sm btn-pg-stepper" type="button"
+                                                    data-target="pgSeasonInput" data-step="1">&plus;</button>
+                                            </div>
+                                            <div class="input-group-series-guide">
+                                                <button class="btn btn-sm btn-pg-stepper" type="button"
+                                                    data-target="pgEpisodeInput" data-step="-1">&minus;</button>
+                                                <input type="number" class="form-control form-control-sm pg-input"
+                                                    id="pgEpisodeInput" value="0" min="0" placeholder="E">
+                                                <button class="btn btn-sm btn-pg-stepper" type="button"
+                                                    data-target="pgEpisodeInput" data-step="1">&plus;</button>
+                                            </div>
+                                            <a id="imdbEpisodeParentalGuideBtn" class="pg-book-icon" href="#"
+                                                target="_blank" rel="noopener noreferrer" title="View Parents Guide">
+                                                <i class="fas fa-book-open"></i>
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- My Ratings -->
-                            <div class="details-my-ratings-section">
-                                <div id="detailsRecommendationGroup" style="display:none;">
-                                    <strong>My Recommendation:</strong> <span id="detailsRecommendation"></span>
+                                <!-- My Ratings -->
+                                <div class="details-my-ratings-section">
+                                    <div id="detailsRecommendationGroup" style="display:none;">
+                                        <strong>My Recommendation:</strong> <span id="detailsRecommendation"></span>
+                                    </div>
+                                    <div id="detailsOverallRatingGroup" style="display:none;">
+                                        <strong>My Overall Rating:</strong> <span id="detailsOverallRating"></span>
+                                    </div>
+                                    <div id="detailsPersonalRecommendationGroup" style="display:none;">
+                                        <strong>Watch Preference:</strong> <span
+                                            id="detailsPersonalRecommendation"></span>
+                                    </div>
                                 </div>
-                                <div id="detailsOverallRatingGroup" style="display:none;">
-                                    <strong>My Overall Rating:</strong> <span id="detailsOverallRating"></span>
-                                </div>
-                                 <div id="detailsPersonalRecommendationGroup" style="display:none;">
-                                    <strong>Watch Preference:</strong> <span id="detailsPersonalRecommendation"></span>
-                                </div>
-                            </div>
 
-                            <!-- NEW: Continue Progress Section -->
-                            <div id="detailsContinueGroup" class="details-progress-section" style="display:none;">
-                                <h6>My Progress</h6>
-                                <p id="detailsContinueText" class="mb-0"></p>
-                            </div>
+                                <!-- NEW: Continue Progress Section -->
+                                <div id="detailsContinueGroup" class="details-progress-section" style="display:none;">
+                                    <h6>My Progress</h6>
+                                    <p id="detailsContinueText" class="mb-0"></p>
+                                </div>
 
-                            <!-- Accordion Sections -->
-                            <div class="accordion details-accordion" id="detailsAccordion">
-                                <!-- Description -->
-                                <div class="card">
-                                    <div class="card-header" id="headingDesc">
-                                        <h6 class="mb-0">
-                                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseDesc" aria-expanded="false" aria-controls="collapseDesc">
-                                                Description
-                                            </button>
-                                        </h6>
+                                <!-- Accordion Sections -->
+                                <div class="accordion details-accordion" id="detailsAccordion">
+                                    <!-- Description -->
+                                    <div class="card">
+                                        <div class="card-header" id="headingDesc">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-block text-left collapsed" type="button"
+                                                    data-toggle="collapse" data-target="#collapseDesc"
+                                                    aria-expanded="false" aria-controls="collapseDesc">
+                                                    Description
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="collapseDesc" class="collapse" aria-labelledby="headingDesc"
+                                            data-parent="#detailsAccordion">
+                                            <div class="card-body" id="detailsDescription"></div>
+                                        </div>
                                     </div>
-                                    <div id="collapseDesc" class="collapse" aria-labelledby="headingDesc" data-parent="#detailsAccordion">
-                                        <div class="card-body" id="detailsDescription"></div>
+                                    <!-- Keywords -->
+                                    <div class="card" id="detailsKeywordsContainer">
+                                        <div class="card-header" id="headingKeywords">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-block text-left collapsed" type="button"
+                                                    data-toggle="collapse" data-target="#collapseKeywords"
+                                                    aria-expanded="false" aria-controls="collapseKeywords">
+                                                    Keywords
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="collapseKeywords" class="collapse" aria-labelledby="headingKeywords"
+                                            data-parent="#detailsAccordion">
+                                            <div class="card-body" id="detailsKeywords"></div>
+                                        </div>
+                                    </div>
+                                    <!-- Related Entries -->
+                                    <div class="card" id="detailsRelatedLinksSectionToggle">
+                                        <div class="card-header" id="headingRelated">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-block text-left collapsed" type="button"
+                                                    data-toggle="collapse" data-target="#collapseRelated"
+                                                    aria-expanded="false" aria-controls="collapseRelated">
+                                                    Related Entries
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="collapseRelated" class="collapse" aria-labelledby="headingRelated"
+                                            data-parent="#detailsAccordion">
+                                            <div class="card-body" id="detailsRelatedLinksContent"></div>
+                                        </div>
+                                    </div>
+                                    <!-- Cast & Crew -->
+                                    <div class="card" id="detailsCastCrewSectionToggle">
+                                        <div class="card-header" id="headingCast">
+                                            <h6 class="mb-0">
+                                                <button class="btn btn-link btn-block text-left collapsed" type="button"
+                                                    data-toggle="collapse" data-target="#collapseCast"
+                                                    aria-expanded="false" aria-controls="collapseCast">
+                                                    Cast & Crew
+                                                </button>
+                                            </h6>
+                                        </div>
+                                        <div id="collapseCast" class="collapse" aria-labelledby="headingCast"
+                                            data-parent="#detailsAccordion">
+                                            <div class="card-body" id="detailsCastCrewContent"></div>
+                                        </div>
                                     </div>
                                 </div>
-                                <!-- Keywords -->
-                                <div class="card" id="detailsKeywordsContainer">
-                                    <div class="card-header" id="headingKeywords">
-                                        <h6 class="mb-0">
-                                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseKeywords" aria-expanded="false" aria-controls="collapseKeywords">
-                                                Keywords
-                                            </button>
-                                        </h6>
-                                    </div>
-                                    <div id="collapseKeywords" class="collapse" aria-labelledby="headingKeywords" data-parent="#detailsAccordion">
-                                        <div class="card-body" id="detailsKeywords"></div>
-                                    </div>
-                                </div>
-                                <!-- Related Entries -->
-                                <div class="card" id="detailsRelatedLinksSectionToggle">
-                                    <div class="card-header" id="headingRelated">
-                                        <h6 class="mb-0">
-                                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseRelated" aria-expanded="false" aria-controls="collapseRelated">
-                                                Related Entries
-                                            </button>
-                                        </h6>
-                                    </div>
-                                    <div id="collapseRelated" class="collapse" aria-labelledby="headingRelated" data-parent="#detailsAccordion">
-                                        <div class="card-body" id="detailsRelatedLinksContent"></div>
-                                    </div>
-                                </div>
-                                <!-- Cast & Crew -->
-                                <div class="card" id="detailsCastCrewSectionToggle">
-                                    <div class="card-header" id="headingCast">
-                                        <h6 class="mb-0">
-                                            <button class="btn btn-link btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseCast" aria-expanded="false" aria-controls="collapseCast">
-                                                Cast & Crew
-                                            </button>
-                                        </h6>
-                                    </div>
-                                    <div id="collapseCast" class="collapse" aria-labelledby="headingCast" data-parent="#detailsAccordion">
-                                        <div class="card-body" id="detailsCastCrewContent"></div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Watch History -->
-                            <div id="detailsWatchHistorySection" class="details-watch-history-section" style="display:none;">
-                                <h6>Watch History</h6>
-                                <ul id="detailsWatchHistoryList" class="list-unstyled"></ul>
+                                <!-- Watch History -->
+                                <div id="detailsWatchHistorySection" class="details-watch-history-section"
+                                    style="display:none;">
+                                    <h6>Watch History</h6>
+                                    <ul id="detailsWatchHistoryList" class="list-unstyled"></ul>
+                                </div>
+
+                                <small id="detailsLastModified" class="text-muted d-block mt-4 text-center"></small>
                             </div>
-                            
-                            <small id="detailsLastModified" class="text-muted d-block mt-4 text-center"></small>
                         </div>
                     </div>
                 </div>
-            </div>
-            <div class="modal-footer details-modal-footer">
-                <button type="button" class="btn btn-primary" id="detailsModalAddBtn" style="display:none;"><i class="fas fa-plus-circle"></i> Add</button>
-                <button type="button" class="btn btn-info" id="findSimilarBtn" style="display:none;"><i class="fas fa-magic"></i> Similar</button>
-                <button type="button" class="btn btn-success" id="downloadDetailsImageBtn"><i class="fas fa-download"></i> Share</button>
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <div class="modal-footer details-modal-footer">
+                    <button type="button" class="btn btn-primary" id="detailsModalAddBtn" style="display:none;"><i
+                            class="fas fa-plus-circle"></i> Add</button>
+                    <button type="button" class="btn btn-info" id="findSimilarBtn" style="display:none;"><i
+                            class="fas fa-magic"></i> Similar</button>
+                    <button type="button" class="btn btn-success" id="downloadDetailsImageBtn"><i
+                            class="fas fa-download"></i> Share</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
-<!-- END CHUNK: Modal - Details View -->
+    <!-- END CHUNK: Modal - Details View -->
 
-<!-- START CHUNK: Modal - Person Details -->
-    <div class="modal fade" id="personDetailsModal" tabindex="-1" role="dialog" aria-labelledby="personDetailsModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Person Details -->
+    <div class="modal fade" id="personDetailsModal" tabindex="-1" role="dialog"
+        aria-labelledby="personDetailsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="personDetailsModalLabel"></h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body text-center">
                     <img id="personProfileImage" alt="Person Profile" class="person-profile-img img-fluid d-none">
@@ -1027,42 +1260,68 @@
                     <ul id="personFilmographyList" class="list-unstyled text-left"></ul>
                 </div>
                 <div class="modal-footer">
-                     <button type="button" class="btn btn-info" id="viewTmdbPersonBtn" target="_blank" rel="noopener noreferrer" style="display:none;"><i class="fas fa-external-link-alt"></i> View on TMDB</button>
+                    <button type="button" class="btn btn-info" id="viewTmdbPersonBtn" target="_blank"
+                        rel="noopener noreferrer" style="display:none;"><i class="fas fa-external-link-alt"></i> View on
+                        TMDB</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Person Details -->
+    <!-- END CHUNK: Modal - Person Details -->
 
-<!-- START CHUNK: Modal - Detailed Statistics -->
-    <div class="modal fade" id="detailedStatsModal" tabindex="-1" role="dialog" aria-labelledby="detailedStatsModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Detailed Statistics -->
+    <div class="modal fade" id="detailedStatsModal" tabindex="-1" role="dialog"
+        aria-labelledby="detailedStatsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="detailedStatsModalLabel">Detailed Statistics</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body" style="max-height: 80vh; overflow-y: auto;">
                     <ul class="nav nav-tabs mb-3" id="detailedStatsTab" role="tablist">
-                        <li class="nav-item"> <a class="nav-link active" id="summary-detailed-tab" data-toggle="tab" href="#stats-summary-detailed" role="tab" aria-controls="stats-summary-detailed" aria-selected="true">Summary</a> </li>
-                        <li class="nav-item"> <a class="nav-link" id="progress-detailed-tab" data-toggle="tab" href="#stats-progress-detailed" role="tab" aria-controls="stats-progress-detailed" aria-selected="false">Progress</a> </li>
-                        <li class="nav-item"> <a class="nav-link" id="temporal-detailed-tab" data-toggle="tab" href="#stats-temporal-detailed" role="tab" aria-controls="stats-temporal-detailed" aria-selected="false">Time Analysis</a> </li>
-                        <li class="nav-item"> <a class="nav-link" id="genre-deep-dive-detailed-tab" data-toggle="tab" href="#stats-genre-deep-dive-detailed" role="tab" aria-controls="stats-genre-deep-dive-detailed" aria-selected="false">Genre Deep Dive</a> </li>
-                        <li class="nav-item"> <a class="nav-link" id="ratings-deep-dive-detailed-tab" data-toggle="tab" href="#stats-ratings-deep-dive-detailed" role="tab" aria-controls="stats-ratings-deep-dive-detailed" aria-selected="false">Rating Insights</a> </li>
-                        <li class="nav-item"> <a class="nav-link" id="people-production-detailed-tab" data-toggle="tab" href="#stats-people-production-detailed" role="tab" aria-controls="stats-people-production-detailed" aria-selected="false">People & Production</a> </li>
-                        <li class="nav-item"> <a class="nav-link" id="geo-lang-detailed-tab" data-toggle="tab" href="#stats-geo-lang-detailed" role="tab" aria-controls="stats-geo-lang-detailed" aria-selected="false">Country & Language</a> </li>
+                        <li class="nav-item"> <a class="nav-link active" id="summary-detailed-tab" data-toggle="tab"
+                                href="#stats-summary-detailed" role="tab" aria-controls="stats-summary-detailed"
+                                aria-selected="true">Summary</a> </li>
+                        <li class="nav-item"> <a class="nav-link" id="progress-detailed-tab" data-toggle="tab"
+                                href="#stats-progress-detailed" role="tab" aria-controls="stats-progress-detailed"
+                                aria-selected="false">Progress</a> </li>
+                        <li class="nav-item"> <a class="nav-link" id="temporal-detailed-tab" data-toggle="tab"
+                                href="#stats-temporal-detailed" role="tab" aria-controls="stats-temporal-detailed"
+                                aria-selected="false">Time Analysis</a> </li>
+                        <li class="nav-item"> <a class="nav-link" id="genre-deep-dive-detailed-tab" data-toggle="tab"
+                                href="#stats-genre-deep-dive-detailed" role="tab"
+                                aria-controls="stats-genre-deep-dive-detailed" aria-selected="false">Genre Deep Dive</a>
+                        </li>
+                        <li class="nav-item"> <a class="nav-link" id="ratings-deep-dive-detailed-tab" data-toggle="tab"
+                                href="#stats-ratings-deep-dive-detailed" role="tab"
+                                aria-controls="stats-ratings-deep-dive-detailed" aria-selected="false">Rating
+                                Insights</a> </li>
+                        <li class="nav-item"> <a class="nav-link" id="people-production-detailed-tab" data-toggle="tab"
+                                href="#stats-people-production-detailed" role="tab"
+                                aria-controls="stats-people-production-detailed" aria-selected="false">People &
+                                Production</a> </li>
+                        <li class="nav-item"> <a class="nav-link" id="geo-lang-detailed-tab" data-toggle="tab"
+                                href="#stats-geo-lang-detailed" role="tab" aria-controls="stats-geo-lang-detailed"
+                                aria-selected="false">Country & Language</a> </li>
                     </ul>
                     <div class="tab-content" id="detailedStatsTabContent">
-                        <div class="tab-pane fade show active" id="stats-summary-detailed" role="tabpanel" aria-labelledby="summary-detailed-tab">
+                        <div class="tab-pane fade show active" id="stats-summary-detailed" role="tabpanel"
+                            aria-labelledby="summary-detailed-tab">
                             <div class="row">
                                 <div class="col-md-6 stats-section">
                                     <h6>Overall Summary</h6>
                                     <p><strong>Total Entries:</strong> <span id="statsTotalEntries">0</span></p>
-                                    <p><strong>Total Titles Watched:</strong> <span id="statsTotalTitlesWatched">0</span></p>
-                                    <p><strong>Total Watch Instances:</strong> <span id="statsTotalWatchInstances">0</span></p>
-                                    <p><strong>Total Watch Time (Est.):</strong> <span id="statsTotalWatchTime">N/A</span></p>
-                                    <p><strong>Average Overall Rating: </strong> <span id="statsAvgOverallRating">N/A</span></p>
+                                    <p><strong>Total Titles Watched:</strong> <span
+                                            id="statsTotalTitlesWatched">0</span></p>
+                                    <p><strong>Total Watch Instances:</strong> <span
+                                            id="statsTotalWatchInstances">0</span></p>
+                                    <p><strong>Total Watch Time (Est.):</strong> <span
+                                            id="statsTotalWatchTime">N/A</span></p>
+                                    <p><strong>Average Overall Rating: </strong> <span
+                                            id="statsAvgOverallRating">N/A</span></p>
                                 </div>
                                 <div class="col-md-6 stats-section">
                                     <h6>Entries by Category</h6>
@@ -1080,20 +1339,30 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="stats-progress-detailed" role="tabpanel" aria-labelledby="progress-detailed-tab">
-                             <div class="stats-section">
+                        <div class="tab-pane fade" id="stats-progress-detailed" role="tabpanel"
+                            aria-labelledby="progress-detailed-tab">
+                            <div class="stats-section">
                                 <h6>Your Watchlist Progress</h6>
-                                <p><strong>"To Watch" List Progress:</strong> <span id="statsToWatchCompletion">0%</span></p>
+                                <p><strong>"To Watch" List Progress:</strong> <span
+                                        id="statsToWatchCompletion">0%</span></p>
                                 <div class="progress">
-                                    <div id="toWatchProgressBar" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    <div id="toWatchProgressBar" class="progress-bar" role="progressbar"
+                                        style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
                                 </div>
-                                <p class="mt-2"><strong>Watched:</strong> <span id="watchedCountProgress">0</span> / <span id="totalRelevantCountProgress">0</span></p>
+                                <p class="mt-2"><strong>Watched:</strong> <span id="watchedCountProgress">0</span> /
+                                    <span id="totalRelevantCountProgress">0</span>
+                                </p>
                                 <hr>
                                 <h6>Pace & Predictions</h6>
-                                <p><strong>Estimated time to finish 'To Watch' list:</strong> <span id="estimatedCompletionTime">N/A</span></p>
-                                <p><strong>Completion Prediction (30-day pace):</strong> <span id="completionPrediction30">N/A</span></p>
-                                <p><strong>Completion Prediction (90-day pace):</strong> <span id="completionPrediction90">N/A</span></p>
-                                <p><strong>Completion Prediction (365-day pace):</strong> <span id="completionPrediction365">N/A</span></p>
+                                <p><strong>Estimated time to finish 'To Watch' list:</strong> <span
+                                        id="estimatedCompletionTime">N/A</span></p>
+                                <p><strong>Completion Prediction (30-day pace):</strong> <span
+                                        id="completionPrediction30">N/A</span></p>
+                                <p><strong>Completion Prediction (90-day pace):</strong> <span
+                                        id="completionPrediction90">N/A</span></p>
+                                <p><strong>Completion Prediction (365-day pace):</strong> <span
+                                        id="completionPrediction365">N/A</span></p>
                                 <hr>
                                 <h6>Watchlist Growth (Last 30 Days)</h6>
                                 <p><strong>Net Change:</strong> <span id="watchlistGrowth30">N/A</span></p>
@@ -1102,13 +1371,21 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="stats-temporal-detailed" role="tabpanel" aria-labelledby="temporal-detailed-tab">
+                        <div class="tab-pane fade" id="stats-temporal-detailed" role="tabpanel"
+                            aria-labelledby="temporal-detailed-tab">
                             <div class="stats-section">
                                 <h6>Watch Activity by Year</h6>
                                 <p class="small text-muted">Based on individual watch instance dates.</p>
                                 <div id="statsWatchesByYear" class="table-responsive" style="max-height: 300px;">
                                     <table class="table table-sm table-bordered">
-                                        <thead><tr><th>Year</th><th>Watch Instances</th><th>Unique Titles Watched</th><th>Avg. Rating This Year</th></tr></thead>
+                                        <thead>
+                                            <tr>
+                                                <th>Year</th>
+                                                <th>Watch Instances</th>
+                                                <th>Unique Titles Watched</th>
+                                                <th>Avg. Rating This Year</th>
+                                            </tr>
+                                        </thead>
                                         <tbody></tbody>
                                     </table>
                                 </div>
@@ -1118,73 +1395,121 @@
                                 <p class="small text-muted">Based on individual watch instance dates.</p>
                                 <div id="statsWatchesByMonth" class="table-responsive" style="max-height: 300px;">
                                     <table class="table table-sm table-bordered">
-                                        <thead><tr><th>Month</th><th>Watch Instances</th><th>Unique Titles Watched</th></tr></thead>
+                                        <thead>
+                                            <tr>
+                                                <th>Month</th>
+                                                <th>Watch Instances</th>
+                                                <th>Unique Titles Watched</th>
+                                            </tr>
+                                        </thead>
                                         <tbody></tbody>
                                     </table>
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="stats-genre-deep-dive-detailed" role="tabpanel" aria-labelledby="genre-deep-dive-detailed-tab">
+                        <div class="tab-pane fade" id="stats-genre-deep-dive-detailed" role="tabpanel"
+                            aria-labelledby="genre-deep-dive-detailed-tab">
                             <div class="row">
-                                <div class="col-md-6 stats-section"><h6>Most Frequent Single Genres</h6><ol id="statsTopSingleGenres" class="list-group list-group-flush" style="max-height: 250px; overflow-y:auto;"></ol></div>
-                                <div class="col-md-6 stats-section"><h6>Top 10 Average Rated Genres</h6><ol id="statsAvgRatingByGenre" class="list-group list-group-flush" style="max-height: 250px; overflow-y:auto;"></ol></div>
+                                <div class="col-md-6 stats-section">
+                                    <h6>Most Frequent Single Genres</h6>
+                                    <ol id="statsTopSingleGenres" class="list-group list-group-flush"
+                                        style="max-height: 250px; overflow-y:auto;"></ol>
+                                </div>
+                                <div class="col-md-6 stats-section">
+                                    <h6>Top 10 Average Rated Genres</h6>
+                                    <ol id="statsAvgRatingByGenre" class="list-group list-group-flush"
+                                        style="max-height: 250px; overflow-y:auto;"></ol>
+                                </div>
                             </div>
-                            <div class="stats-section mt-3"><h6>Most Frequent Genre Combinations</h6><p class="small text-muted">Considers exact combinations.</p><ol id="statsGenreCombinations" class="list-group list-group-flush"></ol></div>
+                            <div class="stats-section mt-3">
+                                <h6>Most Frequent Genre Combinations</h6>
+                                <p class="small text-muted">Considers exact combinations.</p>
+                                <ol id="statsGenreCombinations" class="list-group list-group-flush"></ol>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="stats-ratings-deep-dive-detailed" role="tabpanel" aria-labelledby="ratings-deep-dive-detailed-tab">
+                        <div class="tab-pane fade" id="stats-ratings-deep-dive-detailed" role="tabpanel"
+                            aria-labelledby="ratings-deep-dive-detailed-tab">
                             <div class="row">
-                                <div class="col-md-6 stats-section"><h6>Distribution of Overall Entry Ratings</h6><ul id="statsByOverallRating" class="list-group list-group-flush"></ul></div>
-                                <div class="col-md-6 stats-section"><h6>Distribution of Individual Watch Ratings</h6><ul id="statsByWatchInstanceRating" class="list-group list-group-flush"></ul></div>
+                                <div class="col-md-6 stats-section">
+                                    <h6>Distribution of Overall Entry Ratings</h6>
+                                    <ul id="statsByOverallRating" class="list-group list-group-flush"></ul>
+                                </div>
+                                <div class="col-md-6 stats-section">
+                                    <h6>Distribution of Individual Watch Ratings</h6>
+                                    <ul id="statsByWatchInstanceRating" class="list-group list-group-flush"></ul>
+                                </div>
                             </div>
-                            <div class="stats-section mt-3"><h6>Average Overall Rating by Category</h6><ul id="statsAvgOverallRatingByCategory" class="list-group list-group-flush"></ul></div>
+                            <div class="stats-section mt-3">
+                                <h6>Average Overall Rating by Category</h6>
+                                <ul id="statsAvgOverallRatingByCategory" class="list-group list-group-flush"></ul>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="stats-people-production-detailed" role="tabpanel" aria-labelledby="people-production-detailed-tab">
+                        <div class="tab-pane fade" id="stats-people-production-detailed" role="tabpanel"
+                            aria-labelledby="people-production-detailed-tab">
                             <div class="row">
                                 <div class="col-md-6 stats-section">
                                     <h6>Most Watched Actors (Top 10)</h6>
-                                    <ol id="statsMostWatchedActors" class="list-group list-group-flush" style="max-height: 300px; overflow-y:auto;"></ol>
+                                    <ol id="statsMostWatchedActors" class="list-group list-group-flush"
+                                        style="max-height: 300px; overflow-y:auto;"></ol>
                                 </div>
                                 <div class="col-md-6 stats-section">
                                     <h6>Most Watched Directors (Top 10)</h6>
-                                    <ol id="statsMostWatchedDirectors" class="list-group list-group-flush" style="max-height: 300px; overflow-y:auto;"></ol>
+                                    <ol id="statsMostWatchedDirectors" class="list-group list-group-flush"
+                                        style="max-height: 300px; overflow-y:auto;"></ol>
                                 </div>
                             </div>
-                             <div class="stats-section mt-3">
+                            <div class="stats-section mt-3">
                                 <h6>Most Frequent Production Companies (Top 10)</h6>
-                                <ol id="statsMostFrequentProductionCompanies" class="list-group list-group-flush" style="max-height: 300px; overflow-y:auto;"></ol>
+                                <ol id="statsMostFrequentProductionCompanies" class="list-group list-group-flush"
+                                    style="max-height: 300px; overflow-y:auto;"></ol>
                             </div>
-                            <div class="stats-section mt-3"><h6>Average Overall Rating by Studio (Top 5)</h6><ul id="statsAvgRatingByStudio" class="list-group list-group-flush"></ul></div>
+                            <div class="stats-section mt-3">
+                                <h6>Average Overall Rating by Studio (Top 5)</h6>
+                                <ul id="statsAvgRatingByStudio" class="list-group list-group-flush"></ul>
+                            </div>
                         </div>
-                        <div class="tab-pane fade" id="stats-geo-lang-detailed" role="tabpanel" aria-labelledby="geo-lang-detailed-tab">
+                        <div class="tab-pane fade" id="stats-geo-lang-detailed" role="tabpanel"
+                            aria-labelledby="geo-lang-detailed-tab">
                             <div class="row">
-                                <div class="col-md-6 stats-section"><h6>Top Countries of Origin</h6><ol id="statsTopCountries" class="list-group list-group-flush" style="max-height: 250px; overflow-y:auto;"></ol></div>
-                                <div class="col-md-6 stats-section"><h6>Top Original Languages</h6><ol id="statsTopLanguages" class="list-group list-group-flush" style="max-height: 250px; overflow-y:auto;"></ol></div>
+                                <div class="col-md-6 stats-section">
+                                    <h6>Top Countries of Origin</h6>
+                                    <ol id="statsTopCountries" class="list-group list-group-flush"
+                                        style="max-height: 250px; overflow-y:auto;"></ol>
+                                </div>
+                                <div class="col-md-6 stats-section">
+                                    <h6>Top Original Languages</h6>
+                                    <ol id="statsTopLanguages" class="list-group list-group-flush"
+                                        style="max-height: 250px; overflow-y:auto;"></ol>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer justify-content-between">
-                  <div class="custom-control custom-switch">
+                    <div class="custom-control custom-switch">
                         <input type="checkbox" class="custom-control-input" id="timeFormatToggle">
-                     <label class="custom-control-label small" for="timeFormatToggle"></label>
+                        <label class="custom-control-label small" for="timeFormatToggle"></label>
                     </div>
                     <div>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" id="exportStatsPdfBtn"><i class="fas fa-file-pdf"></i> Export as PDF</button>
+                        <button type="button" class="btn btn-primary" id="exportStatsPdfBtn"><i
+                                class="fas fa-file-pdf"></i> Export as PDF</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Detailed Statistics -->
+    <!-- END CHUNK: Modal - Detailed Statistics -->
 
-<!-- START CHUNK: Modal - Daily Recommendation -->
-    <div class="modal fade" id="dailyRecommendationModal" tabindex="-1" role="dialog" aria-labelledby="dailyRecommendationModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Daily Recommendation -->
+    <div class="modal fade" id="dailyRecommendationModal" tabindex="-1" role="dialog"
+        aria-labelledby="dailyRecommendationModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="dailyRecommendationModalLabel">Daily Recommendation</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body" id="dailyRecommendationModalBody">
                     <p class="text-center text-muted p-3">Loading daily recommendation...</p>
@@ -1195,18 +1520,20 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Daily Recommendation -->
+    <!-- END CHUNK: Modal - Daily Recommendation -->
 
-<!-- START CHUNK: Modal - Personalized Suggestions -->
-    <div class="modal fade" id="personalizedSuggestionsModal" tabindex="-1" role="dialog" aria-labelledby="personalizedSuggestionsModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Personalized Suggestions -->
+    <div class="modal fade" id="personalizedSuggestionsModal" tabindex="-1" role="dialog"
+        aria-labelledby="personalizedSuggestionsModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="personalizedSuggestionsModalLabel">Engine Suggestions</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body" id="personalizedSuggestionsModalBody">
-                     <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 id="recommendationsListTitleModal">Your Suggestions</h6>
                         <button id="refreshRecommendationsBtnModal" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-sync-alt"></i> Refresh
@@ -1223,15 +1550,17 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Personalized Suggestions -->
+    <!-- END CHUNK: Modal - Personalized Suggestions -->
 
-<!-- START CHUNK: Modal - Achievements -->
-    <div class="modal fade" id="achievementsModal" tabindex="-1" role="dialog" aria-labelledby="achievementsModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Achievements -->
+    <div class="modal fade" id="achievementsModal" tabindex="-1" role="dialog" aria-labelledby="achievementsModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="achievementsModalLabel">Achievements</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body" id="achievementsModalBody" style="max-height: 70vh; overflow-y: auto;">
                     <div id="achievementBadgesModal" class="d-flex flex-wrap justify-content-center">
@@ -1244,28 +1573,52 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Achievements -->
+    <!-- END CHUNK: Modal - Achievements -->
 
-<!-- START CHUNK: Modal - Visual Data (Charts) -->
-    <div class="modal fade" id="chartsModal" tabindex="-1" role="dialog" aria-labelledby="chartsModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Visual Data (Charts) -->
+    <div class="modal fade" id="chartsModal" tabindex="-1" role="dialog" aria-labelledby="chartsModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="chartsModalLabel">Visual Data</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body row" id="chartsModalBody" style="max-height: 80vh; overflow-y: auto;">
-                    <div class="col-md-6 stats-chart-container"><h6>Watch Instances by Year</h6><canvas id="chartModalWatchInstancesByYear"></canvas></div>
-                    <div class="col-lg-12 stats-chart-container"><h6>Pace Comparison (30, 90, 365 Days)</h6><canvas id="chartNormalizedPace"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Entries Watched per Genre</h6><canvas id="chartModalMoviesPerGenre"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Overall Entry Rating Distribution</h6><canvas id="chartModalOverallRatingDistribution"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Individual Watch Rating Distribution</h6><canvas id="chartModalWatchInstanceRatingDistribution"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Entry Status Breakdown</h6><canvas id="chartModalMovieStatusBreakdown"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Language Distribution</h6><canvas id="chartModalLanguageDistribution"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Top 10 Country Distributions</h6><canvas id="chartModalCountryDistribution"></canvas></div>
-                    <div class="col-md-6 stats-chart-container"><h6>Monthly Watch Activity</h6><canvas id="chartModalWatchActivityOverTime"></canvas></div>
-                   <!-- <div class="col-md-6 stats-chart-container"><h6>Monthly Average Rating</h6><canvas id="chartModalAvgRatingOverTime"></canvas></div> -->
-                    <div class="col-md-6 stats-chart-container"><h6>Average Overall Rating by Genre</h6><canvas id="chartModalRatingByGenreRadar"></canvas></div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Watch Instances by Year</h6><canvas id="chartModalWatchInstancesByYear"></canvas>
+                    </div>
+                    <div class="col-lg-12 stats-chart-container">
+                        <h6>Pace Comparison (30, 90, 365 Days)</h6><canvas id="chartNormalizedPace"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Entries Watched per Genre</h6><canvas id="chartModalMoviesPerGenre"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Overall Entry Rating Distribution</h6><canvas
+                            id="chartModalOverallRatingDistribution"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Individual Watch Rating Distribution</h6><canvas
+                            id="chartModalWatchInstanceRatingDistribution"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Entry Status Breakdown</h6><canvas id="chartModalMovieStatusBreakdown"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Language Distribution</h6><canvas id="chartModalLanguageDistribution"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Top 10 Country Distributions</h6><canvas id="chartModalCountryDistribution"></canvas>
+                    </div>
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Monthly Watch Activity</h6><canvas id="chartModalWatchActivityOverTime"></canvas>
+                    </div>
+                    <!-- <div class="col-md-6 stats-chart-container"><h6>Monthly Average Rating</h6><canvas id="chartModalAvgRatingOverTime"></canvas></div> -->
+                    <div class="col-md-6 stats-chart-container">
+                        <h6>Average Overall Rating by Genre</h6><canvas id="chartModalRatingByGenreRadar"></canvas>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -1273,62 +1626,77 @@
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Visual Data (Charts) -->
+    <!-- END CHUNK: Modal - Visual Data (Charts) -->
 
-<!-- START CHUNK: Modal - Confirm Delete -->
-    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-md" role="document">
-        <div class="modal-content fade-up">
-          <div class="modal-header bg-danger text-white">
-            <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Deletion</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
-          </div>
-          <div class="modal-body">
-            <p id="deleteModalMessage">Are you sure you want to permanently delete this entry? This action cannot be undone.</p>
-            <div id="batchDeleteOptions" style="display:none;">
-                <p>Delete selected entries from:</p>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="deleteScope" id="deleteLocalOnly" value="local" checked>
-                    <label class="form-check-label" for="deleteLocalOnly">Local Cache Only</label>
+    <!-- START CHUNK: Modal - Confirm Delete -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" role="dialog"
+        aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md" role="document">
+            <div class="modal-content fade-up">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Deletion</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="deleteScope" id="deleteCloudOnly" value="cloud">
-                    <label class="form-check-label" for="deleteCloudOnly">Cloud Only</label>
+                <div class="modal-body">
+                    <p id="deleteModalMessage">Are you sure you want to permanently delete this entry? This action
+                        cannot be undone.</p>
+                    <div id="batchDeleteOptions" style="display:none;">
+                        <p>Delete selected entries from:</p>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="deleteScope" id="deleteLocalOnly"
+                                value="local" checked>
+                            <label class="form-check-label" for="deleteLocalOnly">Local Cache Only</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="deleteScope" id="deleteCloudOnly"
+                                value="cloud">
+                            <label class="form-check-label" for="deleteCloudOnly">Cloud Only</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="deleteScope" id="deleteBoth"
+                                value="both">
+                            <label class="form-check-label" for="deleteBoth">Both Local and Cloud</label>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" name="deleteScope" id="deleteBoth" value="both">
-                    <label class="form-check-label" for="deleteBoth">Both Local and Cloud</label>
-                </div>
+                <div class="modal-footer"> <button type="button" class="btn btn-secondary"
+                        data-dismiss="modal">Cancel</button> <button type="button" class="btn btn-danger"
+                        id="confirmDeleteBtn">Delete</button> </div>
             </div>
-          </div>
-          <div class="modal-footer"> <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button> <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button> </div>
         </div>
-      </div>
     </div>
-<!-- END CHUNK: Modal - Confirm Delete -->
+    <!-- END CHUNK: Modal - Confirm Delete -->
 
-<!-- START CHUNK: Modal - Confirm Duplicate Name -->
-    <div class="modal fade" id="duplicateNameConfirmModal" tabindex="-1" role="dialog" aria-labelledby="duplicateNameConfirmModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-content fade-up">
-          <div class="modal-header bg-warning text-dark">
-            <h5 class="modal-title" id="duplicateNameConfirmModalLabel">Duplicate Name Detected</h5>
-            <button type="button" class="close text-dark" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">×</span> </button>
-          </div>
-          <div class="modal-body"> An entry with this name already exists. Do you want to save this new/edited entry with the same name?</div>
-          <div class="modal-footer"> <button type="button" class="btn btn-secondary" id="cancelDuplicateSaveBtn" data-dismiss="modal">Cancel</button> <button type="button" class="btn btn-primary" id="confirmDuplicateSaveBtn">Save Anyway</button> </div>
+    <!-- START CHUNK: Modal - Confirm Duplicate Name -->
+    <div class="modal fade" id="duplicateNameConfirmModal" tabindex="-1" role="dialog"
+        aria-labelledby="duplicateNameConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content fade-up">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title" id="duplicateNameConfirmModalLabel">Duplicate Name Detected</h5>
+                    <button type="button" class="close text-dark" data-dismiss="modal" aria-label="Close"> <span
+                            aria-hidden="true">×</span> </button>
+                </div>
+                <div class="modal-body"> An entry with this name already exists. Do you want to save this new/edited
+                    entry with the same name?</div>
+                <div class="modal-footer"> <button type="button" class="btn btn-secondary" id="cancelDuplicateSaveBtn"
+                        data-dismiss="modal">Cancel</button> <button type="button" class="btn btn-primary"
+                        id="confirmDuplicateSaveBtn">Save Anyway</button> </div>
+            </div>
         </div>
-      </div>
     </div>
-<!-- END CHUNK: Modal - Confirm Duplicate Name -->
+    <!-- END CHUNK: Modal - Confirm Duplicate Name -->
 
-<!-- START CHUNK: Modal - Confirm Erase Data -->
-    <div class="modal fade" id="confirmEraseDataModal" tabindex="-1" role="dialog" aria-labelledby="confirmEraseDataModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-md" role="document"> 
+    <!-- START CHUNK: Modal - Confirm Erase Data -->
+    <div class="modal fade" id="confirmEraseDataModal" tabindex="-1" role="dialog"
+        aria-labelledby="confirmEraseDataModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-md" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="confirmEraseDataModalLabel">Confirm Erase Data</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
                 </div>
                 <div class="modal-body">
                     <p><strong>Warning:</strong> This action cannot be undone for the selected scope.</p>
@@ -1344,28 +1712,33 @@
                     <p>Are you absolutely sure you want to proceed?</p>
                 </div>
                 <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-secondary" id="checkRepairDataBtn"><i class="fas fa-tools"></i> Check & Repair Data</button>
+                    <button type="button" class="btn btn-secondary" id="checkRepairDataBtn"><i class="fas fa-tools"></i>
+                        Check & Repair Data</button>
                     <div>
                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" id="confirmEraseDataBtn">Erase Selected Data</button>
+                        <button type="button" class="btn btn-danger" id="confirmEraseDataBtn">Erase Selected
+                            Data</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Confirm Erase Data -->
+    <!-- END CHUNK: Modal - Confirm Erase Data -->
 
-<!-- START CHUNK: Modal - Batch Edit -->
-    <div class="modal fade" id="batchEditModal" tabindex="-1" role="dialog" aria-labelledby="batchEditModalLabel" aria-hidden="true">
+    <!-- START CHUNK: Modal - Batch Edit -->
+    <div class="modal fade" id="batchEditModal" tabindex="-1" role="dialog" aria-labelledby="batchEditModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
                     <h5 class="modal-title" id="batchEditModalLabel">Batch Edit Selected Entries</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">×</span></button>
                 </div>
                 <div class="modal-body">
                     <form id="batchEditForm">
-                        <p>Apply changes to <strong id="batchEditCount">0</strong> selected entries. <span class="text-info">Only checked fields will be updated.</span></p>
+                        <p>Apply changes to <strong id="batchEditCount">0</strong> selected entries. <span
+                                class="text-info">Only checked fields will be updated.</span></p>
 
                         <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_Status"></div>
@@ -1399,14 +1772,16 @@
                             <div class="col-1"><input type="checkbox" id="batchEditApply_AddGenre"></div>
                             <label for="batchEditAddGenre" class="col-3 col-form-label">Add Genre</label>
                             <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditAddGenre" placeholder="e.g. Comedy">
+                                <input type="text" class="form-control form-control-sm" id="batchEditAddGenre"
+                                    placeholder="e.g. Comedy">
                             </div>
                         </div>
                         <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_RemoveGenre"></div>
                             <label for="batchEditRemoveGenre" class="col-3 col-form-label">Remove Genre</label>
                             <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditRemoveGenre" placeholder="e.g. Action">
+                                <input type="text" class="form-control form-control-sm" id="batchEditRemoveGenre"
+                                    placeholder="e.g. Action">
                             </div>
                         </div>
                         <hr>
@@ -1430,7 +1805,7 @@
                             <div class="col-1"><input type="checkbox" id="batchEditApply_Recommendation"></div>
                             <label for="batchEditRecommendation" class="col-3 col-form-label">My Recommendation</label>
                             <div class="col-8">
-                                 <select id="batchEditRecommendation" class="form-control form-control-sm">
+                                <select id="batchEditRecommendation" class="form-control form-control-sm">
                                     <option value="">- No Change -</option>
                                     <option value="Ignore">Ignore</option>
                                     <option value="Less Recommended">Less Recommended</option>
@@ -1442,9 +1817,10 @@
 
                         <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_PersonalRecommendation"></div>
-                            <label for="batchEditPersonalRecommendation" class="col-3 col-form-label">Watch Preference</label>
+                            <label for="batchEditPersonalRecommendation" class="col-3 col-form-label">Watch
+                                Preference</label>
                             <div class="col-8">
-                               <select id="batchEditPersonalRecommendation" class="form-control form-control-sm">
+                                <select id="batchEditPersonalRecommendation" class="form-control form-control-sm">
                                     <option value="">- No Change -</option>
                                     <option value="Watch Alone">watch alone</option>
                                     <option value="Safe to share">Safe to share</option>
@@ -1457,237 +1833,270 @@
                             <div class="col-1"><input type="checkbox" id="batchEditApply_Year"></div>
                             <label for="batchEditYear" class="col-3 col-form-label">Year of Release</label>
                             <div class="col-8">
-                                <input type="number" class="form-control form-control-sm" id="batchEditYear" min="1888" max="2100" placeholder="e.g. 2023">
+                                <input type="number" class="form-control form-control-sm" id="batchEditYear" min="1888"
+                                    max="2100" placeholder="e.g. 2023">
                             </div>
                         </div>
                         <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_Country"></div>
                             <label for="batchEditCountry" class="col-3 col-form-label">Country</label>
                             <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditCountry" placeholder="e.g. US, IN">
+                                <input type="text" class="form-control form-control-sm" id="batchEditCountry"
+                                    placeholder="e.g. US, IN">
                             </div>
                         </div>
-                         <div class="form-group form-row align-items-center">
+                        <div class="form-group form-row align-items-center">
                             <div class="col-1"><input type="checkbox" id="batchEditApply_Language"></div>
                             <label for="batchEditLanguage" class="col-3 col-form-label">Language</label>
                             <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditLanguage" placeholder="e.g., English, Hindi">
+                                <input type="text" class="form-control form-control-sm" id="batchEditLanguage"
+                                    placeholder="e.g., English, Hindi">
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save"></i> Apply Changes to Selected</button>
+                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save"></i> Apply Changes to
+                            Selected</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-<!-- END CHUNK: Modal - Batch Edit -->
+    <!-- END CHUNK: Modal - Batch Edit -->
 
-<!-- START CHUNK: Modal - About -->
-<div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content fade-up">
-            <div class="modal-header">
-                <h5 class="modal-title" id="aboutModalLabel">About KeepMoviEZ</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"> 
-                    <span aria-hidden="true">&times;</span> 
-                </button>
+    <!-- START CHUNK: Modal - About -->
+    <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content fade-up">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="aboutModalLabel">About KeepMoviEZ</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
+
+                    <div class="about-hero">
+                        <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ"></img>
+                        <p>KeepMoviEZ is built to give you full control over your movie and series tracking—fast,
+                            structured, and distraction-free. The name reflects exactly what it delivers: keeping your
+                            movies easy to manage.</p>
+                        <p class="text-muted">The app is offline-first by design. All core features work without an
+                            internet connection. Cloud sync is optional, and when enabled, your data stays yours—never
+                            monitored, analyzed, or sold.</p>
+                    </div>
+
+                    <hr>
+
+                    <h4>Key Features</h4>
+                    <div class="features-list">
+                        <div class="feature-item">
+                            <i class="fas fa-pencil-alt"></i>
+                            <div>
+                                <strong>Log Everything</strong>
+                                <small>Track movies, series, specials, progress, ratings, and notes with
+                                    precision.</small>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <i class="fas fa-database"></i>
+                            <div>
+                                <strong>Data Enrichment</strong>
+                                <small>Posters, cast, crew, and metadata fetched automatically from TMDB.</small>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <i class="fas fa-chart-pie"></i>
+                            <div>
+                                <strong>Stats & Insights</strong>
+                                <small>Charts, trends, viewing history, and achievement milestones.</small>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <i class="fas fa-magic"></i>
+                            <div>
+                                <strong>Engine Suggestions</strong>
+                                <small>Recommendations based on your favorites and viewing patterns.</small>
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <i class="fas fa-tasks"></i>
+                            <div>
+                                <strong>Efficient Management</strong>
+                                <small>Search, filters, and batch tools that scale with large collections.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <h4>Credits & Technologies</h4>
+                    <p class="text-muted small">This app stands on the work of open-source projects and public APIs. We
+                        acknowledge and appreciate the following services:</p>
+
+                    <div class="credits-grid">
+
+                        <div class="credit-item">
+                            <div class="credit-icon tmdb-color">
+                                <!-- TMDB SVG stays unchanged -->
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190.24 81.52">
+                                    <defs>
+                                        <style>
+                                            .cls-1 {
+                                                fill: url(#linear-gradient);
+                                            }
+                                        </style>
+                                        <linearGradient id="linear-gradient" y1="40.76" x2="190.24" y2="40.76"
+                                            gradientUnits="userSpaceOnUse">
+                                            <stop offset="0" stop-color="#90cea1" />
+                                            <stop offset="0.56" stop-color="#3cbec9" />
+                                            <stop offset="1" stop-color="#00b3e5" />
+                                        </linearGradient>
+                                    </defs>
+                                    <path class="cls-1"
+                                        d="M105.67,36.06h66.9A17.67,17.67,0,0,0,190.24,18.4h0A17.67,17.67,0,0,0,172.57.73h-66.9A17.67,17.67,0,0,0,88,18.4h0A17.67,17.67,0,0,0,105.67,36.06Zm-88,45h76.9A17.67,17.67,0,0,0,112.24,63.4h0A17.67,17.67,0,0,0,94.57,45.73H17.67A17.67,17.67,0,0,0,0,63.4H0A17.67,17.67,0,0,0,17.67,81.06ZM10.41,35.42h7.8V6.92h10.1V0H.31v6.9h10.1Zm28.1,0h7.8V8.25h.1l9,27.15h6l9.3-27.15h.1V35.4h7.8V0H66.76l-8.2,23.1h-.1L50.31,0H38.51ZM152.43,55.67a15.07,15.07,0,0,0-4.52-5.52,18.57,18.57,0,0,0-6.68-3.08,33.54,33.54,0,0,0-8.07-1h-11.7v35.4h12.75a24.58,24.58,0,0,0,7.55-1.15A19.34,19.34,0,0,0,148.11,77a16.27,16.27,0,0,0,4.37-5.5,16.91,16.91,0,0,0,1.63-7.58A18.5,18.5,0,0,0,152.43,55.67ZM145,68.6a8.8,8.8,0,0,1-2.64,3.4,10.7,10.7,0,0,1-4,1.82,21.57,21.57,0,0,1-5,.55h-4.05v-21h4.6a17,17,0,0,1,4.67.63,11.66,11.66,0,0,1,3.88,1.87A9.14,9.14,0,0,1,145,59a9.87,9.87,0,0,1,1,4.52A11.89,11.89,0,0,1,145,68.6Zm44.63-.13a8,8,0,0,0-1.58-2.62A8.38,8.38,0,0,0,185.63,64a10.31,10.31,0,0,0-3.17-1v-.1a9.22,9.22,0,0,0,4.42-2.82,7.43,7.43,0,0,0,1.68-5,8.42,8.42,0,0,0-1.15-4.65,8.09,8.09,0,0,0-3-2.72,12.56,12.56,0,0,0-4.18-1.3,32.84,32.84,0,0,0-4.62-.33h-13.2v35.4h14.5a22.41,22.41,0,0,0,4.72-.5,13.53,13.53,0,0,0,4.28-1.65,9.42,9.42,0,0,0,3.1-3,8.52,8.52,0,0,0,1.2-4.68A9.39,9.39,0,0,0,189.66,68.47ZM170.21,52.72h5.3a10,10,0,0,1,1.85.18,6.18,6.18,0,0,1,1.7.57,3.39,3.39,0,0,1,1.22,1.13,3.22,3.22,0,0,1,.48,1.82,3.63,3.63,0,0,1-.43,1.8,3.4,3.4,0,0,1-1.12,1.2,4.92,4.92,0,0,1-1.58.65,7.51,7.51,0,0,1-1.77.2h-5.65Zm11.72,20a3.9,3.9,0,0,1-1.22,1.3,4.64,4.64,0,0,1-1.68.7,8.18,8.18,0,0,1-1.82.2h-7v-8h5.9a15.35,15.35,0,0,1,2,.15,8.47,8.47,0,0,1,2.05.55,4,4,0,0,1,1.57,1.18,3.11,3.11,0,0,1,.63,2A3.71,3.71,0,0,1,181.93,72.72Z" />
+                                </svg>
+                            </div>
+                            <div class="credit-text">
+                                <strong>The Movie Database (TMDB)</strong>
+                                <small>The primary source for metadata.<br>
+                                    <b><i style="color: var(--warning-color)">This product uses the TMDB API but is not
+                                            endorsed or certified by TMDB.</i></b></small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon supabase-color"><i class="fas fa-bolt"></i></div>
+                            <div class="credit-text">
+                                <strong>Supabase</strong>
+                                <small>Provides the open-source backend for cloud sync.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon bootstrap-color"><i class="fab fa-bootstrap"></i></div>
+                            <div class="credit-text">
+                                <strong>Bootstrap</strong>
+                                <small>Responsive UI framework.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon chartjs-color"><i class="fas fa-chart-bar"></i></div>
+                            <div class="credit-text">
+                                <strong>Chart.js</strong>
+                                <small>Data visualization library.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon"><i class="fab fa-font-awesome-flag"></i></div>
+                            <div class="credit-text">
+                                <strong>Font Awesome</strong>
+                                <small>Icon library.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon jquery-color"><i class="fas fa-code"></i></div>
+                            <div class="credit-text">
+                                <strong>jQuery</strong>
+                                <small>DOM manipulation utilities.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon"><i class="fas fa-file-csv"></i></div>
+                            <div class="credit-text">
+                                <strong>PapaParse</strong>
+                                <small>In-browser CSV parsing.</small>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <h5 class="mt-4">External Service Links</h5>
+                    <div class="credits-grid">
+                        <div class="credit-item">
+                            <div class="credit-icon youtube-color"><i class="fab fa-youtube"></i></div>
+                            <div class="credit-text">
+                                <strong>YouTube</strong>
+                                <small>Trailer search functionality.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon imdb-color"><i class="fab fa-imdb"></i></div>
+                            <div class="credit-text">
+                                <strong>IMDb</strong>
+                                <small>Parental guide lookups.</small>
+                            </div>
+                        </div>
+
+                        <div class="credit-item">
+                            <div class="credit-icon"><i class="fas fa-play-circle"></i></div>
+                            <div class="credit-text">
+                                <strong>JustWatch</strong>
+                                <small>Streaming availability links.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="creator-section">
+                        <p class="mb-1">Built by Nishant Adhikari.</p>
+                        <a href="https://nishantadhikari.info.np" target="_blank" rel="noopener noreferrer">Website</a>
+                        |
+                        <a href="https://www.instagram.com/nishant060211" target="_blank"
+                            rel="noopener noreferrer">Instagram</a>
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+
             </div>
-
-            <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
-                
-                <div class="about-hero">
-                    <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ"></img>
-                    <p>KeepMoviEZ is built to give you full control over your movie and series tracking—fast, structured, and distraction-free. The name reflects exactly what it delivers: keeping your movies easy to manage.</p>
-                    <p class="text-muted">The app is offline-first by design. All core features work without an internet connection. Cloud sync is optional, and when enabled, your data stays yours—never monitored, analyzed, or sold.</p>
-                </div>
-
-                <hr>
-
-                <h4>Key Features</h4>
-                <div class="features-list">
-                    <div class="feature-item">
-                        <i class="fas fa-pencil-alt"></i>
-                        <div>
-                            <strong>Log Everything</strong>
-                            <small>Track movies, series, specials, progress, ratings, and notes with precision.</small>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <i class="fas fa-database"></i>
-                        <div>
-                            <strong>Data Enrichment</strong>
-                            <small>Posters, cast, crew, and metadata fetched automatically from TMDB.</small>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <i class="fas fa-chart-pie"></i>
-                        <div>
-                            <strong>Stats & Insights</strong>
-                            <small>Charts, trends, viewing history, and achievement milestones.</small>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <i class="fas fa-magic"></i>
-                        <div>
-                            <strong>Engine Suggestions</strong>
-                            <small>Recommendations based on your favorites and viewing patterns.</small>
-                        </div>
-                    </div>
-
-                    <div class="feature-item">
-                        <i class="fas fa-tasks"></i>
-                        <div>
-                            <strong>Efficient Management</strong>
-                            <small>Search, filters, and batch tools that scale with large collections.</small>
-                        </div>
-                    </div>
-                </div>
-
-                <hr>
-
-                <h4>Credits & Technologies</h4>
-                <p class="text-muted small">This app stands on the work of open-source projects and public APIs. We acknowledge and appreciate the following services:</p>
-
-                <div class="credits-grid">
-
-                    <div class="credit-item">
-                        <div class="credit-icon tmdb-color">
-                            <!-- TMDB SVG stays unchanged -->
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 190.24 81.52"><defs><style>.cls-1{fill:url(#linear-gradient);}</style><linearGradient id="linear-gradient" y1="40.76" x2="190.24" y2="40.76" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#90cea1"/><stop offset="0.56" stop-color="#3cbec9"/><stop offset="1" stop-color="#00b3e5"/></linearGradient></defs><path class="cls-1" d="M105.67,36.06h66.9A17.67,17.67,0,0,0,190.24,18.4h0A17.67,17.67,0,0,0,172.57.73h-66.9A17.67,17.67,0,0,0,88,18.4h0A17.67,17.67,0,0,0,105.67,36.06Zm-88,45h76.9A17.67,17.67,0,0,0,112.24,63.4h0A17.67,17.67,0,0,0,94.57,45.73H17.67A17.67,17.67,0,0,0,0,63.4H0A17.67,17.67,0,0,0,17.67,81.06ZM10.41,35.42h7.8V6.92h10.1V0H.31v6.9h10.1Zm28.1,0h7.8V8.25h.1l9,27.15h6l9.3-27.15h.1V35.4h7.8V0H66.76l-8.2,23.1h-.1L50.31,0H38.51ZM152.43,55.67a15.07,15.07,0,0,0-4.52-5.52,18.57,18.57,0,0,0-6.68-3.08,33.54,33.54,0,0,0-8.07-1h-11.7v35.4h12.75a24.58,24.58,0,0,0,7.55-1.15A19.34,19.34,0,0,0,148.11,77a16.27,16.27,0,0,0,4.37-5.5,16.91,16.91,0,0,0,1.63-7.58A18.5,18.5,0,0,0,152.43,55.67ZM145,68.6a8.8,8.8,0,0,1-2.64,3.4,10.7,10.7,0,0,1-4,1.82,21.57,21.57,0,0,1-5,.55h-4.05v-21h4.6a17,17,0,0,1,4.67.63,11.66,11.66,0,0,1,3.88,1.87A9.14,9.14,0,0,1,145,59a9.87,9.87,0,0,1,1,4.52A11.89,11.89,0,0,1,145,68.6Zm44.63-.13a8,8,0,0,0-1.58-2.62A8.38,8.38,0,0,0,185.63,64a10.31,10.31,0,0,0-3.17-1v-.1a9.22,9.22,0,0,0,4.42-2.82,7.43,7.43,0,0,0,1.68-5,8.42,8.42,0,0,0-1.15-4.65,8.09,8.09,0,0,0-3-2.72,12.56,12.56,0,0,0-4.18-1.3,32.84,32.84,0,0,0-4.62-.33h-13.2v35.4h14.5a22.41,22.41,0,0,0,4.72-.5,13.53,13.53,0,0,0,4.28-1.65,9.42,9.42,0,0,0,3.1-3,8.52,8.52,0,0,0,1.2-4.68A9.39,9.39,0,0,0,189.66,68.47ZM170.21,52.72h5.3a10,10,0,0,1,1.85.18,6.18,6.18,0,0,1,1.7.57,3.39,3.39,0,0,1,1.22,1.13,3.22,3.22,0,0,1,.48,1.82,3.63,3.63,0,0,1-.43,1.8,3.4,3.4,0,0,1-1.12,1.2,4.92,4.92,0,0,1-1.58.65,7.51,7.51,0,0,1-1.77.2h-5.65Zm11.72,20a3.9,3.9,0,0,1-1.22,1.3,4.64,4.64,0,0,1-1.68.7,8.18,8.18,0,0,1-1.82.2h-7v-8h5.9a15.35,15.35,0,0,1,2,.15,8.47,8.47,0,0,1,2.05.55,4,4,0,0,1,1.57,1.18,3.11,3.11,0,0,1,.63,2A3.71,3.71,0,0,1,181.93,72.72Z"/></svg>
-                        </div>
-                        <div class="credit-text">
-                            <strong>The Movie Database (TMDB)</strong>
-                            <small>The primary source for metadata.<br>
-                            <b><i style="color: var(--warning-color)">This product uses the TMDB API but is not endorsed or certified by TMDB.</i></b></small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon supabase-color"><i class="fas fa-bolt"></i></div>
-                        <div class="credit-text">
-                            <strong>Supabase</strong>
-                            <small>Provides the open-source backend for cloud sync.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon bootstrap-color"><i class="fab fa-bootstrap"></i></div>
-                        <div class="credit-text">
-                            <strong>Bootstrap</strong>
-                            <small>Responsive UI framework.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon chartjs-color"><i class="fas fa-chart-bar"></i></div>
-                        <div class="credit-text">
-                            <strong>Chart.js</strong>
-                            <small>Data visualization library.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon"><i class="fab fa-font-awesome-flag"></i></div>
-                        <div class="credit-text">
-                            <strong>Font Awesome</strong>
-                            <small>Icon library.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon jquery-color"><i class="fas fa-code"></i></div>
-                        <div class="credit-text">
-                            <strong>jQuery</strong>
-                            <small>DOM manipulation utilities.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon"><i class="fas fa-file-csv"></i></div>
-                        <div class="credit-text">
-                            <strong>PapaParse</strong>
-                            <small>In-browser CSV parsing.</small>
-                        </div>
-                    </div>
-
-                </div>
-
-                <h5 class="mt-4">External Service Links</h5>
-                <div class="credits-grid">
-                    <div class="credit-item">
-                        <div class="credit-icon youtube-color"><i class="fab fa-youtube"></i></div>
-                        <div class="credit-text">
-                            <strong>YouTube</strong>
-                            <small>Trailer search functionality.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon imdb-color"><i class="fab fa-imdb"></i></div>
-                        <div class="credit-text">
-                            <strong>IMDb</strong>
-                            <small>Parental guide lookups.</small>
-                        </div>
-                    </div>
-
-                    <div class="credit-item">
-                        <div class="credit-icon"><i class="fas fa-play-circle"></i></div>
-                        <div class="credit-text">
-                            <strong>JustWatch</strong>
-                            <small>Streaming availability links.</small>
-                        </div>
-                    </div>
-                </div>
-
-                <hr>
-
-                <div class="creator-section">
-                    <p class="mb-1">Built by Nishant Adhikari.</p>
-                    <a href="https://nishantadhikari.info.np" target="_blank" rel="noopener noreferrer">Website</a> | 
-                    <a href="https://www.instagram.com/nishant060211" target="_blank" rel="noopener noreferrer">Instagram</a>
-                </div>
-
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            </div>
-
         </div>
     </div>
-</div>
-<!-- END CHUNK: Modal - About -->
+    <!-- END CHUNK: Modal - About -->
 
-<!-- START CHUNK: Toast Notification Component -->
-      <div id="appToast" class="toast hide fade-up" role="alert" aria-live="assertive" aria-atomic="true" data-delay="3500">
+    <!-- START CHUNK: Toast Notification Component -->
+    <div id="appToast" class="toast hide fade-up" role="alert" aria-live="assertive" aria-atomic="true"
+        data-delay="3500">
         <div class="toast-header">
             <strong class="mr-auto" id="toastTitle">Notification</strong>
-            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close"> <span aria-hidden="true">×</span> </button>
+            <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close"> <span
+                    aria-hidden="true">×</span> </button>
         </div>
         <div class="toast-body" id="toastBody"> Message here. </div>
-        <div id="toastActions" class="toast-footer p-2 text-right" style="border-top: 1px solid rgba(0,0,0,0.05);"></div>
-      </div>
+        <div id="toastActions" class="toast-footer p-2 text-right" style="border-top: 1px solid rgba(0,0,0,0.05);">
+        </div>
     </div>
-<!-- END CHUNK: Toast Notification Component -->
+    </div>
+    <!-- END CHUNK: Toast Notification Component -->
 
-<!-- START CHUNK: JavaScript Libraries and Application Logic Scripts -->
+    <!-- START CHUNK: JavaScript Libraries and Application Logic Scripts -->
     <!-- Local Base Libraries -->
     <script src="libs/js/jquery.min.js"></script>
     <script src="libs/js/popper.min.js"></script>
     <script src="libs/js/bootstrap.min.js"></script>
     <script src="libs/js/papaparse.min.js"></script>
     <script src="libs/js/chart.js"></script>
-    
+
     <!-- Local PDF Export Libraries -->
     <script src="libs/js/html2canvas.min.js"></script>
     <script src="libs/js/jspdf.umd.min.js"></script>
     <script src="libs/js/jspdf.plugin.autotable.min.js"></script>
 
-   <!-- Custom JS modules  -->
+    <!-- Custom JS modules  -->
     <script src="js/constant.js?v=2"></script>
     <script src="js/utils.js?v=2"></script>
     <script src="js/indexeddb.js?v=2"></script>
@@ -1704,7 +2113,8 @@
     <script src="js/backfill.js?v=2"></script>
     <script src="js/backfill-ui.js?v=2"></script>
     <script src="js/main.js?v=2"></script>
-<!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
+    <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
 </body>
+
 </html>
