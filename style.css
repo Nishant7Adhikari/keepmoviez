@@ -506,7 +506,7 @@ p {
 
 .card-container {
   display: grid;
-  /* MODIFIED: Use 24% min-width to ensure max 4 columns (100/24 ~ 4.1) while maintaining responsive min-width */
+  /* MODIFIED: Use 32% min-width to ensure max 3 columns (100/32 ~ 3.1) while maintaining responsive min-width */
   grid-template-columns: repeat(auto-fill, minmax(max(250px, 24%), 1fr));
   gap: 1rem;
   padding-bottom: 1rem;
@@ -522,7 +522,7 @@ p {
   transition: all 0.2s ease-in-out;
   cursor: pointer;
   position: relative; /* Needed for absolute positioning of the year */
-  min-height: 145px; /* Increased min-height for better spacing */
+  min-height: 250px; /* Increased min-height for better spacing and larger poster */
 }
 
 .movie-card:hover {
@@ -541,7 +541,7 @@ p {
 
 .card-thumbnail {
   flex-shrink: 0;
-  width: 100px;
+  width: 140px;
   background-color: var(--table-header-bg);
 }
 

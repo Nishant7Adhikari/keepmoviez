@@ -710,7 +710,13 @@ async function initializeApp() {
     if (typeof renderMovieCards === "function") renderMovieCards();
     if (typeof populateGenreDropdown === "function") populateGenreDropdown();
 
-    await window.checkAndNotifyNewAchievements(true);
+    if (typeof window.checkAndNotifyNewAchievements === "function") {
+      try {
+        await window.checkAndNotifyNewAchievements(true);
+      } catch (error) {
+        console.error("Error checking achievements:", error);
+      }
+    }
 
     if (typeof migrateVeryOldLocalStorageData === "function") {
       await migrateVeryOldLocalStorageData();
@@ -720,27 +726,47 @@ async function initializeApp() {
     if (authContainer) authContainer.style.display = "none";
     if (appContent) appContent.style.display = "block";
 
-    // --- NEW: Trigger Auto-Sync on App Reopen/Reload ---
+    // --- NEW: Trigger Comprehensive Sync on App Initialization (PWA open, page refresh, bookmark revisit) ---
     const SYNC_MODE_KEY = "keepmoviez_sync_mode";
+    const LAST_STARTUP_SYNC_KEY = "keepmoviez_last_startup_sync";
+    const STARTUP_SYNC_COOLDOWN_MS = 12000; // 12 seconds cooldown
     const currentSyncMode = localStorage.getItem(SYNC_MODE_KEY);
 
     if (currentSupabaseUser && currentSyncMode === "normal") {
-      console.log(
-        `[Sync] Auto-Sync (Normal Mode) detected. Preparing startup sync...`,
-      );
-      // Add a slight delay to ensure UI and listeners are fully ready
-      setTimeout(() => {
-        if (window.isSyncingInProgress) {
-          console.log(
-            "[Sync] Startup sync delayed: Another sync already in progress.",
-          );
-          return;
-        }
+      // Check cooldown to prevent excessive syncing
+      const lastStartupSync = localStorage.getItem(LAST_STARTUP_SYNC_KEY);
+      const now = Date.now();
+      const timeSinceLastSync = lastStartupSync
+        ? now - parseInt(lastStartupSync)
+        : STARTUP_SYNC_COOLDOWN_MS + 1;
+
+      if (timeSinceLastSync >= STARTUP_SYNC_COOLDOWN_MS) {
         console.log(
-          `[Sync] Starting comprehensive sync for ${currentSupabaseUser.email}...`,
+          `[Sync] Auto-Sync (Normal Mode) detected. Preparing startup sync...`,
         );
-        comprehensiveSync(true); // Silent sync
-      }, 1000);
+        // Add a slight delay to ensure UI and listeners are fully ready
+        setTimeout(() => {
+          if (window.isSyncingInProgress) {
+            console.log(
+              "[Sync] Startup sync delayed: Another sync already in progress.",
+            );
+            return;
+          }
+          console.log(
+            `[Sync] Starting comprehensive sync for ${currentSupabaseUser.email}...`,
+          );
+          // Store the timestamp to enforce cooldown
+          localStorage.setItem(LAST_STARTUP_SYNC_KEY, now.toString());
+          comprehensiveSync(true); // Silent sync
+        }, 1000);
+      } else {
+        const remainingCooldown = Math.ceil(
+          (STARTUP_SYNC_COOLDOWN_MS - timeSinceLastSync) / 1000,
+        );
+        console.log(
+          `[Sync] Startup sync skipped due to cooldown. Try again in ${remainingCooldown}s.`,
+        );
+      }
     } else {
       console.log(
         `[Sync] Skipping startup sync. User: ${currentSupabaseUser ? "Logged In" : "Guest"}, Mode: ${currentSyncMode || "manual"}`,
