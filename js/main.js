@@ -1042,6 +1042,29 @@ document.addEventListener("DOMContentLoaded", () => {
       "warning",
     );
   });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      const SYNC_MODE_KEY = "keepmoviez_sync_mode";
+      const currentSyncMode = localStorage.getItem(SYNC_MODE_KEY);
+      
+      if (typeof currentSupabaseUser !== 'undefined' && currentSupabaseUser && currentSyncMode === "normal") {
+          const LAST_STARTUP_SYNC_KEY = "keepmoviez_last_startup_sync";
+          const STARTUP_SYNC_COOLDOWN_MS = 12000;
+          const lastStartupSync = localStorage.getItem(LAST_STARTUP_SYNC_KEY);
+          const now = Date.now();
+          const timeSinceLastSync = lastStartupSync ? now - parseInt(lastStartupSync) : (STARTUP_SYNC_COOLDOWN_MS + 1);
+          
+          if (timeSinceLastSync >= STARTUP_SYNC_COOLDOWN_MS) {
+              setTimeout(() => {
+                  if (window.isSyncingInProgress) return;
+                  localStorage.setItem(LAST_STARTUP_SYNC_KEY, now.toString());
+                  if (typeof comprehensiveSync === 'function') comprehensiveSync(true);
+              }, 1000);
+          }
+      }
+    }
+  });
   // END CHUNK: 7: Final Event Listener Wiring & Global Listeners
 
   //START CHUNK: 8: Application Initialization

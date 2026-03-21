@@ -171,9 +171,14 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
       ? supabaseEntry.related_entries
       : [],
     doNotRecommendDaily: supabaseEntry.do_not_recommend_daily || false,
-    lastModifiedDate: supabaseEntry.last_modified_date
-      ? new Date(supabaseEntry.last_modified_date).toISOString()
-      : new Date(0).toISOString(),
+    lastModifiedDate: (() => {
+      if (!supabaseEntry.last_modified_date) return new Date(0).toISOString();
+      let dStr = String(supabaseEntry.last_modified_date);
+      if (!dStr.endsWith('Z') && !dStr.includes('+') && (!dStr.includes('-') || dStr.lastIndexOf('-') < 10)) {
+         dStr += 'Z';
+      }
+      return new Date(dStr).toISOString();
+    })(),
     tmdbId: formatNumericToString(supabaseEntry.tmdb_id),
     tmdb_release_date: supabaseEntry.tmdb_release_date || null,
     tmdbMediaType: supabaseEntry.tmdb_media_type || null,
@@ -318,7 +323,17 @@ async function comprehensiveSync(silent = false) {
 
     for (const [id, remoteLMD] of remoteStateMap.entries()) {
       const localLMD = localStateMap.get(id);
-      if (!localLMD || new Date(remoteLMD) > new Date(localLMD)) {
+      const parseDateSafe = (dStr) => {
+        if (!dStr) return 0;
+        let s = String(dStr);
+        // Ensure trailing Z for ISO parsing if no other timezone indicator exists
+        if (!s.endsWith('Z') && !s.includes('+') && (!s.includes('-') || s.lastIndexOf('-') < 10)) {
+           s += 'Z';
+        }
+        return new Date(s).getTime() || 0;
+      };
+
+      if (!localLMD || parseDateSafe(remoteLMD) > parseDateSafe(localLMD)) {
         idsToPull.push(id);
       }
     }
