@@ -577,7 +577,10 @@ window.handleQuickUpdateSave = async function (event) {
 
     const movie = movieData[entryIndex];
     const isSeries = movie.Category === "Series";
+    const oldStatus = movie.Status; // Save BEFORE overwriting for watchlist tracking
 
+    // --- PHASE 1: Read all DOM values first (validation phase) ---
+    // This ensures no mutation happens if any element is missing.
     const watchDate = document.getElementById("quickUpdateDate").value;
     const watchRating = document.getElementById("quickUpdateRating").value;
     const watchNotes = document.getElementById("quickUpdateNotes").value.trim();
@@ -586,7 +589,44 @@ window.handleQuickUpdateSave = async function (event) {
       throw new Error("Watch Date is required.");
     }
 
-    // Always create a new watch record for this session
+    // Collect series/movie specific fields
+    let updatedFields = {};
+
+    if (isSeries) {
+      const isFinished = document.getElementById(
+        "quickUpdateFinishedToggle",
+      ).checked;
+      updatedFields.seasonsCompleted =
+        parseInt(document.getElementById("quickUpdateSeasons").value, 10) ||
+        movie.seasonsCompleted ||
+        0;
+      updatedFields.currentSeasonEpisodesWatched =
+        parseInt(document.getElementById("quickUpdateEpisodes").value, 10) ||
+        movie.currentSeasonEpisodesWatched ||
+        0;
+
+      if (isFinished) {
+        updatedFields.Status = "Watched";
+        const overallRatingEl = document.getElementById("quickUpdateOverallRating");
+        updatedFields.overallRating = overallRatingEl ? overallRatingEl.value : watchRating;
+        const recEl = document.getElementById("quickUpdateRecommendation");
+        updatedFields.Recommendation = recEl ? recEl.value : "";
+        const personalRecEl = document.getElementById("quickUpdatePersonalRecommendation");
+        updatedFields.personalRecommendation = personalRecEl ? personalRecEl.value : "";
+      } else {
+        updatedFields.Status = "Continue";
+      }
+    } else {
+      // It's a Movie/Doc/Special
+      updatedFields.Status = "Watched";
+      updatedFields.overallRating = watchRating;
+      const recEl = document.getElementById("quickUpdateRecommendation");
+      updatedFields.Recommendation = recEl ? recEl.value : "";
+      const personalRecEl = document.getElementById("quickUpdatePersonalRecommendation");
+      updatedFields.personalRecommendation = personalRecEl ? personalRecEl.value : "";
+    }
+
+    // --- PHASE 2: All reads succeeded, now mutate the movie object ---
     const newWatchRecord = {
       watchId: generateUUID(),
       date: watchDate,
@@ -596,44 +636,12 @@ window.handleQuickUpdateSave = async function (event) {
     if (!Array.isArray(movie.watchHistory)) movie.watchHistory = [];
     movie.watchHistory.push(newWatchRecord);
 
-    if (isSeries) {
-      const isFinished = document.getElementById(
-        "quickUpdateFinishedToggle",
-      ).checked;
-      movie.seasonsCompleted =
-        parseInt(document.getElementById("quickUpdateSeasons").value, 10) ||
-        movie.seasonsCompleted ||
-        0;
-      movie.currentSeasonEpisodesWatched =
-        parseInt(document.getElementById("quickUpdateEpisodes").value, 10) ||
-        movie.currentSeasonEpisodesWatched ||
-        0;
+    // Apply collected fields
+    Object.assign(movie, updatedFields);
 
-      if (isFinished) {
-        movie.Status = "Watched";
-        movie.overallRating = document.getElementById(
-          "quickUpdateOverallRating",
-        ).value;
-        movie.Recommendation = document.getElementById(
-          "quickUpdateRecommendation",
-        ).value;
-        movie.personalRecommendation = document.getElementById(
-          "quickUpdatePersonalRecommendation",
-        ).value;
-        if (movie.Status === "To Watch") logWatchlistActivity("completed");
-      } else {
-        movie.Status = "Continue"; // Ensure status is Continue if it was To Watch
-      }
-    } else {
-      // It's a Movie/Doc/Special
-      movie.Status = "Watched";
-      movie.overallRating = watchRating; // Prefer overall selection, fallback to watch rating
-      movie.Recommendation =
-        document.getElementById("quickUpdateRecommendation").value || "";
-      movie.personalRecommendation =
-        document.getElementById("quickUpdatePersonalRecommendation").value ||
-        "";
-      if (movie.Status === "To Watch") logWatchlistActivity("completed");
+    // Track watchlist completion (using saved oldStatus)
+    if (oldStatus === "To Watch" && movie.Status === "Watched") {
+      logWatchlistActivity("completed");
     }
 
     movie.lastModifiedDate = new Date().toISOString();

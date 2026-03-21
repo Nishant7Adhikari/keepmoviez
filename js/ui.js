@@ -1741,12 +1741,21 @@ window.prepareQuickUpdateModal = function (id) {
     $("#quickUpdateEpisodes").val(movie.currentSeasonEpisodesWatched || "0");
     // Hide extra fields initially for series; they show if "Finished?" is toggled
     $("#quickUpdateConditionalFields").hide();
+    // Show the separate overall rating for series (visible when "Finished" is toggled)
+    $("#quickUpdateOverallRatingGroup").show();
+    // Pre-fill conditional fields in case the user toggles "Finished"
+    $("#quickUpdateOverallRating").val(movie.overallRating || "");
+    $("#quickUpdateRecommendation").val(movie.Recommendation || "");
+    $("#quickUpdatePersonalRecommendation").val(
+      movie.personalRecommendation || "",
+    );
   } else {
     // Show extra fields immediately for Movies/Docs/Specials
     $("#quickUpdateConditionalFields").show();
+    // Hide the separate overall rating for movies (session rating = overall rating)
+    $("#quickUpdateOverallRatingGroup").hide();
 
     // Pre-fill if existing data exists
-    $("#quickUpdateOverallRating").val(movie.overallRating || "");
     $("#quickUpdateRecommendation").val(movie.Recommendation || "");
     $("#quickUpdatePersonalRecommendation").val(
       movie.personalRecommendation || "",
