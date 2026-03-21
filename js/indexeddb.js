@@ -54,7 +54,8 @@ async function clearLocalMovieCache() {
         try {
             const transaction = db.transaction([STORE_NAME], 'readwrite');
             const store = transaction.objectStore(STORE_NAME);
-            const request = store.clear(); // Clears all data in the object store
+            const storageKey = window.currentSupabaseUser ? 'userMovieData_' + window.currentSupabaseUser.id : IDB_USER_DATA_KEY;
+            const request = store.delete(storageKey); // Clears specific user data in the object store
 
             request.onsuccess = () => {
                 console.log("Local movie cache cleared from IndexedDB.");
@@ -70,4 +71,74 @@ async function clearLocalMovieCache() {
         }
     });
 }
-// END CHUNK: Clear Local Cache
+// START CHUNK: Abandoned Data Recovery
+async function downloadAbandonedData() {
+    if (!db) {
+        try { await openDatabase(); } catch (e) { return; }
+    }
+    
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([STORE_NAME], 'readonly');
+        const store = transaction.objectStore(STORE_NAME);
+        const request = store.getAllKeys();
+        
+        request.onsuccess = async () => {
+            const allKeys = request.result;
+            const currentKey = window.currentSupabaseUser ? 'userMovieData_' + window.currentSupabaseUser.id : IDB_USER_DATA_KEY;
+            
+            const abandonedKeys = allKeys.filter(key => key !== currentKey);
+            
+            if (abandonedKeys.length === 0) {
+                showToast("No Abandoned Data", "No other data found in local storage.", "info");
+                return resolve();
+            }
+            
+            let combinedData = [];
+            for (const key of abandonedKeys) {
+                const data = await new Promise((res) => {
+                    const getReq = store.get(key);
+                    getReq.onsuccess = () => {
+                        try {
+                            const parsed = JSON.parse(getReq.result);
+                            res(Array.isArray(parsed) ? parsed : []);
+                        } catch (e) { res([]); }
+                    };
+                    getReq.onerror = () => res([]);
+                });
+                combinedData = combinedData.concat(data);
+            }
+            
+            if (combinedData.length === 0) {
+                showToast("Empty Orphan Data", "Managed to find storage blocks, but they were empty or unreadable.", "warning");
+                return resolve();
+            }
+            
+            // Remove duplicates by ID across all orphaned sets
+            const uniqueMap = new Map();
+            combinedData.forEach(item => { if (item && item.id) uniqueMap.set(item.id, item); });
+            const finalData = Array.from(uniqueMap.values());
+
+            // Trigger Download
+            const dataStr = JSON.stringify(finalData, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `keepmoviez_abandoned_recovery_${new Date().toISOString().slice(0,10)}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showToast("Recovery Success", `Downloaded ${finalData.length} entries from ${abandonedKeys.length} orphan blocks.`, "success");
+            resolve();
+        };
+        
+        request.onerror = (err) => {
+            console.error("Failed to fetch all keys:", err);
+            showToast("Recovery Failed", "Could not scan local database.", "error");
+            reject(err);
+        };
+    });
+}
+// END CHUNK: Abandoned Data Recovery

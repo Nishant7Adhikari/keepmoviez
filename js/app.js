@@ -1047,14 +1047,18 @@ window.markDailyRecSkipped = async function (event) {
 function incrementLocalStorageCounter(key) {
   if (!key) return;
   try {
-    let count = parseInt(localStorage.getItem(key) || "0");
+    const userPrefixedKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + "_" + key : key;
+    let count = parseInt(localStorage.getItem(userPrefixedKey) || "0");
     if (isNaN(count)) count = 0;
-    localStorage.setItem(key, (count + 1).toString());
+    localStorage.setItem(userPrefixedKey, (count + 1).toString());
+
+    if (window.currentSupabaseUser) {
+        let pending = JSON.parse(localStorage.getItem(window.currentSupabaseUser.id + "_pending_stats") || "{}");
+        pending[key] = (pending[key] || 0) + 1;
+        localStorage.setItem(window.currentSupabaseUser.id + "_pending_stats", JSON.stringify(pending));
+    }
   } catch (e) {
-    console.error(
-      `Failed to increment localStorage counter for key: ${key}`,
-      e,
-    );
+    console.error(`Failed to increment stat for key: ${key}`, e);
   }
 }
 
@@ -1062,11 +1066,15 @@ function recordUniqueDateForAchievement(key) {
   if (!key) return;
   try {
     const today = new Date().toISOString().slice(0, 10);
-    let dates = JSON.parse(localStorage.getItem(key) || "[]");
+    const userPrefixedKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + "_" + key : key;
+    let dates = JSON.parse(localStorage.getItem(userPrefixedKey) || "[]");
     if (!Array.isArray(dates)) dates = [];
     if (!dates.includes(today)) {
       dates.push(today);
-      localStorage.setItem(key, JSON.stringify(dates));
+      localStorage.setItem(userPrefixedKey, JSON.stringify(dates));
+      
+      // Directly increment the stat for the backend using the length or by 1
+      incrementLocalStorageCounter(key + "_count");
     }
   } catch (e) {
     console.error(`Failed to record unique date for key: ${key}`, e);

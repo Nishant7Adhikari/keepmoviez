@@ -11,8 +11,18 @@ const DB_NAME = 'KeepMovieZ_UserCacheDB_v2';
 const DB_VERSION = 1;
 const STORE_NAME = 'movieEntries';
 const IDB_USER_DATA_KEY = 'userMovieData';
-const CUSTOM_SYNC_THRESHOLD_KEY = 'customSyncThreshold'; // Stores user pref (2-20)
-const MODIFIED_ENTRIES_LIST_KEY = 'modifiedEntriesList'; // Stores Array of IDs changed since last sync
+const CUSTOM_SYNC_THRESHOLD_KEY = 'customSyncThreshold';
+const MODIFIED_ENTRIES_LIST_KEY = 'modifiedEntriesList';
+
+/**
+ * Standard utility to ensure all localStorage keys are isolated per user.
+ * @param {string} baseKey - The core key name
+ * @returns {string} - The namespaced key
+ */
+window.getScopedKey = (baseKey) => {
+    const userId = window.currentSupabaseUser?.id;
+    return userId ? `${userId}_${baseKey}` : `guest_${baseKey}`;
+};
 // END CHUNK: API and Database Keys
 
 // START CHUNK: Application Feature Constants

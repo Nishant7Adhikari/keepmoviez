@@ -231,7 +231,8 @@ async function comprehensiveSync(silent = false) {
     return { success: false, error: "Offline" };
   }
   // --- NEW: Strict Privacy Mode Guard ---
-  const currentSyncMode = localStorage.getItem("keepmoviez_sync_mode");
+  const currentSyncModeKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + '_sync_mode' : 'keepmoviez_sync_mode';
+  const currentSyncMode = localStorage.getItem(currentSyncModeKey);
   if (currentSyncMode === "strict_privacy") {
     if (!silent)
       showToast(
@@ -410,6 +411,11 @@ async function comprehensiveSync(silent = false) {
     }
 
     incrementLocalStorageCounter("sync_count_achievement");
+    
+    // --- ACHIVEMENT SYNC HOOK ---
+    if (typeof window.syncAchievementStatsCloud === "function") {
+      await window.syncAchievementStatsCloud();
+    }
 
     // Clear Pending Changes List
     if (typeof clearModifiedEntriesList === "function")
@@ -440,7 +446,8 @@ async function forcePullFromSupabase() {
   }
 
   // Guard: Strict Privacy
-  if (localStorage.getItem("keepmoviez_sync_mode") === "strict_privacy") {
+  const syncModeKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + '_sync_mode' : 'keepmoviez_sync_mode';
+  if (localStorage.getItem(syncModeKey) === "strict_privacy") {
     showToast(
       "Privacy Mode Enabled",
       "Disable Strict Privacy Mode to use this feature.",
@@ -509,7 +516,8 @@ async function forcePushToSupabase() {
   }
 
   // Guard: Strict Privacy
-  if (localStorage.getItem("keepmoviez_sync_mode") === "strict_privacy") {
+  const syncModeKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + '_sync_mode' : 'keepmoviez_sync_mode';
+  if (localStorage.getItem(syncModeKey) === "strict_privacy") {
     showToast(
       "Privacy Mode Enabled",
       "Disable Strict Privacy Mode to use this feature.",
@@ -647,6 +655,7 @@ async function initAuth() {
       const user = session?.user || null;
       const previousUserId = currentSupabaseUser?.id;
       currentSupabaseUser = user;
+      window.currentSupabaseUser = user;
       if (typeof updateSyncButtonState === "function") updateSyncButtonState();
 
       if (event === "SIGNED_OUT") {
@@ -666,6 +675,8 @@ async function initAuth() {
           "success",
         );
       } else if (user && user.id !== previousUserId) {
+        movieData = []; // Clear current session memory
+        if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
         await handleUserSession(user);
       }
     });
@@ -686,6 +697,7 @@ async function initAuth() {
 
     if (session?.user) {
       currentSupabaseUser = session.user;
+      window.currentSupabaseUser = session.user;
       if (typeof updateSyncButtonState === "function") updateSyncButtonState();
       await handleUserSession(session.user);
     } else {
@@ -714,6 +726,10 @@ async function initAuth() {
 async function initializeApp() {
   showLoading("Loading your collection...");
   try {
+    // Attempt to download fresh offline-first achievement stats from cloud
+    if (typeof window.syncAchievementStatsCloud === "function") {
+       await window.syncAchievementStatsCloud();
+    }
     if (!movieData || movieData.length === 0) {
       movieData = await loadFromIndexedDB();
     }
@@ -742,7 +758,7 @@ async function initializeApp() {
     if (appContent) appContent.style.display = "block";
 
     // --- NEW: Trigger Comprehensive Sync on App Initialization (PWA open, page refresh, bookmark revisit) ---
-    const SYNC_MODE_KEY = "keepmoviez_sync_mode";
+    const SYNC_MODE_KEY = window.currentSupabaseUser ? window.currentSupabaseUser.id + '_sync_mode' : 'keepmoviez_sync_mode';
     const LAST_STARTUP_SYNC_KEY = "keepmoviez_last_startup_sync";
     const STARTUP_SYNC_COOLDOWN_MS = 12000; // 12 seconds cooldown
     const currentSyncMode = localStorage.getItem(SYNC_MODE_KEY);
@@ -814,6 +830,8 @@ async function resetAppForLogout(message, wipeData = false) {
     sessionStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
   }
   currentSupabaseUser = null;
+  window.currentSupabaseUser = null;
+  if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
 
   if (wipeData) {
     // --- EXPLICIT LOGOUT: SECURITY WIPE ---
@@ -1185,3 +1203,57 @@ async function eraseAllData() {
     hideLoading();
   }
 }
+
+// START CHUNK: Super Storage Achievement Sync Pipeline
+window.syncAchievementStatsCloud = async function() {
+    if (!window.supabaseClient || !window.currentSupabaseUser || !navigator.onLine) return;
+    
+    try {
+        const userId = window.currentSupabaseUser.id;
+        const pendingKey = userId + "_pending_stats";
+        let pending = JSON.parse(localStorage.getItem(pendingKey) || "{}");
+        
+        const keysToPush = Object.keys(pending);
+        if (keysToPush.length > 0) console.log("Pushing dirty stats to cloud:", keysToPush);
+        
+        for (const statKey of keysToPush) {
+            const incrementAmount = pending[statKey];
+            if (incrementAmount > 0) {
+                const { error } = await window.supabaseClient.rpc('increment_user_stat', { 
+                    p_stat_key: statKey, 
+                    increment_amount: incrementAmount 
+                });
+                if (!error) {
+                    pending[statKey] -= incrementAmount;
+                    if (pending[statKey] <= 0) delete pending[statKey];
+                } else {
+                    console.error(`Error syncing stat ${statKey}:`, error);
+                }
+            } else {
+                delete pending[statKey]; 
+            }
+        }
+        localStorage.setItem(pendingKey, JSON.stringify(pending));
+
+        // Pull Down Exact Truth From Remote
+        const { data, error: pullError } = await window.supabaseClient
+            .from('user_achievements_stats')
+            .select('stat_key, stat_value');
+            
+        if (pullError) throw pullError;
+
+        if (data && data.length > 0) {
+            data.forEach(statRecord => {
+                const localKeyPrefix = userId + "_" + statRecord.stat_key;
+                localStorage.setItem(localKeyPrefix, statRecord.stat_value.toString());
+            });
+            // Automatically push any unlocked toasts if differences exist in stats
+            if (typeof window.checkAndNotifyNewAchievements === 'function' && window.movieData && window.movieData.length > 0) {
+                window.checkAndNotifyNewAchievements();
+            }
+        }
+    } catch (e) {
+        console.error("Achievement sync pipeline error:", e);
+    }
+};
+// END CHUNK: Super Storage Achievement Sync Pipeline

@@ -27,10 +27,16 @@ document.addEventListener("DOMContentLoaded", () => {
       themeIcon.className = `fas ${savedTheme === DARK_THEME ? "fa-moon" : "fa-sun"} mr-2`;
   }
 
-  // --- NEW: Sync Mode Init ---
-  const SYNC_MODE_KEY = "keepmoviez_sync_mode";
+  // --- MODIFIED: Sync Mode Init (Namespaced) ---
+  const getLocalSyncModeKey = () => window.currentSupabaseUser ? window.currentSupabaseUser.id + "_sync_mode" : "keepmoviez_sync_mode";
   // Default to 'manual' if not set
-  let currentSyncMode = localStorage.getItem(SYNC_MODE_KEY) || "manual";
+  let currentSyncMode = localStorage.getItem(getLocalSyncModeKey()) || "manual";
+  
+  window.refreshSyncModeGlobal = () => {
+    currentSyncMode = localStorage.getItem(getLocalSyncModeKey()) || "manual";
+    if (typeof updateSyncUI === "function") updateSyncUI();
+    if (typeof updateCustomSyncUI === "function") updateCustomSyncUI();
+  };
 
   // Function to Update UI based on Sync Mode
   const updateSyncUI = () => {
@@ -861,7 +867,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (newMode !== oldMode) {
         currentSyncMode = newMode;
-        localStorage.setItem(SYNC_MODE_KEY, newMode);
+        localStorage.setItem(getLocalSyncModeKey(), newMode);
         updateSyncUI(); // Update Badge and Buttons
         if (typeof updateCustomSyncUI === "function") updateCustomSyncUI();
 
@@ -1045,10 +1051,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
-      const SYNC_MODE_KEY = "keepmoviez_sync_mode";
-      const currentSyncMode = localStorage.getItem(SYNC_MODE_KEY);
+      const getSyncModeKeyVisibility = () => window.currentSupabaseUser ? window.currentSupabaseUser.id + "_sync_mode" : "keepmoviez_sync_mode";
+      const currentSyncModeVis = localStorage.getItem(getSyncModeKeyVisibility());
       
-      if (typeof currentSupabaseUser !== 'undefined' && currentSupabaseUser && currentSyncMode === "normal") {
+      if (typeof currentSupabaseUser !== 'undefined' && currentSupabaseUser && currentSyncModeVis === "normal") {
           const LAST_STARTUP_SYNC_KEY = "keepmoviez_last_startup_sync";
           const STARTUP_SYNC_COOLDOWN_MS = 12000;
           const lastStartupSync = localStorage.getItem(LAST_STARTUP_SYNC_KEY);
@@ -1089,4 +1095,16 @@ document.addEventListener("DOMContentLoaded", () => {
     );
   }
   // END CHUNK: 8: Application Initialization
+  // START CHUNK: Abandoned Data Button
+  const downloadAbandonedDataBtn = document.getElementById("downloadAbandonedDataBtn");
+  if (downloadAbandonedDataBtn) {
+    downloadAbandonedDataBtn.addEventListener("click", async () => {
+      if (typeof downloadAbandonedData === "function") {
+        await downloadAbandonedData();
+      } else {
+        showToast("Recovery Error", "Recovery logic not found.", "error");
+      }
+    });
+  }
+  // END CHUNK: Abandoned Data Button
 });

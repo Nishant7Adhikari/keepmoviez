@@ -309,10 +309,15 @@ function calculateAllStatistics(currentMovieData) {
         achievementData.special_title_watch[key] = specialTitleStatus[key] ? 1 : 0;
     });
 
-    achievementData.active_days_count = JSON.parse(localStorage.getItem('app_usage_dates_achievement') || '[]').length;
-    achievementData.sync_count = parseInt(localStorage.getItem('sync_count_achievement') || '0');
-    achievementData.stats_modal_opened_count = parseInt(localStorage.getItem('stats_modal_opened_count') || '0');
-    achievementData.daily_recommendation_watched_count = parseInt(localStorage.getItem('daily_rec_watched_achievement') || '0');
+    const getLocalStat = (key) => {
+        const pKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + "_" + key : key;
+        return localStorage.getItem(pKey);
+    };
+
+    achievementData.active_days_count = Math.max(parseInt(getLocalStat('app_usage_dates_achievement_count') || '0', 10), JSON.parse(getLocalStat('app_usage_dates_achievement') || '[]').length);
+    achievementData.sync_count = parseInt(getLocalStat('sync_count_achievement') || '0', 10);
+    achievementData.stats_modal_opened_count = parseInt(getLocalStat('stats_modal_opened_count') || '0', 10);
+    achievementData.daily_recommendation_watched_count = parseInt(getLocalStat('daily_rec_watched_achievement') || '0', 10);
 
     // --- Final Stats Object Construction ---
     stats.achievementData = achievementData;

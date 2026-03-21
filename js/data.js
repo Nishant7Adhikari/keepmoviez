@@ -24,12 +24,14 @@ async function saveToIndexedDB() {
         const dataToStore = JSON.stringify(movieData);
         const transaction = db.transaction([STORE_NAME], 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.put(dataToStore, IDB_USER_DATA_KEY);
+        const storageKey = window.currentSupabaseUser ? 'userMovieData_' + window.currentSupabaseUser.id : IDB_USER_DATA_KEY;
+        const request = store.put(dataToStore, storageKey);
 
         return new Promise((resolve, reject) => {
             request.onsuccess = () => {
                 // --- MODIFIED: Auto-Sync Hook ---
-                const currentSyncMode = localStorage.getItem('keepmoviez_sync_mode');
+                const syncModeKey = window.currentSupabaseUser ? window.currentSupabaseUser.id + '_sync_mode' : 'keepmoviez_sync_mode';
+                const currentSyncMode = localStorage.getItem(syncModeKey);
                 const isOnline = navigator.onLine;
 
                 if (currentSyncMode === 'normal' && isOnline && !window.isSyncingInProgress) {
@@ -78,7 +80,8 @@ async function loadFromIndexedDB() {
     try {
         const transaction = db.transaction([STORE_NAME], 'readonly');
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.get(IDB_USER_DATA_KEY);
+        const storageKey = window.currentSupabaseUser ? 'userMovieData_' + window.currentSupabaseUser.id : IDB_USER_DATA_KEY;
+        const request = store.get(storageKey);
 
         return await new Promise((resolve, reject) => {
             request.onsuccess = (event) => {
@@ -105,7 +108,8 @@ async function loadFromIndexedDB() {
 
                         const writeTransaction = db.transaction([STORE_NAME], 'readwrite');
                         const writeStore = writeTransaction.objectStore(STORE_NAME);
-                        writeStore.delete(IDB_USER_DATA_KEY);
+                        const storageKey = window.currentSupabaseUser ? 'userMovieData_' + window.currentSupabaseUser.id : IDB_USER_DATA_KEY;
+                        writeStore.delete(storageKey);
 
                         resolve([]);
                     }
