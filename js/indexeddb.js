@@ -40,9 +40,9 @@ async function openDatabase() {
 // END CHUNK: Open IndexedDB Database
 
 // START CHUNK: Clear Local Cache
-async function clearLocalMovieCache() {
+async function clearLocalMovieCache(userId = null) {
     if (!db) {
-        console.warn("Database not open. Cannot clear cache."); // Changed from error to warn
+        console.warn("Database not open. Cannot clear cache."); 
         try {
             await openDatabase(); // Attempt to open if not already
             if (!db) return Promise.reject("Database could not be opened to clear cache.");
@@ -54,11 +54,15 @@ async function clearLocalMovieCache() {
         try {
             const transaction = db.transaction([STORE_NAME], 'readwrite');
             const store = transaction.objectStore(STORE_NAME);
-            const storageKey = window.currentSupabaseUser ? 'userMovieData_' + window.currentSupabaseUser.id : IDB_USER_DATA_KEY;
-            const request = store.delete(storageKey); // Clears specific user data in the object store
+            
+            // USE PASSED userId OR FALLBACK to current (if still exists) OR guest key
+            const effectiveUserId = userId || window.currentSupabaseUser?.id;
+            const storageKey = effectiveUserId ? 'userMovieData_' + effectiveUserId : IDB_USER_DATA_KEY;
+            
+            const request = store.delete(storageKey);
 
             request.onsuccess = () => {
-                console.log("Local movie cache cleared from IndexedDB.");
+                console.log(`Local movie cache (${storageKey}) cleared from IndexedDB.`);
                 resolve();
             };
             request.onerror = (event) => {
@@ -71,6 +75,7 @@ async function clearLocalMovieCache() {
         }
     });
 }
+
 // START CHUNK: Abandoned Data Recovery
 async function downloadAbandonedData() {
     if (!db) {

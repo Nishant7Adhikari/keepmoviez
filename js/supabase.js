@@ -434,7 +434,6 @@ async function comprehensiveSync(silent = false) {
 // END CHUNK: 2
 
 // START CHUNK: Force Pull
-// START CHUNK: Force Pull
 async function forcePullFromSupabase() {
   if (!window.supabaseClient || !currentSupabaseUser) {
     showToast(
@@ -826,18 +825,30 @@ async function initializeApp() {
 async function resetAppForLogout(message, wipeData = false) {
   console.warn(`Resetting App. Reason: ${message}. Wiping Data: ${wipeData}`);
 
+  // CAPTURE user ID before nullifying it, so we can clear correctly from IndexedDB
+  const userIdToClear = currentSupabaseUser?.id;
+
   if (currentSupabaseUser) {
     sessionStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
   }
+  
+  // RESET ALL AUTH STATE
   currentSupabaseUser = null;
   window.currentSupabaseUser = null;
+  window.isSyncingInProgress = false; // Reset lock on logout
   if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
 
   if (wipeData) {
     // --- EXPLICIT LOGOUT: SECURITY WIPE ---
     movieData = [];
+    window.movieData = [];
+    
     if (typeof clearLocalMovieCache === "function")
-      await clearLocalMovieCache();
+      await clearLocalMovieCache(userIdToClear);
+
+    // Clear user-specific tracking
+    localStorage.removeItem("last_synced_time");
+    if (window.knownUnlockedAchievements) window.knownUnlockedAchievements.clear();
 
     // Full UI Reset to Login Screen
     if (typeof destroyCharts === "function") destroyCharts(chartInstances);
@@ -1007,20 +1018,30 @@ async function supabaseSignOutUser() {
     // SET THE FLAG: This tells resetAppForLogout to WIPE data because user explicitly clicked logout.
     window.isExplicitLogout = true;
 
-    const { error } = await window.supabaseClient.auth.signOut();
-    if (error && error.name !== "AuthSessionMissingError") throw error;
-
-    // Usually onAuthStateChange handles the rest.
+    if (window.supabaseClient) {
+      // Check if there's actually a session to sign out of
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
+      
+      if (session) {
+        const { error } = await window.supabaseClient.auth.signOut();
+        if (error && error.name !== "AuthSessionMissingError") throw error;
+        // The onAuthStateChange listener will detect the SIGNED_OUT event and call resetAppForLogout
+      } else {
+        // NO SESSION: User is already logged out of Supabase (or in Guest Mode)
+        // We still need to wipe the app state as they requested a logout.
+        await resetAppForLogout("Local session cleared.", true);
+        window.isExplicitLogout = false;
+      }
+    } else {
+      // NO CLIENT: Force local reset
+      await resetAppForLogout("Offline session cleared.", true);
+      window.isExplicitLogout = false;
+    }
   } catch (error) {
     console.error("Sign out error:", error);
-    // Force manual reset if the event listener doesn't fire due to network error
+    // Force manual reset if the event listener doesn't fire due to networking or internal errors
     await resetAppForLogout("Logged out (Force).", true);
     window.isExplicitLogout = false;
-    showToast(
-      "Logout Error",
-      "Logged out locally, but network error occurred.",
-      "warning",
-    );
   } finally {
     hideLoading();
   }
