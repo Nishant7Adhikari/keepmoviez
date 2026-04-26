@@ -21,7 +21,7 @@ async function initiateSmartImport(dataFromFile, fileName) {
     };
 
     const localIdMap = new Map(movieData.map(entry => [entry.id, entry]));
-    const localTmdbIdMap = new Map(movieData.filter(entry => entry.tmdbId).map(entry => [String(entry.tmdbId), entry]));
+    const localTmdbIdMap = new Map(movieData.filter(entry => entry.tmdbId).map(entry => [`${entry.tmdbId}_${entry.Category || 'Movie'}`, entry]));
     const localNameYearMap = new Map(movieData.map(entry => [`${(entry.Name || '').toLowerCase()}|${entry.Year || ''}`, entry]));
 
     for (const row of dataFromFile) {
@@ -38,9 +38,13 @@ async function initiateSmartImport(dataFromFile, fileName) {
         if (fileEntry.id && localIdMap.has(fileEntry.id)) {
             match = localIdMap.get(fileEntry.id);
             matchType = 'UUID Match';
-        } else if (fileEntry.tmdbId && localTmdbIdMap.has(String(fileEntry.tmdbId))) {
-            match = localTmdbIdMap.get(String(fileEntry.tmdbId));
-            matchType = 'TMDB ID Match';
+        } else if (fileEntry.tmdbId) {
+            // Use composite key (tmdbId + Category) to avoid cross-type collisions
+            const tmdbCompositeKey = `${fileEntry.tmdbId}_${fileEntry.Category || 'Movie'}`;
+            if (localTmdbIdMap.has(tmdbCompositeKey)) {
+                match = localTmdbIdMap.get(tmdbCompositeKey);
+                matchType = 'TMDB ID Match';
+            }
         } else {
             const nameYearKey = `${(fileEntry.Name || '').toLowerCase()}|${fileEntry.Year || ''}`;
             if (localNameYearMap.has(nameYearKey)) {

@@ -148,12 +148,21 @@ async function fetchSuggestionCarousels(seedMovie) {
     if (!seedMovie || !seedMovie.tmdbId) return [];
 
     const carousels = [];
-    const loggedTmdbIds = new Set(movieData.map(m => m.tmdbId).filter(Boolean));
+    // Build a Set of composite keys (mediaType_tmdbId) to correctly differentiate
+    // movies and TV shows that share the same numeric TMDB ID.
+    const loggedTmdbKeys = new Set(movieData.filter(m => m.tmdbId).map(m => {
+        const type = m.tmdbMediaType || (m.Category === 'Series' ? 'tv' : 'movie');
+        return `${type}_${m.tmdbId}`;
+    }));
     
     // 1. "Because You Liked..." carousel
     try {
-        const data = await callTmdbApiDirect(`/${seedMovie.tmdbMediaType || 'movie'}/${seedMovie.tmdbId}/recommendations`);
-        const items = (data.results || []).filter(rec => !loggedTmdbIds.has(String(rec.id))).slice(0, 10);
+        const seedMediaType = seedMovie.tmdbMediaType || 'movie';
+        const data = await callTmdbApiDirect(`/${seedMediaType}/${seedMovie.tmdbId}/recommendations`);
+        const items = (data.results || []).filter(rec => {
+            const recType = rec.media_type || seedMediaType;
+            return !loggedTmdbKeys.has(`${recType}_${rec.id}`);
+        }).slice(0, 10);
         if(items.length > 0) carousels.push({ title: `Because you liked "${seedMovie.Name}"`, items });
     } catch (e) { console.warn("Could not fetch TMDB recommendations:", e); }
     
@@ -162,7 +171,7 @@ async function fetchSuggestionCarousels(seedMovie) {
         try {
             const data = await callTmdbApiDirect(`/person/${seedMovie.director_info.id}/combined_credits`);
             const items = (data.cast || []).concat(data.crew || [])
-                .filter(c => c.id !== parseInt(seedMovie.tmdbId) && (c.media_type === 'movie' || c.media_type === 'tv') && !loggedTmdbIds.has(String(c.id)))
+                .filter(c => c.id !== parseInt(seedMovie.tmdbId) && (c.media_type === 'movie' || c.media_type === 'tv') && !loggedTmdbKeys.has(`${c.media_type}_${c.id}`))
                 .sort((a,b) => b.popularity - a.popularity)
                 .slice(0, 10);
             if(items.length > 0) carousels.push({ title: `More from ${seedMovie.director_info.name}`, items });
@@ -173,7 +182,8 @@ async function fetchSuggestionCarousels(seedMovie) {
     if (seedMovie.tmdb_collection_id) {
          try {
             const data = await callTmdbApiDirect(`/collection/${seedMovie.tmdb_collection_id}`);
-            const items = (data.parts || []).filter(rec => !loggedTmdbIds.has(String(rec.id))).slice(0, 10);
+            // Collection parts are always movies
+            const items = (data.parts || []).filter(rec => !loggedTmdbKeys.has(`movie_${rec.id}`)).slice(0, 10);
             if(items.length > 0) carousels.push({ title: `Complete the "${seedMovie.tmdb_collection_name}"`, items });
         } catch (e) { console.warn("Could not fetch collection details:", e); }
     }
@@ -184,7 +194,8 @@ async function fetchSuggestionCarousels(seedMovie) {
     if(carousels.length < 2 && genreObject) {
         try {
             const data = await callTmdbApiDirect(`/discover/movie`, { with_genres: genreObject.id, sort_by: 'popularity.desc' });
-            const items = (data.results || []).filter(rec => !loggedTmdbIds.has(String(rec.id))).slice(0, 10);
+            // Discover/movie results are always movies
+            const items = (data.results || []).filter(rec => !loggedTmdbKeys.has(`movie_${rec.id}`)).slice(0, 10);
             if(items.length > 0) carousels.push({ title: `Popular in ${primaryGenre}`, items });
         } catch (e) { console.warn("Could not fetch popular by genre:", e); }
     }

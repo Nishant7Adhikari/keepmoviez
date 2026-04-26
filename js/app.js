@@ -321,10 +321,20 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
     const newTmdbId = document.getElementById("tmdbId").value || null;
 
     // FIX: STRICT CONFLICT CHECKING (TMDB ID & Title/Year)
+    // NOTE: TMDB uses separate ID namespaces for movies and TV shows,
+    // so the same numeric ID can exist for both a movie and a series.
+    // We must check both tmdbId AND Category to avoid false conflicts.
     if (newTmdbId) {
-      // Check if another entry (not the one we are editing) has this TMDB ID
+      const currentCategory = formFieldsGlob.category.value;
+      const currentMediaType = document.getElementById("tmdbMediaType").value || null;
+      // Check if another entry (not the one we are editing) has this TMDB ID AND is the same type
       const exactTmdbMatch = movieData.find(
-        (m) => m.tmdbId == newTmdbId && m.id !== editId && !m.is_deleted,
+        (m) =>
+          m.tmdbId == newTmdbId &&
+          m.id !== editId &&
+          !m.is_deleted &&
+          (m.Category === currentCategory ||
+            (currentMediaType && m.tmdbMediaType === currentMediaType)),
       );
       if (exactTmdbMatch) {
         showToast(
