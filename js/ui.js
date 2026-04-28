@@ -586,38 +586,16 @@ function populateFilterGenreDropdown() {
   container.innerHTML = "";
   const filterText = searchInput.value.toLowerCase().trim();
 
-  const allKnownGenres = [
-    ...new Set(
-      movieData
-        .filter((m) => !m.is_deleted)
-        .flatMap((m) =>
-          m.Genre ? m.Genre.split(",").map((g) => g.trim()) : [],
-        )
-        .filter(Boolean),
-    ),
-  ];
-  const availableGenres = [
-    ...new Set([...UNIQUE_ALL_GENRES, ...allKnownGenres]),
-  ]
-    .filter(
-      (g) =>
-        !selectedFilterGenres.includes(g) &&
-        g.toLowerCase().includes(filterText),
-    )
-    .sort();
+  const availableGenres = UNIQUE_ALL_GENRES.filter(
+    (g) =>
+      !selectedFilterGenres.includes(g) &&
+      g.toLowerCase().includes(filterText),
+  ).sort();
 
-  if (availableGenres.length === 0 && filterText) {
-    const item = document.createElement("a");
-    item.href = "#";
-    item.className = "list-group-item list-group-item-action py-1 text-success";
-    item.innerHTML = `<i class="fas fa-plus-circle mr-2"></i> Add filter genre: "${filterText}"`;
-    item.addEventListener("click", (e) => {
-      e.preventDefault();
-      addFilterGenre(filterText);
-      searchInput.value = "";
-      populateFilterGenreDropdown();
-      searchInput.focus();
-    });
+  if (availableGenres.length === 0) {
+    const item = document.createElement("div");
+    item.className = "list-group-item py-1 text-muted";
+    item.textContent = "No matching TMDB genre";
     container.appendChild(item);
   } else {
     availableGenres.forEach((genre) => {

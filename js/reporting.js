@@ -314,7 +314,9 @@ function displayAchievementsModal() {
     if (!badgesContainer) { console.warn("Achievements modal badges container not found."); return; }
     badgesContainer.innerHTML = '<p class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i> Calculating achievements...</p>';
 
-    const statsForAchievements = calculateAllStatistics(movieData);
+    const statsForAchievements = (Object.keys(globalStatsData || {}).length > 0 && globalStatsData.totalEntries > 0)
+        ? globalStatsData
+        : calculateAllStatistics(movieData);
     generateBadgesAndAchievements(statsForAchievements, badgesContainer);
 }
 

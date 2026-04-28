@@ -75,14 +75,22 @@ function addGenre(
   }
 
   const sanitizedGenre = genre.trim();
+  const canonicalGenre = UNIQUE_ALL_GENRES.find(
+    (g) => g.toLowerCase() === sanitizedGenre.toLowerCase(),
+  );
+
+  if (!canonicalGenre) {
+    return;
+  }
+
   if (
-    sanitizedGenre &&
-    typeof sanitizedGenre === "string" &&
+    canonicalGenre &&
+    typeof canonicalGenre === "string" &&
     !targetList
       .map((g) => g.toLowerCase())
-      .includes(sanitizedGenre.toLowerCase())
+      .includes(canonicalGenre.toLowerCase())
   ) {
-    targetList.push(sanitizedGenre);
+    targetList.push(canonicalGenre);
     targetList.sort();
     renderGenreTags(containerId, targetList, searchInputId);
   }
@@ -179,12 +187,10 @@ function populateGenreDropdown(
     }, 10);
   };
 
-  if (availableGenres.length === 0 && lowerFilterText) {
-    const item = document.createElement("a");
-    item.href = "#";
-    item.className = "list-group-item list-group-item-action py-1 text-success";
-    item.innerHTML = `<i class="fas fa-plus-circle mr-2"></i> Add new genre: "${filterText}"`;
-    item.addEventListener("mousedown", (e) => addHandler(e, filterText.trim()));
+  if (availableGenres.length === 0) {
+    const item = document.createElement("div");
+    item.className = "list-group-item py-1 text-muted";
+    item.textContent = "No matching TMDB genre";
     genreItemsContainer.appendChild(item);
   } else {
     availableGenres.forEach((genre) => {

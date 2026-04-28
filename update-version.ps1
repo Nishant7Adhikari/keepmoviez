@@ -5,9 +5,8 @@ $version = $version.Trim()
 Write-Host "Hunting down version strings for v$version..." -ForegroundColor Cyan
 
 # 2. Update index.html comment
-# This regex (\s*) matches ANY kind of space, including those annoying non-breaking ones.
-$htmlPattern = '(?i)'
-$htmlReplacement = ""
+$htmlPattern = '(?i)<!--\s*KeepMoviEZ\s+v[0-9.]+\s*-->'
+$htmlReplacement = "<!-- KeepMoviEZ  v$version -->"
 (Get-Content index.html) -replace $htmlPattern, $htmlReplacement | Set-Content index.html
 
 # 3. Update sw.js

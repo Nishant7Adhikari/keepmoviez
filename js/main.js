@@ -417,7 +417,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!val) return;
         const lower = val.toLowerCase();
         const match = UNIQUE_ALL_GENRES.find((g) => g.toLowerCase() === lower);
-        addFn(match || val);
+        if (!match) return;
+        addFn(match);
         input.value = "";
         filterFn();
         items.classList.add("show");

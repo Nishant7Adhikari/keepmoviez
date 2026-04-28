@@ -2509,69 +2509,6 @@ a:hover {
 }
 /*END CHUNK: 17: About Modal (Stylized)*/
 
-/* Backfill Modal Styles */
-#backfillGenreContainer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 6px;
-  border-radius: var(--border-radius-sm);
-  background-color: var(--input-bg);
-  cursor: text;
-  transition:
-    background-color 0.15s ease-in-out,
-    box-shadow 0.15s ease-in-out;
-  min-height: calc(1.5em + 1.5rem);
-}
-#backfillGenreContainer:focus-within {
-  background-color: var(--input-focus-bg);
-  box-shadow: var(--shadow-light-focus);
-  outline: none;
-}
-#backfillGenreInput {
-  min-width: 150px;
-  flex: 1 1 150px;
-  border: 0;
-  outline: 0;
-  padding: 0.25rem;
-  font-size: 0.875rem;
-  background-color: transparent !important;
-  color: var(--body-text-color) !important;
-}
-#backfillGenreInput::placeholder {
-  color: var(--body-text-color);
-  opacity: 0.7;
-}
-#backfillGenreDropdown {
-  position: relative;
-}
-#backfillGenreItems {
-  position: absolute;
-  z-index: 1051;
-  top: auto;
-  bottom: 100%; /* Open upwards */
-  margin-bottom: 4px;
-  left: 0;
-  right: 0;
-  max-height: 180px;
-  overflow-y: auto;
-  background-color: var(--card-bg);
-  border: 1px solid var(--card-border-color);
-  border-radius: var(--border-radius-sm);
-  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15); /* Shadow upwards */
-  display: none;
-}
-.genre-backfill-container .remove-genre {
-  cursor: pointer;
-  margin-left: 0.5rem;
-  color: rgba(255, 255, 255, 0.85);
-  font-weight: bold;
-  transition: color 0.15s ease;
-}
-.genre-backfill-container .remove-genre:hover {
-  color: white;
-}
-/* Backfill Modal Styles */
 #backfillGoogleBtn {
   border: 1px solid #007bff !important;
   color: #007bff !important;
@@ -2588,20 +2525,6 @@ a:hover {
 .dark-theme #backfillGoogleBtn:hover {
   background-color: #3b82f6 !important;
   color: white !important;
-}
-
-#backfillGenreContainer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  padding: 6px;
-  border-radius: var(--border-radius-sm);
-  background-color: var(--input-bg);
-  cursor: text;
-  transition:
-    background-color 0.15s ease-in-out,
-    box-shadow 0.15s ease-in-out;
-  min-height: calc(1.5em + 1.5rem);
 }
 #backfillGenreContainer:focus-within {
   background-color: var(--input-focus-bg);

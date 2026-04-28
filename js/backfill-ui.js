@@ -388,6 +388,10 @@ function renderBackfillCard() {
       window.backfillSelectedGenres,
       "backfillGenreInput",
     );
+    const hiddenGenreInput = document.getElementById("backfillInput");
+    if (hiddenGenreInput) {
+      hiddenGenreInput.value = JSON.stringify(window.backfillSelectedGenres);
+    }
 
     // Wire up specific events for the backfill genre input
     const genreInput = document.getElementById("backfillGenreInput");
@@ -408,16 +412,19 @@ function renderBackfillCard() {
           "backfillGenreItems",
         );
         const dropdown = document.getElementById("backfillGenreItems");
-        if (dropdown) dropdown.style.display = "block";
+        if (dropdown) dropdown.classList.add("show");
       });
       // Keydown handling is slightly custom due to needing to add to specific list
       genreInput.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
           const val = genreInput.value.trim();
-          if (val) {
+          const match = UNIQUE_ALL_GENRES.find(
+            (g) => g.toLowerCase() === val.toLowerCase(),
+          );
+          if (match) {
             addGenre(
-              val,
+              match,
               "backfillGenreContainer",
               window.backfillSelectedGenres,
               "backfillGenreInput",
@@ -457,7 +464,7 @@ function renderBackfillCard() {
           !container.contains(e.target) &&
           !dropdown.contains(e.target)
         ) {
-          dropdown.style.display = "none";
+          dropdown.classList.remove("show");
         }
       });
     }
@@ -722,8 +729,14 @@ function transformFieldValue(fieldKey, value, fieldConfig, entry) {
       return value;
 
     case "Genre":
-      // Already an array
-      return value;
+      // Store in same format as add/edit flow: comma-separated string.
+      return Array.isArray(value)
+        ? value.map((g) => g.trim()).filter(Boolean).join(", ")
+        : String(value || "")
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
+            .join(", ");
 
     default:
       return value;

@@ -1096,6 +1096,8 @@ window.checkAndNotifyNewAchievements = async function (isInitialLoad = false) {
     return;
   }
   const stats = calculateAllStatistics(movieData);
+  // Cache stats so the achievements/modal can use precomputed data without recalculating
+  try { window.globalStatsData = stats || {}; } catch (e) { /* ignore */ }
   let unlockedCountForMeta = 0;
   const currentlyUnlocked = new Set();
 
@@ -1117,6 +1119,44 @@ window.checkAndNotifyNewAchievements = async function (isInitialLoad = false) {
   });
 
   if (isInitialLoad) {
+    // Populate known set so the achievements modal shows current state without re-notifying
+    // On initial sign-in, only notify for active_days achievements when the user's
+    // total active days exactly equals the achievement threshold (i.e., just reached).
+    try {
+      const activeDays = stats.achievementData && stats.achievementData.active_days_count ? stats.achievementData.active_days_count : 0;
+      const activeDayAchievements = ACHIEVEMENTS.filter(a => a.type === 'active_days_count');
+      const toShow = activeDayAchievements.filter((ach) => {
+        return currentlyUnlocked.has(ach.id) && (activeDays === ach.threshold);
+      });
+
+      toShow.forEach((achievement, index) => {
+        const toastActions = [
+          {
+            label: "View Achievements",
+            className: "btn-outline-light",
+            onClick: () => {
+              if (typeof displayAchievementsModal === "function" && typeof $ !== "undefined") {
+                displayAchievementsModal();
+                $("#achievementsModal").modal("show");
+              }
+            },
+          },
+        ];
+        setTimeout(() => {
+          showToast(
+            `🏆 Achievement Unlocked!`,
+            `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`,
+            "success",
+            0,
+            null,
+            toastActions,
+          );
+        }, 500 * index);
+      });
+    } catch (e) {
+      console.error('Error showing initial active-days achievements:', e);
+    }
+
     knownUnlockedAchievements = currentlyUnlocked;
     return;
   }

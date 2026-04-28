@@ -133,51 +133,39 @@ const countryCodeToNameMap = {
   PR: "Puerto Rico",
 };
 
-// Updated Genre List: Removed Duplicate 'War', Added TV specific genres (Kids, News, Reality, Soap, Talk)
+// Official TMDB-supported movie + TV genres (union).
+// Keep Documentary available because it is also used for category auto-detection.
 const ALL_GENRES = [
   "Action",
+  "Action & Adventure",
   "Adventure",
   "Animation",
-  "Biopic",
   "Comedy",
   "Crime",
-  "Disaster",
   "Documentary",
   "Drama",
   "Family",
   "Fantasy",
-  "Game",
   "History",
   "Horror",
   "Kids",
-  "Legal",
-  "Medical",
-  "Military",
   "Music",
-  "Musical",
   "Mystery",
   "News",
-  "Police",
-  "Political",
-  "Psychological",
   "Reality",
   "Romance",
-  "School",
   "Science Fiction",
+  "Sci-Fi & Fantasy",
   "Soap",
-  "Sports",
   "Talk",
   "Thriller",
-  "Time Travel",
-  "Tragedy",
   "TV Movie",
-  "Uplifting",
   "War",
+  "War & Politics",
   "Western",
-  "Work",
 ].sort();
 
-let UNIQUE_ALL_GENRES = [...new Set(ALL_GENRES.map(g => g.toLowerCase() === 'si-fi' ? 'Sci-Fi' : g))].sort();
+let UNIQUE_ALL_GENRES = [...new Set(ALL_GENRES)].sort();
 // END CHUNK: Data Schema and Static Data
 
 // START CHUNK: Achievements Data
