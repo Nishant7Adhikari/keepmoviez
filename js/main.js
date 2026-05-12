@@ -699,6 +699,20 @@ document.addEventListener("DOMContentLoaded", () => {
     Year: "Y",
     overallRating: "R",
   };
+
+  // Function to update UI to reflect current sort state
+  window.updateSortUI = function() {
+    const sortColumnBtn = document.getElementById("sortColumnDropdown");
+    const sortDirectionIcon = document.querySelector("#sortDirectionToggle i");
+    
+    if (sortColumnBtn) {
+      sortColumnBtn.textContent = abbreviationMap[currentSortColumn] || "N";
+    }
+    if (sortDirectionIcon) {
+      sortDirectionIcon.className = `fas fa-arrow-${currentSortDirection === "asc" ? "down" : "up"}`;
+    }
+  };
+
   document
     .querySelectorAll(
       '.dropdown-menu[aria-labelledby="sortColumnDropdown"] .dropdown-item',
@@ -709,6 +723,8 @@ document.addEventListener("DOMContentLoaded", () => {
         currentSortColumn = e.target.dataset.sortBy;
         document.getElementById("sortColumnDropdown").textContent =
           abbreviationMap[currentSortColumn] || "N";
+        // Save sort preference to localStorage
+        localStorage.setItem("keepmoviez_sortColumn", currentSortColumn);
         sortMovies(currentSortColumn, currentSortDirection);
         renderMovieCards();
       });
@@ -720,6 +736,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const icon = e.currentTarget.querySelector("i");
       if (icon)
         icon.className = `fas fa-arrow-${currentSortDirection === "asc" ? "down" : "up"}`;
+      // Save sort direction preference to localStorage
+      localStorage.setItem("keepmoviez_sortDirection", currentSortDirection);
       sortMovies(currentSortColumn, currentSortDirection);
       renderMovieCards();
     });

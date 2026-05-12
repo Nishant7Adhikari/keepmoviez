@@ -725,6 +725,22 @@ async function initAuth() {
 async function initializeApp() {
   showLoading("Loading your collection...");
   try {
+    // Load saved sort preferences from localStorage
+    const savedSortColumn = localStorage.getItem("keepmoviez_sortColumn");
+    const savedSortDirection = localStorage.getItem("keepmoviez_sortDirection");
+    
+    if (savedSortColumn) {
+      currentSortColumn = savedSortColumn;
+    }
+    if (savedSortDirection) {
+      currentSortDirection = savedSortDirection;
+    }
+    
+    // Update UI to reflect loaded sort preferences
+    if (typeof window.updateSortUI === "function") {
+      window.updateSortUI();
+    }
+    
     // Attempt to download fresh offline-first achievement stats from cloud
     if (typeof window.syncAchievementStatsCloud === "function") {
        await window.syncAchievementStatsCloud();
