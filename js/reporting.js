@@ -22,42 +22,310 @@ function destroyCharts(chartInstanceObject = chartInstances) {
 
 // --- UI Display Functions for Modals ---
 
-async function displayDailyRecommendationModal() {
-    const modalBody = document.getElementById('dailyRecommendationModalBody');
-    if (!modalBody) { console.warn("Daily recommendation modal body not found."); return; }
-    modalBody.innerHTML = '<p class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i> Finding your daily pick...</p>';
+const DAILY_RECOMMENDATION_QUEUE_SIZE = MAX_DAILY_SKIPS + 1;
 
-    const { message: dailyRecMsg, movie: dailyRecMovie, dailyRecSkipCount } = getDailyRecommendationMovie();
+function getDailyRecommendationModalState() {
+    if (!window.dailyRecommendationModalState) {
+        window.dailyRecommendationModalState = {
+            today: null,
+            queue: [],
+            currentIndex: 0,
+            skipCount: 0,
+            message: '',
+        };
+    }
 
-    if (dailyRecMovie) {
-        modalBody.innerHTML = `
-            <h5 class="mt-1">Your Daily Pick! <small class="text-muted">(Skips left: ${MAX_DAILY_SKIPS - dailyRecSkipCount})</small></h5>
-            <div class="recommendation-item daily-pick list-group-item p-3 shadow-sm rounded">
-                <div class="d-flex w-100 justify-content-between">
-                     <h6 class="mb-1">${dailyRecMovie.Name} <small class="text-muted">(${dailyRecMovie.Year || 'N/A'})</small></h6>
-                     ${dailyRecMovie.tmdb_vote_average ? `<small class="text-info" title="TMDB Rating">TMDB: ${dailyRecMovie.tmdb_vote_average.toFixed(1)} <i class="fas fa-star text-warning"></i></small>` : ''}
+    return window.dailyRecommendationModalState;
+}
+
+function shuffleDailyRecommendationMovies(items) {
+    const shuffled = [...items];
+    for (let index = shuffled.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
+}
+
+function getDailyRecommendationPickReason(movie) {
+    let pickReason = "This title matches your overall movie taste and is waiting for you in your watchlist!";
+    if (window.globalStatsData && Array.isArray(window.globalStatsData.topRatedGenresOverall) && window.globalStatsData.topRatedGenresOverall.length > 0) {
+        const genres = (movie.Genre || '').split(',').map(g => g.trim());
+        const favoriteGenreObj = window.globalStatsData.topRatedGenresOverall[0];
+        const match = genres.find(g => g.toLowerCase() === favoriteGenreObj.label.toLowerCase());
+        if (match) {
+            pickReason = `Matches one of your top-rated genres: <strong>${match}</strong> (average rating: ${favoriteGenreObj.value} <i class="fas fa-star text-warning"></i>)!`;
+        } else if (window.globalStatsData.mostWatchedDirectors && window.globalStatsData.mostWatchedDirectors.length > 0 && movie.director_info && movie.director_info.name) {
+            const topDirector = window.globalStatsData.mostWatchedDirectors[0].label;
+            if (movie.director_info.name === topDirector) {
+                pickReason = `Directed by <strong>${topDirector}</strong>, who is currently your most-watched director!`;
+            }
+        }
+    }
+
+    return pickReason;
+}
+
+async function prepareDailyRecommendationCard(movie) {
+    let backdropUrl = '';
+
+    if (movie.tmdbId) {
+        try {
+            const mediaType = movie.tmdbMediaType || (movie.Category === 'Series' ? 'tv' : 'movie');
+            const detailData = await callTmdbApiDirect(`/${mediaType}/${movie.tmdbId}`);
+            if (detailData && detailData.backdrop_path) {
+                backdropUrl = `https://image.tmdb.org/t/p/w780${detailData.backdrop_path}`;
+            }
+        } catch (e) {
+            console.warn("Could not fetch daily pick backdrop from TMDB:", e);
+        }
+    }
+
+    if (!backdropUrl && (movie.poster_url || movie['Poster URL'])) {
+        backdropUrl = movie.poster_url || movie['Poster URL'];
+    }
+
+    const rating = parseFloat(movie.tmdb_vote_average) || parseFloat(movie.overallRating) || 0.0;
+    const ratingPercentage = Math.round(rating * 10);
+    let gaugeColorClass = 'gauge-low';
+    if (rating >= 7.0) {
+        gaugeColorClass = 'gauge-high';
+    } else if (rating >= 5.0) {
+        gaugeColorClass = 'gauge-mid';
+    }
+
+    return {
+        movie,
+        backdropUrl,
+        rating,
+        ratingPercentage,
+        gaugeColorClass,
+        pickReason: getDailyRecommendationPickReason(movie),
+    };
+}
+
+function renderDailyRecommendationCard(card, dailyRecSkipCount) {
+    const movie = card.movie;
+    const hasStandbyCards = Array.isArray(card.remainingCards) && card.remainingCards.length > 0;
+    return `
+            <button type="button" class="daily-pick-close-btn" data-dismiss="modal" aria-label="Close" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="daily-pick-backdrop" style="background-image: ${card.backdropUrl ? `url('${card.backdropUrl}')` : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'};">
+                <div class="daily-pick-header-content">
+                    <div class="daily-pick-meta">${movie.Category || 'N/A'} &bull; ${movie.Year || 'N/A'}</div>
+                    <h2 class="daily-pick-title">${movie.Name}</h2>
                 </div>
-                <p class="mb-1 text-muted small"><strong>Category:</strong> ${dailyRecMovie.Category || 'N/A'} | <strong>Genre:</strong> ${dailyRecMovie.Genre || 'N/A'}</p>
-                <p class="mb-2 text-muted small">${(dailyRecMovie.Description || 'No description available.').substring(0, 150)}${dailyRecMovie.Description && dailyRecMovie.Description.length > 150 ? '...' : ''}</p>
-                <div class="text-right mt-2">
-                    <button class="btn btn-sm btn-warning skip-daily-rec-modal mr-2" data-movie-id="${dailyRecMovie.id}" title="Skip this pick for today"><i class="fas fa-forward"></i> Skip</button>
-                    <button class="btn btn-sm btn-info view-btn-modal mr-2" data-movie-id="${dailyRecMovie.id}" title="View Details"><i class="fas fa-eye"></i> View</button>
-                    <button class="btn btn-sm btn-success mark-completed-daily-rec-modal" data-movie-id="${dailyRecMovie.id}" title="Mark as Watched"><i class="fas fa-check-circle"></i> Watched It!</button>
+            </div>
+            
+            <div class="daily-pick-body">
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="daily-pick-badge-row">
+                        ${(movie.Genre || '').split(',').map(g => `<span class="badge badge-pill badge-secondary" style="background: rgba(128, 128, 128, 0.12); color: var(--body-text-color); border: 1px solid rgba(128, 128, 128, 0.2);">${g.trim()}</span>`).join('')}
+                    </div>
+                    
+                    <div class="gauge-container" title="TMDB Rating: ${card.rating > 0 ? card.rating.toFixed(1) : 'N/A'}/10">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg"
+                                d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <path class="circle ${card.gaugeColorClass}"
+                                stroke-dasharray="${card.ratingPercentage}, 100"
+                                d="M18 2.0845
+                                    a 15.9155 15.9155 0 0 1 0 31.831
+                                    a 15.9155 15.9155 0 0 1 0 -31.831"
+                            />
+                            <text x="18" y="20.35" class="percentage">${card.rating > 0 ? card.rating.toFixed(1) : 'N/A'}</text>
+                        </svg>
+                    </div>
                 </div>
+                
+                <div class="daily-pick-reason-box">
+                    <i class="fas fa-magic text-primary mr-1"></i> ${card.pickReason}
+                </div>
+                
+                <div class="daily-pick-description">
+                    ${movie.Description || 'No description available. Open details view to fetch more info.'}
+                </div>
+                
+                <div class="daily-pick-standby-strip">
+                    <span class="daily-pick-standby-label">Up next</span>
+                    ${hasStandbyCards ? card.remainingCards.map(nextCard => `<span class="daily-pick-standby-chip">${nextCard.movie.Name}</span>`).join('') : '<span class="daily-pick-standby-empty">No standby picks left</span>'}
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <small class="text-muted">Skips left: <strong>${MAX_DAILY_SKIPS - dailyRecSkipCount}</strong></small>
+                    <div>
+                        ${hasStandbyCards
+            ? `<button class="btn btn-warning skip-daily-rec-modal mr-2" data-movie-id="${movie.id}" title="Skip this pick for today"><i class="fas fa-forward"></i> Skip</button>`
+            : `<button class="btn btn-warning mr-2" disabled title="No more skips left"><i class="fas fa-ban"></i> No more skips</button>`}
+                        <button class="btn btn-info view-btn-modal mr-2" data-movie-id="${movie.id}" title="View Details"><i class="fas fa-eye"></i> View</button>
+                        <button class="btn btn-success mark-completed-daily-rec-modal" data-movie-id="${movie.id}" title="Mark as Watched"><i class="fas fa-check-circle"></i> Watched It!</button>
+                    </div>
+                </div>
+                ${hasStandbyCards ? '' : '<div class="daily-pick-no-more-skips">No more skipping. The recommendation bureau has closed for business.</div>'}
             </div>`;
+}
 
-        modalBody.querySelector('.view-btn-modal').addEventListener('click', function () {
+function bindDailyRecommendationCardActions(modalBody) {
+    const viewButton = modalBody.querySelector('.view-btn-modal');
+    const markCompletedButton = modalBody.querySelector('.mark-completed-daily-rec-modal');
+    const skipButton = modalBody.querySelector('.skip-daily-rec-modal');
+
+    if (viewButton) {
+        viewButton.addEventListener('click', function () {
             $('#dailyRecommendationModal').modal('hide');
             $('#dailyRecommendationModal').one('hidden.bs.modal', () => openDetailsModal(this.dataset.movieId));
         });
-        modalBody.querySelector('.mark-completed-daily-rec-modal').addEventListener('click', async function (event) {
+    }
+
+    if (markCompletedButton) {
+        markCompletedButton.addEventListener('click', async function (event) {
             await window.markDailyRecCompleted(event);
             $('#dailyRecommendationModal').modal('hide');
         });
-        modalBody.querySelector('.skip-daily-rec-modal').addEventListener('click', window.markDailyRecSkipped);
+    }
 
+    if (skipButton) {
+        skipButton.addEventListener('click', async function (event) {
+            await window.advanceDailyRecommendationModal(event);
+        });
+    }
+}
+
+async function buildDailyRecommendationModalState() {
+    const state = getDailyRecommendationModalState();
+    const today = new Date().toISOString().slice(0, 10);
+    const lastRecDate = localStorage.getItem(DAILY_RECOMMENDATION_DATE_KEY);
+    const lastRecId = localStorage.getItem(DAILY_RECOMMENDATION_ID_KEY);
+    let dailyRecSkipCount = parseInt(localStorage.getItem(DAILY_REC_SKIP_COUNT_KEY) || '0');
+
+    if (lastRecDate !== today) {
+        dailyRecSkipCount = 0;
+        localStorage.setItem(DAILY_REC_SKIP_COUNT_KEY, '0');
+        localStorage.removeItem(DAILY_RECOMMENDATION_ID_KEY);
+    }
+
+    state.today = today;
+    state.skipCount = dailyRecSkipCount;
+    state.message = 'Success';
+
+    if (lastRecDate === today && dailyRecSkipCount >= MAX_DAILY_SKIPS) {
+        state.queue = [];
+        state.currentIndex = 0;
+        state.message = "You've skipped the maximum number of daily recommendations. Check back tomorrow!";
+        return state;
+    }
+
+    const toWatchList = movieData.filter(m => m.Status === 'To Watch' && !m.doNotRecommendDaily && !m.is_deleted);
+    if (toWatchList.length === 0) {
+        state.queue = [];
+        state.currentIndex = 0;
+        state.message = "No recommendations available. Try adding more movies to your 'To Watch' list!";
+        return state;
+    }
+
+    let seedMovie = null;
+    if (lastRecDate === today && lastRecId) {
+        seedMovie = movieData.find(m => m.id === lastRecId && m.Status === 'To Watch' && !m.doNotRecommendDaily && !m.is_deleted) || null;
+    }
+
+    if (!seedMovie) {
+        const potentialPicks = toWatchList.filter(m => m.id !== lastRecId);
+        const listToPickFrom = potentialPicks.length > 0 ? potentialPicks : toWatchList;
+        seedMovie = listToPickFrom[Math.floor(Math.random() * listToPickFrom.length)];
+        localStorage.setItem(DAILY_RECOMMENDATION_ID_KEY, seedMovie.id);
+        localStorage.setItem(DAILY_RECOMMENDATION_DATE_KEY, today);
+
+        if (lastRecDate !== today) {
+            showToast("Daily Recommendation", "Here is your pick for today!", "info", 4000, DO_NOT_SHOW_AGAIN_KEYS.DAILY_RECOMMENDATION_INTRO);
+        }
+    }
+
+    const standbyMovies = shuffleDailyRecommendationMovies(toWatchList.filter(m => m.id !== seedMovie.id));
+    const queueMovies = [seedMovie, ...standbyMovies].slice(0, DAILY_RECOMMENDATION_QUEUE_SIZE);
+    state.queue = await Promise.all(queueMovies.map(prepareDailyRecommendationCard));
+    state.currentIndex = 0;
+
+    return state;
+}
+
+async function advanceDailyRecommendationModal(event) {
+    const modalContent = document.querySelector('.daily-pick-modal-content');
+    const modalBody = document.getElementById('dailyRecommendationModalBody');
+    const state = getDailyRecommendationModalState();
+    const nextIndex = state.currentIndex + 1;
+
+    if (!state.queue[nextIndex]) {
+        localStorage.removeItem(DAILY_RECOMMENDATION_ID_KEY);
+        if (modalContent) {
+            modalContent.classList.add('skip-card-transition');
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+        if (modalBody && state.queue[state.currentIndex]) {
+            modalBody.innerHTML = renderDailyRecommendationCard({
+                ...state.queue[state.currentIndex],
+                remainingCards: [],
+            }, state.skipCount);
+            bindDailyRecommendationCardActions(modalBody);
+        }
+        showToast("No more skips", "The algorithm has seized the means of recommendation. This is the last pick.", "info");
+        return;
+    }
+
+    if (modalContent) {
+        modalContent.classList.add('skip-card-transition');
+        await new Promise(resolve => setTimeout(resolve, 300));
+    }
+
+    state.skipCount += 1;
+    localStorage.setItem(DAILY_REC_SKIP_COUNT_KEY, state.skipCount.toString());
+
+    state.currentIndex = nextIndex;
+    localStorage.setItem(DAILY_RECOMMENDATION_ID_KEY, state.queue[state.currentIndex].movie.id);
+    localStorage.setItem(DAILY_RECOMMENDATION_DATE_KEY, state.today || new Date().toISOString().slice(0, 10));
+
+    if (modalBody) {
+        modalBody.innerHTML = renderDailyRecommendationCard({
+            ...state.queue[state.currentIndex],
+            remainingCards: state.queue.slice(state.currentIndex + 1),
+        }, state.skipCount);
+        bindDailyRecommendationCardActions(modalBody);
+    }
+
+    if (modalContent) {
+        modalContent.classList.remove('skip-card-transition');
+    }
+}
+
+async function displayDailyRecommendationModal() {
+    const modalBody = document.getElementById('dailyRecommendationModalBody');
+    if (!modalBody) { console.warn("Daily recommendation modal body not found."); return; }
+    modalBody.innerHTML = '<p class="text-center text-muted p-5"><i class="fas fa-spinner fa-spin fa-2x"></i><span class="d-block mt-2">Finding your daily pick...</span></p>';
+
+    const state = await buildDailyRecommendationModalState();
+    const dailyRecMovie = state.queue[state.currentIndex];
+    const dailyRecSkipCount = state.skipCount;
+    const dailyRecMsg = state.message;
+
+    if (dailyRecMovie) {
+        modalBody.innerHTML = renderDailyRecommendationCard({
+            ...dailyRecMovie,
+            remainingCards: state.queue.slice(state.currentIndex + 1),
+        }, dailyRecSkipCount);
+        bindDailyRecommendationCardActions(modalBody);
     } else {
-        modalBody.innerHTML = `<p class="text-center text-muted p-3">${dailyRecMsg}</p>`;
+        modalBody.innerHTML = `
+            <button type="button" class="daily-pick-close-btn" data-dismiss="modal" aria-label="Close" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="p-5 text-center">
+                <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
+                <p class="text-muted">${dailyRecMsg}</p>
+                <button class="btn btn-secondary mt-3" data-dismiss="modal">Close</button>
+            </div>`;
     }
 }
 
@@ -203,17 +471,16 @@ async function fetchSuggestionCarousels(seedMovie) {
     return carousels;
 }
 
-// Renders a single carousel (title + cards)
+// Renders a single carousel (title + cards) using premium scrolling container
 function renderSuggestionCarousel(title, items) {
     const carouselWrapper = document.createElement('div');
     carouselWrapper.className = 'suggestion-carousel-wrapper mb-4';
 
     const carouselTitle = document.createElement('h6');
-    carouselTitle.className = 'pl-2';
     carouselTitle.textContent = title;
 
     const cardContainer = document.createElement('div');
-    cardContainer.className = 'd-flex flex-nowrap overflow-auto py-2';
+    cardContainer.className = 'suggestion-card-container';
     
     items.forEach(item => {
         cardContainer.appendChild(renderSuggestionCard(item));
@@ -224,7 +491,7 @@ function renderSuggestionCarousel(title, items) {
     return carouselWrapper;
 }
 
-// Renders a single suggestion card for the carousel
+// Renders a single suggestion card with Match Score and Quick Action overlays
 function renderSuggestionCard(item) {
     const card = document.createElement('div');
     card.className = 'suggestion-card';
@@ -233,19 +500,91 @@ function renderSuggestionCard(item) {
     const name = item.title || item.name;
     const year = (item.release_date || item.first_air_date || '').substring(0, 4);
 
+    // Calculate match score
+    const matchScore = calculateMatchScoreForRecommendation(item);
+    let matchColorClass = 'match-score-low';
+    if (matchScore >= 88) {
+        matchColorClass = 'match-score-high';
+    } else if (matchScore >= 80) {
+        matchColorClass = 'match-score-mid';
+    }
+
     card.innerHTML = `
+        <div class="match-score-badge ${matchColorClass}">${matchScore}% Match</div>
         <img src="${posterPath}" alt="Poster for ${name}" loading="lazy">
+        
+        <!-- Hover Quick Actions Overlay -->
+        <div class="quick-action-overlay">
+            <button class="quick-action-btn quick-action-add" title="Add to Watchlist" aria-label="Add to Watchlist">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button class="quick-action-btn quick-action-watch" title="Mark as Watched" aria-label="Mark as Watched">
+                <i class="fas fa-check"></i>
+            </button>
+        </div>
+        
         <div class="suggestion-card-info">
             <strong>${name}</strong>
             <small class="text-muted">${year || 'N/A'}</small>
         </div>
     `;
 
-    // Add tooltip with more info
+    // Tooltip configuration
     const voteAvg = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
     card.setAttribute('title', `${name} (${year || 'N/A'}) - TMDB Rating: ${voteAvg}/10`);
     $(card).tooltip({ boundary: 'window', trigger: 'hover' });
 
+    // Handle Quick Action Clicks
+    card.querySelector('.quick-action-add').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        $(card).tooltip('hide');
+        
+        // Smoothly fade card element to indicate action
+        card.style.opacity = '0.4';
+        card.style.pointerEvents = 'none';
+        
+        await fastSaveSuggestion(item, 'To Watch');
+        
+        // Remove card element from DOM after save
+        $(card).fadeOut(400, () => {
+            const container = card.parentElement;
+            card.remove();
+            // If container is empty, show a fallback message or refresh suggestions
+            if (container && container.children.length === 0) {
+                const wrapper = container.parentElement;
+                if (wrapper) {
+                    $(wrapper).fadeOut(400, () => wrapper.remove());
+                }
+            }
+        });
+    });
+
+    card.querySelector('.quick-action-watch').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        $(card).tooltip('hide');
+        
+        // Smoothly fade card element to indicate action
+        card.style.opacity = '0.4';
+        card.style.pointerEvents = 'none';
+        
+        await fastSaveSuggestion(item, 'Watched');
+        
+        // Remove card element from DOM after save
+        $(card).fadeOut(400, () => {
+            const container = card.parentElement;
+            card.remove();
+            if (container && container.children.length === 0) {
+                const wrapper = container.parentElement;
+                if (wrapper) {
+                    $(wrapper).fadeOut(400, () => wrapper.remove());
+                }
+            }
+        });
+    });
+
+    // Handle Card click to view details
     card.addEventListener('click', () => {
         $('#personalizedSuggestionsModal').modal('hide');
         $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
@@ -254,6 +593,177 @@ function renderSuggestionCard(item) {
     });
 
     return card;
+}
+
+// Dynamic Taste affinity Match Score calculator
+function calculateMatchScoreForRecommendation(item) {
+    let score = 75; // base match score
+    const itemGenres = item.genre_ids || [];
+    
+    if (window.globalStatsData && Array.isArray(window.globalStatsData.topRatedGenresOverall)) {
+        // Map genre_ids to local names using our GENRE_MAP
+        const localGenreNames = itemGenres.map(id => {
+            const mapObj = GENRE_MAP.find(g => g.id === id);
+            return mapObj ? mapObj.name : null;
+        }).filter(Boolean);
+        
+        let matchingTopGenre = false;
+        localGenreNames.forEach(genreName => {
+            const ratedGenre = window.globalStatsData.topRatedGenresOverall.find(g => g.label.toLowerCase() === genreName.toLowerCase());
+            if (ratedGenre) {
+                matchingTopGenre = true;
+                const ratingVal = parseFloat(ratedGenre.value) || 0;
+                if (ratingVal >= 4.0) {
+                    score += 6;
+                } else {
+                    score += 3;
+                }
+            }
+        });
+        
+        if (!matchingTopGenre) {
+            score += Math.floor(Math.random() * 5); // organic variety
+        }
+    }
+    
+    if (item.vote_average && item.vote_average >= 7.5) {
+        score += 4;
+    }
+    
+    return Math.min(score, 98); // Cap match score at 98%
+}
+
+// Fast-save engine for suggestion quick-action overlays
+async function fastSaveSuggestion(item, status) {
+    const isSeries = item.media_type === 'tv';
+    const detectedCategory = isSeries ? 'Series' : 'Movie';
+    const name = item.title || item.name;
+    const year = (item.release_date || item.first_air_date || '').substring(0, 4);
+    
+    // Check if duplicate
+    const existing = window.movieData.find(m => m.tmdbId == item.id && !m.is_deleted);
+    let savedEntryId;
+    
+    if (existing) {
+        if (status === 'To Watch' && existing.Status === 'To Watch') {
+            showToast("Already in Log", `"${name}" is already in your Watchlist!`, "info");
+            return;
+        } else if (status === 'Watched' && existing.Status === 'Watched') {
+            showToast("Already in Log", `"${name}" is already marked as Watched!`, "info");
+            return;
+        }
+        
+        // Update status of existing entry
+        existing.Status = status;
+        existing.lastModifiedDate = new Date().toISOString();
+        if (existing._sync_state !== 'new') existing._sync_state = 'edited';
+        if (status === 'Watched' && (!existing.watchHistory || existing.watchHistory.length === 0)) {
+            existing.watchHistory = [{
+                watchId: generateUUID(),
+                date: new Date().toISOString().slice(0, 10),
+                rating: "",
+                notes: "Fast-saved from Suggestion Engine"
+            }];
+        }
+        savedEntryId = existing.id;
+    } else {
+        // Fetch detailed TMDB data to get genres, runtimes etc.
+        let detailData = {};
+        let tmdbGenres = [], tmdbCountryISO = '', tmdbLanguage = '';
+        let tmdbCast = [], tmdbDirector = null, tmdbProductionCompanies = [];
+        let tmdbRuntime = null;
+        
+        try {
+            detailData = await callTmdbApiDirect(`/${item.media_type}/${item.id}`, { append_to_response: 'credits,external_ids' });
+            if (detailData) {
+                if (detailData.genres) tmdbGenres = detailData.genres.map(g => g.name);
+                if (detailData.production_countries && detailData.production_countries.length > 0) tmdbCountryISO = detailData.production_countries[0].iso_3166_1 || '';
+                if (detailData.original_language) {
+                    tmdbLanguage = detailData.original_language.toUpperCase();
+                }
+                if (detailData.credits) {
+                    if (detailData.credits.cast) tmdbCast = detailData.credits.cast.slice(0, 15).map(c => ({ id: c.id, name: c.name, character: c.character }));
+                    if (detailData.credits.crew) {
+                        const dir = detailData.credits.crew.find(c => c.job === 'Director');
+                        if (dir) tmdbDirector = { id: dir.id, name: dir.name };
+                    }
+                }
+                if (detailData.production_companies) tmdbProductionCompanies = detailData.production_companies.map(pc => ({ id: pc.id, name: pc.name }));
+                
+                if (item.media_type === 'movie') {
+                    tmdbRuntime = detailData.runtime || null;
+                } else if (item.media_type === 'tv') {
+                    tmdbRuntime = {
+                        seasons: detailData.number_of_seasons || null,
+                        episodes: detailData.number_of_episodes || null,
+                        episode_run_time: detailData.episode_run_time && detailData.episode_run_time.length > 0 ? detailData.episode_run_time[0] : null
+                    };
+                }
+            }
+        } catch (err) {
+            console.warn("Could not fetch full details for fast-save:", err);
+        }
+        
+        // Assemble new movie object
+        const newEntry = {
+            id: generateUUID(),
+            Name: name,
+            Category: detectedCategory,
+            Genre: tmdbGenres.join(', '),
+            Status: status,
+            seasonsCompleted: 0,
+            currentSeasonEpisodesWatched: 0,
+            Recommendation: "",
+            overallRating: "",
+            personalRecommendation: "",
+            Language: tmdbLanguage,
+            Year: year,
+            Country: tmdbCountryISO,
+            Description: item.overview || "",
+            poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "",
+            watchHistory: status === 'Watched' ? [{
+                watchId: generateUUID(),
+                date: new Date().toISOString().slice(0, 10),
+                rating: "",
+                notes: "Fast-saved from Suggestion Engine"
+            }] : [],
+            relatedEntries: [],
+            lastModifiedDate: new Date().toISOString(),
+            tmdbId: item.id,
+            tmdbMediaType: item.media_type,
+            full_cast: tmdbCast,
+            director_info: tmdbDirector,
+            production_companies: tmdbProductionCompanies,
+            tmdb_vote_average: item.vote_average || null,
+            tmdb_vote_count: item.vote_count || null,
+            runtime: tmdbRuntime,
+            imdb_id: detailData.external_ids?.imdb_id || null,
+            is_deleted: false,
+            _sync_state: "new"
+        };
+        
+        window.movieData.push(newEntry);
+        savedEntryId = newEntry.id;
+    }
+    
+    // Save to DB and refresh main grid
+    recalculateAndApplyAllRelationships();
+    sortMovies(currentSortColumn, currentSortDirection);
+    renderMovieCards();
+    await saveToIndexedDB();
+    
+    // Track modification for auto-sync
+    if (typeof trackModification === 'function') {
+        trackModification(savedEntryId);
+    }
+    
+    await checkAndNotifyNewAchievements();
+    
+    showToast(
+        status === 'To Watch' ? "Added to Watchlist" : "Marked as Watched",
+        `Successfully added "${name}" to your library!`,
+        "success"
+    );
 }
 
 // A simple map for TMDB genre IDs. In a real app, this would be fetched from the API.
@@ -310,14 +820,128 @@ if (!document.getElementById('suggestion-hub-styles')) {
 // <<-- REIMAGINED SUGGESTION ENGINE END -->>
 
 function displayAchievementsModal() {
-    const badgesContainer = document.getElementById('achievementBadgesModal');
-    if (!badgesContainer) { console.warn("Achievements modal badges container not found."); return; }
-    badgesContainer.innerHTML = '<p class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i> Calculating achievements...</p>';
+    const containerAll = document.getElementById('achievementBadgesModal');
+    const containerMilestones = document.getElementById('achievementBadgesMilestones');
+    const containerGenres = document.getElementById('achievementBadgesGenres');
+    const containerFun = document.getElementById('achievementBadgesFun');
+
+    if (!containerAll) { console.warn("Achievements modal badges container not found."); return; }
+
+    // Show loading state in all containers
+    [containerAll, containerMilestones, containerGenres, containerFun].forEach(c => {
+        if (c) c.innerHTML = '<p class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i> Calculating achievements...</p>';
+    });
 
     const statsForAchievements = (Object.keys(globalStatsData || {}).length > 0 && globalStatsData.totalEntries > 0)
         ? globalStatsData
         : calculateAllStatistics(movieData);
-    generateBadgesAndAchievements(statsForAchievements, badgesContainer);
+
+    // ---- Evaluate all achievements ----
+    let achievedCountForMeta = 0;
+    const achievementsToDisplay = ACHIEVEMENTS.map(ach => {
+        const { isAchieved, progress } = checkAchievement(ach, statsForAchievements);
+        if (isAchieved && ach.type !== 'meta_achievement_count') achievedCountForMeta++;
+        return { ...ach, isAchieved, progress };
+    });
+
+    const statsForMeta = { ...statsForAchievements, unlockedCountForMeta: achievedCountForMeta };
+    achievementsToDisplay.forEach(ach => {
+        if (ach.type === 'meta_achievement_count') {
+            const { isAchieved, progress } = checkAchievement(ach, statsForMeta);
+            ach.progress = progress;
+            ach.isAchieved = isAchieved;
+        }
+    });
+
+    // Sort: unlocked first, then by closest to completion, then alphabetically
+    achievementsToDisplay.sort((a, b) =>
+        (b.isAchieved - a.isAchieved) ||
+        ((b.progress / (b.threshold || 1)) - (a.progress / (a.threshold || 1))) ||
+        a.name.localeCompare(b.name)
+    );
+
+    // ---- Categorize achievements ----
+    const milestoneTypes = ['total_entries', 'total_titles_watched', 'distinct_titles_rewatched',
+        'single_title_rewatch_count', 'category_watched_count', 'long_series_watched_count',
+        'status_count', 'status_count_active', 'meta_achievement_count'];
+    const genreTypes = ['genre_watched_count', 'genre_variety_count', 'country_variety_count', 'language_variety_count'];
+
+    const buckets = { all: [], milestones: [], genres: [], fun: [] };
+
+    achievementsToDisplay.forEach(ach => {
+        buckets.all.push(ach);
+        if (milestoneTypes.includes(ach.type)) {
+            buckets.milestones.push(ach);
+        } else if (genreTypes.includes(ach.type)) {
+            buckets.genres.push(ach);
+        } else {
+            buckets.fun.push(ach);
+        }
+    });
+
+    // ---- Render into each container ----
+    const renderIntoContainer = (container, items) => {
+        if (!container) return;
+        container.innerHTML = '';
+        if (items.length === 0) {
+            container.innerHTML = '<p class="text-center text-muted p-3">No achievements in this category yet.</p>';
+            return;
+        }
+        items.forEach(ach => container.appendChild(_createAchievementBadgeElement(ach)));
+    };
+
+    renderIntoContainer(containerAll, buckets.all);
+    renderIntoContainer(containerMilestones, buckets.milestones);
+    renderIntoContainer(containerGenres, buckets.genres);
+    renderIntoContainer(containerFun, buckets.fun);
+
+    // ---- Update global completion header ----
+    const totalCount = ACHIEVEMENTS.length;
+    const unlockedCount = achievementsToDisplay.filter(a => a.isAchieved).length;
+    const percent = totalCount > 0 ? Math.round((unlockedCount / totalCount) * 100) : 0;
+
+    const ratioEl = document.getElementById('globalAchievementsRatio');
+    if (ratioEl) ratioEl.textContent = `${unlockedCount} / ${totalCount} Unlocked`;
+
+    const progressBarEl = document.getElementById('globalAchievementsProgressBar');
+    if (progressBarEl) {
+        progressBarEl.style.width = '0%';
+        // Animate the progress bar after a tiny delay for visual effect
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                progressBarEl.style.transition = 'width 0.8s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                progressBarEl.style.width = percent + '%';
+            });
+        });
+    }
+}
+
+/** Creates a single achievement badge DOM element with optional mini-progress bar for locked trophies. */
+function _createAchievementBadgeElement(ach) {
+    const titleText = `${ach.name} - ${ach.description} (${ach.isAchieved ? 'Completed!' : `${ach.progress} / ${ach.threshold}`})`;
+    const badge = document.createElement('div');
+    badge.className = `achievement-badge ${ach.isAchieved ? 'achieved' : 'locked'}`;
+    badge.title = titleText;
+    badge.dataset.description = ach.description;
+    badge.dataset.name = ach.name;
+    badge.dataset.progress = ach.progress;
+    badge.dataset.threshold = ach.threshold;
+    badge.dataset.achieved = ach.isAchieved;
+
+    let progressBarHTML = '';
+    if (!ach.isAchieved && ach.threshold > 0) {
+        const pct = Math.min(100, Math.round((ach.progress / ach.threshold) * 100));
+        progressBarHTML = `<div class="ach-progress-bar-mini" title="Progress: ${ach.progress}/${ach.threshold}"><div class="ach-progress-fill-mini" style="width: ${pct}%"></div></div>`;
+    }
+
+    badge.innerHTML = `
+        <span class="fa-stack fa-2x">
+            <i class="${ach.icon} fa-stack-2x"></i>
+        </span>
+        <span>${ach.name}</span>
+        ${progressBarHTML}`;
+
+    return badge;
 }
 
 const chartsModalChartInstances = {};
@@ -741,3 +1365,158 @@ function getDailyRecommendationMovie() {
     
     return { message: "Success", movie: recommendedMovie, dailyRecSkipCount };
 }
+
+// ==========================================================================
+//  PHASE 3: LIGHTWEIGHT CANVAS CONFETTI ENGINE
+// ==========================================================================
+
+/**
+ * Fires a burst of confetti particles on the #globalConfettiCanvas.
+ * Self-cleans after ~5 seconds when all particles have fallen out of view.
+ */
+window.fireConfetti = function () {
+    const canvas = document.getElementById('globalConfettiCanvas');
+    if (!canvas) return;
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.display = 'block';
+
+    const ctx = canvas.getContext('2d');
+    const PARTICLE_COUNT = 120;
+    const COLORS = [
+        '#ffc107', '#ff6f61', '#00e676', '#40c4ff', '#ab47bc',
+        '#ff9100', '#e040fb', '#ffeb3b', '#69f0ae', '#ea80fc'
+    ];
+
+    const particles = [];
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height * -0.5 - 20,
+            w: Math.random() * 8 + 4,
+            h: Math.random() * 5 + 3,
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+            vx: (Math.random() - 0.5) * 4,
+            vy: Math.random() * 3 + 2,
+            rotation: Math.random() * 360,
+            rotationSpeed: (Math.random() - 0.5) * 10,
+            opacity: 1,
+        });
+    }
+
+    let animId = null;
+    const startTime = performance.now();
+    const DURATION = 5000; // 5 seconds max
+
+    const _resizeHandler = () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', _resizeHandler);
+
+    function animate(now) {
+        const elapsed = now - startTime;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let alive = 0;
+        particles.forEach(p => {
+            p.x += p.vx;
+            p.vy += 0.05; // gravity
+            p.y += p.vy;
+            p.rotation += p.rotationSpeed;
+
+            // Fade out after 3.5s
+            if (elapsed > 3500) {
+                p.opacity = Math.max(0, p.opacity - 0.02);
+            }
+
+            if (p.y < canvas.height + 50 && p.opacity > 0) {
+                alive++;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.globalAlpha = p.opacity;
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                ctx.restore();
+            }
+        });
+
+        if (alive > 0 && elapsed < DURATION) {
+            animId = requestAnimationFrame(animate);
+        } else {
+            // Cleanup
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            canvas.style.display = 'none';
+            window.removeEventListener('resize', _resizeHandler);
+            if (animId) cancelAnimationFrame(animId);
+        }
+    }
+
+    animId = requestAnimationFrame(animate);
+};
+
+// ==========================================================================
+//  PHASE 3: ACHIEVEMENT UNLOCK CELEBRATION OVERLAY
+// ==========================================================================
+
+/**
+ * Shows a full-screen celebration overlay for a newly unlocked achievement.
+ * Automatically fires confetti and provides a dismiss button.
+ * @param {Object} achievement - The achievement object from ACHIEVEMENTS array.
+ */
+window.celebrateAchievementUnlock = function (achievement) {
+    if (!achievement) return;
+
+    // Prevent duplicate overlays
+    const existing = document.querySelector('.achievement-showcase-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'achievement-showcase-overlay';
+    overlay.innerHTML = `
+        <div class="achievement-showcase-card">
+            <div class="achievement-showcase-icon">
+                <i class="${achievement.icon || 'fas fa-trophy'}"></i>
+            </div>
+            <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #ffc107; font-weight: 700; margin-bottom: 0.5rem;">🏆 Achievement Unlocked!</div>
+            <div class="achievement-showcase-title">${achievement.name}</div>
+            <div class="achievement-showcase-desc">${achievement.description}</div>
+            <button class="achievement-showcase-btn" id="achievementShowcaseDismissBtn">Awesome!</button>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Animate in
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            overlay.classList.add('show');
+        });
+    });
+
+    // Fire confetti
+    if (typeof window.fireConfetti === 'function') {
+        window.fireConfetti();
+    }
+
+    // Dismiss handler
+    const dismiss = () => {
+        overlay.classList.remove('show');
+        setTimeout(() => {
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        }, 500);
+    };
+
+    const btn = overlay.querySelector('#achievementShowcaseDismissBtn');
+    if (btn) btn.addEventListener('click', dismiss);
+
+    // Also dismiss on overlay background click
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) dismiss();
+    });
+
+    // Auto-dismiss after 8 seconds
+    setTimeout(dismiss, 8000);
+};

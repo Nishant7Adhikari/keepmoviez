@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.4.11 -->
+<!-- KeepMoviEZ  v5.5.00 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -1522,18 +1522,10 @@
     <!-- START CHUNK: Modal - Daily Recommendation -->
     <div class="modal fade" id="dailyRecommendationModal" tabindex="-1" role="dialog"
         aria-labelledby="dailyRecommendationModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content fade-up">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dailyRecommendationModalLabel">Daily Recommendation</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
-                            aria-hidden="true">×</span> </button>
-                </div>
-                <div class="modal-body" id="dailyRecommendationModalBody">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content daily-pick-modal-content">
+                <div class="modal-body p-0" id="dailyRecommendationModalBody">
                     <p class="text-center text-muted p-3">Loading daily recommendation...</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1576,13 +1568,53 @@
         <div class="modal-dialog modal-xl" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="achievementsModalLabel">Achievements</h5>
+                    <h5 class="modal-title" id="achievementsModalLabel">Trophy Room & Achievements</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span
                             aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body" id="achievementsModalBody" style="max-height: 70vh; overflow-y: auto;">
-                    <div id="achievementBadgesModal" class="d-flex flex-wrap justify-content-center">
-                        <p class="text-center text-muted p-3">Loading achievements...</p>
+                    <!-- Global Trophy Room Progress -->
+                    <div class="global-completion-header mb-4 p-3 border rounded shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="font-weight-bold text-dark dark-theme-text-white"><i class="fas fa-award text-success mr-1"></i> Trophy Room Completion</span>
+                            <span id="globalAchievementsRatio" class="badge badge-success font-weight-bold" style="font-size: 0.9rem;">0 / 0 Unlocked</span>
+                        </div>
+                        <div class="progress" style="height: 10px; border-radius: 8px;">
+                            <div id="globalAchievementsProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sleek Tab Navigation -->
+                    <ul class="nav nav-tabs nav-justified mb-3" id="achievementsTabList" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="ach-all-tab" data-toggle="tab" href="#ach-all-pane" role="tab" aria-controls="ach-all-pane" aria-selected="true"><i class="fas fa-trophy mr-1"></i> All</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="ach-milestones-tab" data-toggle="tab" href="#ach-milestones-pane" role="tab" aria-controls="ach-milestones-pane" aria-selected="false"><i class="fas fa-flag mr-1"></i> Milestones</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="ach-genres-tab" data-toggle="tab" href="#ach-genres-pane" role="tab" aria-controls="ach-genres-pane" aria-selected="false"><i class="fas fa-mask mr-1"></i> Genre Mastery</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="ach-fun-tab" data-toggle="tab" href="#ach-fun-pane" role="tab" aria-controls="ach-fun-pane" aria-selected="false"><i class="fas fa-smile mr-1"></i> Features & Fun</a>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content" id="achievementsTabContent" style="padding-top: 10px;">
+                        <div class="tab-pane fade show active" id="ach-all-pane" role="tabpanel" aria-labelledby="ach-all-tab">
+                            <div id="achievementBadgesModal" class="d-flex flex-wrap justify-content-center">
+                                <p class="text-center text-muted p-3">Loading achievements...</p>
+                            </div>
+                        </div>
+                        <div class="tab-pane fade" id="ach-milestones-pane" role="tabpanel" aria-labelledby="ach-milestones-tab">
+                            <div id="achievementBadgesMilestones" class="d-flex flex-wrap justify-content-center"></div>
+                        </div>
+                        <div class="tab-pane fade" id="ach-genres-pane" role="tabpanel" aria-labelledby="ach-genres-tab">
+                            <div id="achievementBadgesGenres" class="d-flex flex-wrap justify-content-center"></div>
+                        </div>
+                        <div class="tab-pane fade" id="ach-fun-pane" role="tabpanel" aria-labelledby="ach-fun-tab">
+                            <div id="achievementBadgesFun" class="d-flex flex-wrap justify-content-center"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -2133,6 +2165,8 @@
     <script src="js/main.js?v=2"></script>
     <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
+    <!-- Global Full-Screen Confetti Celebration Canvas -->
+    <canvas id="globalConfettiCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: none;"></canvas>
 </body>
 
 </html>

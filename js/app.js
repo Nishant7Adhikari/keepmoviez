@@ -1036,20 +1036,12 @@ window.markDailyRecCompleted = async function (event) {
 };
 
 window.markDailyRecSkipped = async function (event) {
-  let dailyRecSkipCount = parseInt(
-    localStorage.getItem(DAILY_REC_SKIP_COUNT_KEY) || "0",
-  );
-  dailyRecSkipCount++;
-  localStorage.setItem(DAILY_REC_SKIP_COUNT_KEY, dailyRecSkipCount.toString());
-  localStorage.removeItem(DAILY_RECOMMENDATION_ID_KEY);
   showToast("Skipped", "Getting you a new recommendation...", "info");
-  $("#dailyRecommendationModal").modal("hide");
-  $("#dailyRecommendationModal").one("hidden.bs.modal", async () => {
-    showLoading("Getting next pick...");
-    await displayDailyRecommendationModal();
-    hideLoading();
-    $("#dailyRecommendationModal").modal("show");
-  });
+  if (typeof window.advanceDailyRecommendationModal === "function") {
+    await window.advanceDailyRecommendationModal(event);
+  } else {
+    console.warn("Daily recommendation advance handler is not available.");
+  }
 };
 // END CHUNK: Recommendation Modal Actions
 
@@ -1168,31 +1160,34 @@ window.checkAndNotifyNewAchievements = async function (isInitialLoad = false) {
     newlyUnlocked.forEach((id, index) => {
       const achievement = ACHIEVEMENTS.find((ach) => ach.id === id);
       if (achievement) {
-        const toastActions = [
-          {
-            label: "View Achievements",
-            className: "btn-outline-light",
-            onClick: () => {
-              if (
-                typeof displayAchievementsModal === "function" &&
-                typeof $ !== "undefined"
-              ) {
-                displayAchievementsModal();
-                $("#achievementsModal").modal("show");
-              }
-            },
-          },
-        ];
         setTimeout(() => {
-          showToast(
-            `🏆 Achievement Unlocked!`,
-            `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`,
-            "success",
-            0,
-            null,
-            toastActions,
-          );
-        }, 500 * index);
+          // Phase 3: Use celebration overlay with confetti if available
+          if (typeof window.celebrateAchievementUnlock === 'function') {
+            window.celebrateAchievementUnlock(achievement);
+          } else {
+            // Fallback: show toast
+            const toastActions = [
+              {
+                label: "View Achievements",
+                className: "btn-outline-light",
+                onClick: () => {
+                  if (typeof displayAchievementsModal === "function" && typeof $ !== "undefined") {
+                    displayAchievementsModal();
+                    $("#achievementsModal").modal("show");
+                  }
+                },
+              },
+            ];
+            showToast(
+              `🏆 Achievement Unlocked!`,
+              `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`,
+              "success",
+              0,
+              null,
+              toastActions,
+            );
+          }
+        }, 2000 * index); // 2s stagger to avoid overlapping celebrations
       }
     });
   }
