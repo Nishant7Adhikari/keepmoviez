@@ -342,6 +342,7 @@ async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
     const modalBody = document.getElementById('personalizedSuggestionsModalBody');
     const listEl = document.getElementById('recommendationsListModal');
     const titleEl = document.getElementById('recommendationsListTitleModal');
+    const metaEl = document.getElementById('recommendationsListMeta');
     const refreshBtn = document.getElementById('refreshRecommendationsBtnModal');
 
     if (!modalBody || !listEl || !titleEl || !refreshBtn) return;
@@ -369,6 +370,7 @@ async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
     if (!seedMovie) {
         listEl.innerHTML = '<div class="list-group-item text-muted small p-3">Could not generate suggestions. Try rating more movies highly, or adding TMDB info to your favorites.</div>';
         titleEl.textContent = 'Engine Suggestions';
+        if (metaEl) metaEl.textContent = 'Need a stronger seed movie to build the hub.';
         return;
     }
     
@@ -378,7 +380,13 @@ async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
 
     if (carousels.length === 0) {
         listEl.innerHTML = '<div class="list-group-item text-muted small p-3">No new suggestions found based on this movie. Try refreshing for a new seed!</div>';
+        if (metaEl) metaEl.textContent = `Seeded from ${seedMovie.Name}. No sections were strong enough to display.`;
         return;
+    }
+
+    if (metaEl) {
+        const sectionCount = carousels.filter(carousel => carousel.items.length > 0).length;
+        metaEl.textContent = `${sectionCount} recommendation section${sectionCount === 1 ? '' : 's'} ready. Built from ${seedMovie.Name}.`;
     }
     
     listEl.innerHTML = ''; // Clear loading spinner
@@ -778,29 +786,59 @@ const GENRE_MAP = [
 // Add some CSS to style.css for the new suggestion hub
 if (!document.getElementById('suggestion-hub-styles')) {
     const suggestionHubCSS = `
+        .suggestion-hub-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.1rem;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(0,123,138,0.12), rgba(0,123,138,0.03));
+            border: 1px solid rgba(0,123,138,0.14);
+        }
+        .suggestion-hub-list {
+            display: grid;
+            gap: 1rem;
+        }
+        .suggestion-carousel-wrapper {
+            padding: 1rem;
+            border-radius: 18px;
+            background: var(--card-bg);
+            border: 1px solid var(--table-border-color);
+            box-shadow: var(--box-shadow-subtle);
+        }
         .suggestion-carousel-wrapper .overflow-auto { -ms-overflow-style: none; scrollbar-width: none; }
         .suggestion-carousel-wrapper .overflow-auto::-webkit-scrollbar { display: none; }
+        .suggestion-carousel-wrapper h6 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+            color: var(--primary-color);
+            font-weight: 800;
+        }
         .suggestion-card {
             flex: 0 0 auto;
-            width: 140px;
-            margin: 0 8px;
+            width: 150px;
+            margin: 0 10px;
             cursor: pointer;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-            border-radius: 8px;
+            transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            background: var(--table-header-bg);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.04));
         }
         .suggestion-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.22);
         }
-        .suggestion-card img { width: 100%; height: 210px; object-fit: cover; display: block; }
+        .suggestion-card img { width: 100%; height: 220px; object-fit: cover; display: block; }
         .suggestion-card-info {
-            padding: 8px;
-            background: var(--card-bg);
+            padding: 10px;
+            background: rgba(0,0,0,0.12);
             color: var(--body-text-color);
-            font-size: 0.8rem;
+            font-size: 0.82rem;
         }
         .suggestion-card-info strong {
             display: -webkit-box;
@@ -809,6 +847,30 @@ if (!document.getElementById('suggestion-hub-styles')) {
             overflow: hidden;
             text-overflow: ellipsis;
             min-height: 2.4em; /* Approx 2 lines */
+        }
+        .achievement-hero {
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(40,167,69,0.12), rgba(0,123,138,0.04));
+            border: 1px solid rgba(40,167,69,0.14) !important;
+        }
+        .achievement-summary-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .achievement-summary-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.75rem;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.08);
+            color: var(--body-text-color);
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .achievement-ratio-pill {
+            border-radius: 999px;
+            padding: 0.45rem 0.8rem;
         }
     `;
     const styleSheet = document.createElement("style");
@@ -895,6 +957,21 @@ function displayAchievementsModal() {
     renderIntoContainer(containerGenres, buckets.genres);
     renderIntoContainer(containerFun, buckets.fun);
 
+    const bucketSummaries = [
+        { label: 'Milestones', items: buckets.milestones },
+        { label: 'Genre Mastery', items: buckets.genres },
+        { label: 'Features & Fun', items: buckets.fun },
+    ].map(bucket => {
+        const achieved = bucket.items.filter(ach => ach.isAchieved).length;
+        const total = bucket.items.length;
+        return {
+            ...bucket,
+            achieved,
+            total,
+            percent: total > 0 ? Math.round((achieved / total) * 100) : 0,
+        };
+    }).sort((a, b) => b.percent - a.percent || b.achieved - a.achieved || a.label.localeCompare(b.label));
+
     // ---- Update global completion header ----
     const totalCount = ACHIEVEMENTS.length;
     const unlockedCount = achievementsToDisplay.filter(a => a.isAchieved).length;
@@ -913,6 +990,20 @@ function displayAchievementsModal() {
                 progressBarEl.style.width = percent + '%';
             });
         });
+    }
+
+    const unlockedSummaryEl = document.getElementById('achievementSummaryUnlocked');
+    if (unlockedSummaryEl) unlockedSummaryEl.textContent = `${unlockedCount} achieved`;
+
+    const lockedSummaryEl = document.getElementById('achievementSummaryLocked');
+    if (lockedSummaryEl) lockedSummaryEl.textContent = `${Math.max(totalCount - unlockedCount, 0)} locked`;
+
+    const topCategoryEl = document.getElementById('achievementSummaryTopCategory');
+    if (topCategoryEl) {
+        const topBucket = bucketSummaries[0];
+        topCategoryEl.textContent = topBucket && topBucket.total > 0
+            ? `Top category: ${topBucket.label} (${topBucket.achieved}/${topBucket.total})`
+            : 'Top category: pending';
     }
 }
 

@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.5.00 -->
+<!-- KeepMoviEZ  v5.5.01 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -1543,14 +1543,17 @@
                             aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body" id="personalizedSuggestionsModalBody">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 id="recommendationsListTitleModal">Your Suggestions</h6>
-                        <button id="refreshRecommendationsBtnModal" class="btn btn-sm btn-outline-primary">
+                    <div class="suggestion-hub-header mb-3">
+                        <div>
+                            <div class="modal-eyebrow">Suggestion Hub</div>
+                            <h6 id="recommendationsListTitleModal" class="mb-1">Your Suggestions</h6>
+                            <p id="recommendationsListMeta" class="text-muted small mb-0">Based on your data and preferences.</p>
+                        </div>
+                        <button id="refreshRecommendationsBtnModal" class="btn btn-sm btn-outline-primary suggestion-refresh-btn">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
-                    <p class="text-muted small">Based on your data and preferences.</p>
-                    <div id="recommendationsListModal" class="list-group">
+                    <div id="recommendationsListModal" class="suggestion-hub-list list-group">
                         <p class="text-center text-muted p-3">Loading suggestions...</p>
                     </div>
                 </div>
@@ -1574,13 +1577,22 @@
                 </div>
                 <div class="modal-body" id="achievementsModalBody" style="max-height: 70vh; overflow-y: auto;">
                     <!-- Global Trophy Room Progress -->
-                    <div class="global-completion-header mb-4 p-3 border rounded shadow-sm">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="font-weight-bold text-dark dark-theme-text-white"><i class="fas fa-award text-success mr-1"></i> Trophy Room Completion</span>
-                            <span id="globalAchievementsRatio" class="badge badge-success font-weight-bold" style="font-size: 0.9rem;">0 / 0 Unlocked</span>
+                    <div class="global-completion-header achievement-hero mb-4 p-3 border rounded shadow-sm">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <div class="modal-eyebrow">Achievement Vault</div>
+                                <span class="font-weight-bold text-dark dark-theme-text-white"><i class="fas fa-award text-success mr-1"></i> Trophy Room Completion</span>
+                                <p class="text-muted small mb-0">Track your progress across milestones, genre mastery, and feature-driven badges.</p>
+                            </div>
+                            <span id="globalAchievementsRatio" class="badge badge-success font-weight-bold achievement-ratio-pill" style="font-size: 0.9rem;">0 / 0 Unlocked</span>
                         </div>
                         <div class="progress" style="height: 10px; border-radius: 8px;">
                             <div id="globalAchievementsProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <div class="achievement-summary-row mt-3">
+                            <span id="achievementSummaryUnlocked" class="achievement-summary-chip">0 achieved</span>
+                            <span id="achievementSummaryLocked" class="achievement-summary-chip">0 locked</span>
+                            <span id="achievementSummaryTopCategory" class="achievement-summary-chip">Top category: pending</span>
                         </div>
                     </div>
 

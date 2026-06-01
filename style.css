@@ -2112,6 +2112,16 @@ a:hover {
   /* Pulls it up to the header */
 }
 
+.modal-eyebrow {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--primary-color);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 /* END CHUNK: 12: Miscellaneous Specific Styles */
 
 /*START CHUNK: 13: Achievement Badge Component*/
@@ -2121,6 +2131,34 @@ a:hover {
   margin: 0 auto;
 }
 
+.achievement-hero {
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.12), rgba(0, 123, 138, 0.04));
+  border: 1px solid rgba(40, 167, 69, 0.14) !important;
+}
+
+.achievement-ratio-pill {
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+}
+
+.achievement-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.achievement-summary-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--body-text-color);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
 .achievement-badge {
   display: flex;
   flex-direction: column;
@@ -2128,26 +2166,29 @@ a:hover {
   justify-content: center;
   text-align: center;
   margin: 10px;
-  padding: 15px 5px;
-  border-radius: var(--border-radius-md);
-  background-color: var(--table-header-bg);
+  padding: 16px 10px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.06));
+  border: 1px solid var(--table-border-color);
   box-shadow: var(--box-shadow-subtle);
-  width: 120px;
-  min-height: 120px;
+  width: 125px;
+  min-height: 132px;
   transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
+    transform 0.25s ease,
+    box-shadow 0.25s ease,
+    border-color 0.25s ease;
   flex-shrink: 0;
   color: var(--body-text-color);
 }
 
 .achievement-badge:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+  border-color: rgba(0, 123, 138, 0.22);
 }
 
 .achievement-badge .fa-stack {
-  font-size: 2rem;
+  font-size: 2.1rem;
   margin-bottom: 10px;
   color: #a0a0a0;
   /* Color of the locked background trophy */
@@ -2159,7 +2200,7 @@ a:hover {
 }
 
 .achievement-badge.locked {
-  opacity: 0.65;
+  opacity: 0.72;
 }
 
 .achievement-badge span {
@@ -2168,6 +2209,21 @@ a:hover {
   line-height: 1.25;
   display: block;
   width: 100%;
+}
+
+.ach-progress-bar-mini {
+  width: 100%;
+  height: 6px;
+  margin-top: 0.5rem;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.16);
+  overflow: hidden;
+}
+
+.ach-progress-fill-mini {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--primary-color), var(--success-color));
 }
 
 .progress-ring {
