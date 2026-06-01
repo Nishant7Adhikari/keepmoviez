@@ -3282,6 +3282,7 @@ a:hover {
 
 .suggestion-carousel-wrapper {
   margin-bottom: 2rem;
+  overflow-x: scroll;
 }
 
 .suggestion-carousel-wrapper h6 {
