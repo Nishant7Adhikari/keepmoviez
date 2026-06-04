@@ -1052,6 +1052,12 @@ document.addEventListener("DOMContentLoaded", () => {
       onlineIndicator.className = "badge badge-pill badge-success";
     }
     showToast("Connection Restored", "You are back online.", "success");
+    
+    // Auto-sync when connection is restored
+    if (typeof comprehensiveSync === "function" && window.currentSupabaseUser) {
+      console.log("Connection restored. Triggering auto-sync...");
+      comprehensiveSync(true);
+    }
   });
   window.addEventListener("offline", () => {
     const onlineIndicator = document.getElementById(

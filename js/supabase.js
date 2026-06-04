@@ -743,7 +743,7 @@ async function initializeApp() {
     
     // Attempt to download fresh offline-first achievement stats from cloud
     if (typeof window.syncAchievementStatsCloud === "function") {
-       await window.syncAchievementStatsCloud();
+       window.syncAchievementStatsCloud();
     }
     if (!movieData || movieData.length === 0) {
       movieData = await loadFromIndexedDB();

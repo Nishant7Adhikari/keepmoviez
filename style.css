@@ -2112,16 +2112,6 @@ a:hover {
   /* Pulls it up to the header */
 }
 
-.modal-eyebrow {
-  display: block;
-  margin-bottom: 0.25rem;
-  color: var(--primary-color);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
 /* END CHUNK: 12: Miscellaneous Specific Styles */
 
 /*START CHUNK: 13: Achievement Badge Component*/
@@ -2131,34 +2121,6 @@ a:hover {
   margin: 0 auto;
 }
 
-.achievement-hero {
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(40, 167, 69, 0.12), rgba(0, 123, 138, 0.04));
-  border: 1px solid rgba(40, 167, 69, 0.14) !important;
-}
-
-.achievement-ratio-pill {
-  border-radius: 999px;
-  padding: 0.45rem 0.8rem;
-}
-
-.achievement-summary-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.achievement-summary-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--body-text-color);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
 .achievement-badge {
   display: flex;
   flex-direction: column;
@@ -2166,29 +2128,26 @@ a:hover {
   justify-content: center;
   text-align: center;
   margin: 10px;
-  padding: 16px 10px;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(0,0,0,0.06));
-  border: 1px solid var(--table-border-color);
+  padding: 15px 5px;
+  border-radius: var(--border-radius-md);
+  background-color: var(--table-header-bg);
   box-shadow: var(--box-shadow-subtle);
-  width: 125px;
-  min-height: 132px;
+  width: 120px;
+  min-height: 120px;
   transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    border-color 0.25s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
   flex-shrink: 0;
   color: var(--body-text-color);
 }
 
 .achievement-badge:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
-  border-color: rgba(0, 123, 138, 0.22);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
 }
 
 .achievement-badge .fa-stack {
-  font-size: 2.1rem;
+  font-size: 2rem;
   margin-bottom: 10px;
   color: #a0a0a0;
   /* Color of the locked background trophy */
@@ -2200,7 +2159,7 @@ a:hover {
 }
 
 .achievement-badge.locked {
-  opacity: 0.72;
+  opacity: 0.65;
 }
 
 .achievement-badge span {
@@ -2209,21 +2168,6 @@ a:hover {
   line-height: 1.25;
   display: block;
   width: 100%;
-}
-
-.ach-progress-bar-mini {
-  width: 100%;
-  height: 6px;
-  margin-top: 0.5rem;
-  border-radius: 999px;
-  background: rgba(128, 128, 128, 0.16);
-  overflow: hidden;
-}
-
-.ach-progress-fill-mini {
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--primary-color), var(--success-color));
 }
 
 .progress-ring {
@@ -2808,7 +2752,7 @@ a:hover {
 
 /* END CHUNK: 16: Redesigned Details Modal*/
 
-/*START CHUNK: 17: About Modal (Stylized)*/
+/*START CHUNK: 17: About Modal*/
 .about-modal-body {
   padding: 1.5rem;
 }
@@ -2965,7 +2909,7 @@ a:hover {
   font-weight: 500;
 }
 
-/*END CHUNK: 17: About Modal (Stylized)*/
+/*END CHUNK: 17: About Modal*/
 
 #backfillGoogleBtn {
   border: 1px solid #007bff !important;
@@ -3034,7 +2978,7 @@ a:hover {
 }
 
 /* ==========================================================================
-   PREMIUM DAILY PICK UPGRADE (OPTION A)
+   PREMIUM DAILY PICK UPGRADE 
    ========================================================================== */
 
 .daily-pick-modal-content {
@@ -3192,59 +3136,6 @@ a:hover {
   margin-bottom: 1.5rem;
 }
 
-.daily-pick-standby-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin: 0.75rem 0 1rem;
-  padding: 0.7rem 0.85rem;
-  border-radius: 12px;
-  background: rgba(128, 128, 128, 0.08);
-  border: 1px solid rgba(128, 128, 128, 0.12);
-}
-
-.daily-pick-standby-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--primary-color);
-  margin-right: 0.25rem;
-}
-
-.daily-pick-standby-chip {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--body-text-color);
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.daily-pick-standby-empty {
-  font-size: 0.78rem;
-  color: var(--tdcolor);
-  font-style: italic;
-}
-
-.daily-pick-no-more-skips {
-  margin-top: 0.75rem;
-  padding: 0.65rem 0.85rem;
-  border-radius: 10px;
-  background: rgba(220, 53, 69, 0.08);
-  border: 1px solid rgba(220, 53, 69, 0.18);
-  color: var(--body-text-color);
-  font-size: 0.84rem;
-  font-weight: 600;
-}
-
 .daily-pick-meta {
   font-size: 0.8rem;
   text-transform: uppercase;
@@ -3282,7 +3173,6 @@ a:hover {
 
 .suggestion-carousel-wrapper {
   margin-bottom: 2rem;
-  overflow-x: scroll;
 }
 
 .suggestion-carousel-wrapper h6 {
