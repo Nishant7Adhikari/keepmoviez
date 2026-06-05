@@ -188,30 +188,25 @@ function displayTmdbResults(results) {
 // END CHUNK: Display TMDB Search Results
 
 // START CHUNK: Apply TMDB Selection to Form
-async function applyTmdbSelection(item) {
-    if (!formFieldsGlob) {
-        console.error("formFieldsGlob not initialized. Cannot apply TMDB selection.");
-        return;
-    }
-    if (typeof showLoading === 'function') showLoading("Fetching details for TMDB selection...");
-
-    const releaseDate = item.release_date || item.first_air_date;
-    const year = releaseDate ? new Date(releaseDate).getFullYear().toString() : '';
-
+async function fetchAndProcessTmdbDetails(mediaType, id) {
     let tmdbGenres = [], tmdbCountryISO = '', tmdbLanguage = '', tmdbKeywords = [];
-    let tmdbPosterPath = item.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${item.poster_path}` : '';
+    let tmdbPosterPath = '';
     let tmdbCast = [], tmdbDirector = null, tmdbProductionCompanies = [];
     let tmdbVoteAverage = null, tmdbVoteCount = null, tmdbRuntime = null;
     let tmdbCollectionId = null, tmdbCollectionName = null;
     let tmdbCollectionTotalParts = null; 
     let detailData = {};
 
-    try {
-        detailData = await callTmdbApiDirect(`/${item.media_type}/${item.id}`, { append_to_response: 'keywords,credits,collection,external_ids' });
+    detailData = await callTmdbApiDirect(`/${mediaType}/${id}`, { append_to_response: 'keywords,credits,collection,external_ids' });
 
+    if (detailData) {
         if (detailData.genres) tmdbGenres = detailData.genres.map(g => g.name);
-        if (detailData.production_countries && detailData.production_countries.length > 0) tmdbCountryISO = detailData.production_countries[0].iso_3166_1 || '';
-        else if (detailData.origin_country && detailData.origin_country.length > 0) tmdbCountryISO = detailData.origin_country[0] || '';
+        if (detailData.production_countries && detailData.production_countries.length > 0) {
+            tmdbCountryISO = detailData.production_countries[0].iso_3166_1 || '';
+        } else if (detailData.origin_country && detailData.origin_country.length > 0) {
+            tmdbCountryISO = detailData.origin_country[0] || '';
+        }
+        
         if (detailData.original_language) {
             const langObj = (detailData.spoken_languages || []).find(l => l.iso_639_1 === detailData.original_language);
             tmdbLanguage = langObj ? (langObj.english_name || langObj.name || detailData.original_language.toUpperCase()) : detailData.original_language.toUpperCase();
@@ -236,12 +231,12 @@ async function applyTmdbSelection(item) {
 
         if (detailData.production_companies) tmdbProductionCompanies = detailData.production_companies.map(pc => ({ id: pc.id, name: pc.name, logo_path: pc.logo_path, origin_country: pc.origin_country }));
 
-        tmdbVoteAverage = item.vote_average || detailData.vote_average || null;
-        tmdbVoteCount = item.vote_count || detailData.vote_count || null;
+        tmdbVoteAverage = detailData.vote_average || null;
+        tmdbVoteCount = detailData.vote_count || null;
 
-        if (item.media_type === 'movie') {
+        if (mediaType === 'movie') {
             tmdbRuntime = detailData.runtime || null;
-        } else if (item.media_type === 'tv') {
+        } else if (mediaType === 'tv') {
             tmdbRuntime = {
                 seasons: detailData.number_of_seasons || null,
                 episodes: detailData.number_of_episodes || null,
@@ -261,84 +256,120 @@ async function applyTmdbSelection(item) {
                 console.warn(`Could not fetch details for collection ID ${tmdbCollectionId}:`, collectionError.message);
             }
         }
-
-    } catch (error) {
-        console.error("Error fetching TMDB item details (proxy):", error);
-        if (typeof showToast === 'function') {
-            showToast("TMDB Detail Error", `Could not fetch detailed info: ${error.message}`, "warning");
-        }
     }
 
-    formFieldsGlob.name.value = item.title || item.name || formFieldsGlob.name.value;
-    
     // Auto-Category Logic
     let detectedCategory = 'Movie';
-    if (item.media_type === 'tv') {
+    if (mediaType === 'tv') {
         detectedCategory = 'Series';
-    } else if (item.media_type === 'movie') {
-        // Check if it's a documentary based on genre ID 99 or name
+    } else if (mediaType === 'movie') {
         const hasDocGenre = (tmdbGenres || []).some(g => g.toLowerCase() === 'documentary');
         if (hasDocGenre) {
             detectedCategory = 'Documentary';
         }
     }
-    formFieldsGlob.category.value = detectedCategory;
 
-    formFieldsGlob.year.value = year;
-    formFieldsGlob.country.value = tmdbCountryISO;
-    formFieldsGlob.language.value = tmdbLanguage;
+    const releaseDate = detailData.release_date || detailData.first_air_date || '';
+    const year = releaseDate ? new Date(releaseDate).getFullYear().toString() : '';
 
-    // NEW: Overwrite Protection for Poster URL
-    const existingPosterVal = formFieldsGlob.posterUrl.value.trim();
-    if (existingPosterVal.startsWith('"') && existingPosterVal.endsWith('"')) {
-        console.log("Skipping Poster URL update (Locked by User).");
-        // Keep existing, do nothing
-    } else {
-        formFieldsGlob.posterUrl.value = tmdbPosterPath;
-        // Also update preview
-        if(typeof window.handlePosterUrlInput === 'function') {
-            window.handlePosterUrlInput(false); // False = Not locked (it's from TMDB)
-        }
-        formFieldsGlob.posterUrl.dataset.source = 'tmdb'; // Track source
+    return {
+        Name: detailData.title || detailData.name || '',
+        Category: detectedCategory,
+        Genre: tmdbGenres.join(', '),
+        genres: tmdbGenres,
+        Language: tmdbLanguage,
+        Year: year,
+        Country: tmdbCountryISO,
+        Description: detailData.overview || '',
+        "Poster URL": tmdbPosterPath,
+        poster_url: tmdbPosterPath,
+        keywords: tmdbKeywords,
+        full_cast: tmdbCast,
+        director_info: tmdbDirector,
+        production_companies: tmdbProductionCompanies,
+        tmdb_vote_average: tmdbVoteAverage,
+        tmdb_vote_count: tmdbVoteCount,
+        runtime: tmdbRuntime,
+        tmdb_collection_id: tmdbCollectionId,
+        tmdb_collection_name: tmdbCollectionName,
+        tmdb_collection_total_parts: tmdbCollectionTotalParts,
+        imdb_id: detailData.external_ids?.imdb_id || null,
+        tmdb_release_date: releaseDate || null
+    };
+}
+
+async function applyTmdbSelection(item) {
+    if (!formFieldsGlob) {
+        console.error("formFieldsGlob not initialized. Cannot apply TMDB selection.");
+        return;
     }
-    
-    if (item.overview) formFieldsGlob.description.value = item.overview;
+    if (typeof showLoading === 'function') showLoading("Fetching details for TMDB selection...");
 
-    document.getElementById('tmdbId').value = item.id;
-    document.getElementById('tmdbMediaType').value = item.media_type;
+    try {
+        const processed = await fetchAndProcessTmdbDetails(item.media_type, item.id);
 
-    if (tmdbGenres.length > 0) {
-        const currentSelectedGenres = new Set(selectedGenres);
-        tmdbGenres.forEach(tmdbGenreName => {
-            const matchedLocalGenre = UNIQUE_ALL_GENRES.find(localGenre => String(localGenre).toLowerCase() === String(tmdbGenreName).toLowerCase().replace(/-/g, ' '));
-            if (matchedLocalGenre) {
-                currentSelectedGenres.add(matchedLocalGenre);
+        formFieldsGlob.name.value = processed.Name || formFieldsGlob.name.value;
+        formFieldsGlob.category.value = processed.Category;
+        formFieldsGlob.year.value = processed.Year;
+        formFieldsGlob.country.value = processed.Country;
+        formFieldsGlob.language.value = processed.Language;
+
+        // NEW: Overwrite Protection for Poster URL
+        const existingPosterVal = formFieldsGlob.posterUrl.value.trim();
+        if (existingPosterVal.startsWith('"') && existingPosterVal.endsWith('"')) {
+            console.log("Skipping Poster URL update (Locked by User).");
+        } else {
+            formFieldsGlob.posterUrl.value = processed["Poster URL"];
+            if (typeof window.handlePosterUrlInput === 'function') {
+                window.handlePosterUrlInput(false);
             }
-        });
-        selectedGenres = Array.from(currentSelectedGenres).sort();
-        renderGenreTags();
-        populateGenreDropdown();
-    }
+            formFieldsGlob.posterUrl.dataset.source = 'tmdb';
+        }
+        
+        if (processed.Description) formFieldsGlob.description.value = processed.Description;
 
-    const entryFormEl = document.getElementById('entryForm');
-    if (entryFormEl) {
-        entryFormEl._tempTmdbData = {
-            keywords: tmdbKeywords,
-            full_cast: tmdbCast,
-            director_info: tmdbDirector,
-            production_companies: tmdbProductionCompanies,
-            tmdb_vote_average: tmdbVoteAverage,
-            tmdb_vote_count: tmdbVoteCount,
-            runtime: tmdbRuntime,
-            tmdb_collection_id: tmdbCollectionId,
-            tmdb_collection_name: tmdbCollectionName, 
-            tmdb_collection_total_parts: tmdbCollectionTotalParts,
-            imdb_id: detailData.external_ids?.imdb_id || null,
-            tmdb_release_date: releaseDate || null
-        };
+        document.getElementById('tmdbId').value = item.id;
+        document.getElementById('tmdbMediaType').value = item.media_type;
+
+        if (processed.genres && processed.genres.length > 0) {
+            const currentSelectedGenres = new Set(selectedGenres);
+            processed.genres.forEach(tmdbGenreName => {
+                const matchedLocalGenre = UNIQUE_ALL_GENRES.find(localGenre => String(localGenre).toLowerCase() === String(tmdbGenreName).toLowerCase().replace(/-/g, ' '));
+                if (matchedLocalGenre) {
+                    currentSelectedGenres.add(matchedLocalGenre);
+                }
+            });
+            selectedGenres = Array.from(currentSelectedGenres).sort();
+            renderGenreTags();
+            populateGenreDropdown();
+        }
+
+        const entryFormEl = document.getElementById('entryForm');
+        if (entryFormEl) {
+            entryFormEl._tempTmdbData = {
+                keywords: processed.keywords,
+                full_cast: processed.full_cast,
+                director_info: processed.director_info,
+                production_companies: processed.production_companies,
+                tmdb_vote_average: processed.tmdb_vote_average,
+                tmdb_vote_count: processed.tmdb_vote_count,
+                runtime: processed.runtime,
+                tmdb_collection_id: processed.tmdb_collection_id,
+                tmdb_collection_name: processed.tmdb_collection_name, 
+                tmdb_collection_total_parts: processed.tmdb_collection_total_parts,
+                imdb_id: processed.imdb_id,
+                tmdb_release_date: processed.tmdb_release_date
+            };
+        }
+        if (typeof showToast === 'function') showToast("Info Applied", `${processed.Name} details pre-filled. Review and save.`, "info", 3000);
+    } catch (error) {
+        console.error("Error applying TMDB selection:", error);
+        if (typeof showToast === 'function') {
+            showToast("TMDB Detail Error", `Could not fetch detailed info: ${error.message}`, "warning");
+        }
+    } finally {
+        if (typeof hideLoading === 'function') hideLoading();
     }
-    if (typeof showToast === 'function') showToast("Info Applied", `${item.title || item.name} details pre-filled. Review and save.`, "info", 3000);
-    if (typeof hideLoading === 'function') hideLoading();
 }
 // END CHUNK: Apply TMDB Selection to Form
 

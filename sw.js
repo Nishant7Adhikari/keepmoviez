@@ -1,5 +1,5 @@
-// sw.js
-const CACHE_NAME = "keepmoviez-local-v5.5.03"; // Version bumped to force update
+  // sw.js
+const CACHE_NAME = "keepmoviez-local-v5.5.05"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -38,14 +38,14 @@ const CORE_ASSETS = [
   "./js/data.js",
   "./js/io1.js",
   "./js/io2.js",
-  "./js/tmdb.js",
+  "./js/tmdb.js?v=5.5.05",
   "./js/genre.js",
   "./js/analysis.js",
   "./js/ui.js",
-  "./js/reporting.js",
-  "./js/app.js",
+  "./js/reporting.js?v=5.5.05",
+  "./js/app.js?v=5.5.05",
   "./js/supabase.js",
-  "./js/main.js",
+  "./js/main.js?v=5.5.05",
 
   // Icons
   "./icons/icon-192x192.png",
@@ -92,9 +92,9 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
 
   const criticalAppScripts = [
-    "app.js",
+    "app.js?v=5.5.05",
     "data.js",
-    "main.js",
+    "main.js?v=5.5.05",
     "supabase.js",
     "indexeddb.js",
     "ui.js",

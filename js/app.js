@@ -674,6 +674,13 @@ window.handleQuickUpdateSave = async function (event) {
     await saveToIndexedDB();
     if (typeof trackModification === "function") trackModification(entryId);
     renderMovieCards();
+
+    // Check if opened from daily recommendation to trigger achievement
+    if (window.lastOpenedFromDailyRec === entryId) {
+      incrementLocalStorageCounter("daily_rec_watched_achievement");
+      window.lastOpenedFromDailyRec = null;
+    }
+
     await checkAndNotifyNewAchievements();
 
     $("#quickUpdateModal").modal("hide");
@@ -1022,29 +1029,11 @@ window.handleBatchEditFormSubmit = async function (event) {
 // START CHUNK: Recommendation Modal Actions
 window.markDailyRecCompleted = async function (event) {
   const movieId = event.target.closest("button").dataset.movieId;
-  const movieIndex = movieData.findIndex((m) => m.id === movieId);
-  if (movieIndex !== -1) {
-    movieData[movieIndex].Status = "Watched";
-    movieData[movieIndex].lastModifiedDate = new Date().toISOString();
-    if (!Array.isArray(movieData[movieIndex].watchHistory))
-      movieData[movieIndex].watchHistory = [];
-    movieData[movieIndex].watchHistory.push({
-      watchId: generateUUID(),
-      date: new Date().toISOString(),
-      rating: "",
-      notes: "Marked as Watched from Daily Recommendation",
-    });
-    if (movieData[movieIndex]._sync_state !== "new")
-      movieData[movieIndex]._sync_state = "edited";
-    incrementLocalStorageCounter("daily_rec_watched_achievement");
-    await saveToIndexedDB();
-    renderMovieCards();
-    showToast(
-      "Great!",
-      `Marked "${movieData[movieIndex].Name}" as Watched.`,
-      "success",
-    );
-  }
+  window.lastOpenedFromDailyRec = movieId;
+  $('#dailyRecommendationModal').modal('hide');
+  $('#dailyRecommendationModal').one('hidden.bs.modal', () => {
+    prepareQuickUpdateModal(movieId);
+  });
 };
 
 window.markDailyRecSkipped = async function (event) {

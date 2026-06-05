@@ -701,10 +701,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
-    $("#refreshRecommendationsBtnModal").on("click", async function () {
-      displayPersonalizedSuggestionsModal();
-    });
-
     $(document).on("click", ".achievement-badge", function () {
       const badge = $(this);
       const name = badge.data("name");

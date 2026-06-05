@@ -187,7 +187,6 @@ function bindDailyRecommendationCardActions(modalBody) {
     if (markCompletedButton) {
         markCompletedButton.addEventListener('click', async function (event) {
             await window.markDailyRecCompleted(event);
-            $('#dailyRecommendationModal').modal('hide');
         });
     }
 
@@ -580,19 +579,13 @@ function renderSuggestionCard(item) {
         card.style.opacity = '0.4';
         card.style.pointerEvents = 'none';
         
-        await fastSaveSuggestion(item, 'Watched');
-        
-        // Remove card element from DOM after save
-        $(card).fadeOut(400, () => {
-            const container = card.parentElement;
-            card.remove();
-            if (container && container.children.length === 0) {
-                const wrapper = container.parentElement;
-                if (wrapper) {
-                    $(wrapper).fadeOut(400, () => wrapper.remove());
-                }
-            }
-        });
+        const savedEntryId = await fastSaveSuggestion(item, 'Watched');
+        if (savedEntryId) {
+            $('#personalizedSuggestionsModal').modal('hide');
+            $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
+                prepareQuickUpdateModal(savedEntryId);
+            });
+        }
     });
 
     // Handle Card click to view details
@@ -650,7 +643,6 @@ function calculateMatchScoreForRecommendation(item) {
 // Fast-save engine for suggestion quick-action overlays
 async function fastSaveSuggestion(item, status) {
     const isSeries = item.media_type === 'tv';
-    const detectedCategory = isSeries ? 'Series' : 'Movie';
     const name = item.title || item.name;
     const year = (item.release_date || item.first_air_date || '').substring(0, 4);
     
@@ -658,100 +650,118 @@ async function fastSaveSuggestion(item, status) {
     const existing = window.movieData.find(m => m.tmdbId == item.id && !m.is_deleted);
     let savedEntryId;
     
+    showLoading(status === 'To Watch' ? "Adding to Watchlist..." : "Saving details...");
+    
+    let processed = {};
+    try {
+        processed = await fetchAndProcessTmdbDetails(item.media_type || (item.name ? 'tv' : 'movie'), item.id);
+    } catch (err) {
+        console.warn("Could not fetch full details for fast-save:", err);
+        // Fallback minimally if tmdb fetch fails
+        processed = {
+            Name: name,
+            Category: isSeries ? 'Series' : 'Movie',
+            Genre: '',
+            genres: [],
+            Language: '',
+            Year: year,
+            Country: '',
+            Description: item.overview || '',
+            "Poster URL": item.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${item.poster_path}` : '',
+            poster_url: item.poster_path ? `${TMDB_IMAGE_BASE_URL}w500${item.poster_path}` : '',
+            keywords: [],
+            full_cast: [],
+            director_info: null,
+            production_companies: [],
+            tmdb_vote_average: item.vote_average || null,
+            tmdb_vote_count: item.vote_count || null,
+            runtime: null,
+            tmdb_collection_id: null,
+            tmdb_collection_name: null,
+            tmdb_collection_total_parts: null,
+            imdb_id: null,
+            tmdb_release_date: item.release_date || item.first_air_date || null
+        };
+    }
+
+    // Map genres to local UNIQUE_ALL_GENRES names
+    const localGenres = [];
+    if (processed.genres && processed.genres.length > 0) {
+        processed.genres.forEach(tmdbGenreName => {
+            const matchedLocalGenre = UNIQUE_ALL_GENRES.find(localGenre => String(localGenre).toLowerCase() === String(tmdbGenreName).toLowerCase().replace(/-/g, ' '));
+            if (matchedLocalGenre) {
+                localGenres.push(matchedLocalGenre);
+            }
+        });
+    }
+    const genreString = [...new Set(localGenres)].sort().join(", ");
+    
     if (existing) {
-        if (status === 'To Watch' && existing.Status === 'To Watch') {
-            showToast("Already in Log", `"${name}" is already in your Watchlist!`, "info");
-            return;
-        } else if (status === 'Watched' && existing.Status === 'Watched') {
-            showToast("Already in Log", `"${name}" is already marked as Watched!`, "info");
-            return;
-        }
-        
-        // Update status of existing entry
+        // Update status and fields of existing entry
         existing.Status = status;
+        existing.Name = processed.Name || existing.Name;
+        existing.Category = processed.Category || existing.Category;
+        existing.Genre = genreString || existing.Genre;
+        existing.Language = processed.Language || existing.Language;
+        existing.Year = processed.Year || existing.Year;
+        existing.Country = processed.Country || existing.Country;
+        existing.Description = processed.Description || existing.Description;
+        existing["Poster URL"] = processed["Poster URL"] || existing["Poster URL"];
+        existing.poster_url = processed.poster_url || existing.poster_url;
+        existing.keywords = processed.keywords.length > 0 ? processed.keywords : existing.keywords;
+        existing.full_cast = processed.full_cast.length > 0 ? processed.full_cast : existing.full_cast;
+        existing.director_info = processed.director_info || existing.director_info;
+        existing.production_companies = processed.production_companies.length > 0 ? processed.production_companies : existing.production_companies;
+        existing.tmdb_vote_average = processed.tmdb_vote_average || existing.tmdb_vote_average;
+        existing.tmdb_vote_count = processed.tmdb_vote_count || existing.tmdb_vote_count;
+        existing.runtime = processed.runtime || existing.runtime;
+        existing.tmdb_collection_id = processed.tmdb_collection_id || existing.tmdb_collection_id;
+        existing.tmdb_collection_name = processed.tmdb_collection_name || existing.tmdb_collection_name;
+        existing.tmdb_collection_total_parts = processed.tmdb_collection_total_parts || existing.tmdb_collection_total_parts;
+        existing.imdb_id = processed.imdb_id || existing.imdb_id;
+        existing.tmdb_release_date = processed.tmdb_release_date || existing.tmdb_release_date;
+
         existing.lastModifiedDate = new Date().toISOString();
         if (existing._sync_state !== 'new') existing._sync_state = 'edited';
-        if (status === 'Watched' && (!existing.watchHistory || existing.watchHistory.length === 0)) {
-            existing.watchHistory = [{
-                watchId: generateUUID(),
-                date: new Date().toISOString(),
-                rating: "",
-                notes: "Fast-saved from Suggestion Engine"
-            }];
-        }
+        
         savedEntryId = existing.id;
     } else {
-        // Fetch detailed TMDB data to get genres, runtimes etc.
-        let detailData = {};
-        let tmdbGenres = [], tmdbCountryISO = '', tmdbLanguage = '';
-        let tmdbCast = [], tmdbDirector = null, tmdbProductionCompanies = [];
-        let tmdbRuntime = null;
-        
-        try {
-            detailData = await callTmdbApiDirect(`/${item.media_type}/${item.id}`, { append_to_response: 'credits,external_ids' });
-            if (detailData) {
-                if (detailData.genres) tmdbGenres = detailData.genres.map(g => g.name);
-                if (detailData.production_countries && detailData.production_countries.length > 0) tmdbCountryISO = detailData.production_countries[0].iso_3166_1 || '';
-                if (detailData.original_language) {
-                    tmdbLanguage = detailData.original_language.toUpperCase();
-                }
-                if (detailData.credits) {
-                    if (detailData.credits.cast) tmdbCast = detailData.credits.cast.slice(0, 15).map(c => ({ id: c.id, name: c.name, character: c.character }));
-                    if (detailData.credits.crew) {
-                        const dir = detailData.credits.crew.find(c => c.job === 'Director');
-                        if (dir) tmdbDirector = { id: dir.id, name: dir.name };
-                    }
-                }
-                if (detailData.production_companies) tmdbProductionCompanies = detailData.production_companies.map(pc => ({ id: pc.id, name: pc.name }));
-                
-                if (item.media_type === 'movie') {
-                    tmdbRuntime = detailData.runtime || null;
-                } else if (item.media_type === 'tv') {
-                    tmdbRuntime = {
-                        seasons: detailData.number_of_seasons || null,
-                        episodes: detailData.number_of_episodes || null,
-                        episode_run_time: detailData.episode_run_time && detailData.episode_run_time.length > 0 ? detailData.episode_run_time[0] : null
-                    };
-                }
-            }
-        } catch (err) {
-            console.warn("Could not fetch full details for fast-save:", err);
-        }
-        
-        // Assemble new movie object
+        // Construct and save new entry with full details
         const newEntry = {
             id: generateUUID(),
-            Name: name,
-            Category: detectedCategory,
-            Genre: tmdbGenres.join(', '),
+            Name: processed.Name || name,
+            Category: processed.Category,
+            Genre: genreString,
             Status: status,
             seasonsCompleted: 0,
             currentSeasonEpisodesWatched: 0,
             Recommendation: "",
             overallRating: "",
             personalRecommendation: "",
-            Language: tmdbLanguage,
-            Year: year,
-            Country: tmdbCountryISO,
-            Description: item.overview || "",
-            poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "",
-            watchHistory: status === 'Watched' ? [{
-                watchId: generateUUID(),
-                date: new Date().toISOString(),
-                rating: "",
-                notes: "Fast-saved from Suggestion Engine"
-            }] : [],
+            Language: processed.Language,
+            Year: processed.Year || year,
+            Country: processed.Country,
+            Description: processed.Description,
+            "Poster URL": processed["Poster URL"],
+            poster_url: processed.poster_url,
+            watchHistory: [],
             relatedEntries: [],
             lastModifiedDate: new Date().toISOString(),
+            doNotRecommendDaily: false,
             tmdbId: item.id,
-            tmdbMediaType: item.media_type,
-            full_cast: tmdbCast,
-            director_info: tmdbDirector,
-            production_companies: tmdbProductionCompanies,
-            tmdb_vote_average: item.vote_average || null,
-            tmdb_vote_count: item.vote_count || null,
-            runtime: tmdbRuntime,
-            imdb_id: detailData.external_ids?.imdb_id || null,
+            tmdbMediaType: item.media_type || (item.name ? 'tv' : 'movie'),
+            keywords: processed.keywords,
+            full_cast: processed.full_cast,
+            director_info: processed.director_info,
+            production_companies: processed.production_companies,
+            tmdb_vote_average: processed.tmdb_vote_average,
+            tmdb_vote_count: processed.tmdb_vote_count,
+            runtime: processed.runtime,
+            tmdb_collection_id: processed.tmdb_collection_id,
+            tmdb_collection_name: processed.tmdb_collection_name,
+            tmdb_collection_total_parts: processed.tmdb_collection_total_parts,
+            imdb_id: processed.imdb_id,
+            tmdb_release_date: processed.tmdb_release_date,
             is_deleted: false,
             _sync_state: "new"
         };
@@ -772,12 +782,26 @@ async function fastSaveSuggestion(item, status) {
     }
     
     await checkAndNotifyNewAchievements();
+    if (processed.tmdb_collection_id) {
+        await propagateCollectionDataUpdate({
+            id: savedEntryId,
+            tmdb_collection_id: processed.tmdb_collection_id,
+            tmdb_collection_name: processed.tmdb_collection_name,
+            tmdb_collection_total_parts: processed.tmdb_collection_total_parts
+        });
+    }
     
-    showToast(
-        status === 'To Watch' ? "Added to Watchlist" : "Marked as Watched",
-        `Successfully added "${name}" to your library!`,
-        "success"
-    );
+    hideLoading();
+    
+    if (status === 'To Watch') {
+        showToast(
+            "Added to Watchlist",
+            `Successfully added "${processed.Name || name}" to your library!`,
+            "success"
+        );
+    }
+    
+    return savedEntryId;
 }
 
 // A simple map for TMDB genre IDs. In a real app, this would be fetched from the API.
