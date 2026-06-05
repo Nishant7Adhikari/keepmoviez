@@ -348,27 +348,6 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
       }
     }
 
-    // Check for Name + Year conflict (Soft Block)
-    const isDuplicateNameYear = movieData.some(
-      (m) =>
-        m.id !== editId &&
-        !m.is_deleted &&
-        m.Name.toLowerCase() === nameValue.toLowerCase() &&
-        m.Year == yearVal,
-    );
-
-    if (isDuplicateNameYear) {
-      // We use a specialized confirmation modal logic, or native confirm for simplicity in this chunk
-      if (
-        !confirm(
-          `Possible Duplicate: "${nameValue}" (${yearVal}) already exists. Do you want to save it anyway?`,
-        )
-      ) {
-        hideLoading();
-        return;
-      }
-    }
-
     const entry = {
       Name: nameValue,
       Category: formFieldsGlob.category.value,
@@ -445,19 +424,40 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         entry.doNotRecommendDaily = existingEntry.doNotRecommendDaily;
     }
 
-    // Fallback simple name check for confirm modal (legacy support)
-    const isDuplicateNameOnly = movieData.some(
-      (m) =>
-        m &&
-        m.Name &&
-        String(m.Name).toLowerCase() === entry.Name.toLowerCase() &&
-        m.id !== editId &&
-        !m.is_deleted &&
-        !isDuplicateNameYear,
-    ); // Skip if we already confirmed Name+Year
-    if (isDuplicateNameOnly) {
+    let hasDuplicateNameOnly = false;
+    let hasDuplicateNameYear = false;
+    for (const movie of movieData) {
+      if (!movie || movie.id === editId || movie.is_deleted || !movie.Name)
+        continue;
+      if (String(movie.Name).toLowerCase() !== entry.Name.toLowerCase())
+        continue;
+      if (movie.Year == entry.Year) {
+        hasDuplicateNameYear = true;
+        break;
+      }
+      hasDuplicateNameOnly = true;
+    }
+
+    if (hasDuplicateNameYear || hasDuplicateNameOnly) {
       pendingEntryForConfirmation = entry;
       pendingEditIdForConfirmation = editId;
+      const duplicateTitle = document.getElementById(
+        "duplicateNameConfirmModalLabel",
+      );
+      const duplicateBody = document.querySelector(
+        "#duplicateNameConfirmModal .modal-body",
+      );
+      if (duplicateTitle && duplicateBody) {
+        if (hasDuplicateNameYear) {
+          duplicateTitle.textContent = "Duplicate Name and Year Detected";
+          duplicateBody.textContent =
+            `An entry for "${entry.Name}" (${entry.Year}) already exists. Do you want to save this one anyway?`;
+        } else {
+          duplicateTitle.textContent = "Duplicate Name Detected";
+          duplicateBody.textContent =
+            `An entry with the name "${entry.Name}" already exists. Do you want to save this new/edited entry anyway?`;
+        }
+      }
       $("#duplicateNameConfirmModal").modal("show");
       hideLoading();
       return;
@@ -637,9 +637,21 @@ window.handleQuickUpdateSave = async function (event) {
     }
 
     // --- PHASE 2: All reads succeeded, now mutate the movie object ---
+    const currentTime = new Date();
+    const [watchYear, watchMonth, watchDay] = watchDate
+      .split("-")
+      .map((value) => parseInt(value, 10));
     const newWatchRecord = {
       watchId: generateUUID(),
-      date: watchDate,
+      date: new Date(
+        watchYear,
+        watchMonth - 1,
+        watchDay,
+        currentTime.getHours(),
+        currentTime.getMinutes(),
+        currentTime.getSeconds(),
+        currentTime.getMilliseconds(),
+      ).toISOString(),
       rating: watchRating,
       notes: watchNotes,
     };
@@ -1018,7 +1030,7 @@ window.markDailyRecCompleted = async function (event) {
       movieData[movieIndex].watchHistory = [];
     movieData[movieIndex].watchHistory.push({
       watchId: generateUUID(),
-      date: new Date().toISOString().slice(0, 10),
+      date: new Date().toISOString(),
       rating: "",
       notes: "Marked as Watched from Daily Recommendation",
     });

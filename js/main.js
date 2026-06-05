@@ -81,6 +81,128 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize UI immediately
   updateSyncUI();
+  // --- Modal History / Back Navigation ---
+  // Keeps a lightweight stack of modal ids to allow "back" navigation between modals
+  window.modalHistory = {
+    stack: [],
+    navigating: false,
+    preserveOnHide: new Set(),
+    push(id) {
+      if (!this.navigating && id) this.stack.push(id);
+    },
+    pop() {
+      return this.stack.pop();
+    },
+    peek() {
+      return this.stack.length ? this.stack[this.stack.length - 1] : null;
+    },
+    previous() {
+      return this.stack.length > 1 ? this.stack[this.stack.length - 2] : null;
+    },
+    clear() {
+      this.stack = [];
+    },
+  };
+
+  window.preserveModalForBackNavigation = function (modalSelector) {
+    if (!modalSelector || !window.modalHistory?.preserveOnHide) return;
+    window.modalHistory.preserveOnHide.add(modalSelector);
+  };
+
+  // Add / remove back button when modals show
+  $(document).on("show.bs.modal", ".modal", function (e) {
+    const id = this.id ? `#${this.id}` : null;
+    if (window.modalHistory.navigating) {
+      // If we are programmatically navigating back, ignore pushing
+      setTimeout(() => {
+        window.modalHistory.navigating = false;
+      }, 50);
+    } else {
+      if (id) window.modalHistory.push(id);
+    }
+    // update back button appearance for this modal header
+    updateModalBackButton(this);
+  });
+
+  // Clean up stack on hide
+  $(document).on("hidden.bs.modal", ".modal", function (e) {
+    const id = this.id ? `#${this.id}` : null;
+    if (!id) return;
+    if (window.modalHistory.preserveOnHide.has(id)) {
+      window.modalHistory.preserveOnHide.delete(id);
+      return;
+    }
+    // remove trailing instances of this id from the stack
+    while (window.modalHistory.stack.length && window.modalHistory.peek() === id) {
+      window.modalHistory.pop();
+    }
+    if ($(".modal.show").length === 0 && !window.modalHistory.navigating) {
+      window.modalHistory.clear();
+    }
+  });
+
+  function updateModalBackButton(modalEl) {
+    const $modal = $(modalEl);
+    const $header = $modal.find(".modal-header").first();
+    const hasPreviousModal = window.modalHistory.stack.length > 1;
+
+    // Clean old back controls first
+    $modal.find(".modal-back-button").remove();
+    $modal.find(".details-modal-back-btn").remove();
+    $header.removeClass("has-modal-back");
+
+    // Standard Bootstrap headers
+    if ($header && $header.length > 0) {
+      if (hasPreviousModal) {
+        $header.addClass("has-modal-back");
+        const $btn = $(
+          '<button type="button" class="modal-back-button btn btn-link p-0" title="Back" aria-label="Back"><span class="modal-back-icon">←</span></button>',
+        );
+        const $title = $header.find(".modal-title").first();
+        if ($title.length > 0) {
+          $title.before($btn);
+        } else {
+          $header.prepend($btn);
+        }
+        $btn.on("click", function (ev) {
+          ev.preventDefault();
+          navigateBackFromModal(modalEl);
+        });
+      }
+      return;
+    }
+
+    // Custom Details modal (no .modal-header in markup)
+    if (modalEl.id === "detailsModal") {
+      const $content = $modal.find(".details-modal-content").first();
+      if (!$content || $content.length === 0 || !hasPreviousModal) return;
+      const $detailsBackBtn = $(
+        '<button type="button" class="details-modal-back-btn" title="Back" aria-label="Back"><span aria-hidden="true">←</span></button>',
+      );
+      $detailsBackBtn.on("click", function (ev) {
+        ev.preventDefault();
+        navigateBackFromModal(modalEl);
+      });
+      $content.prepend($detailsBackBtn);
+    }
+  }
+
+  function navigateBackFromModal(currentModalEl) {
+    const curId = currentModalEl.id ? `#${currentModalEl.id}` : null;
+    // Pop current if it's on top
+    if (curId && window.modalHistory.peek() === curId) {
+      window.modalHistory.pop();
+    }
+    const prev = window.modalHistory.peek();
+    if (prev) {
+      window.modalHistory.navigating = true;
+      // hide current and show previous after a short delay
+      $(currentModalEl).modal("hide");
+      setTimeout(() => {
+        $(prev).modal("show");
+      }, 180);
+    }
+  }
   //END CHUNK: 2: Theme & Sync Settings Setup
 
   //START CHUNK: 3: Off-Canvas Menu Logic
@@ -548,6 +670,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const parentModal = target.closest(".modal");
 
         if (movieId) {
+          const parentModalId = $(parentModal).attr("id");
+          if (parentModalId && typeof window.preserveModalForBackNavigation === "function") {
+            window.preserveModalForBackNavigation(`#${parentModalId}`);
+          }
           $(parentModal).modal("hide");
           $(parentModal).one("hidden.bs.modal", () =>
             openDetailsModal(movieId),
@@ -565,6 +691,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $("#findSimilarBtn").on("click", function () {
       const currentMovieId = $(this).data("current-movie-id");
+      if (typeof window.preserveModalForBackNavigation === "function") {
+        window.preserveModalForBackNavigation("#detailsModal");
+      }
       $("#detailsModal").modal("hide");
       $("#detailsModal").one("hidden.bs.modal", () => {
         displayPersonalizedSuggestionsModal(currentMovieId);
@@ -766,17 +895,6 @@ document.addEventListener("DOMContentLoaded", () => {
     ?.addEventListener("click", async () => {
       if (isMultiSelectMode) await window.performBatchDelete();
       else await window.performDeleteEntry();
-    });
-  document
-    .getElementById("confirmDuplicateSaveBtn")
-    ?.addEventListener("click", async () => {
-      if (pendingEntryForConfirmation)
-        await window.proceedWithEntrySave(
-          pendingEntryForConfirmation,
-          pendingEditIdForConfirmation,
-          "quickSave",
-        );
-      $("#duplicateNameConfirmModal").modal("hide");
     });
   document
     .getElementById("confirmDuplicateSaveBtn")

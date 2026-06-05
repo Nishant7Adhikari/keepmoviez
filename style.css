@@ -366,6 +366,32 @@ p {
   color: var(--warning-text-color) !important;
 }
 
+/* Modal back button (left-arrow) shown when there's a previous modal */
+.modal-header.has-modal-back {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.modal-back-button {
+  position: relative;
+  color: inherit;
+  font-size: 1.1rem;
+  border: none;
+  background: transparent;
+  z-index: 1;
+  flex: 0 0 auto;
+}
+.modal-back-button .modal-back-icon {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+}
+.modal-header.has-modal-back .modal-title {
+  margin-right: 0.5rem;
+}
+.modal-header.has-modal-back .close {
+  margin-left: auto;
+}
+
 .modal-footer {
   border-top: none;
   background-color: var(--card-bg);
@@ -2416,6 +2442,30 @@ a:hover {
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.7);
 }
 
+.details-modal-back-btn {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 10;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #1f2937;
+  font-size: 1.4rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+.dark-theme .details-modal-back-btn {
+  background: rgba(18, 18, 18, 0.88);
+  color: #f8f9fa;
+}
+
 .details-modal-container {
   display: flex;
   flex-direction: column;
@@ -3173,6 +3223,7 @@ a:hover {
 
 .suggestion-carousel-wrapper {
   margin-bottom: 2rem;
+  overflow-x: scroll;
 }
 
 .suggestion-carousel-wrapper h6 {

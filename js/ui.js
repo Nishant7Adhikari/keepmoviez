@@ -210,9 +210,19 @@ async function saveOrUpdateWatchInstance() {
     return;
   }
   const editingId = editingWatchIdEl.value;
+  const [watchYear, watchMonth, watchDay] = watchDate.split("-").map((value) => parseInt(value, 10));
+  const watchTimestamp = new Date(
+    watchYear,
+    watchMonth - 1,
+    watchDay,
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+    now.getMilliseconds(),
+  ).toISOString();
   const newOrUpdatedInstance = {
     watchId: editingId || generateUUID(),
-    date: watchDate,
+    date: watchTimestamp,
     rating: watchInstanceFormFields.rating
       ? watchInstanceFormFields.rating.value
       : "",

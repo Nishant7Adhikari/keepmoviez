@@ -176,6 +176,9 @@ function bindDailyRecommendationCardActions(modalBody) {
 
     if (viewButton) {
         viewButton.addEventListener('click', function () {
+            if (typeof window.preserveModalForBackNavigation === 'function') {
+                window.preserveModalForBackNavigation('#dailyRecommendationModal');
+            }
             $('#dailyRecommendationModal').modal('hide');
             $('#dailyRecommendationModal').one('hidden.bs.modal', () => openDetailsModal(this.dataset.movieId));
         });
@@ -594,6 +597,9 @@ function renderSuggestionCard(item) {
 
     // Handle Card click to view details
     card.addEventListener('click', () => {
+        if (typeof window.preserveModalForBackNavigation === 'function') {
+            window.preserveModalForBackNavigation('#personalizedSuggestionsModal');
+        }
         $('#personalizedSuggestionsModal').modal('hide');
         $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
             openDetailsModal(null, item);
@@ -668,7 +674,7 @@ async function fastSaveSuggestion(item, status) {
         if (status === 'Watched' && (!existing.watchHistory || existing.watchHistory.length === 0)) {
             existing.watchHistory = [{
                 watchId: generateUUID(),
-                date: new Date().toISOString().slice(0, 10),
+                date: new Date().toISOString(),
                 rating: "",
                 notes: "Fast-saved from Suggestion Engine"
             }];
@@ -731,7 +737,7 @@ async function fastSaveSuggestion(item, status) {
             poster_url: item.poster_path ? `https://image.tmdb.org/t/p/w500${item.poster_path}` : "",
             watchHistory: status === 'Watched' ? [{
                 watchId: generateUUID(),
-                date: new Date().toISOString().slice(0, 10),
+                date: new Date().toISOString(),
                 rating: "",
                 notes: "Fast-saved from Suggestion Engine"
             }] : [],
