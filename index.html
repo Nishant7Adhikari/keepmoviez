@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.5.05 -->
+<!-- KeepMoviEZ  v5.5.06 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -15,7 +15,39 @@
     <meta name="keywords" content="KeepMoviEZ, movie tracker, media collection">
     <meta name="robots" content="index, follow">
     <meta name="author" content="Nishant Adhikari">
-    <link rel="canonical" href="keepmoviez.nishantadhikari.info.np">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests;">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <link rel="canonical" href="https://keepmoviez.nishantadhikari.info.np/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://keepmoviez.nishantadhikari.info.np/">
+    <meta property="og:title" content="KeepMoviEZ - Smart Movie & Series Tracker">
+    <meta property="og:description" content="KeepMoviEZ is your personal smart movie and series tracking app. Log, rate & visualize your collection.">
+    <meta property="og:image" content="https://keepmoviez.nishantadhikari.info.np/icons/icon-512x512.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://keepmoviez.nishantadhikari.info.np/">
+    <meta property="twitter:title" content="KeepMoviEZ - Smart Movie & Series Tracker">
+    <meta property="twitter:description" content="KeepMoviEZ is your personal smart movie and series tracking app. Log, rate & visualize your collection.">
+    <meta property="twitter:image" content="https://keepmoviez.nishantadhikari.info.np/icons/icon-512x512.png">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "KeepMoviEZ",
+      "url": "https://keepmoviez.nishantadhikari.info.np/",
+      "description": "KeepMoviEZ is your personal smart movie and series tracking app.",
+      "applicationCategory": "EntertainmentApplication",
+      "author": {
+        "@type": "Person",
+        "name": "Nishant Adhikari"
+      }
+    }
+    </script>
 
     <!-- Local Libraries (CSS) -->
     <link href="libs/css/bootstrap.min.css" rel="stylesheet">
@@ -71,7 +103,7 @@
 
                 <button id="supabaseGoogleSignInBtn" class="btn btn-light btn-block border">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo"
-                        style="height: 18px; margin-right: 10px;">
+                        width="18" height="18" style="height: 18px; margin-right: 10px;">
                 </button>
 
                 <button id="supabasePasswordResetBtn" class="btn btn-link btn-block mt-2">Forgot Password?</button>
@@ -463,7 +495,7 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <a id="Brand" class="navbar-brand" href="#">
+            <a id="Brand" class="navbar-brand" href="#" aria-label="KeepMoviEZ Home">
                 <strong id="fthis" class="d-none d-sm-inline-block">KeepMoviEZ</strong>
             </a>
 
@@ -1086,7 +1118,7 @@
                     <div class="details-modal-container">
                         <!-- LEFT/TOP: POSTER PANEL (Cleaned) -->
                         <div class="details-poster-panel">
-                            <img id="detailsPoster" class="details-poster-img" alt="Poster">
+                            <img id="detailsPoster" class="details-poster-img" alt="Poster" width="300" height="450">
                             <div id="noPosterMessage" class="no-poster-message">No Poster Available</div>
                         </div>
 
@@ -1269,7 +1301,7 @@
                             aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body text-center">
-                    <img id="personProfileImage" alt="Person Profile" class="person-profile-img img-fluid d-none">
+                    <img id="personProfileImage" alt="Person Profile" class="person-profile-img img-fluid d-none" width="150" height="225">
                     <p id="noPersonImageMessage" class="text-muted small mt-2">No Image Available</p>
                     <p id="personBio" class="mt-3 text-left small"></p>
 
@@ -1940,7 +1972,7 @@
                 <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
 
                     <div class="about-hero">
-                        <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ"></img>
+                        <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ" width="256" height="256"></img>
                         <p>KeepMoviEZ is built to give you full control over your movie and series tracking—fast,
                             structured, and distraction-free. The name reflects exactly what it delivers: keeping your
                             movies easy to manage.</p>

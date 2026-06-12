@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://keepmoviez.nishantadhikari.info.np/sitemap.xml

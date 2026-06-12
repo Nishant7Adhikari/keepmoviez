@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Plot Twist! Page Not Found</title>
+    <meta name="description" content="Oops, you hit a 404 page. Play a fun movie trivia game while you are here.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://keepmoviez.nishantadhikari.info.np/404.html">
+    <meta property="og:title" content="404 - Plot Twist! Page Not Found">
+    <meta property="og:description" content="Plot twist! The page you are looking for doesn't exist.">
+    <meta property="og:image" content="https://keepmoviez.nishantadhikari.info.np/icons/icon-512x512.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://keepmoviez.nishantadhikari.info.np/404.html">
+    <meta property="twitter:title" content="404 - Plot Twist! Page Not Found">
+    <meta property="twitter:description" content="Plot twist! The page you are looking for doesn't exist.">
+    <meta property="twitter:image" content="https://keepmoviez.nishantadhikari.info.np/icons/icon-512x512.png">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a2e;
+            color: #fff;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            color: #e50914;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-top: 10px;
+            color: #e0e0e0;
+        }
+
+        p {
+            font-size: 1rem;
+            max-width: 600px;
+            color: #b0b0b0;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+
+        .sarcasm {
+            font-style: italic;
+            color: #ff9a9e;
+            margin-top: 5px;
+        }
+
+        /* Game Container */
+        #game-container {
+            margin-top: 15px;
+            background-color: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            padding: 30px;
+            width: 90%;
+            max-width: 450px;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: #f9d423;
+        }
+
+        .emoji-display {
+            font-size: 3.5rem;
+            margin: 20px 0;
+            letter-spacing: 5px;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .option-btn {
+            padding: 12px;
+            background-color: #0f3460;
+            color: white;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-btn:hover {
+            background-color: #1a4a8c;
+            transform: scale(1.02);
+        }
+
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+            transform: none;
+        }
+
+        .option-btn.correct {
+            background-color: #228B22;
+            border-color: #32CD32;
+        }
+
+        .option-btn.wrong {
+            background-color: #8b0000;
+            border-color: #e50914;
+        }
+
+        .feedback {
+            font-size: 1.1rem;
+            font-weight: bold;
+            min-height: 25px;
+            margin-bottom: 15px;
+        }
+
+        .feedback.success { color: #32CD32; }
+        .feedback.error { color: #ff4c4c; }
+
+        /* Navigation Buttons */
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary { background-color: #e50914; }
+        .btn-primary:hover { background-color: #f40612; }
+        
+        .btn-secondary { background-color: #555; }
+        .btn-secondary:hover { background-color: #777; }
+    </style>
+</head>
+<body>
+
+    <h1>404</h1>
+    <h2>Plot Twist: The page was never here.</h2>
+    <p class="sarcasm" id="sarcasm-text">Looks like this page was a box office flop.</p>
+
+    <div id="game-container">
+        <div class="score-board">
+            <div>Score: <span id="current-score">0</span></div>
+            <div>Best: <span id="high-score">0</span></div>
+        </div>
+
+        <p style="margin: 0; color: #b0b0b0; font-size: 0.9rem;">Guess the movie from the emojis:</p>
+        <div class="emoji-display" id="emoji-display">⏳</div>
+        <div class="feedback" id="feedback"></div>
+
+        <div class="options-grid" id="options-container">
+            <!-- Buttons injected by JS -->
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-secondary" onclick="resetGame()">Reset Game</button>
+            <a href="/" class="btn btn-primary">Back to Homepage</a>
+        </div>
+    </div>
+
+    <script>
+        const sarcasmLines = [
+            "Looks like this page was a box office flop.",
+            "This page is more lost than Tom Hanks in Cast Away.",
+            "404: The sequel nobody asked for.",
+            "Looks like the writers went on strike before finishing this page.",
+            "Plot hole detected! We can't find the page you want.",
+            "We searched every cinematic universe, but this page doesn't exist."
+        ];
+
+        document.getElementById("sarcasm-text").innerText = sarcasmLines[Math.floor(Math.random() * sarcasmLines.length)];
+
+        // Movie Trivia Data (55 Movies)
+        const allMovies = [
+            { emojis: "🚢🧊🥶", answer: "Titanic", options: ["Titanic", "Ice Age", "The Poseidon Adventure"] },
+            { emojis: "🦇👨🤡", answer: "The Dark Knight", options: ["Joker", "The Dark Knight", "Batman Begins"] },
+            { emojis: "🦁👑🌅", answer: "The Lion King", options: ["Madagascar", "The Lion King", "Tarzan"] },
+            { emojis: "👽🚴🌕", answer: "E.T.", options: ["Star Wars", "Alien", "E.T."] },
+            { emojis: "🦕🦖🚙", answer: "Jurassic Park", options: ["Godzilla", "Jurassic Park", "King Kong"] },
+            { emojis: "🏴‍☠️🚢🐒", answer: "Pirates of the Caribbean", options: ["Peter Pan", "Pirates of the Caribbean", "Treasure Planet"] },
+            { emojis: "🕷️👨🕸️", answer: "Spider-Man", options: ["Iron Man", "Ant-Man", "Spider-Man"] },
+            { emojis: "🪄⚡👓", answer: "Harry Potter", options: ["Harry Potter", "Lord of the Rings", "Doctor Strange"] },
+            { emojis: "👴🕰️🚗", answer: "Back to the Future", options: ["Transformers", "Back to the Future", "Mad Max"] },
+            { emojis: "💊🕶️💻", answer: "The Matrix", options: ["Inception", "The Matrix", "Terminator"] },
+            { emojis: "🦈🏖️😱", answer: "Jaws", options: ["Finding Nemo", "Jaws", "The Meg"] },
+            { emojis: "🍫🏭🎩", answer: "Charlie and the Chocolate Factory", options: ["Willy Wonka", "Charlie and the Chocolate Factory", "Alice in Wonderland"] },
+            { emojis: "🥊🏃‍♂️🥩", answer: "Rocky", options: ["Creed", "Rocky", "Raging Bull"] },
+            { emojis: "👻🚫🔫", answer: "Ghostbusters", options: ["Ghostbusters", "Casper", "Men in Black"] },
+            { emojis: "🧸🤠🚀", answer: "Toy Story", options: ["The Lego Movie", "Toy Story", "Wall-E"] },
+            { emojis: "💍🌋🧙‍♂️", answer: "The Lord of the Rings", options: ["The Lord of the Rings", "The Hobbit", "Warcraft"] },
+            { emojis: "🌟⚔️🤖", answer: "Star Wars", options: ["Star Trek", "Star Wars", "Dune"] },
+            { emojis: "🦸‍♂️🔨🌩️", answer: "Thor", options: ["The Avengers", "Thor", "Captain America"] },
+            { emojis: "🐼🥋🍜", answer: "Kung Fu Panda", options: ["Mulan", "Kung Fu Panda", "Raya and the Last Dragon"] },
+            { emojis: "🎈🏠👴", answer: "Up", options: ["Up", "Inside Out", "Coco"] },
+            { emojis: "🤡🎈🩸", answer: "It", options: ["The Conjuring", "Halloween", "It"] },
+            { emojis: "🦍🏙️🛩️", answer: "King Kong", options: ["Rampage", "King Kong", "Godzilla"] },
+            { emojis: "🧊👸❄️", answer: "Frozen", options: ["Tangled", "Brave", "Frozen"] },
+            { emojis: "👩‍🚀🌌🕳️", answer: "Interstellar", options: ["Gravity", "Interstellar", "The Martian"] },
+            { emojis: "🚗💨😡", answer: "Fast & Furious", options: ["Need for Speed", "Fast & Furious", "Mad Max: Fury Road"] },
+            { emojis: "🧙‍♀️👠🌪️", answer: "The Wizard of Oz", options: ["Alice in Wonderland", "The Wizard of Oz", "Mary Poppins"] },
+            { emojis: "🧜‍♀️🦀🌊", answer: "The Little Mermaid", options: ["Moana", "The Little Mermaid", "Aquaman"] },
+            { emojis: "👨‍💼🔪🚿", answer: "Psycho", options: ["Halloween", "The Shining", "Psycho"] },
+            { emojis: "🐀🍳👨‍🍳", answer: "Ratatouille", options: ["Ratatouille", "Chef", "A Bug's Life"] },
+            { emojis: "🚗🤖💥", answer: "Transformers", options: ["Pacific Rim", "Transformers", "Real Steel"] },
+            { emojis: "👧🐉🏮", answer: "Spirited Away", options: ["Mulan", "How to Train Your Dragon", "Spirited Away"] },
+            { emojis: "🏹👧🔥", answer: "The Hunger Games", options: ["Divergent", "The Hunger Games", "The Maze Runner"] },
+            { emojis: "🤠🐎🏜️", answer: "The Good, the Bad and the Ugly", options: ["Django Unchained", "The Good, the Bad and the Ugly", "True Grit"] },
+            { emojis: "🩸🧛‍♂️🦇", answer: "Dracula", options: ["Twilight", "Blade", "Dracula"] },
+            { emojis: "👮‍♂️🤖🔫", answer: "RoboCop", options: ["Terminator 2", "RoboCop", "Judge Dredd"] },
+            { emojis: "🏝️🏐🧔", answer: "Cast Away", options: ["Cast Away", "Robinson Crusoe", "Life of Pi"] },
+            { emojis: "🦸‍♂️🦇🌆", answer: "Batman", options: ["Batman", "Superman", "Daredevil"] },
+            { emojis: "🧑‍🦲🦽🧠", answer: "X-Men", options: ["X-Men", "Fantastic Four", "Watchmen"] },
+            { emojis: "🦹‍♂️🫰🌌", answer: "Avengers: Infinity War", options: ["Justice League", "Avengers: Infinity War", "Guardians of the Galaxy"] },
+            { emojis: "🐒🦍🌍", answer: "Planet of the Apes", options: ["King Kong", "Planet of the Apes", "Tarzan"] },
+            { emojis: "🕵️‍♂️🔎🇬🇧", answer: "Sherlock Holmes", options: ["Knives Out", "Sherlock Holmes", "Enola Holmes"] },
+            { emojis: "🤴🗡️🛡️", answer: "Gladiator", options: ["Troy", "300", "Gladiator"] },
+            { emojis: "👧🐰🕳️", answer: "Alice in Wonderland", options: ["Alice in Wonderland", "Peter Pan", "Coraline"] },
+            { emojis: "🎭🗡️🩸", answer: "V for Vendetta", options: ["V for Vendetta", "Watchmen", "The Phantom of the Opera"] },
+            { emojis: "👨‍🚀🥔🪐", answer: "The Martian", options: ["Apollo 13", "The Martian", "Interstellar"] },
+            { emojis: "💃🕺🎶", answer: "La La Land", options: ["The Greatest Showman", "La La Land", "A Star is Born"] },
+            { emojis: "🦈🌪️🩸", answer: "Sharknado", options: ["Jaws", "The Meg", "Sharknado"] },
+            { emojis: "👽🛸📞", answer: "Arrival", options: ["Signs", "Contact", "Arrival"] },
+            { emojis: "🐕🐾🍝", answer: "Lady and the Tramp", options: ["101 Dalmatians", "Lady and the Tramp", "The Aristocats"] },
+            { emojis: "👨‍👩‍👧‍👦🏡👻", answer: "Poltergeist", options: ["The Conjuring", "Insidious", "Poltergeist"] },
+            { emojis: "🧑‍🎤🎸🤘", answer: "School of Rock", options: ["Bohemian Rhapsody", "School of Rock", "A Star is Born"] },
+            { emojis: "👩‍🚀👽🔫", answer: "Aliens", options: ["Predator", "Aliens", "Prometheus"] },
+            { emojis: "🦖🏢🦍", answer: "Godzilla vs. Kong", options: ["Godzilla vs. Kong", "Pacific Rim", "Rampage"] },
+            { emojis: "👸🐸💋", answer: "The Princess and the Frog", options: ["Tangled", "The Princess and the Frog", "Shrek"] },
+            { emojis: "🐷🕸️🕷️", answer: "Charlotte's Web", options: ["Babe", "Charlotte's Web", "A Bug's Life"] }
+        ];
+
+        let availableMovies = [...allMovies];
+        let currentMovie = null;
+        let score = 0;
+        let highScore = localStorage.getItem('keepmoviez_404_highscore') || 0;
+
+        const emojiDisplay = document.getElementById('emoji-display');
+        const optionsContainer = document.getElementById('options-container');
+        const feedbackEl = document.getElementById('feedback');
+        const currentScoreEl = document.getElementById('current-score');
+        const highScoreEl = document.getElementById('high-score');
+
+        highScoreEl.innerText = highScore;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function loadNextQuestion() {
+            if (availableMovies.length === 0) {
+                availableMovies = [...allMovies]; // Reset pool if exhausted
+            }
+
+            // Pick a random movie
+            const randomIndex = Math.random() * availableMovies.length | 0;
+            currentMovie = availableMovies.splice(randomIndex, 1)[0];
+
+            emojiDisplay.innerText = currentMovie.emojis;
+            feedbackEl.innerText = "";
+            feedbackEl.className = "feedback";
+
+            // Shuffle options
+            let opts = [...currentMovie.options];
+            shuffleArray(opts);
+
+            optionsContainer.innerHTML = "";
+            opts.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "option-btn";
+                btn.innerText = opt;
+                btn.onclick = () => handleGuess(btn, opt);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function handleGuess(btn, guessed) {
+            // Disable all buttons
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (guessed === currentMovie.answer) {
+                btn.classList.add('correct');
+                feedbackEl.innerText = "Correct! 🎬 +10";
+                feedbackEl.classList.add('success');
+                score += 10;
+                
+                if (score > highScore) {
+                    highScore = score;
+                    localStorage.setItem('keepmoviez_404_highscore', highScore);
+                    highScoreEl.innerText = highScore;
+                }
+            } else {
+                btn.classList.add('wrong');
+                feedbackEl.innerText = `Oops! It was ${currentMovie.answer}`;
+                feedbackEl.classList.add('error');
+                
+                // Highlight the correct one
+                allBtns.forEach(b => {
+                    if (b.innerText === currentMovie.answer) {
+                        b.classList.add('correct');
+                    }
+                });
+                
+                score = 0; // Reset score on wrong answer
+            }
+
+            currentScoreEl.innerText = score;
+
+            // Load next after delay
+            setTimeout(loadNextQuestion, 2000);
+        }
+
+        function resetGame() {
+            score = 0;
+            currentScoreEl.innerText = score;
+            availableMovies = [...allMovies];
+            loadNextQuestion();
+        }
+
+        // Start game
+        loadNextQuestion();
+
+    </script>
+</body>
+</html>

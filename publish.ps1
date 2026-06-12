@@ -18,7 +18,7 @@ if ([string]::IsNullOrWhiteSpace($VersionString)) {
         $majorVer = [int]$parts[0]
         $minorVer = [int]$parts[1]
         $patchStr = $parts[2]
-        
+            
         # Determine padding for patch (e.g. 03 has length 2)
         $padLength = $patchStr.Length
         $patchVer = [int]$patchStr
@@ -27,21 +27,25 @@ if ([string]::IsNullOrWhiteSpace($VersionString)) {
             $majorVer++
             $minorVer = 0
             $patchVer = 0
-        } elseif ($Minor) {
+        }
+        elseif ($Minor) {
             $minorVer++
             $patchVer = 0
-        } else {
+        }
+        else {
             $patchVer++
         }
 
         $newPatchStr = $patchVer.ToString("D$padLength")
         $newVersion = "$majorVer.$minorVer.$newPatchStr"
-    } else {
+    }
+    else {
         # Fallback if version doesn't split nicely
         Write-Host "Could not parse current version format cleanly. Using basic increment." -ForegroundColor Yellow
         $newVersion = $currentVersion + "-new"
     }
-} else {
+}
+else {
     $newVersion = $VersionString
 }
 
@@ -83,7 +87,7 @@ if ($changedFiles) {
         $filePath = $line.Substring(3).Trim()
         # Escape path for regex
         $fileName = [System.IO.Path]::GetFileName($filePath)
-        
+            
         Write-Host " - Cache busting: $filePath" -ForegroundColor Gray
 
         # Replace in index.html
@@ -104,7 +108,8 @@ if ($changedFiles) {
         Set-Content -Path sw.js -Value $swContent -NoNewline
         Write-Host "Cache busting updated in index.html and sw.js." -ForegroundColor Green
     }
-} else {
+}
+else {
     Write-Host "No JS/CSS modifications found to cache-bust." -ForegroundColor DarkGray
 }
 
@@ -132,20 +137,7 @@ $diffOutput
 "@
     Set-Clipboard -Value $prompt
     Write-Host "✅ A prompt with your git diff has been copied to your clipboard! Paste it into ChatGPT or Gemini." -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "No changes detected in git diff." -ForegroundColor DarkGray
 }
-
-# Prompt for commit message manually
-$commitMsg = ""
-while ([string]::IsNullOrWhiteSpace($commitMsg)) {
-    $commitMsg = Read-Host "`nEnter commit message (Required)"
-}
-
-Write-Host "Committing..."
-git commit -m $commitMsg
-
-Write-Host "Pushing to remote..."
-git push
-
-Write-Host "Publish complete! 🎉" -ForegroundColor Green
