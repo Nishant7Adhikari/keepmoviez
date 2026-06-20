@@ -1,6 +1,9 @@
 /* analysis.js */
 // START CHUNK: Comprehensive Statistics Engine
 function calculateAllStatistics(currentMovieData) {
+    // Filter out Unwatchable entries — they should not contribute to any stats, charts, or achievements
+    currentMovieData = currentMovieData.filter(m => m && m.Status !== 'Unwatchable');
+
     if (!Array.isArray(currentMovieData) || currentMovieData.length === 0) {
         return {}; // Return empty object if no data
     }

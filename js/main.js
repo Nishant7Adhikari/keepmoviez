@@ -628,6 +628,12 @@ document.addEventListener("DOMContentLoaded", () => {
       $("#settingsModal").modal("hide");
       openBackfillModal();
     });
+    $("#settingsUnwatchableBtn").on("click", () => {
+      $("#settingsModal").modal("hide");
+      $("#settingsModal").one("hidden.bs.modal", () => {
+        openUnwatchableModal();
+      });
+    });
 
     $("#filterSortModal").on("show.bs.modal", populateFilterModalOptions);
 
@@ -762,7 +768,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("category")
     ?.addEventListener("change", toggleConditionalFields);
 
-  // FIX: Live Search Implementation (Debounced 700ms)
+  // FIX: Live Search Implementation (Debounced 350ms)
   formFieldsGlob.name?.addEventListener(
     "input",
     debounce((e) => {
@@ -783,7 +789,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         if (spinner) spinner.style.display = "none";
       }
-    }, 700),
+    }, 350),
   );
 
   formFieldsGlob.tmdbSearchYear?.addEventListener(
@@ -793,7 +799,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (query.length >= 2) {
         fetchMovieInfoFromTmdb(query, formFieldsGlob.tmdbSearchYear.value);
       }
-    }, 700),
+    }, 350),
   );
 
   formFieldsGlob.relatedEntriesNames?.addEventListener(
@@ -909,6 +915,25 @@ document.addEventListener("DOMContentLoaded", () => {
       pendingEntryForConfirmation = null;
       pendingEditIdForConfirmation = null;
     });
+  // Unwatchable duplicate warning: Save Anyway
+  document
+    .getElementById("confirmUnwatchableSaveBtn")
+    ?.addEventListener("click", async () => {
+      if (pendingEntryForConfirmation)
+        await window.proceedWithEntrySave(
+          pendingEntryForConfirmation,
+          pendingEditIdForConfirmation,
+          "quickSave",
+        );
+      $("#unwatchableDuplicateModal").modal("hide");
+    });
+  // Reset the "view why" button when the unwatchable duplicate modal opens
+  $("#unwatchableDuplicateModal").on("show.bs.modal", () => {
+    const whyBtn = document.getElementById("unwatchableViewWhyBtn");
+    const whyContainer = document.getElementById("unwatchableDuplicateWhy");
+    if (whyBtn) whyBtn.style.display = "block";
+    if (whyContainer) whyContainer.style.display = "none";
+  });
   document
     .getElementById("exportStatsPdfBtn")
     ?.addEventListener("click", () => exportStatsAsPdf());

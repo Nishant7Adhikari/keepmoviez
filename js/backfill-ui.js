@@ -70,7 +70,7 @@ const BACKFILL_FIELDS = [
     key: "Status",
     label: "Status",
     inputType: "select",
-    options: ["To Watch", "Watched", "Continue", "Unwatched"],
+    options: ["To Watch", "Watched", "Continue", "Unwatchable"],
     priority: 7,
   },
   { key: "Genre", label: "Genres", inputType: "multi-genre", priority: 5 },

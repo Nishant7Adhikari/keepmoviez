@@ -312,7 +312,7 @@ function renderMovieCards() {
   // 1. Process Data (Filter & Sort)
   // Note: Sorting happens in-place on movieData before this function is usually called,
   // or applyFilters returns a new sorted array if your logic requires it.
-  currentFilteredData = applyFilters(movieData);
+  currentFilteredData = applyFilters(movieData).filter(m => m.Status !== 'Unwatchable');
 
   // 2. Handle Empty States
   if (initialMessage) {
@@ -381,7 +381,7 @@ function renderNextBatch() {
       movie.Status === "To Watch" || movie.Status === "Continue";
 
     let lastWatchedInfo;
-    if (movie.Status === "To Watch" || movie.Status === "Unwatched") {
+    if (movie.Status === "To Watch") {
       lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
     } else {
       lastWatchedInfo = `<span class="card-last-watched">
@@ -1327,9 +1327,70 @@ window.prepareBatchEditModal = function () {
       .querySelectorAll('input[type="checkbox"]')
       .forEach((cb) => (cb.checked = false));
   }
-  const batchEditCount = document.getElementById("batchEditCount");
   if (batchEditCount) batchEditCount.textContent = selectedEntryIds.length;
   $("#batchEditModal").modal("show");
+};
+
+window.openUnwatchableModal = function () {
+  const container = document.getElementById("unwatchableListContainer");
+  if (!container) return;
+
+  const escapeHTML = (str) => {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  };
+
+  const unwatchableEntries = movieData.filter(
+    (m) => !m.is_deleted && m.Status === "Unwatchable",
+  );
+
+  if (unwatchableEntries.length === 0) {
+    container.innerHTML = '<p class="text-center text-muted p-3">No unwatchable entries yet.</p>';
+  } else {
+    // Sort by name
+    unwatchableEntries.sort((a, b) => {
+      const nameA = String(a.Name || "").toLowerCase();
+      const nameB = String(b.Name || "").toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+
+    let html = '<div class="list-group">';
+    unwatchableEntries.forEach((entry) => {
+      const latestWatch = getLatestWatchInstance(entry.watchHistory || []);
+      const reason = latestWatch && latestWatch.notes ? latestWatch.notes : "No reason recorded.";
+      
+      html += `
+        <div class="list-group-item list-group-item-action flex-column align-items-start bg-dark text-white border-secondary mb-2 rounded">
+          <div class="d-flex w-100 justify-content-between align-items-center">
+            <h6 class="mb-1 text-warning">${escapeHTML(entry.Name)} <small class="text-muted">(${escapeHTML(entry.Year || "N/A")})</small></h6>
+            <div>
+              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${entry.id}'); });" title="Edit Entry">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${entry.id}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+            </div>
+          </div>
+          <p class="mb-1 small"><strong>Category:</strong> ${escapeHTML(entry.Category || "N/A")}</p>
+          <div class="alert alert-secondary p-2 mt-2 mb-0 small text-dark">
+             <strong>Reason:</strong> ${escapeHTML(reason)}
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  $("#unwatchableModal").modal("show");
 };
 // END CHUNK: Modal Preparation and Display Logic
 
@@ -1342,9 +1403,8 @@ function toggleConditionalFields() {
   const isContinueSeries = status === "Continue" && category === "Series";
 
   $("#seriesContinueGroup").toggle(isContinueSeries);
-  $("#recommendationGroup, #overallRatingGroup, #watchHistorySection").toggle(
-    isWatchedOrContinue,
-  );
+  $("#recommendationGroup, #overallRatingGroup").toggle(isWatchedOrContinue);
+  $("#watchHistorySection").toggle(isWatchedOrContinue || status === "Unwatchable");
 
   const isSeries = category === "Series";
   $("#movieRuntimeGroup").toggle(!isSeries);

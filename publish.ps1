@@ -137,6 +137,25 @@ $diffOutput
 "@
     Set-Clipboard -Value $prompt
     Write-Host "✅ A prompt with your git diff has been copied to your clipboard! Paste it into ChatGPT or Gemini." -ForegroundColor Yellow
+
+    Write-Host ""
+    $commitMessage = Read-Host "Paste your commit message here (or press Enter to abort)"
+
+    if (![string]::IsNullOrWhiteSpace($commitMessage)) {
+        git commit -m $commitMessage
+        Write-Host "Changes committed successfully." -ForegroundColor Green
+
+        $push = Read-Host "Do you want to push to remote? [Y/n]"
+        if ($push -eq '' -or $push.ToLower().StartsWith('y')) {
+            Write-Host "Pushing changes..." -ForegroundColor Cyan
+            git push
+            Write-Host "Push complete." -ForegroundColor Green
+        } else {
+            Write-Host "Push skipped." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "Commit aborted. Changes are still staged." -ForegroundColor Yellow
+    }
 }
 else {
     Write-Host "No changes detected in git diff." -ForegroundColor DarkGray

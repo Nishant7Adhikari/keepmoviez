@@ -333,6 +333,7 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
           m.tmdbId == newTmdbId &&
           m.id !== editId &&
           !m.is_deleted &&
+          m.Status !== "Unwatchable" &&
           (m.Category === currentCategory ||
             (currentMediaType && m.tmdbMediaType === currentMediaType)),
       );
@@ -424,11 +425,63 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         entry.doNotRecommendDaily = existingEntry.doNotRecommendDaily;
     }
 
+    // --- UNWATCHABLE CHECK: Warn if the title exists in the Unwatchable section ---
+    if (!editId) {
+      const unwatchableMatch = movieData.find((m) => {
+        if (!m || m.is_deleted || m.Status !== "Unwatchable") return false;
+        // Match by TMDB ID (if available)
+        if (newTmdbId && m.tmdbId == newTmdbId) return true;
+        // Match by exact Name + Year
+        if (
+          m.Name &&
+          String(m.Name).toLowerCase() === entry.Name.toLowerCase() &&
+          m.Year == entry.Year
+        )
+          return true;
+        return false;
+      });
+
+      if (unwatchableMatch) {
+        const latestWatch = getLatestWatchInstance(
+          unwatchableMatch.watchHistory || [],
+        );
+        const whyMessage =
+          latestWatch && latestWatch.notes
+            ? latestWatch.notes
+            : "No reason was recorded.";
+        const unwatchableTitle = document.getElementById(
+          "unwatchableDuplicateModalLabel",
+        );
+        const unwatchableBody = document.getElementById(
+          "unwatchableDuplicateBody",
+        );
+        const unwatchableWhyContainer = document.getElementById(
+          "unwatchableDuplicateWhy",
+        );
+        if (unwatchableTitle)
+          unwatchableTitle.textContent = "⚠️ Unwatchable Title Detected";
+        if (unwatchableBody)
+          unwatchableBody.innerHTML = `You already have <strong>"${unwatchableMatch.Name}" (${unwatchableMatch.Year || "N/A"})</strong> in your <span class="badge badge-secondary">Unwatchable</span> section.`;
+        if (unwatchableWhyContainer) {
+          unwatchableWhyContainer.style.display = "none";
+          unwatchableWhyContainer.querySelector(
+            "#unwatchableWhyMessage",
+          ).textContent = whyMessage;
+        }
+        pendingEntryForConfirmation = entry;
+        pendingEditIdForConfirmation = editId;
+        $("#unwatchableDuplicateModal").modal("show");
+        hideLoading();
+        return;
+      }
+    }
+
     let hasDuplicateNameOnly = false;
     let hasDuplicateNameYear = false;
     for (const movie of movieData) {
       if (!movie || movie.id === editId || movie.is_deleted || !movie.Name)
         continue;
+      if (movie.Status === "Unwatchable") continue; // Already handled above
       if (String(movie.Name).toLowerCase() !== entry.Name.toLowerCase())
         continue;
       if (movie.Year == entry.Year) {
