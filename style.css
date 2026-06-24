@@ -3400,3 +3400,18 @@ a:hover {
 .quick-action-watch:hover {
   background-color: #00e082;
 }
+
+/* --- New Visual Data Charts --- */
+.heatmap-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.85);
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 10000;
+    transition: opacity 0.15s ease;
+    white-space: pre-wrap;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}

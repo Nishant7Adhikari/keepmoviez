@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.5.08 -->
+<!-- KeepMoviEZ  v5.5.09 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -56,7 +56,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5.5.09">
 
     <!-- PWA Manifest and Theme -->
     <link rel="manifest" href="manifest.json">
@@ -1684,6 +1684,18 @@
                             aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body row" id="chartsModalBody" style="max-height: 80vh; overflow-y: auto;">
+                    <div class="col-lg-12 stats-chart-container">
+                        <h6>Daily Watch Activity (Heatmap)</h6>
+                        <div style="overflow-x: auto;">
+                            <canvas id="activityHeatmapCanvas" width="900" height="180"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-12 stats-chart-container">
+                        <h6>Rating by Release Year</h6>
+                        <div style="height: 400px; width: 100%;">
+                            <canvas id="ratingReleaseYearScatter"></canvas>
+                        </div>
+                    </div>
                     <div class="col-md-6 stats-chart-container">
                         <h6>Watch Instances by Year</h6><canvas id="chartModalWatchInstancesByYear"></canvas>
                     </div>
@@ -2248,6 +2260,10 @@
     <script src="libs/js/jspdf.umd.min.js"></script>
     <script src="libs/js/jspdf.plugin.autotable.min.js"></script>
 
+    <!-- Chart.js Plugins via CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
+
     <!-- Custom JS modules  -->
     <script src="js/constant.js?v=2"></script>
     <script src="js/utils.js?v=2"></script>
@@ -2259,7 +2275,7 @@
     <script src="js/genre.js?v=2"></script>
     <script src="js/analysis.js?v=5.5.08"></script>
     <script src="js/ui.js?v=5.5.08"></script>
-    <script src="js/reporting.js?v=5.5.05"></script>
+    <script src="js/reporting.js?v=5.5.09"></script>
     <script src="js/app.js?v=5.5.08"></script>
     <script src="js/supabase.js?v=2"></script>
     <script src="js/backfill.js?v=2"></script>

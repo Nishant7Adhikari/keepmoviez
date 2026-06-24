@@ -1,5 +1,5 @@
-  // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.5.08"; // Version bumped to force update
+// sw.js
+const CACHE_NAME = "keepmoviez-local-v5.5.09"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css",
+  "./style.css?v=5.5.09",
   "./manifest.json",
 
   // Local CSS
@@ -30,6 +30,8 @@ const CORE_ASSETS = [
   "./libs/js/html2canvas.min.js",
   "./libs/js/jspdf.umd.min.js",
   "./libs/js/jspdf.plugin.autotable.min.js",
+  "https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js",
+  "https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js",
 
   // App Logic Scripts
   "./js/constant.js",
@@ -42,7 +44,7 @@ const CORE_ASSETS = [
   "./js/genre.js",
   "./js/analysis.js?v=5.5.08",
   "./js/ui.js?v=5.5.08",
-  "./js/reporting.js?v=5.5.05",
+  "./js/reporting.js?v=5.5.09",
   "./js/app.js?v=5.5.08",
   "./js/supabase.js",
   "./js/main.js?v=5.5.08",

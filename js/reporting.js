@@ -1219,6 +1219,258 @@ async function displayDetailedStatsModal() {
     }
 }
 
+let activityHeatmapLastRenderHash = null;
+
+function renderActivityHeatmap(canvasId) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    // Hash based on total watch instances to memoize
+    const currentHash = globalStatsData.totalWatchInstances + '_' + globalStatsData.totalEntries;
+    if (activityHeatmapLastRenderHash === currentHash) return; 
+    activityHeatmapLastRenderHash = currentHash;
+
+    const ctx = canvas.getContext('2d');
+    // Set internal resolution for crisp rendering
+    const width = canvas.width = 900;
+    const height = canvas.height = 180;
+    ctx.clearRect(0, 0, width, height);
+
+    // 365 days = 53 cols x 7 rows, we use 54 to be safe with Sunday alignment
+    const cols = 54;
+    const rows = 7;
+    const cellSize = 12;
+    const cellGap = 4;
+    const gridWidth = cols * (cellSize + cellGap);
+    const gridHeight = rows * (cellSize + cellGap);
+    
+    const startX = 40;
+    const startY = 30;
+
+    const dailyData = {};
+    window.movieData.forEach(movie => {
+        if (movie.watchHistory && Array.isArray(movie.watchHistory)) {
+            movie.watchHistory.forEach(wh => {
+                if (wh.date) {
+                    const dateStr = new Date(wh.date).toISOString().slice(0, 10);
+                    if (!dailyData[dateStr]) dailyData[dateStr] = { count: 0, titles: [] };
+                    dailyData[dateStr].count++;
+                    dailyData[dateStr].titles.push(movie.Name);
+                }
+            });
+        }
+    });
+
+    const today = new Date();
+    const targetStart = new Date(today);
+    targetStart.setDate(today.getDate() - 364);
+    const startDay = targetStart.getDay();
+    const startDate = new Date(targetStart);
+    startDate.setDate(startDate.getDate() - startDay); // Shift to Sunday
+    
+    const cellDataMap = [];
+    const isDark = document.body.classList.contains('dark-theme');
+
+    // Draw Day Labels (Y-axis)
+    const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    ctx.fillStyle = isDark ? '#8b949e' : '#57606a';
+    ctx.font = '10px "Inter", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    for (let r = 0; r < 7; r++) {
+        const y = startY + r * (cellSize + cellGap) + (cellSize / 2);
+        ctx.fillText(dayLabels[r], startX - 8, y);
+    }
+
+    let currentMonth = -1;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
+    for (let c = 0; c < cols; c++) {
+        const colStartX = startX + c * (cellSize + cellGap);
+        
+        const topRowDate = new Date(startDate);
+        topRowDate.setDate(startDate.getDate() + c * 7);
+        const month = topRowDate.getMonth();
+        
+        if (month !== currentMonth) {
+            ctx.fillStyle = isDark ? '#8b949e' : '#57606a';
+            ctx.fillText(months[month], colStartX, startY - 8);
+            
+            if (c > 0) {
+                ctx.beginPath();
+                ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+                ctx.lineWidth = 1;
+                ctx.moveTo(colStartX - cellGap/2, startY - 2);
+                ctx.lineTo(colStartX - cellGap/2, startY + gridHeight + 2);
+                ctx.stroke();
+            }
+            currentMonth = month;
+        }
+
+        for (let r = 0; r < rows; r++) {
+            const dayIndex = c * 7 + r;
+            const dateObj = new Date(startDate);
+            dateObj.setDate(startDate.getDate() + dayIndex);
+            
+            if (dateObj > today) continue;
+            
+            const dateStr = dateObj.toISOString().slice(0, 10);
+            const data = dailyData[dateStr] || { count: 0, titles: [] };
+            
+            let color = isDark ? '#161b22' : '#ebedf0'; // 0 watches
+            if (data.count === 1) color = isDark ? '#0e4429' : '#9be9a8';
+            else if (data.count === 2 || data.count === 3) color = isDark ? '#006d32' : '#40c463';
+            else if (data.count >= 4) color = isDark ? '#26a641' : '#30a14e';
+            
+            const y = startY + r * (cellSize + cellGap);
+            
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(colStartX, y, cellSize, cellSize, 3);
+            else ctx.rect(colStartX, y, cellSize, cellSize);
+            ctx.fill();
+            
+            cellDataMap.push({ x: colStartX, y, size: cellSize, date: dateStr, titles: data.titles, count: data.count });
+        }
+    }
+    
+    // Add tooltip logic
+    let tooltip = document.getElementById('heatmapTooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'heatmapTooltip';
+        tooltip.className = 'heatmap-tooltip';
+        tooltip.style.opacity = '0';
+        document.body.appendChild(tooltip);
+    }
+    
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        // Scale mouse coordinates to canvas internal resolution
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+        
+        let hovered = null;
+        for (let i = 0; i < cellDataMap.length; i++) {
+            const cell = cellDataMap[i];
+            if (x >= cell.x && x <= cell.x + cell.size && y >= cell.y && y <= cell.y + cell.size) {
+                hovered = cell;
+                break;
+            }
+        }
+        
+        if (hovered) {
+            let tooltipHtml = `<strong>${hovered.date}</strong><br/>Watches: ${hovered.count}`;
+            if (hovered.count > 0) {
+                tooltipHtml += `<br/><br/>${hovered.titles.join('<br/>')}`;
+            }
+            tooltip.innerHTML = tooltipHtml;
+            tooltip.style.left = (e.pageX + 15) + 'px';
+            tooltip.style.top = (e.pageY - 20) + 'px';
+            tooltip.style.opacity = '1';
+        } else {
+            tooltip.style.opacity = '0';
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', () => {
+        tooltip.style.opacity = '0';
+    });
+}
+
+function renderRatingReleaseYearScatter(canvasId, chartInstanceObj) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    
+    const scatterData = [];
+    let minYear = Infinity;
+    let maxYear = -Infinity;
+    
+    window.movieData.forEach(movie => {
+        if (movie.Year && movie.overallRating) {
+            const year = parseInt(movie.Year);
+            const rating = parseFloat(movie.overallRating);
+            if (!isNaN(year) && !isNaN(rating) && rating > 0) {
+                minYear = Math.min(minYear, year);
+                maxYear = Math.max(maxYear, year);
+                
+                let latestDate = 'N/A';
+                if (movie.watchHistory && movie.watchHistory.length > 0) {
+                    const sorted = [...movie.watchHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
+                    latestDate = sorted[0].date ? new Date(sorted[0].date).toLocaleDateString() : 'N/A';
+                }
+                scatterData.push({ x: year, y: rating, _title: movie.Name, _date: latestDate });
+            }
+        }
+    });
+
+    if (scatterData.length === 0) return;
+    if (minYear === Infinity) { minYear = 1900; maxYear = new Date().getFullYear(); }
+    else { minYear -= 1; maxYear += 1; }
+
+    const chartTextColor = getComputedStyle(document.body).getPropertyValue('--body-text-color').trim() || '#333';
+    const gridColor = getComputedStyle(document.body).getPropertyValue('--table-border-color').trim() || 'rgba(0,0,0,0.1)';
+    const isDark = document.body.classList.contains('dark-theme');
+    const pointColor = isDark ? 'rgba(0, 255, 148, 0.4)' : 'rgba(0, 123, 138, 0.4)';
+    const pointBorderColor = isDark ? 'rgba(0, 255, 148, 1)' : 'rgba(0, 123, 138, 1)';
+
+    chartInstanceObj[canvasId] = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Release Year vs Rating',
+                data: scatterData,
+                backgroundColor: pointColor,
+                borderColor: pointBorderColor,
+                pointRadius: 6,
+                pointHoverRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const point = context.raw;
+                            return `${point._title} (${point.x}) | Rating: ${point.y} | Watched: ${point._date}`;
+                        }
+                    }
+                },
+                zoom: {
+                    pan: { enabled: true, mode: 'x' },
+                    zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+                }
+            },
+            scales: {
+                x: {
+                    type: 'linear',
+                    position: 'bottom',
+                    title: { display: true, text: 'Release Year', color: chartTextColor },
+                    min: minYear,
+                    max: maxYear,
+                    ticks: { color: chartTextColor, stepSize: 5, callback: function(value) { return value; } },
+                    grid: { color: gridColor }
+                },
+                y: {
+                    title: { display: true, text: 'Personal Rating', color: chartTextColor },
+                    min: 0,
+                    max: 6,
+                    ticks: { color: chartTextColor, stepSize: 1, callback: function(value) { return (value >= 1 && value <= 5) ? value : ''; } },
+                    grid: { color: gridColor }
+                }
+            }
+        }
+    });
+}
+
 function renderChartsForModal(statsData, chartInstanceObj) {
     destroyCharts(chartInstanceObj);
     const chartsModalBody = document.getElementById('chartsModalBody');
@@ -1240,6 +1492,11 @@ function renderChartsForModal(statsData, chartInstanceObj) {
             chartInstanceObj[canvasId] = new Chart(ctx, { type, data: { labels: chartLabels, datasets: styledChartDataSets }, options: chartOptions });
         }
     };
+
+    // Render new custom charts
+    renderActivityHeatmap('activityHeatmapCanvas');
+    renderRatingReleaseYearScatter('ratingReleaseYearScatter', chartInstanceObj);
+
 
     renderSingleChart('chartModalWatchInstancesByYear', 'bar', (statsData.watchesByYear || []).map(d => d.year).reverse(), [{ label: 'Watch Instances', data: (statsData.watchesByYear || []).map(d => d.instances).reverse() }]);
     renderSingleChart('chartNormalizedPace', 'line', statsData.normalizedPaceData.labels, statsData.normalizedPaceData.datasets.map(ds => ({...ds, fill: false })), { plugins: { legend: { display: true } }, scales: { y: { title: { display: true, text: 'Cumulative Watches' } } }});
