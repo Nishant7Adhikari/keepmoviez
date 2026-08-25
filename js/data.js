@@ -34,6 +34,12 @@ async function saveToIndexedDB() {
                 const currentSyncMode = localStorage.getItem(syncModeKey);
                 const isOnline = navigator.onLine;
 
+                if (window.isModalSyncHold) {
+                    // Modal sync-hold is active: bypass auto-sync timer
+                    resolve();
+                    return;
+                }
+
                 if (currentSyncMode === 'normal' && isOnline && !window.isSyncingInProgress) {
                     console.log("Auto-Sync Triggered after local save.");
                     // Debounce/Throttle this slightly to avoid rapid-fire syncs on batch edits

@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.5.09"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.5.10"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -37,17 +37,17 @@ const CORE_ASSETS = [
   "./js/constant.js",
   "./js/utils.js",
   "./js/indexeddb.js",
-  "./js/data.js",
+  "./js/data.js?v=5.5.10",
   "./js/io1.js",
   "./js/io2.js",
-  "./js/tmdb.js?v=5.5.05",
+  "./js/tmdb.js?v=5.5.10",
   "./js/genre.js",
   "./js/analysis.js?v=5.5.08",
-  "./js/ui.js?v=5.5.08",
+  "./js/ui.js?v=5.5.10",
   "./js/reporting.js?v=5.5.09",
-  "./js/app.js?v=5.5.08",
-  "./js/supabase.js",
-  "./js/main.js?v=5.5.08",
+  "./js/app.js?v=5.5.10",
+  "./js/supabase.js?v=5.5.10",
+  "./js/main.js?v=5.5.10",
 
   // Icons
   "./icons/icon-192x192.png",
@@ -94,12 +94,12 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
 
   const criticalAppScripts = [
-    "app.js?v=5.5.08",
-    "data.js",
-    "main.js?v=5.5.08",
-    "supabase.js",
+    "app.js?v=5.5.10",
+    "data.js?v=5.5.10",
+    "main.js?v=5.5.10",
+    "supabase.js?v=5.5.10",
     "indexeddb.js",
-    "ui.js?v=5.5.08",
+    "ui.js?v=5.5.10",
     "utils.js",
   ];
   const isAppScript = criticalAppScripts.some((script) =>

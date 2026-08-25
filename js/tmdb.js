@@ -326,23 +326,27 @@ async function applyTmdbSelection(item) {
             formFieldsGlob.posterUrl.dataset.source = 'tmdb';
         }
         
-        if (processed.Description) formFieldsGlob.description.value = processed.Description;
+        // Overwrite description cleanly with new selection
+        formFieldsGlob.description.value = processed.Description || "";
 
         document.getElementById('tmdbId').value = item.id;
         document.getElementById('tmdbMediaType').value = item.media_type;
 
+        // Overwrite genres with new selection (do not merge with previous title's genres)
         if (processed.genres && processed.genres.length > 0) {
-            const currentSelectedGenres = new Set(selectedGenres);
+            const newSelectedGenres = new Set();
             processed.genres.forEach(tmdbGenreName => {
                 const matchedLocalGenre = UNIQUE_ALL_GENRES.find(localGenre => String(localGenre).toLowerCase() === String(tmdbGenreName).toLowerCase().replace(/-/g, ' '));
                 if (matchedLocalGenre) {
-                    currentSelectedGenres.add(matchedLocalGenre);
+                    newSelectedGenres.add(matchedLocalGenre);
                 }
             });
-            selectedGenres = Array.from(currentSelectedGenres).sort();
-            renderGenreTags();
-            populateGenreDropdown();
+            selectedGenres = Array.from(newSelectedGenres).sort();
+        } else {
+            selectedGenres = [];
         }
+        renderGenreTags();
+        populateGenreDropdown();
 
         const entryFormEl = document.getElementById('entryForm');
         if (entryFormEl) {

@@ -182,6 +182,9 @@ function openBackfillModal() {
     return;
   }
 
+  window.isModalSyncHold = true;
+  window.backfillSessionDirtyCount = 0;
+
   const missingSummary = scanForMissingFieldsSummary();
 
   if (missingSummary.length === 0) {
@@ -681,6 +684,23 @@ async function saveAndNext() {
     }
 
     backfillStats.completed++;
+    window.backfillSessionDirtyCount =
+      (window.backfillSessionDirtyCount || 0) + 1;
+
+    // Safety ceiling: silently flush batch every 25 completed items without interrupting the wizard
+    if (window.backfillSessionDirtyCount >= 25) {
+      if (typeof saveToIndexedDB === "function") saveToIndexedDB();
+      if (
+        typeof comprehensiveSync === "function" &&
+        window.currentSupabaseUser
+      ) {
+        console.log(
+          "Backfill 25-item safety window reached: silently syncing batch...",
+        );
+        comprehensiveSync(true);
+      }
+      window.backfillSessionDirtyCount = 0;
+    }
 
     // Move to next
     currentBackfillIndex++;
@@ -959,6 +979,10 @@ function showBackfillComplete() {
   saveToIndexedDB().then(() => {
     console.log("Backfill data saved to IndexedDB");
     if (typeof renderMovieCards === "function") renderMovieCards();
+    if (typeof window.releaseModalSyncHoldAndFlush === "function") {
+      window.releaseModalSyncHoldAndFlush();
+    }
+    window.backfillSessionDirtyCount = 0;
   });
 }
 

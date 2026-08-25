@@ -243,10 +243,11 @@ async function comprehensiveSync(silent = false) {
     return { success: false, error: "Privacy Locked" };
   }
 
-  // --- NEW: Sync Lock to prevent loops ---
+  // --- NEW: Sync Lock to prevent loops & queue subsequent requests ---
   if (window.isSyncingInProgress) {
-    console.warn("Sync already in progress. Skipping.");
-    return { success: false, error: "Locked" };
+    console.warn("Sync already in progress. Queuing next sync.");
+    window.hasPendingSync = true;
+    return { success: false, error: "Queued" };
   }
   window.isSyncingInProgress = true;
 
@@ -429,6 +430,15 @@ async function comprehensiveSync(silent = false) {
   } finally {
     window.isSyncingInProgress = false; // Release Lock
     if (!silent) hideLoading();
+    if (window.hasPendingSync) {
+      window.hasPendingSync = false;
+      console.log("Flushing queued pending sync...");
+      setTimeout(() => {
+        if (typeof comprehensiveSync === "function") {
+          comprehensiveSync(true);
+        }
+      }, 200);
+    }
   }
 }
 // END CHUNK: 2
@@ -852,6 +862,8 @@ async function resetAppForLogout(message, wipeData = false) {
   currentSupabaseUser = null;
   window.currentSupabaseUser = null;
   window.isSyncingInProgress = false; // Reset lock on logout
+  window.hasPendingSync = false;
+  window.isModalSyncHold = false;
   if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
 
   if (wipeData) {

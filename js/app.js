@@ -594,20 +594,23 @@ window.proceedWithEntrySave = async function (
     if (typeof trackModification === "function")
       trackModification(savedEntryId);
 
-    // Handle post-save actions
+    // Handle post-save actions with Modal-Gated sync hold support
     switch (saveAction) {
       case "saveAndAddAnother":
-        $("#entryModal").modal("hide");
-        $("#entryModal").one("hidden.bs.modal", prepareAddModal);
+        // Keep modal open, reset form in-place for seamless batch adding
+        window.isModalSyncHold = true;
+        window.isModalTransitioning = false;
+        prepareAddModal(false);
         break;
       case "saveAndEdit":
-        $("#entryModal").modal("hide");
-        $("#entryModal").one("hidden.bs.modal", () =>
-          prepareEditModal(savedEntryId),
-        );
+        // Keep modal open, transition into edit mode in-place
+        window.isModalSyncHold = true;
+        window.isModalTransitioning = false;
+        prepareEditModal(savedEntryId, false);
         break;
       case "quickSave":
       default:
+        window.isModalTransitioning = false;
         $("#entryModal").modal("hide");
         break;
     }

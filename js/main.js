@@ -141,6 +141,39 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // --- Modal-Gated Sync (Sync-Hold) Lifecycle Management ---
+  window.isModalSyncHold = false;
+  window.isModalTransitioning = false;
+
+  $(document).on(
+    "show.bs.modal",
+    "#entryModal, #quickUpdateModal, #backfillModal, #batchEditModal, #confirmDeleteModal",
+    function () {
+      window.isModalSyncHold = true;
+      window.isModalTransitioning = false;
+    },
+  );
+
+  $(document).on(
+    "hidden.bs.modal",
+    "#entryModal, #quickUpdateModal, #backfillModal, #batchEditModal, #confirmDeleteModal",
+    function () {
+      if (window.isModalTransitioning) return;
+      setTimeout(() => {
+        if (
+          !window.isModalTransitioning &&
+          $(
+            "#entryModal.show, #quickUpdateModal.show, #backfillModal.show, #batchEditModal.show, #confirmDeleteModal.show",
+          ).length === 0
+        ) {
+          if (typeof window.releaseModalSyncHoldAndFlush === "function") {
+            window.releaseModalSyncHoldAndFlush();
+          }
+        }
+      }, 100);
+    },
+  );
+
   function updateModalBackButton(modalEl) {
     const $modal = $(modalEl);
     const $header = $modal.find(".modal-header").first();
@@ -302,9 +335,41 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Global Helper to Release Sync-Hold and Flush any pending dirty modifications in one consolidated call
+  window.releaseModalSyncHoldAndFlush = function () {
+    window.isModalSyncHold = false;
+    window.isModalTransitioning = false;
+    if (currentSyncMode === "strict_privacy") return;
+
+    // Check if there are un-synced dirty entries locally in memory
+    const hasDirtyEntries =
+      Array.isArray(window.movieData) &&
+      window.movieData.some(
+        (e) =>
+          e &&
+          (e._sync_state === "new" ||
+            e._sync_state === "edited" ||
+            e._sync_state === "deleted"),
+      );
+
+    if (hasDirtyEntries) {
+      if (typeof comprehensiveSync === "function" && currentSupabaseUser) {
+        console.log(
+          "Modal Sync-Hold released: Flushing consolidated batch sync...",
+        );
+        comprehensiveSync(true);
+      }
+    }
+  };
+
   // Global Tracker Function (Exposed for app.js)
   window.trackModification = function (entryIds) {
     if (currentSyncMode === "strict_privacy") return;
+
+    // If modal sync-hold is active, pause auto-sync debounce timer (bulk on finish/exit approach)
+    if (window.isModalSyncHold) {
+      return;
+    }
 
     // Normal mode: Trigger auto-sync with debounce
     if (currentSyncMode === "normal") {

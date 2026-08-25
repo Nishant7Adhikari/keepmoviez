@@ -673,7 +673,7 @@ window.handlePosterUrlInput = function (forceLockedState = null) {
 };
 // END CHUNK: Poster URL Handling
 
-window.prepareAddModal = function () {
+window.prepareAddModal = function (showModal = true) {
   const entryModal = $("#entryModal");
   entryModal.find(".modal-title").text("Add New Entry");
   const entryForm = document.getElementById("entryForm");
@@ -722,11 +722,15 @@ window.prepareAddModal = function () {
   }
 
   toggleConditionalFields();
-  entryModal.modal("show");
-  entryModal.one("shown.bs.modal", () => formFieldsGlob.name.focus());
+  if (showModal) {
+    entryModal.modal("show");
+    entryModal.one("shown.bs.modal", () => formFieldsGlob.name?.focus());
+  } else {
+    formFieldsGlob.name?.focus();
+  }
 };
 
-window.prepareEditModal = function (id) {
+window.prepareEditModal = function (id, showModal = true) {
   const movie = movieData.find((m) => m && m.id === id);
   if (!movie) {
     showToast("Error", "Entry not found for editing.", "error");
@@ -753,8 +757,6 @@ window.prepareEditModal = function (id) {
   formFieldsGlob.currentSeasonEpisodesWatched.value =
     movie.currentSeasonEpisodesWatched || "";
   formFieldsGlob.year.value = movie.Year || "";
-  formFieldsGlob.country.value = movie.Country || "";
-  formFieldsGlob.description.value = movie.Description || "";
   formFieldsGlob.country.value = movie.Country || "";
   formFieldsGlob.description.value = movie.Description || "";
 
@@ -842,7 +844,9 @@ window.prepareEditModal = function (id) {
   $("#updateEntryBtn").show();
 
   toggleConditionalFields();
-  entryModal.modal("show");
+  if (showModal) {
+    entryModal.modal("show");
+  }
 };
 
 window.showDeleteConfirmationModal = function (id = null) {
