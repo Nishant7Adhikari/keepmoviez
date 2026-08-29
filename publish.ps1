@@ -15,20 +15,20 @@ if ([string]::IsNullOrWhiteSpace($VersionString)) {
     if ($parts.Length -eq 3) {
         $majorVer = [int]$parts[0]
         $minorVer = [int]$parts[1]
-        $patchStr  = $parts[2]
+        $patchStr = $parts[2]
 
         $padLength = $patchStr.Length
-        $patchVer  = [int]$patchStr
+        $patchVer = [int]$patchStr
 
         if ($Major) {
             $majorVer++
-            $minorVer  = 0
-            $patchVer  = 0
+            $minorVer = 0
+            $patchVer = 0
             $padLength = 1   # FIX: reset padding on major/minor bump
         }
         elseif ($Minor) {
             $minorVer++
-            $patchVer  = 0
+            $patchVer = 0
             $padLength = 1   # FIX: reset padding on major/minor bump
         }
         else {
@@ -36,7 +36,7 @@ if ([string]::IsNullOrWhiteSpace($VersionString)) {
         }
 
         $newPatchStr = $patchVer.ToString("D$padLength")
-        $newVersion  = "$majorVer.$minorVer.$newPatchStr"
+        $newVersion = "$majorVer.$minorVer.$newPatchStr"
     }
     else {
         Write-Host "Could not parse current version format cleanly. Using basic increment." -ForegroundColor Yellow
@@ -53,19 +53,19 @@ Set-Content -Path $versionFile -Value $newVersion -NoNewline
 # 2. Run version updates locally
 Write-Host "Hunting down version strings for v$newVersion..." -ForegroundColor Cyan
 
-$htmlPattern   = '(?i)<!--\s*KeepMoviEZ\s+v[0-9.]+\s*-->'
+$htmlPattern = '(?i)<!--\s*KeepMoviEZ\s+v[0-9.]+\s*-->'
 $htmlReplacement = "<!-- KeepMoviEZ  v$newVersion -->"
 (Get-Content index.html) -replace $htmlPattern, $htmlReplacement | Set-Content index.html
 
-$swPattern     = '(?i)const\s+CACHE_NAME\s+=\s+["'']keepmoviez-local-v[0-9.]+["''];'
+$swPattern = '(?i)const\s+CACHE_NAME\s+=\s+["'']keepmoviez-local-v[0-9.]+["''];'
 $swReplacement = "const CACHE_NAME = `"keepmoviez-local-v$newVersion`";"
 (Get-Content sw.js) -replace $swPattern, $swReplacement | Set-Content sw.js
 
 # FIX: chain both replacements in a single read-write to avoid stale second read
 (Get-Content manifest.json) `
-    -replace '(?i)"version":\s*"[0-9.]+"',      "`"version`": `"$newVersion`"" `
+    -replace '(?i)"version":\s*"[0-9.]+"', "`"version`": `"$newVersion`"" `
     -replace '(?i)"version_name":\s*"[0-9.]+"', "`"version_name`": `"$newVersion`"" |
-    Set-Content manifest.json
+Set-Content manifest.json
 
 if (Test-Path "docs/index.html") {
     (Get-Content docs/index.html) -replace '(?i)<small>v[0-9.]+</small>', "<small>v$newVersion</small>" | Set-Content docs/index.html
@@ -78,7 +78,7 @@ $changedFiles = git status --porcelain | Where-Object { $_ -match '\.(js|css)$' 
 
 if ($changedFiles) {
     $indexContent = Get-Content index.html -Raw
-    $swContent    = Get-Content sw.js -Raw
+    $swContent = Get-Content sw.js -Raw
     $filesUpdated = $false
 
     foreach ($line in $changedFiles) {
@@ -125,7 +125,7 @@ if (![string]::IsNullOrWhiteSpace($diffOutput)) {
     $prompt = @"
 You are an expert developer. Please generate a concise, descriptive Git commit message based on the following git diff output.
 Use the Conventional Commits format (e.g., feat:, fix:, chore:, docs:).
-Provide only the commit message without any additional conversational text.
+Provide only the commit message without any additional conversational text but it should be descriptive (Range 1 - 80 words), multi-lines are recommended if major changes included else single line is preferred for minor changes.
 
 Git diff:
 $diffOutput
@@ -164,7 +164,8 @@ $diffOutput
             git push
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "Push complete." -ForegroundColor Green
-            } else {
+            }
+            else {
                 Write-Host "Push failed." -ForegroundColor Red
             }
         }

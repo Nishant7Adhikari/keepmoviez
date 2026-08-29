@@ -340,7 +340,7 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
       if (exactTmdbMatch) {
         showToast(
           "Data Conflict",
-          `Entry "${exactTmdbMatch.Name}" already exists with this TMDB ID. Please use search in Edit Mode instead.`,
+          `Entry "${exactTmdbMatch.Name}" already exists with this TMDB ID. Please verify using search bar instead.`,
           "error",
           6000,
         );
@@ -356,22 +356,22 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
       Status: formFieldsGlob.status.value,
       seasonsCompleted:
         formFieldsGlob.status.value === "Continue" &&
-        formFieldsGlob.category.value === "Series"
+          formFieldsGlob.category.value === "Series"
           ? parseInt(formFieldsGlob.seasonsCompleted.value, 10) || 0
           : null,
       currentSeasonEpisodesWatched:
         formFieldsGlob.status.value === "Continue" &&
-        formFieldsGlob.category.value === "Series"
+          formFieldsGlob.category.value === "Series"
           ? parseInt(formFieldsGlob.currentSeasonEpisodesWatched.value, 10) || 0
           : null,
       Recommendation:
         formFieldsGlob.status.value === "Watched" ||
-        formFieldsGlob.status.value === "Continue"
+          formFieldsGlob.status.value === "Continue"
           ? formFieldsGlob.recommendation.value
           : "",
       overallRating:
         formFieldsGlob.status.value === "Watched" ||
-        formFieldsGlob.status.value === "Continue"
+          formFieldsGlob.status.value === "Continue"
           ? formFieldsGlob.overallRating.value
           : "",
       personalRecommendation: formFieldsGlob.personalRecommendation.value,
@@ -501,6 +501,12 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         "#duplicateNameConfirmModal .modal-body",
       );
       if (duplicateTitle && duplicateBody) {
+        window.duplicateModalMode = "save"; // reset mode for save
+        const confirmBtn = document.getElementById("confirmDuplicateSaveBtn");
+        const cancelBtn = document.getElementById("cancelDuplicateSaveBtn");
+        if (confirmBtn) confirmBtn.textContent = "Save Anyway";
+        if (cancelBtn) cancelBtn.textContent = "Cancel";
+
         if (hasDuplicateNameYear) {
           duplicateTitle.textContent = "Duplicate Name and Year Detected";
           duplicateBody.textContent =
@@ -538,12 +544,12 @@ window.proceedWithEntrySave = async function (
       const toastActions =
         saveAction === "quickSave" || saveAction === "saveAndAddAnother"
           ? [
-              {
-                label: "Edit Details",
-                className: "btn-outline-light btn-sm",
-                onClick: () => prepareEditModal(savedEntryId),
-              },
-            ]
+            {
+              label: "Edit Details",
+              className: "btn-outline-light btn-sm",
+              onClick: () => prepareEditModal(savedEntryId),
+            },
+          ]
           : [];
 
       showToast(
@@ -1112,9 +1118,9 @@ function incrementLocalStorageCounter(key) {
     localStorage.setItem(userPrefixedKey, (count + 1).toString());
 
     if (window.currentSupabaseUser) {
-        let pending = JSON.parse(localStorage.getItem(window.currentSupabaseUser.id + "_pending_stats") || "{}");
-        pending[key] = (pending[key] || 0) + 1;
-        localStorage.setItem(window.currentSupabaseUser.id + "_pending_stats", JSON.stringify(pending));
+      let pending = JSON.parse(localStorage.getItem(window.currentSupabaseUser.id + "_pending_stats") || "{}");
+      pending[key] = (pending[key] || 0) + 1;
+      localStorage.setItem(window.currentSupabaseUser.id + "_pending_stats", JSON.stringify(pending));
     }
   } catch (e) {
     console.error(`Failed to increment stat for key: ${key}`, e);
@@ -1131,7 +1137,7 @@ function recordUniqueDateForAchievement(key) {
     if (!dates.includes(today)) {
       dates.push(today);
       localStorage.setItem(userPrefixedKey, JSON.stringify(dates));
-      
+
       // Directly increment the stat for the backend using the length or by 1
       incrementLocalStorageCounter(key + "_count");
     }

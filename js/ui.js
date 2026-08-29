@@ -83,8 +83,10 @@ function prepareAddWatchInstanceForm() {
         String(now.getDate()).padStart(2, "0");
       watchInstanceFormFields.date.value = localDate;
     }
+    // Auto-copy My Overall Rating to watch record rating if overall rating is set
+    const overallRatingVal = formFieldsGlob?.overallRating?.value || "";
     if (watchInstanceFormFields.rating)
-      watchInstanceFormFields.rating.value = "";
+      watchInstanceFormFields.rating.value = overallRatingVal || "";
     if (watchInstanceFormFields.notes) watchInstanceFormFields.notes.value = "";
   }
   if (addWatchInstanceFormEl) addWatchInstanceFormEl.style.display = "block";
@@ -707,6 +709,12 @@ window.prepareAddModal = function (showModal = true) {
   renderWatchHistoryUI([]);
   closeWatchInstanceForm();
 
+  // Reset accordion state
+  $("#advancedCollapse").removeClass("show").removeClass("collapsing");
+  $("#advancedHeading button")
+    .addClass("collapsed")
+    .attr("aria-expanded", "false");
+
   // FIX: Robust Toggle for Add Mode
   $("#advancedSectionAccordion").hide();
 
@@ -742,6 +750,12 @@ window.prepareEditModal = function (id, showModal = true) {
   const entryForm = document.getElementById("entryForm");
   if (entryForm) entryForm.reset();
   document.getElementById("editEntryId").value = movie.id;
+
+  // Reset accordion state so it always starts collapsed
+  $("#advancedCollapse").removeClass("show").removeClass("collapsing");
+  $("#advancedHeading button")
+    .addClass("collapsed")
+    .attr("aria-expanded", "false");
 
   // Populate all fields, including those in the advanced section
   formFieldsGlob.name.value = movie.Name || "";
@@ -816,9 +830,9 @@ window.prepareEditModal = function (id, showModal = true) {
   formFieldsGlob.relatedEntriesSuggestions.style.display = "none";
   selectedGenres = movie.Genre
     ? String(movie.Genre)
-        .split(",")
-        .map((g) => String(g).trim())
-        .filter(Boolean)
+      .split(",")
+      .map((g) => String(g).trim())
+      .filter(Boolean)
     : [];
   renderGenreTags();
   document.getElementById("genreSearchInput").value = "";
@@ -944,10 +958,10 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
       : fullDetails.Year || "";
     const formattedReleaseDate = releaseDate
       ? new Date(releaseDate).toLocaleDateString(undefined, {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })
       : year;
 
     const lang =
@@ -1142,8 +1156,8 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
     const relatedContent = modal.find("#detailsRelatedLinksContent").empty();
     const relatedEntries = isLocalEntry
       ? (fullDetails.relatedEntries || [])
-          .map((rId) => movieData.find((m) => m.id === rId))
-          .filter(Boolean)
+        .map((rId) => movieData.find((m) => m.id === rId))
+        .filter(Boolean)
       : [];
     toggle("#detailsRelatedLinksSectionToggle", relatedEntries.length > 0);
     if (relatedEntries.length > 0)
@@ -1369,7 +1383,7 @@ window.openUnwatchableModal = function () {
     unwatchableEntries.forEach((entry) => {
       const latestWatch = getLatestWatchInstance(entry.watchHistory || []);
       const reason = latestWatch && latestWatch.notes ? latestWatch.notes : "No reason recorded.";
-      
+
       html += `
         <div class="list-group-item list-group-item-action flex-column align-items-start bg-dark text-white border-secondary mb-2 rounded">
           <div class="d-flex w-100 justify-content-between align-items-center">
@@ -1407,8 +1421,48 @@ function toggleConditionalFields() {
   const isContinueSeries = status === "Continue" && category === "Series";
 
   $("#seriesContinueGroup").toggle(isContinueSeries);
+  if (isContinueSeries) {
+    if (formFieldsGlob.seasonsCompleted && formFieldsGlob.seasonsCompleted.value === "") {
+      formFieldsGlob.seasonsCompleted.value = "0";
+    }
+    if (
+      formFieldsGlob.currentSeasonEpisodesWatched &&
+      formFieldsGlob.currentSeasonEpisodesWatched.value === ""
+    ) {
+      formFieldsGlob.currentSeasonEpisodesWatched.value = "0";
+    }
+  }
+
   $("#recommendationGroup, #overallRatingGroup").toggle(isWatchedOrContinue);
   $("#watchHistorySection").toggle(isWatchedOrContinue || status === "Unwatchable");
+
+  // Dynamic Watch History Guidance Hint
+  const $hintEl = $("#watchHistoryHint");
+  if ($hintEl.length > 0) {
+    if (status === "Watched") {
+      if (category === "Series") {
+        $hintEl
+          .html(
+            '<i class="fas fa-lightbulb"></i> <span class="hint-strong">Series Tip:</span> You can add multiple watch records if you watched across different dates or rewatches.',
+          )
+          .show();
+      } else {
+        $hintEl
+          .html(
+            '<i class="fas fa-calendar-check"></i> <span class="hint-strong">Watch Log:</span> Record the date and rating for this watch session.',
+          )
+          .show();
+      }
+    } else if (isContinueSeries) {
+      $hintEl
+        .html(
+          '<i class="fas fa-play-circle"></i> <span class="hint-strong">Progress Log:</span> Add a record to log your latest episode or session date.',
+        )
+        .show();
+    } else {
+      $hintEl.hide().empty();
+    }
+  }
 
   const isSeries = category === "Series";
   $("#movieRuntimeGroup").toggle(!isSeries);

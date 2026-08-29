@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.5.10 -->
+<!-- KeepMoviEZ  v5.5.11 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -10,7 +10,8 @@
     <link rel="icon" type="image/x-icon" href="favicon.png">
     <!-- Primary Meta Tags -->
     <meta name="title" content="KeepMoviEZ - Smart Movie & Series Tracker | Log, Rate & Visualize">
-    <meta name="description" content="KeepMovieZ is a free movie and TV show tracker for managing your watchlist, watch history, ratings, progress, recommendations and personal movie collection.">
+    <meta name="description"
+        content="KeepMovieZ is a free movie and TV show tracker for managing your watchlist, watch history, ratings, progress, recommendations and personal movie collection.">
     <meta name="keywords" content="KeepMoviEZ, movie tracker, media collection">
     <meta name="robots" content="index, follow">
     <meta name="author" content="Nishant Adhikari">
@@ -22,14 +23,16 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://keepmoviez.nishantadhikari.info.np/">
     <meta property="og:title" content="KeepMoviEZ - Smart Movie & Series Tracker">
-    <meta property="og:description" content="KeepMoviEZ is your personal smart movie and series tracking app. Log, rate & visualize your collection.">
+    <meta property="og:description"
+        content="KeepMoviEZ is your personal smart movie and series tracking app. Log, rate & visualize your collection.">
     <meta property="og:image" content="https://keepmoviez.nishantadhikari.info.np/icons/icon-512x512.png">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="https://keepmoviez.nishantadhikari.info.np/">
     <meta property="twitter:title" content="KeepMoviEZ - Smart Movie & Series Tracker">
-    <meta property="twitter:description" content="KeepMoviEZ is your personal smart movie and series tracking app. Log, rate & visualize your collection.">
+    <meta property="twitter:description"
+        content="KeepMoviEZ is your personal smart movie and series tracking app. Log, rate & visualize your collection.">
     <meta property="twitter:image" content="https://keepmoviez.nishantadhikari.info.np/icons/icon-512x512.png">
 
     <!-- Structured Data -->
@@ -55,7 +58,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=5.5.09">
+    <link rel="stylesheet" href="style.css?v=5.5.11">
 
     <!-- PWA Manifest and Theme -->
     <link rel="manifest" href="manifest.json">
@@ -793,7 +796,7 @@
                                 </div>
                             </div>
                             <div class="form-group col-md-4">
-                                <label for="tmdbSearchYear">Year <small class="text-muted">(Optional)</small></label>
+                                <label for="tmdbSearchYear">Year <small class="text-muted">Optional</small></label>
                                 <input type="number" class="form-control" id="tmdbSearchYear" placeholder="YYYY"
                                     min="1888" max="2100">
                             </div>
@@ -867,6 +870,7 @@
                                 <button type="button" class="btn btn-sm btn-outline-primary"
                                     id="toggleAddWatchInstanceFormBtn"><i class="fas fa-plus"></i> Add Record</button>
                             </div>
+                            <div id="watchHistoryHint" class="watch-history-hint mb-2" style="display:none;"></div>
                             <div id="addWatchInstanceForm" class="p-3 border rounded mb-3" style="display:none;">
                                 <h6 id="watchInstanceFormTitle" class="mb-3">Add Watch Record</h6>
                                 <div class="form-row">
@@ -897,8 +901,8 @@
                             <div class="card">
                                 <div class="card-header" id="advancedHeading">
                                     <h5 class="mb-0">
-                                        <button type="button" class="btn btn-link" data-toggle="collapse"
-                                            data-target="#advancedCollapse" aria-expanded="true"
+                                        <button type="button" class="btn btn-link collapsed" data-toggle="collapse"
+                                            data-target="#advancedCollapse" aria-expanded="false"
                                             aria-controls="advancedCollapse">
                                             Advanced Details
                                         </button>
@@ -1304,7 +1308,8 @@
                             aria-hidden="true">×</span> </button>
                 </div>
                 <div class="modal-body text-center">
-                    <img id="personProfileImage" alt="Person Profile" class="person-profile-img img-fluid d-none" width="150" height="225">
+                    <img id="personProfileImage" alt="Person Profile" class="person-profile-img img-fluid d-none"
+                        width="150" height="225">
                     <p id="noPersonImageMessage" class="text-muted small mt-2">No Image Available</p>
                     <p id="personBio" class="mt-3 text-left small"></p>
 
@@ -1582,9 +1587,11 @@
                         <div>
                             <div class="modal-eyebrow">Suggestion Hub</div>
                             <h6 id="recommendationsListTitleModal" class="mb-1">Your Suggestions</h6>
-                            <p id="recommendationsListMeta" class="text-muted small mb-0">Based on your data and preferences.</p>
+                            <p id="recommendationsListMeta" class="text-muted small mb-0">Based on your data and
+                                preferences.</p>
                         </div>
-                        <button id="refreshRecommendationsBtnModal" class="btn btn-sm btn-outline-primary suggestion-refresh-btn">
+                        <button id="refreshRecommendationsBtnModal"
+                            class="btn btn-sm btn-outline-primary suggestion-refresh-btn">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
@@ -1616,47 +1623,65 @@
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
                                 <div class="modal-eyebrow">Achievement Vault</div>
-                                <span class="font-weight-bold text-dark dark-theme-text-white"><i class="fas fa-award text-success mr-1"></i> Trophy Room Completion</span>
-                                <p class="text-muted small mb-0">Track your progress across milestones, genre mastery, and feature-driven badges.</p>
+                                <span class="font-weight-bold text-dark dark-theme-text-white"><i
+                                        class="fas fa-award text-success mr-1"></i> Trophy Room Completion</span>
+                                <p class="text-muted small mb-0">Track your progress across milestones, genre mastery,
+                                    and feature-driven badges.</p>
                             </div>
-                            <span id="globalAchievementsRatio" class="badge badge-success font-weight-bold achievement-ratio-pill" style="font-size: 0.9rem;">0 / 0 Unlocked</span>
+                            <span id="globalAchievementsRatio"
+                                class="badge badge-success font-weight-bold achievement-ratio-pill"
+                                style="font-size: 0.9rem;">0 / 0 Unlocked</span>
                         </div>
                         <div class="progress" style="height: 10px; border-radius: 8px;">
-                            <div id="globalAchievementsProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%"></div>
+                            <div id="globalAchievementsProgressBar"
+                                class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                role="progressbar" style="width: 0%"></div>
                         </div>
                         <div class="achievement-summary-row mt-3">
                             <span id="achievementSummaryUnlocked" class="achievement-summary-chip">0 achieved</span>
                             <span id="achievementSummaryLocked" class="achievement-summary-chip">0 locked</span>
-                            <span id="achievementSummaryTopCategory" class="achievement-summary-chip">Top category: pending</span>
+                            <span id="achievementSummaryTopCategory" class="achievement-summary-chip">Top category:
+                                pending</span>
                         </div>
                     </div>
 
                     <!-- Sleek Tab Navigation -->
                     <ul class="nav nav-tabs nav-justified mb-3" id="achievementsTabList" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="ach-all-tab" data-toggle="tab" href="#ach-all-pane" role="tab" aria-controls="ach-all-pane" aria-selected="true"><i class="fas fa-trophy mr-1"></i> All</a>
+                            <a class="nav-link active" id="ach-all-tab" data-toggle="tab" href="#ach-all-pane"
+                                role="tab" aria-controls="ach-all-pane" aria-selected="true"><i
+                                    class="fas fa-trophy mr-1"></i> All</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="ach-milestones-tab" data-toggle="tab" href="#ach-milestones-pane" role="tab" aria-controls="ach-milestones-pane" aria-selected="false"><i class="fas fa-flag mr-1"></i> Milestones</a>
+                            <a class="nav-link" id="ach-milestones-tab" data-toggle="tab" href="#ach-milestones-pane"
+                                role="tab" aria-controls="ach-milestones-pane" aria-selected="false"><i
+                                    class="fas fa-flag mr-1"></i> Milestones</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="ach-genres-tab" data-toggle="tab" href="#ach-genres-pane" role="tab" aria-controls="ach-genres-pane" aria-selected="false"><i class="fas fa-mask mr-1"></i> Genre Mastery</a>
+                            <a class="nav-link" id="ach-genres-tab" data-toggle="tab" href="#ach-genres-pane" role="tab"
+                                aria-controls="ach-genres-pane" aria-selected="false"><i class="fas fa-mask mr-1"></i>
+                                Genre Mastery</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="ach-fun-tab" data-toggle="tab" href="#ach-fun-pane" role="tab" aria-controls="ach-fun-pane" aria-selected="false"><i class="fas fa-smile mr-1"></i> Features & Fun</a>
+                            <a class="nav-link" id="ach-fun-tab" data-toggle="tab" href="#ach-fun-pane" role="tab"
+                                aria-controls="ach-fun-pane" aria-selected="false"><i class="fas fa-smile mr-1"></i>
+                                Features & Fun</a>
                         </li>
                     </ul>
 
                     <div class="tab-content" id="achievementsTabContent" style="padding-top: 10px;">
-                        <div class="tab-pane fade show active" id="ach-all-pane" role="tabpanel" aria-labelledby="ach-all-tab">
+                        <div class="tab-pane fade show active" id="ach-all-pane" role="tabpanel"
+                            aria-labelledby="ach-all-tab">
                             <div id="achievementBadgesModal" class="d-flex flex-wrap justify-content-center">
                                 <p class="text-center text-muted p-3">Loading achievements...</p>
                             </div>
                         </div>
-                        <div class="tab-pane fade" id="ach-milestones-pane" role="tabpanel" aria-labelledby="ach-milestones-tab">
+                        <div class="tab-pane fade" id="ach-milestones-pane" role="tabpanel"
+                            aria-labelledby="ach-milestones-tab">
                             <div id="achievementBadgesMilestones" class="d-flex flex-wrap justify-content-center"></div>
                         </div>
-                        <div class="tab-pane fade" id="ach-genres-pane" role="tabpanel" aria-labelledby="ach-genres-tab">
+                        <div class="tab-pane fade" id="ach-genres-pane" role="tabpanel"
+                            aria-labelledby="ach-genres-tab">
                             <div id="achievementBadgesGenres" class="d-flex flex-wrap justify-content-center"></div>
                         </div>
                         <div class="tab-pane fade" id="ach-fun-pane" role="tabpanel" aria-labelledby="ach-fun-tab">
@@ -1809,8 +1834,8 @@
                 </div>
                 <div class="modal-body">
                     <p id="unwatchableDuplicateBody">This title exists in your Unwatchable section.</p>
-                    <button type="button" class="btn btn-outline-info btn-sm btn-block mb-2"
-                        id="unwatchableViewWhyBtn" onclick="document.getElementById('unwatchableDuplicateWhy').style.display='block'; this.style.display='none';">
+                    <button type="button" class="btn btn-outline-info btn-sm btn-block mb-2" id="unwatchableViewWhyBtn"
+                        onclick="document.getElementById('unwatchableDuplicateWhy').style.display='block'; this.style.display='none';">
                         <i class="fas fa-eye"></i> Click to view why
                     </button>
                     <div id="unwatchableDuplicateWhy" class="alert alert-light border small p-2" style="display: none;">
@@ -1828,17 +1853,19 @@
     <!-- END CHUNK: Modal - Unwatchable Duplicate Warning -->
 
     <!-- START CHUNK: Modal - Unwatchable Management -->
-    <div class="modal fade" id="unwatchableModal" tabindex="-1" role="dialog"
-        aria-labelledby="unwatchableModalLabel" aria-hidden="true">
+    <div class="modal fade" id="unwatchableModal" tabindex="-1" role="dialog" aria-labelledby="unwatchableModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="unwatchableModalLabel"><i class="fas fa-trash-alt"></i> Unwatchable Entries</h5>
+                    <h5 class="modal-title" id="unwatchableModalLabel"><i class="fas fa-trash-alt"></i> Unwatchable
+                        Entries</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">×</span></button>
                 </div>
                 <div class="modal-body" style="max-height: 65vh; overflow-y: auto;">
-                    <p class="text-muted small mb-3">Titles you couldn't finish. These are hidden from your library and excluded from all stats.</p>
+                    <p class="text-muted small mb-3">Titles you couldn't finish. These are hidden from your library and
+                        excluded from all stats.</p>
                     <div id="unwatchableListContainer">
                         <p class="text-center text-muted p-3">No unwatchable entries yet.</p>
                     </div>
@@ -2041,7 +2068,8 @@
                 <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
 
                     <div class="about-hero">
-                        <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ" width="256" height="256"></img>
+                        <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ" width="256"
+                            height="256"></img>
                         <p>KeepMoviEZ is built to give you full control over your movie and series tracking—fast,
                             structured, and distraction-free. The name reflects exactly what it delivers: keeping your
                             movies easy to manage.</p>
@@ -2270,20 +2298,21 @@
     <script src="js/data.js?v=5.5.10"></script>
     <script src="js/io1.js?v=2"></script>
     <script src="js/io2.js?v=2"></script>
-    <script src="js/tmdb.js?v=5.5.10"></script>
+    <script src="js/tmdb.js?v=5.5.11"></script>
     <script src="js/genre.js?v=2"></script>
     <script src="js/analysis.js?v=5.5.08"></script>
-    <script src="js/ui.js?v=5.5.10"></script>
+    <script src="js/ui.js?v=5.5.11"></script>
     <script src="js/reporting.js?v=5.5.09"></script>
-    <script src="js/app.js?v=5.5.10"></script>
+    <script src="js/app.js?v=5.5.11"></script>
     <script src="js/supabase.js?v=5.5.10"></script>
     <script src="js/backfill.js?v=2"></script>
-    <script src="js/backfill-ui.js?v=5.5.10"></script>
-    <script src="js/main.js?v=5.5.10"></script>
+    <script src="js/backfill-ui.js?v=5.5.11"></script>
+    <script src="js/main.js?v=5.5.11"></script>
     <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
     <!-- Global Full-Screen Confetti Celebration Canvas -->
-    <canvas id="globalConfettiCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: none;"></canvas>
+    <canvas id="globalConfettiCanvas"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: none;"></canvas>
 </body>
 
 </html>

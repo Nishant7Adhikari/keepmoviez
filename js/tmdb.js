@@ -14,7 +14,7 @@ async function callTmdbApiDirect(endpoint, params = {}) {
             // This handles errors from the Edge Function itself (e.g., network issues, Deno errors)
             throw new Error(`Edge Function invocation failed: ${error.message}`);
         }
-        
+
         if (data.error) {
             // This handles errors our Edge Function code caught (e.g., secret key missing)
             throw new Error(`Error from Edge Function: ${data.error}`);
@@ -23,7 +23,7 @@ async function callTmdbApiDirect(endpoint, params = {}) {
         // The Edge Function forwards TMDB's status, so we check for non-200 responses here
         // The data object might contain TMDB's error message, like { status_message: 'Invalid API key' }
         if (data.status_message) {
-             throw new Error(data.status_message);
+            throw new Error(data.status_message);
         }
 
         return data;
@@ -57,7 +57,7 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
     if (tmdbSearchCache.has(cacheKey)) {
         console.log(`[Cache Hit] Serving results for: "${normalizedQuery}"`);
         // IMPORTANT: Do NOT show spinner here. Immediate render.
-        if(spinnerEl) spinnerEl.style.display = 'none'; // Ensure it's hidden
+        if (spinnerEl) spinnerEl.style.display = 'none'; // Ensure it's hidden
         const cachedResults = tmdbSearchCache.get(cacheKey);
         displayTmdbResults(cachedResults);
         return;
@@ -65,7 +65,7 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
 
     // 3. Cache Miss - Network Request
     console.log(`[API Call] Fetching live results for: "${normalizedQuery}"`);
-    
+
     // ONLY show spinner now that we know we are making a request
     if (spinnerEl) spinnerEl.style.display = 'inline-block';
 
@@ -77,7 +77,7 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
         if (idMatch) {
             const tmdbId = idMatch[1];
             console.log(`[ID Search] Attempting direct fetch for TMDB ID: ${tmdbId}`);
-            
+
             // Try fetching as both movie and tv since we don't know the type
             const [movieRes, tvRes] = await Promise.allSettled([
                 callTmdbApiDirect(`/movie/${tmdbId}`),
@@ -116,7 +116,7 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
 
             const movieResults = (movieData.results || []).map(r => ({ ...r, media_type: 'movie' }));
             const tvResults = (tvData.results || []).map(r => ({ ...r, media_type: 'tv' }));
-            
+
             results = [...movieResults, ...tvResults];
             // Sort combined results by popularity
             results.sort((a, b) => (b.popularity || 0) - (a.popularity || 0));
@@ -125,14 +125,14 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
             const multiData = await callTmdbApiDirect('/search/multi', { query });
             results = multiData.results || [];
         }
-        
+
         // 4. Save to Cache
         if (tmdbSearchCache.size >= MAX_CACHE_SIZE) {
             const oldestKey = tmdbSearchCache.keys().next().value;
             tmdbSearchCache.delete(oldestKey);
         }
         tmdbSearchCache.set(cacheKey, results);
-        
+
         displayTmdbResults(results);
 
     } catch (error) {
@@ -194,7 +194,7 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
     let tmdbCast = [], tmdbDirector = null, tmdbProductionCompanies = [];
     let tmdbVoteAverage = null, tmdbVoteCount = null, tmdbRuntime = null;
     let tmdbCollectionId = null, tmdbCollectionName = null;
-    let tmdbCollectionTotalParts = null; 
+    let tmdbCollectionTotalParts = null;
     let detailData = {};
 
     detailData = await callTmdbApiDirect(`/${mediaType}/${id}`, { append_to_response: 'keywords,credits,collection,external_ids' });
@@ -206,12 +206,12 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
         } else if (detailData.origin_country && detailData.origin_country.length > 0) {
             tmdbCountryISO = detailData.origin_country[0] || '';
         }
-        
+
         if (detailData.original_language) {
             const langObj = (detailData.spoken_languages || []).find(l => l.iso_639_1 === detailData.original_language);
             tmdbLanguage = langObj ? (langObj.english_name || langObj.name || detailData.original_language.toUpperCase()) : detailData.original_language.toUpperCase();
         } else if (detailData.spoken_languages && detailData.spoken_languages.length > 0) {
-             tmdbLanguage = detailData.spoken_languages[0].english_name || detailData.spoken_languages[0].name;
+            tmdbLanguage = detailData.spoken_languages[0].english_name || detailData.spoken_languages[0].name;
         }
 
         if (detailData.keywords) {
@@ -250,7 +250,7 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
             try {
                 const collectionDetails = await callTmdbApiDirect(`/collection/${tmdbCollectionId}`);
                 if (collectionDetails && collectionDetails.parts) {
-                    tmdbCollectionTotalParts = collectionDetails.parts.length; 
+                    tmdbCollectionTotalParts = collectionDetails.parts.length;
                 }
             } catch (collectionError) {
                 console.warn(`Could not fetch details for collection ID ${tmdbCollectionId}:`, collectionError.message);
@@ -298,11 +298,76 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
     };
 }
 
-async function applyTmdbSelection(item) {
+async function applyTmdbSelection(item, force = false) {
     if (!formFieldsGlob) {
         console.error("formFieldsGlob not initialized. Cannot apply TMDB selection.");
         return;
     }
+
+    // --- NEW LOCAL DUPLICATE CHECK BEFORE FETCH ---
+    if (!force && typeof movieData !== "undefined" && movieData) {
+        const tmdbId = String(item.id);
+        const mediaType = item.media_type;
+        const title = item.title || item.name || "";
+        const releaseDate = item.release_date || item.first_air_date;
+        const year = releaseDate ? new Date(releaseDate).getFullYear().toString() : "";
+        const category = mediaType === 'tv' ? 'Series' : 'Movie';
+
+        const editIdInput = document.getElementById('editEntryId');
+        const editId = editIdInput ? editIdInput.value : "";
+
+        // 1. Strict TMDB ID Block
+        const exactTmdbMatch = movieData.find(
+            (m) =>
+                m.tmdbId == tmdbId &&
+                m.id !== editId &&
+                !m.is_deleted &&
+                m.Status !== "Unwatchable" &&
+                (m.Category === category || m.tmdbMediaType === mediaType)
+        );
+
+        if (exactTmdbMatch) {
+            if (typeof showToast === 'function') {
+                showToast(
+                    "Data Conflict",
+                    `Entry "${exactTmdbMatch.Name}" already exists with this TMDB ID. Please verify using search bar.`,
+                    "error",
+                    6000
+                );
+            }
+            return; // Hard block, do not fetch
+        }
+
+        // 2. Name & Year Check
+        const exactNameYearMatch = movieData.find(
+            (m) =>
+                m.id !== editId &&
+                !m.is_deleted &&
+                m.Status !== "Unwatchable" &&
+                m.Name && String(m.Name).toLowerCase().trim() === title.toLowerCase().trim() &&
+                m.Year == year
+        );
+
+        if (exactNameYearMatch) {
+            window.duplicateModalMode = "tmdb_fetch";
+            window.pendingTmdbItem = item;
+
+            const titleEl = document.getElementById("duplicateNameConfirmModalLabel");
+            const bodyEl = document.querySelector("#duplicateNameConfirmModal .modal-body");
+            if (titleEl) titleEl.textContent = "Local Entry Found";
+            if (bodyEl) bodyEl.innerHTML = `An entry for <strong>"${exactNameYearMatch.Name}"</strong> (${exactNameYearMatch.Year || 'N/A'}) already exists in your library. Do you still want to fetch and apply this TMDB data?`;
+
+            const confirmBtn = document.getElementById("confirmDuplicateSaveBtn");
+            const cancelBtn = document.getElementById("cancelDuplicateSaveBtn");
+            if (confirmBtn) confirmBtn.textContent = "Fetch Anyway";
+            if (cancelBtn) cancelBtn.textContent = "Cancel";
+
+            $("#duplicateNameConfirmModal").modal("show");
+            return; // Pause execution, wait for user modal action
+        }
+    }
+    // --- END DUPLICATE CHECK ---
+
     if (typeof showLoading === 'function') showLoading("Fetching details for TMDB selection...");
 
     try {
@@ -325,7 +390,7 @@ async function applyTmdbSelection(item) {
             }
             formFieldsGlob.posterUrl.dataset.source = 'tmdb';
         }
-        
+
         // Overwrite description cleanly with new selection
         formFieldsGlob.description.value = processed.Description || "";
 
@@ -359,7 +424,7 @@ async function applyTmdbSelection(item) {
                 tmdb_vote_count: processed.tmdb_vote_count,
                 runtime: processed.runtime,
                 tmdb_collection_id: processed.tmdb_collection_id,
-                tmdb_collection_name: processed.tmdb_collection_name, 
+                tmdb_collection_name: processed.tmdb_collection_name,
                 tmdb_collection_total_parts: processed.tmdb_collection_total_parts,
                 imdb_id: processed.imdb_id,
                 tmdb_release_date: processed.tmdb_release_date
@@ -386,7 +451,7 @@ async function fetchTmdbPersonDetails(personId) {
     } catch (error) {
         console.error(`Error fetching TMDB person details for ID ${personId}:`, error);
         if (typeof showToast === 'function') {
-           showToast("TMDB Person Error", `Could not fetch person details: ${error.message}`, "warning");
+            showToast("TMDB Person Error", `Could not fetch person details: ${error.message}`, "warning");
         }
         return null;
     }
@@ -407,7 +472,7 @@ async function propagateCollectionDataUpdate(updatedEntry) {
     movieData.forEach(entry => {
         if (entry && entry.id !== updatedEntry.id && entry.tmdb_collection_id === collectionId) {
             let entryModified = false;
-            
+
             if (entry.tmdb_collection_name !== collectionName) {
                 entry.tmdb_collection_name = collectionName;
                 entryModified = true;

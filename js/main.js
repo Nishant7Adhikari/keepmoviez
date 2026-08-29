@@ -674,6 +674,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
 
+    $(document).on("hidden.bs.modal hide.bs.modal", "#entryModal", function () {
+      // Ensure accordion state is strictly reset to collapsed whenever Add/Edit modal closes (via X, Cancel, ESC, or backdrop)
+      const $advCollapse = $("#advancedCollapse");
+      if ($advCollapse.length) {
+        $advCollapse.removeClass("show collapsing");
+      }
+      $("#advancedHeading button")
+        .addClass("collapsed")
+        .attr("aria-expanded", "false");
+    });
+
     $("#addNewEntryBtn").on("click", prepareAddModal);
     $("#menuDownloadCsvBtn").on("click", () => {
       generateAndDownloadFile("csv");
@@ -966,19 +977,32 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("confirmDuplicateSaveBtn")
     ?.addEventListener("click", async () => {
-      if (pendingEntryForConfirmation)
-        await window.proceedWithEntrySave(
-          pendingEntryForConfirmation,
-          pendingEditIdForConfirmation,
-          "quickSave",
-        );
-      $("#duplicateNameConfirmModal").modal("hide");
+      if (window.duplicateModalMode === "tmdb_fetch") {
+        $("#duplicateNameConfirmModal").modal("hide");
+        window.duplicateModalMode = "save"; // reset
+        if (window.pendingTmdbItem) {
+          applyTmdbSelection(window.pendingTmdbItem, true); // true = force fetch
+        }
+      } else {
+        if (pendingEntryForConfirmation)
+          await window.proceedWithEntrySave(
+            pendingEntryForConfirmation,
+            pendingEditIdForConfirmation,
+            "quickSave",
+          );
+        $("#duplicateNameConfirmModal").modal("hide");
+      }
     });
   document
     .getElementById("cancelDuplicateSaveBtn")
     ?.addEventListener("click", () => {
-      pendingEntryForConfirmation = null;
-      pendingEditIdForConfirmation = null;
+      if (window.duplicateModalMode === "tmdb_fetch") {
+        window.duplicateModalMode = "save"; // reset
+        window.pendingTmdbItem = null;
+      } else {
+        pendingEntryForConfirmation = null;
+        pendingEditIdForConfirmation = null;
+      }
     });
   // Unwatchable duplicate warning: Save Anyway
   document
