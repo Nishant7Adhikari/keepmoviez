@@ -66,9 +66,17 @@ function localEntryToSupabaseFormat(localEntry, userId) {
     category: entryToFormat.Category || "Movie",
     genre: entryToFormat.Genre || "",
     status: entryToFormat.Status || "To Watch",
-    seasons_completed: parseNumeric(entryToFormat.seasonsCompleted),
-    current_season_episodes_watched: parseNumeric(
-      entryToFormat.currentSeasonEpisodesWatched,
+    current_season: parseNumeric(
+      entryToFormat.currentSeason != null
+        ? entryToFormat.currentSeason
+        : entryToFormat.seasonsCompleted != null
+          ? entryToFormat.seasonsCompleted + 1
+          : null,
+    ),
+    current_episode: parseNumeric(
+      entryToFormat.currentEpisode != null
+        ? entryToFormat.currentEpisode
+        : entryToFormat.currentSeasonEpisodesWatched,
     ),
     recommendation: entryToFormat.Recommendation || null,
     overall_rating: parseNumeric(entryToFormat.overallRating, true),
@@ -156,8 +164,24 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
     Category: supabaseEntry.category || "Movie",
     Genre: supabaseEntry.genre || "",
     Status: supabaseEntry.status || "To Watch",
-    seasonsCompleted: supabaseEntry.seasons_completed,
-    currentSeasonEpisodesWatched: supabaseEntry.current_season_episodes_watched,
+    currentSeason:
+      supabaseEntry.current_season ??
+      (supabaseEntry.seasons_completed != null
+        ? supabaseEntry.seasons_completed + 1
+        : null),
+    currentEpisode:
+      supabaseEntry.current_episode ??
+      supabaseEntry.current_season_episodes_watched ??
+      null,
+    // Backward compatibility aliases
+    seasonsCompleted:
+      supabaseEntry.current_season != null
+        ? Math.max(0, supabaseEntry.current_season - 1)
+        : supabaseEntry.seasons_completed,
+    currentSeasonEpisodesWatched:
+      supabaseEntry.current_episode ??
+      supabaseEntry.current_season_episodes_watched ??
+      null,
     Recommendation: supabaseEntry.recommendation || "",
     overallRating: formatNumericToString(supabaseEntry.overall_rating),
     personalRecommendation: supabaseEntry.personal_recommendation || "",

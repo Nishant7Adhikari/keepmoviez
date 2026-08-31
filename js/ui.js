@@ -392,6 +392,13 @@ function renderNextBatch() {
                                </span>`;
     }
 
+    let statusBadgeText = movie.Status || "N/A";
+    if (movie.Status === "Continue" && (movie.Category === "Series" || movie.currentSeason != null || movie.seasonsCompleted != null)) {
+      const seasonNum = movie.currentSeason ?? (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : 1);
+      const episodeNum = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? 0;
+      statusBadgeText = `Continue · S${seasonNum} E${episodeNum}`;
+    }
+
     card.innerHTML = `
             <div class="card-thumbnail">
                 <img data-src="${posterUrl}" alt="Poster for ${movie.Name}" class="lazy">
@@ -403,7 +410,7 @@ function renderNextBatch() {
                         <span class="card-title" title="${movie.Name}">${movie.Name || "N/A"}</span>
                     </div>
                     <div class="card-info">
-                        <span class="status-badge ${statusClass}">${movie.Status || "N/A"}</span>
+                        <span class="status-badge ${statusClass}">${statusBadgeText}</span>
                         ${renderStars(movie.overallRating)}
                     </div>
                 </div>
@@ -767,9 +774,13 @@ window.prepareEditModal = function (id, showModal = true) {
   formFieldsGlob.personalRecommendation.value =
     movie.personalRecommendation || "";
   formFieldsGlob.language.value = movie.Language || "";
-  formFieldsGlob.seasonsCompleted.value = movie.seasonsCompleted || "";
-  formFieldsGlob.currentSeasonEpisodesWatched.value =
-    movie.currentSeasonEpisodesWatched || "";
+  
+  const seasonVal = movie.currentSeason ?? (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : (movie.Status === "Continue" ? 1 : ""));
+  const epVal = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? (movie.Status === "Continue" ? 0 : "");
+  if (formFieldsGlob.currentSeason) formFieldsGlob.currentSeason.value = seasonVal !== "" ? seasonVal : "";
+  if (formFieldsGlob.currentEpisode) formFieldsGlob.currentEpisode.value = epVal !== "" ? epVal : "";
+  if (typeof updateEditSeriesPreview === "function") updateEditSeriesPreview();
+
   formFieldsGlob.year.value = movie.Year || "";
   formFieldsGlob.country.value = movie.Country || "";
   formFieldsGlob.description.value = movie.Description || "";
@@ -1102,12 +1113,19 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
       fullDetails.Status === "Continue";
     toggle("#detailsContinueGroup", isContinueSeries);
     if (isContinueSeries) {
-      const displaySeason = (fullDetails.seasonsCompleted || 0) + 1;
-      const displayEpisode = fullDetails.currentSeasonEpisodesWatched || 0;
+      const displaySeason =
+        fullDetails.currentSeason ??
+        (fullDetails.seasonsCompleted != null
+          ? fullDetails.seasonsCompleted + 1
+          : 1);
+      const displayEpisode =
+        fullDetails.currentEpisode ??
+        fullDetails.currentSeasonEpisodesWatched ??
+        0;
 
       setText(
         "#detailsContinueText",
-        `Completed up to: Season ${displaySeason}, Episode ${displayEpisode}`,
+        `Currently Watching: Season ${displaySeason}, Episode ${displayEpisode} (S${displaySeason} E${displayEpisode})`,
       );
 
       const pgSeasonInput = modal.find("#pgSeasonInput");
@@ -1438,15 +1456,16 @@ function toggleConditionalFields() {
 
   $("#seriesContinueGroup").toggle(isContinueSeries);
   if (isContinueSeries) {
-    if (formFieldsGlob.seasonsCompleted && formFieldsGlob.seasonsCompleted.value === "") {
-      formFieldsGlob.seasonsCompleted.value = "0";
+    if (formFieldsGlob.currentSeason && formFieldsGlob.currentSeason.value === "") {
+      formFieldsGlob.currentSeason.value = "1";
     }
     if (
-      formFieldsGlob.currentSeasonEpisodesWatched &&
-      formFieldsGlob.currentSeasonEpisodesWatched.value === ""
+      formFieldsGlob.currentEpisode &&
+      formFieldsGlob.currentEpisode.value === ""
     ) {
-      formFieldsGlob.currentSeasonEpisodesWatched.value = "0";
+      formFieldsGlob.currentEpisode.value = "0";
     }
+    if (typeof updateEditSeriesPreview === "function") updateEditSeriesPreview();
   }
 
   $("#recommendationGroup, #overallRatingGroup").toggle(isWatchedOrContinue);
@@ -1840,6 +1859,23 @@ function roundRect(ctx, x, y, width, height, radius) {
 }
 
 // START CHUNK: Quick Update Modal Logic
+function updateQuickUpdateBadge() {
+  const s = parseInt($("#quickUpdateSeasons").val(), 10) || 1;
+  const e = parseInt($("#quickUpdateEpisodes").val(), 10) || 0;
+  $("#quickUpdateProgressBadge").text(`S${s} E${e}`);
+}
+
+window.updateEditSeriesPreview = function () {
+  const seasonEl = document.getElementById("currentSeason") || document.getElementById("seasonsCompleted");
+  const epEl = document.getElementById("currentEpisode") || document.getElementById("currentSeasonEpisodesWatched");
+  const s = parseInt(seasonEl?.value, 10) || 1;
+  const e = parseInt(epEl?.value, 10) || 0;
+  const previewEl = document.getElementById("seriesProgressPreview");
+  if (previewEl) {
+    previewEl.textContent = `S${s} E${e}`;
+  }
+};
+
 window.prepareQuickUpdateModal = function (id) {
   const movie = movieData.find((m) => m && m.id === id);
   if (!movie) {
@@ -1859,8 +1895,12 @@ window.prepareQuickUpdateModal = function (id) {
   $("#quickUpdateFinishedToggleWrapper").toggle(isSeries);
 
   if (isSeries) {
-    $("#quickUpdateSeasons").val(movie.seasonsCompleted || "0");
-    $("#quickUpdateEpisodes").val(movie.currentSeasonEpisodesWatched || "0");
+    const seasonVal = movie.currentSeason ?? (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : 1);
+    const episodeVal = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? 0;
+    $("#quickUpdateSeasons").val(seasonVal);
+    $("#quickUpdateEpisodes").val(episodeVal);
+    updateQuickUpdateBadge();
+
     // Hide extra fields initially for series; they show if "Finished?" is toggled
     $("#quickUpdateConditionalFields").hide();
     // Show the separate overall rating for series (visible when "Finished" is toggled)
@@ -1895,4 +1935,60 @@ window.prepareQuickUpdateModal = function (id) {
 
   modal.modal("show");
 };
+
+// Global Listeners for Series Steppers
+document.addEventListener("DOMContentLoaded", () => {
+  // Quick update modal steppers
+  $(document).on("click", "#quickUpdatePlusEpBtn", function () {
+    const epInput = $("#quickUpdateEpisodes");
+    const currentVal = parseInt(epInput.val(), 10) || 0;
+    epInput.val(currentVal + 1);
+    updateQuickUpdateBadge();
+  });
+
+  $(document).on("click", "#quickUpdateNextSeasonBtn", function () {
+    const seasonInput = $("#quickUpdateSeasons");
+    const epInput = $("#quickUpdateEpisodes");
+    const currentSeason = parseInt(seasonInput.val(), 10) || 1;
+    seasonInput.val(currentSeason + 1);
+    epInput.val(1);
+    updateQuickUpdateBadge();
+  });
+
+  $(document).on("input change", "#quickUpdateSeasons, #quickUpdateEpisodes", updateQuickUpdateBadge);
+
+  // Add/Edit modal steppers
+  $(document).on("click", "#btnEditPlusEpisode", function () {
+    const epEl = document.getElementById("currentEpisode") || document.getElementById("currentSeasonEpisodesWatched");
+    if (epEl) {
+      epEl.value = (parseInt(epEl.value, 10) || 0) + 1;
+      updateEditSeriesPreview();
+    }
+  });
+
+  $(document).on("click", "#btnEditNextSeason", function () {
+    const seasonEl = document.getElementById("currentSeason") || document.getElementById("seasonsCompleted");
+    const epEl = document.getElementById("currentEpisode") || document.getElementById("currentSeasonEpisodesWatched");
+    if (seasonEl) seasonEl.value = (parseInt(seasonEl.value, 10) || 1) + 1;
+    if (epEl) epEl.value = 1;
+    updateEditSeriesPreview();
+  });
+
+  $(document).on("input change", "#currentSeason, #currentEpisode", updateEditSeriesPreview);
+
+  // Batch edit modal steppers
+  $(document).on("click", "#batchEditNextSeasonBtn", function () {
+    const seasonInput = $("#batchEditCurrentSeason");
+    const currentSeason = parseInt(seasonInput.val(), 10) || 1;
+    seasonInput.val(currentSeason + 1);
+    $("#batchEditApply_CurrentSeason").prop("checked", true);
+  });
+
+  $(document).on("click", "#batchEditPlusEpBtn", function () {
+    const epInput = $("#batchEditCurrentEpisode");
+    const currentEp = parseInt(epInput.val(), 10) || 0;
+    epInput.val(currentEp + 1);
+    $("#batchEditApply_CurrentEpisode").prop("checked", true);
+  });
+});
 // END CHUNK: Quick Update Modal Logic

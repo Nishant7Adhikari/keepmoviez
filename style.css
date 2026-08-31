@@ -646,6 +646,7 @@ body.multi-select-active #addNewEntryBtn {
 }
 
 .movie-card {
+  user-select: none;
   background-color: var(--card-bg);
   border-radius: var(--border-radius-md);
   border: 1px solid var(--card-border-color);
@@ -750,6 +751,13 @@ body.multi-select-active #addNewEntryBtn {
 .status-watched {
   background-color: var(--success-color);
   color: var(--success-text-color);
+}
+
+.btn-xs {
+  padding: 0.18rem 0.45rem;
+  font-size: 0.75rem;
+  line-height: 1.2;
+  border-radius: var(--border-radius-sm);
 }
 
 .status-continue {
@@ -3637,4 +3645,73 @@ a:hover {
 
 .watch-history-hint .hint-strong {
     font-weight: 600;
-}
+}
+
+/* --- Hide Browser Native Number Input Spinners --- */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+/* --- Series Inline Stepper Input Groups --- */
+.series-input-group {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+.series-input-group .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+.series-input-group .input-group-append .btn-inline-stepper {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    font-size: 0.76rem;
+    padding: 0.25rem 0.6rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1.2;
+    transition: all 0.15s ease-in-out;
+}
+
+/* --- Vibrant Solid Colors by Default (Not outline) --- */
+.btn-stepper-season {
+    background-color: #6f42c1 !important;
+    border-color: #6f42c1 !important;
+    color: #ffffff !important;
+}
+
+.btn-stepper-season:hover {
+    background-color: #59359a !important;
+    border-color: #59359a !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(111, 66, 193, 0.45);
+}
+
+.btn-stepper-ep {
+    background-color: var(--primary-color, #0d6efd) !important;
+    border-color: var(--primary-color, #0d6efd) !important;
+    color: #ffffff !important;
+}
+
+.btn-stepper-ep:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0a58ca !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.45);
+}
+
+.py-05 {
+    padding-top: 0.15rem !important;
+    padding-bottom: 0.15rem !important;
+}

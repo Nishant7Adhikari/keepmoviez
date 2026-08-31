@@ -54,7 +54,7 @@ const PRANK_ERROR_CHANCE = 200;
 
 // START CHUNK: Data Schema and Static Data
 const CSV_HEADERS = [
-    "id", "Name", "Category", "Genre", "Status", "seasonsCompleted", "currentSeasonEpisodesWatched", "Recommendation", "overallRating", "personalRecommendation",
+    "id", "Name", "Category", "Genre", "Status", "currentSeason", "currentEpisode", "Recommendation", "overallRating", "personalRecommendation",
     "Language", "Year", "Country", "Description", "Poster URL",
     "watchHistory", "relatedEntries", "Last Watched Date", "Last Watch Rating", "lastModifiedDate",
     "tmdbId", "tmdbMediaType", "tmdb_release_date", "keywords", "tmdb_collection_id", "tmdb_collection_name",
@@ -1345,10 +1345,11 @@ function initializeDOMElements() {
       category: document.getElementById("category"),
       status: document.getElementById("status"),
       recommendation: document.getElementById("recommendation"),
-      seasonsCompleted: document.getElementById("seasonsCompleted"),
-      currentSeasonEpisodesWatched: document.getElementById(
-        "currentSeasonEpisodesWatched",
-      ),
+      currentSeason: document.getElementById("currentSeason") || document.getElementById("seasonsCompleted"),
+      currentEpisode: document.getElementById("currentEpisode") || document.getElementById("currentSeasonEpisodesWatched"),
+      // Legacy backward-compatibility aliases
+      seasonsCompleted: document.getElementById("currentSeason") || document.getElementById("seasonsCompleted"),
+      currentSeasonEpisodesWatched: document.getElementById("currentEpisode") || document.getElementById("currentSeasonEpisodesWatched"),
       runtimeMovie: document.getElementById("runtimeMovie"),
       runtimeSeriesSeasons: document.getElementById("runtimeSeriesSeasons"),
       runtimeSeriesEpisodes: document.getElementById("runtimeSeriesEpisodes"),

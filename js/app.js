@@ -406,16 +406,25 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
       Name: nameValue,
       Category: formFieldsGlob.category.value,
       Genre: Array.isArray(selectedGenres) ? selectedGenres.join(", ") : "",
-      Status: formFieldsGlob.status.value,
+      currentSeason:
+        formFieldsGlob.status.value === "Continue" &&
+        formFieldsGlob.category.value === "Series"
+          ? parseInt(formFieldsGlob.currentSeason?.value || formFieldsGlob.seasonsCompleted?.value, 10) || 1
+          : null,
+      currentEpisode:
+        formFieldsGlob.status.value === "Continue" &&
+        formFieldsGlob.category.value === "Series"
+          ? parseInt(formFieldsGlob.currentEpisode?.value || formFieldsGlob.currentSeasonEpisodesWatched?.value, 10) || 0
+          : null,
       seasonsCompleted:
         formFieldsGlob.status.value === "Continue" &&
-          formFieldsGlob.category.value === "Series"
-          ? parseInt(formFieldsGlob.seasonsCompleted.value, 10) || 0
+        formFieldsGlob.category.value === "Series"
+          ? Math.max(0, (parseInt(formFieldsGlob.currentSeason?.value || formFieldsGlob.seasonsCompleted?.value, 10) || 1) - 1)
           : null,
       currentSeasonEpisodesWatched:
         formFieldsGlob.status.value === "Continue" &&
-          formFieldsGlob.category.value === "Series"
-          ? parseInt(formFieldsGlob.currentSeasonEpisodesWatched.value, 10) || 0
+        formFieldsGlob.category.value === "Series"
+          ? parseInt(formFieldsGlob.currentEpisode?.value || formFieldsGlob.currentSeasonEpisodesWatched?.value, 10) || 0
           : null,
       Recommendation:
         formFieldsGlob.status.value === "Watched" ||
@@ -721,17 +730,22 @@ window.handleQuickUpdateSave = async function (event) {
       const isFinished = document.getElementById(
         "quickUpdateFinishedToggle",
       ).checked;
-      updatedFields.seasonsCompleted =
+      const seasonVal =
         parseInt(document.getElementById("quickUpdateSeasons").value, 10) ||
-        movie.seasonsCompleted ||
-        0;
-      updatedFields.currentSeasonEpisodesWatched =
+        movie.currentSeason ||
+        (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : 1);
+      const epVal =
         parseInt(document.getElementById("quickUpdateEpisodes").value, 10) ||
+        movie.currentEpisode ||
         movie.currentSeasonEpisodesWatched ||
         0;
 
       if (isFinished) {
         updatedFields.Status = "Watched";
+        updatedFields.currentSeason = null;
+        updatedFields.currentEpisode = null;
+        updatedFields.seasonsCompleted = null;
+        updatedFields.currentSeasonEpisodesWatched = null;
         const overallRatingEl = document.getElementById("quickUpdateOverallRating");
         updatedFields.overallRating = overallRatingEl ? overallRatingEl.value : watchRating;
         const recEl = document.getElementById("quickUpdateRecommendation");
@@ -740,6 +754,10 @@ window.handleQuickUpdateSave = async function (event) {
         updatedFields.personalRecommendation = personalRecEl ? personalRecEl.value : "";
       } else {
         updatedFields.Status = "Continue";
+        updatedFields.currentSeason = seasonVal;
+        updatedFields.currentEpisode = epVal;
+        updatedFields.seasonsCompleted = Math.max(0, seasonVal - 1);
+        updatedFields.currentSeasonEpisodesWatched = epVal;
       }
     } else {
       // It's a Movie/Doc/Special
@@ -1287,9 +1305,19 @@ window.handleBatchEditFormSubmit = async function (event) {
     const watchRating = getVal("batchEditWatchRating");
     if (watchDate) changes.logWatchSession = { date: watchDate, rating: watchRating || null };
   }
-  if (isChecked("batchEditApply_SeasonsCompleted")) {
-    const sc = parseInt(getVal("batchEditSeasonsCompleted"), 10);
-    if (!isNaN(sc) && sc >= 0) changes.seasonsCompleted = sc;
+  if (isChecked("batchEditApply_CurrentSeason") || isChecked("batchEditApply_SeasonsCompleted")) {
+    const cs = parseInt(getVal("batchEditCurrentSeason") || getVal("batchEditSeasonsCompleted"), 10);
+    if (!isNaN(cs) && cs >= 1) {
+      changes.currentSeason = cs;
+      changes.seasonsCompleted = Math.max(0, cs - 1);
+    }
+  }
+  if (isChecked("batchEditApply_CurrentEpisode")) {
+    const ce = parseInt(getVal("batchEditCurrentEpisode"), 10);
+    if (!isNaN(ce) && ce >= 0) {
+      changes.currentEpisode = ce;
+      changes.currentSeasonEpisodesWatched = ce;
+    }
   }
 
   if (Object.keys(changes).length === 0) {
@@ -1317,7 +1345,8 @@ window.handleBatchEditFormSubmit = async function (event) {
       const standardKeys = [
         "Status", "Category", "overallRating", "Recommendation",
         "personalRecommendation", "Year", "Country", "Language",
-        "doNotRecommendDaily", "seasonsCompleted",
+        "doNotRecommendDaily", "currentSeason", "currentEpisode", "seasonsCompleted",
+        "currentSeasonEpisodesWatched",
       ];
       standardKeys.forEach((key) => {
         if (key in changes && entry[key] !== changes[key]) {

@@ -61,11 +61,18 @@ function calculateAllStatistics(currentMovieData) {
             // For Series, count its runtime only ONCE, based on its status.
             if (movie.Status === 'Watched' && movie.runtime && typeof movie.runtime === 'object' && movie.runtime.episodes && movie.runtime.episode_run_time) {
                 totalWatchTimeMinutes += movie.runtime.episodes * movie.runtime.episode_run_time;
-            } else if (movie.Status === 'Continue' && movie.runtime && typeof movie.runtime === 'object' && typeof movie.seasonsCompleted === 'number' && typeof movie.currentSeasonEpisodesWatched === 'number') {
+            } else if (movie.Status === 'Continue' && movie.runtime && typeof movie.runtime === 'object') {
+                const completedSeasons = movie.currentSeason != null 
+                    ? Math.max(0, movie.currentSeason - 1) 
+                    : (typeof movie.seasonsCompleted === 'number' ? movie.seasonsCompleted : 0);
+                const currentSeasonEpisodes = movie.currentEpisode != null
+                    ? movie.currentEpisode
+                    : (typeof movie.currentSeasonEpisodesWatched === 'number' ? movie.currentSeasonEpisodesWatched : 0);
+
                 const { seasons, episodes, episode_run_time: episodeRunTime } = movie.runtime;
                 if (seasons > 0 && episodes > 0 && episodeRunTime > 0) {
                     const avgEpisodesPerSeason = episodes / seasons;
-                    const totalEpisodesWatched = (movie.seasonsCompleted * avgEpisodesPerSeason) + movie.currentSeasonEpisodesWatched;
+                    const totalEpisodesWatched = (completedSeasons * avgEpisodesPerSeason) + currentSeasonEpisodes;
                     totalWatchTimeMinutes += totalEpisodesWatched * episodeRunTime;
                 }
             }

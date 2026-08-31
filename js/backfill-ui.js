@@ -23,21 +23,22 @@ const BACKFILL_FIELDS = [
         ? "Enter average episode runtime"
         : "Enter total runtime in minutes",
   },
-  // MODIFIED: Status filter removed 'To Watch' based on user feedback. Only 'Continue' needs progress tracking.
   {
-    key: "seasonsCompleted",
-    label: "Seasons Completed",
+    key: "currentSeason",
+    label: "Current Season",
     inputType: "number",
-    placeholder: "e.g., 3",
+    placeholder: "e.g., 1, 2...",
+    min: 1,
     priority: 9,
     onlyFor: ["Series"],
     statusFilter: ["Continue"],
   },
   {
-    key: "currentSeasonEpisodesWatched",
-    label: "Episodes (Current Season)",
+    key: "currentEpisode",
+    label: "Current Episode",
     inputType: "number",
     placeholder: "e.g., 5",
+    min: 0,
     priority: 9,
     onlyFor: ["Series"],
     statusFilter: ["Continue"],
@@ -525,10 +526,12 @@ function isFieldMissing(entry, fieldKey) {
   }
 
   if (
+    fieldKey === "currentSeason" ||
+    fieldKey === "currentEpisode" ||
     fieldKey === "seasonsCompleted" ||
     fieldKey === "currentSeasonEpisodesWatched"
   ) {
-    // These are numbers, but 0 is valid - only missing if undefined/null
+    // These are numbers, but 0 is valid for episode - only missing if undefined/null
     return value === undefined || value === null || value === "";
   }
 
@@ -732,6 +735,8 @@ function transformFieldValue(fieldKey, value, fieldConfig, entry) {
       return parseInt(value);
 
     case "Year":
+    case "currentSeason":
+    case "currentEpisode":
     case "seasonsCompleted":
     case "currentSeasonEpisodesWatched":
       return parseInt(value);

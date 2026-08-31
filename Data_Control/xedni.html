@@ -93,8 +93,8 @@
                                     <th>Seasons (Series)</th>
                                     <th>Episodes (Series)</th>
                                     <th>Avg Ep Runtime (min)</th>
-                                    <th>Seasons Done</th>
-                                    <th>Eps in Current</th>
+                                    <th>Current Season</th>
+                                    <th>Current Episode</th>
                                 </tr>
                             </thead>
                             <tbody id="dataTableBody">
@@ -223,7 +223,7 @@
                     missingMatch = !hasRuntime;
                 } else if (missingFilter === 'progress') {
                     const isContinueSeries = entry.category === 'Series' && entry.status === 'Continue';
-                    const hasProgress = typeof entry.seasons_completed === 'number' && typeof entry.current_season_episodes_watched === 'number';
+                    const hasProgress = typeof entry.current_season === 'number' && typeof entry.current_episode === 'number';
                     missingMatch = isContinueSeries && !hasProgress;
                 }
                 
@@ -255,8 +255,8 @@
                     <td class="editable-cell" data-field="runtime.seasons">${runtimeSeriesSeasons}</td>
                     <td class="editable-cell" data-field="runtime.episodes">${runtimeSeriesEpisodes}</td>
                     <td class="editable-cell" data-field="runtime.episode_run_time">${runtimeSeriesAvg}</td>
-                    <td class="editable-cell" data-field="seasons_completed">${entry.seasons_completed ?? ''}</td>
-                    <td class="editable-cell" data-field="current_season_episodes_watched">${entry.current_season_episodes_watched ?? ''}</td>
+                    <td class="editable-cell" data-field="current_season">${entry.current_season ?? ''}</td>
+                    <td class="editable-cell" data-field="current_episode">${entry.current_episode ?? ''}</td>
                 `;
                 fragment.appendChild(tr);
             });
