@@ -273,14 +273,49 @@ p {
 .multi-select-actions-bar {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  padding: 0 10px;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 5px;
+  gap: 8px;
 }
 
-.multi-select-actions-bar .btn {
-  font-size: 0.9rem;
-  padding: 8px 15px;
+.multi-select-count-wrapper {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.multi-select-badge {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #ffffff;
+  letter-spacing: 0.2px;
+}
+
+.multi-select-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.multi-select-btn-group .btn {
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  border-radius: var(--border-radius-sm) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.movie-card.selected {
+  outline: 2.5px solid var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(var(--primary-color-rgb, 0, 123, 255), 0.25);
+}
+
+body.multi-select-active #addNewEntryBtn {
+  display: none !important;
 }
 
 .fixed-bottom-nav.center-add-btn #addNewEntryBtn {
@@ -288,6 +323,7 @@ p {
 }
 
 /* END CHUNK: 3: Navigation Bars (Top & Bottom)*/
+
 
 /*START CHUNK: 8: Modals, Toasts, and Overlays*/
 .modal-content {
@@ -812,7 +848,9 @@ p {
 /*START CHUNK: 6: Interactive Genre Picker Component*/
 #genreInputContainer,
 #filterGenreContainer,
-#backfillGenreContainer {
+#backfillGenreContainer,
+#batchEditAddGenreContainer,
+#batchEditRemoveGenreContainer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -829,7 +867,9 @@ p {
 
 #genreInputContainer:focus-within,
 #filterGenreContainer:focus-within,
-#backfillGenreContainer:focus-within {
+#backfillGenreContainer:focus-within,
+#batchEditAddGenreContainer:focus-within,
+#batchEditRemoveGenreContainer:focus-within {
   background-color: var(--input-focus-bg);
   box-shadow: var(--shadow-light-focus);
   outline: none;
@@ -837,7 +877,9 @@ p {
 
 #genreSearchInput,
 #filterGenreSearchInput,
-#backfillGenreInput {
+#backfillGenreInput,
+#batchEditAddGenreSearchInput,
+#batchEditRemoveGenreSearchInput {
   min-width: 150px;
   flex: 1 1 150px;
   border: 0;
@@ -850,21 +892,177 @@ p {
 }
 
 #genreSearchInput::placeholder,
-#filterGenreSearchInput::placeholder {
+#filterGenreSearchInput::placeholder,
+#batchEditAddGenreSearchInput::placeholder,
+#batchEditRemoveGenreSearchInput::placeholder {
   color: var(--body-text-color);
   opacity: 0.7;
 }
 
 #genreDropdown,
 #filterGenreDropdown,
-#backfillGenreDropdown {
+#backfillGenreDropdown,
+#batchEditAddGenreDropdown,
+#batchEditRemoveGenreDropdown {
   position: relative;
   /* Container for absolute positioning */
 }
 
+/* START: Batch Edit Modal Clean Mobile-First Styles */
+.batch-edit-info-box {
+  background-color: var(--table-header-bg);
+  border-left: 4px solid var(--primary-color);
+  padding: 0.75rem 1rem;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 1.25rem;
+  font-size: 0.88rem;
+  color: var(--body-text-color);
+}
+
+.batch-section-header {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 1.25rem;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--card-border-color);
+}
+
+.batch-field-unit {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  background-color: var(--card-bg);
+  border: 1.5px solid var(--card-border-color);
+  border-radius: var(--border-radius-sm);
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.batch-field-unit:has(.batch-native-checkbox:checked) {
+  border-color: var(--primary-color);
+  background-color: rgba(var(--primary-color-rgb, 0, 150, 136), 0.06);
+  box-shadow: 0 2px 10px rgba(var(--primary-color-rgb, 0, 150, 136), 0.12);
+}
+
+.batch-field-header {
+  margin-bottom: 0.45rem;
+}
+
+.batch-field-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--body-text-color);
+  margin: 0;
+  cursor: pointer;
+  display: inline-block;
+}
+
+.batch-field-unit:has(.batch-native-checkbox:checked) .batch-field-title {
+  color: var(--primary-color);
+}
+
+.batch-field-body {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.batch-field-body.align-items-start {
+  align-items: flex-start;
+}
+
+/* Big, Touch-Friendly Custom Checkbox */
+.batch-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  min-width: 36px;
+  min-height: 36px;
+}
+
+.batch-native-checkbox {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.batch-custom-checkbox {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  background-color: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  box-sizing: border-box;
+}
+
+.light-theme .batch-custom-checkbox {
+  border-color: rgba(0, 0, 0, 0.4);
+}
+
+.batch-custom-checkbox::after {
+  content: '';
+  width: 7px;
+  height: 14px;
+  border: solid white;
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg) scale(0);
+  margin-bottom: 2px;
+  transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.batch-native-checkbox:checked + .batch-custom-checkbox {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(var(--primary-color-rgb, 0, 150, 136), 0.5);
+}
+
+.batch-native-checkbox:checked + .batch-custom-checkbox::after {
+  transform: rotate(45deg) scale(1);
+}
+
+.batch-field-input-wrap {
+  flex: 1;
+  min-width: 0;
+}
+
+.batch-field-input-wrap .form-control {
+  background-color: var(--input-bg);
+  border: 1px solid var(--card-border-color);
+  border-radius: var(--border-radius-sm);
+  color: var(--body-text-color);
+  min-height: calc(1.5em + 1.25rem);
+}
+
+.batch-field-input-wrap .form-control:focus {
+  border-color: var(--primary-color);
+  background-color: var(--input-focus-bg);
+  box-shadow: var(--shadow-light-focus);
+}
+/* END: Batch Edit Modal Clean Mobile-First Styles */
+
+
+
+
 #genreItemsContainer,
 #filterGenreItemsContainer,
-#backfillGenreItems {
+#backfillGenreItems,
+#batchEditAddGenreItemsContainer,
+#batchEditRemoveGenreItemsContainer {
   position: absolute;
   z-index: 1051;
   /* Needs to be above modal content but below modal header */
@@ -883,14 +1081,18 @@ p {
 
 #genreItemsContainer.show,
 #filterGenreItemsContainer.show,
-#backfillGenreItems.show {
+#backfillGenreItems.show,
+#batchEditAddGenreItemsContainer.show,
+#batchEditRemoveGenreItemsContainer.show {
   display: block;
   /* Shown via JS */
 }
 
 #genreItemsContainer .list-group-item,
 #filterGenreItemsContainer .list-group-item,
-#backfillGenreItems .list-group-item {
+#backfillGenreItems .list-group-item,
+#batchEditAddGenreItemsContainer .list-group-item,
+#batchEditRemoveGenreItemsContainer .list-group-item {
   background-color: transparent;
   color: var(--body-text-color);
   border: none;
@@ -902,13 +1104,17 @@ p {
 
 #genreItemsContainer .list-group-item:last-child,
 #filterGenreItemsContainer .list-group-item:last-child,
-#backfillGenreItems .list-group-item:last-child {
+#backfillGenreItems .list-group-item:last-child,
+#batchEditAddGenreItemsContainer .list-group-item:last-child,
+#batchEditRemoveGenreItemsContainer .list-group-item:last-child {
   border-bottom: none;
 }
 
 #genreItemsContainer .list-group-item:hover,
 #filterGenreItemsContainer .list-group-item:hover,
-#backfillGenreItems .list-group-item:hover {
+#backfillGenreItems .list-group-item:hover,
+#batchEditAddGenreItemsContainer .list-group-item:hover,
+#batchEditRemoveGenreItemsContainer .list-group-item:hover {
   background-color: var(--primary-hover-color);
   color: white;
 }
@@ -1662,28 +1868,25 @@ a:hover {
     font-size: 0.8rem;
   }
 
-  .fixed-bottom-nav .btn,
-  .fixed-bottom-nav .multi-select-actions-bar .btn {
-    font-size: 0.8rem;
-    padding: 6px 10px;
-    margin: 2px;
-  }
-
-  .fixed-bottom-nav {
-    flex-wrap: wrap;
-    height: auto;
-    padding-bottom: 5px;
-  }
-
   .multi-select-actions-bar {
     width: 100%;
-    justify-content: space-around;
-    padding-bottom: 5px;
+    padding: 0;
+    gap: 4px;
   }
 
-  #addNewEntryBtn {
-    margin-top: 5px;
+  .multi-select-btn-group {
+    gap: 4px;
   }
+
+  .multi-select-btn-group .btn {
+    font-size: 0.78rem;
+    padding: 5px 8px;
+  }
+
+  .multi-select-badge {
+    font-size: 0.85rem;
+  }
+
 
   /* .modal-dialog {
     margin: 0.5rem;

@@ -586,7 +586,7 @@ function renderFieldInput(fieldConfig, entry) {
     case "select":
       return `
                 <select class="form-control form-control-lg" id="backfillInput">
-                    <option value="">-- Select --</option>
+                    <option value="">Select</option>
                     ${options.map((opt) => `<option value="${opt}">${opt}</option>`).join("")}
                 </select>
             `;

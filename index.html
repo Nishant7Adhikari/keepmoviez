@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.5.11 -->
+<!-- KeepMoviEZ  v5.6.0 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -58,7 +58,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=5.5.11">
+    <link rel="stylesheet" href="style.css?v=5.6.0">
 
     <!-- PWA Manifest and Theme -->
     <link rel="manifest" href="manifest.json">
@@ -616,10 +616,34 @@
     <!-- START CHUNK: Bottom Navigation & Action Bar -->
     <nav id="bottomNav" class="navbar fixed-bottom-nav center-add-btn">
         <div id="multiSelectActionsBar" class="multi-select-actions-bar" style="display: none;">
-            <button id="batchEditSelectedBtn" class="btn btn-info"><i class="fas fa-edit"></i> Edit</button>
-            <button id="batchDeleteSelectedBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
-            <button id="cancelMultiSelectBtn" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
-            <span id="multiSelectCount" class="text-white ml-2 small">0</span>
+            <div class="multi-select-count-wrapper">
+                <span id="multiSelectCount" class="multi-select-badge">0 selected</span>
+            </div>
+            <div class="multi-select-btn-group">
+                <button id="batchEditSelectedBtn" class="btn btn-sm btn-info"><i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span></button>
+                <button id="batchDeleteSelectedBtn" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i> <span class="d-none d-sm-inline">Delete</span></button>
+                
+                <div class="dropup d-inline-block">
+                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="moreMultiActionsDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-ellipsis-h d-inline d-sm-none"></i><span class="d-none d-sm-inline">More</span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="moreMultiActionsDropdown">
+                        <a class="dropdown-item" href="#" id="selectAllBtn"><i class="fas fa-check-double text-primary mr-2"></i> Select All</a>
+                        <a class="dropdown-item" href="#" id="clearSelectionBtn"><i class="fas fa-minus-square text-muted mr-2"></i> Clear Selection</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" id="batchExportJsonBtn"><i class="fas fa-file-code text-info mr-2"></i> Export JSON</a>
+                        <a class="dropdown-item" href="#" id="batchExportCsvBtn"><i class="fas fa-file-csv text-success mr-2"></i> Export CSV</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" id="batchRefreshTmdbBtn"><i class="fas fa-sync-alt text-warning mr-2"></i> Refresh TMDB Data</a>
+                        <a class="dropdown-item" href="#" id="batchFranchiseLinkBtn"><i class="fas fa-link text-purple mr-2"></i> Link as Franchise</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="#" id="batchMarkWatchedBtn"><i class="fas fa-eye text-success mr-2"></i> Mark Watched</a>
+                        <a class="dropdown-item" href="#" id="batchMarkToWatchBtn"><i class="fas fa-eye-slash text-warning mr-2"></i> Mark To Watch</a>
+                    </div>
+                </div>
+                
+                <button id="cancelMultiSelectBtn" class="btn btn-sm btn-outline-secondary" title="Exit Selection"><i class="fas fa-times"></i></button>
+            </div>
         </div>
         <button id="addNewEntryBtn" class="btn btn-primary" data-toggle="modal" data-target="#entryModal"> <i
                 class="fas fa-plus-circle"></i> </button>
@@ -836,7 +860,7 @@
                             <div class="form-group col-md-6" id="overallRatingGroup" style="display: none;"><label
                                     for="overallRating">My Overall Rating</label><select id="overallRating"
                                     class="form-control">
-                                    <option value="">--Select--</option>
+                                    <option value="">Select</option>
                                     <option value="1">1 Star</option>
                                     <option value="2">2 Stars</option>
                                     <option value="3">3 Stars</option>
@@ -846,7 +870,7 @@
                             <div class="form-group col-md-6" id="recommendationGroup" style="display: none;">
                                 <label for="recommendation">My Recommendation</label>
                                 <select id="recommendation" class="form-control">
-                                    <option value="">-Select-</option>
+                                    <option value="">Select</option>
                                     <option value="Ignore">Ignore</option>
                                     <option value="Less Recommended">Less Recommended</option>
                                     <option value="Recommended">Recommended</option>
@@ -857,7 +881,7 @@
                         <div class="form-group" id="personalRecommendationGroup">
                             <label for="personalRecommendation">Watch Preference</label><select
                                 id="personalRecommendation" class="form-control">
-                                <option value="">--Select--</option>
+                                <option value="">Select</option>
                                 <option value="Watch Alone">Watch Alone</option>
                                 <option value="Safe to share">Safe to Share</option>
                             </select>
@@ -878,7 +902,7 @@
                                             type="date" class="form-control" id="watchDate"></div>
                                     <div class="form-group col-md-6"><label for="watchRating">Rating</label><select
                                             id="watchRating" class="form-control">
-                                            <option value="">--Select--</option>
+                                            <option value="">Select</option>
                                             <option value="1">1 Star</option>
                                             <option value="2">2 Stars</option>
                                             <option value="3">3 Stars</option>
@@ -1055,7 +1079,7 @@
                         <div class="form-group">
                             <label for="quickUpdateRating">Rating (for this session)</label>
                             <select id="quickUpdateRating" class="form-control">
-                                <option value="">--Select--</option>
+                                <option value="">Select</option>
                                 <option value="1">1 Star</option>
                                 <option value="2">2 Stars</option>
                                 <option value="3">3 Stars</option>
@@ -1070,7 +1094,7 @@
                             <div id="quickUpdateOverallRatingGroup" class="form-group">
                                 <label for="quickUpdateOverallRating">My Overall Rating</label>
                                 <select id="quickUpdateOverallRating" class="form-control">
-                                    <option value="">--Select--</option>
+                                    <option value="">Select</option>
                                     <option value="1">1 Star</option>
                                     <option value="2">2 Stars</option>
                                     <option value="3">3 Stars</option>
@@ -1081,7 +1105,7 @@
                             <div class="form-group">
                                 <label for="quickUpdateRecommendation">My Recommendation</label>
                                 <select id="quickUpdateRecommendation" class="form-control">
-                                    <option value="">-Select-</option>
+                                    <option value="">Select</option>
                                     <option value="Ignore">Ignore</option>
                                     <option value="Less Recommended">Less Recommended</option>
                                     <option value="Recommended">Recommended</option>
@@ -1091,7 +1115,7 @@
                             <div class="form-group">
                                 <label for="quickUpdatePersonalRecommendation">Watch Preference</label>
                                 <select id="quickUpdatePersonalRecommendation" class="form-control">
-                                    <option value="">--Select--</option>
+                                    <option value="">Select</option>
                                     <option value="Watch Alone">Watch Alone</option>
                                     <option value="Safe to share">Safe to share</option>
                                 </select>
@@ -1923,135 +1947,308 @@
                 <div class="modal-header">
                     <h5 class="modal-title" id="batchEditModalLabel">Batch Edit Selected Entries</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
-                            aria-hidden="true">×</span></button>
+                            aria-hidden="true">&times;</span></button>
                 </div>
                 <div class="modal-body">
                     <form id="batchEditForm">
-                        <p>Apply changes to <strong id="batchEditCount">0</strong> selected entries. <span
-                                class="text-info">Only checked fields will be updated.</span></p>
-
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_Status"></div>
-                            <label for="batchEditStatus" class="col-3 col-form-label">Status</label>
-                            <div class="col-8">
-                                <select id="batchEditStatus" class="form-control form-control-sm">
-                                    <option value="To Watch">To Watch</option>
-                                    <option value="Watched">Watched</option>
-                                    <option value="Continue">Continue</option>
-                                    <option value="Unwatchable">Unwatchable</option>
-                                </select>
-                            </div>
+                        <div class="batch-edit-info-box">
+                            <i class="fas fa-info-circle mr-1 text-primary"></i> Apply changes to <strong id="batchEditCount">0</strong> selected entries. <span class="text-muted">Only checked fields will be updated.</span>
                         </div>
 
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_Category"></div>
-                            <label for="batchEditCategory" class="col-3 col-form-label">Category</label>
-                            <div class="col-8">
-                                <select id="batchEditCategory" class="form-control form-control-sm">
-                                    <option value="Movie">Movie</option>
-                                    <option value="Series">Series</option>
-                                    <option value="Documentary">Documentary</option>
-                                    <option value="Special">Special</option>
-                                </select>
+                        <!-- Status -->
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditStatus" class="batch-field-title">Status</label>
+                            </div>
+                            <div class="batch-field-body">
+                                <label class="batch-checkbox-wrap" for="batchEditApply_Status" title="Include Status in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Status">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <select id="batchEditStatus" class="form-control form-control-sm">
+                                        <option value="To Watch">To Watch</option>
+                                        <option value="Watched">Watched</option>
+                                        <option value="Continue">Continue</option>
+                                        <option value="Unwatchable">Unwatchable</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <hr>
-                        <h6>Genre Actions</h6>
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_AddGenre"></div>
-                            <label for="batchEditAddGenre" class="col-3 col-form-label">Add Genre</label>
-                            <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditAddGenre"
-                                    placeholder="e.g. Comedy">
+                        <!-- Category -->
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditCategory" class="batch-field-title">Category</label>
                             </div>
-                        </div>
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_RemoveGenre"></div>
-                            <label for="batchEditRemoveGenre" class="col-3 col-form-label">Remove Genre</label>
-                            <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditRemoveGenre"
-                                    placeholder="e.g. Action">
-                            </div>
-                        </div>
-                        <hr>
-
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_OverallRating"></div>
-                            <label for="batchEditOverallRating" class="col-3 col-form-label">Overall Rating</label>
-                            <div class="col-8">
-                                <select id="batchEditOverallRating" class="form-control form-control-sm">
-                                    <option value="">-- No Rating --</option>
-                                    <option value="1">1 Star</option>
-                                    <option value="2">2 Stars</option>
-                                    <option value="3">3 Stars</option>
-                                    <option value="4">4 Stars</option>
-                                    <option value="5">5 Stars</option>
-                                </select>
+                            <div class="batch-field-body">
+                                <label class="batch-checkbox-wrap" for="batchEditApply_Category" title="Include Category in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Category">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <select id="batchEditCategory" class="form-control form-control-sm">
+                                        <option value="Movie">Movie</option>
+                                        <option value="Series">Series</option>
+                                        <option value="Documentary">Documentary</option>
+                                        <option value="Special">Special</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_Recommendation"></div>
-                            <label for="batchEditRecommendation" class="col-3 col-form-label">My Recommendation</label>
-                            <div class="col-8">
-                                <select id="batchEditRecommendation" class="form-control form-control-sm">
-                                    <option value="">- No Change -</option>
-                                    <option value="Ignore">Ignore</option>
-                                    <option value="Less Recommended">Less Recommended</option>
-                                    <option value="Recommended">Recommended</option>
-                                    <option value="Highly Recommended">Highly Recommended</option>
-                                </select>
+                        <!-- Genre Actions -->
+                        <div class="batch-section-header">Genre Actions</div>
+                        
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label class="batch-field-title">Add Genre(s)</label>
+                            </div>
+                            <div class="batch-field-body align-items-start">
+                                <label class="batch-checkbox-wrap mt-1" for="batchEditApply_AddGenre" title="Include Add Genre in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_AddGenre">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <div id="batchEditAddGenreContainer" tabindex="0">
+                                        <input id="batchEditAddGenreSearchInput" type="text" placeholder="Click to add genres...">
+                                    </div>
+                                    <div id="batchEditAddGenreDropdown">
+                                        <div id="batchEditAddGenreItemsContainer" class="list-group mt-1"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_PersonalRecommendation"></div>
-                            <label for="batchEditPersonalRecommendation" class="col-3 col-form-label">Watch
-                                Preference</label>
-                            <div class="col-8">
-                                <select id="batchEditPersonalRecommendation" class="form-control form-control-sm">
-                                    <option value="">- No Change -</option>
-                                    <option value="Watch Alone">watch alone</option>
-                                    <option value="Safe to share">Safe to share</option>
-                                </select>
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label class="batch-field-title">Remove Genre(s)</label>
+                            </div>
+                            <div class="batch-field-body align-items-start">
+                                <label class="batch-checkbox-wrap mt-1" for="batchEditApply_RemoveGenre" title="Include Remove Genre in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_RemoveGenre">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <div id="batchEditRemoveGenreContainer" tabindex="0">
+                                        <input id="batchEditRemoveGenreSearchInput" type="text" placeholder="Click to select genres to remove...">
+                                    </div>
+                                    <div id="batchEditRemoveGenreDropdown">
+                                        <div id="batchEditRemoveGenreItemsContainer" class="list-group mt-1"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <hr>
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_Year"></div>
-                            <label for="batchEditYear" class="col-3 col-form-label">Year of Release</label>
-                            <div class="col-8">
-                                <input type="number" class="form-control form-control-sm" id="batchEditYear" min="1888"
-                                    max="2100" placeholder="e.g. 2023">
+                        <!-- Ratings & Recommendations -->
+                        <div class="batch-section-header">Ratings &amp; Recommendations</div>
+
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditOverallRating" class="batch-field-title">Overall Rating</label>
                             </div>
-                        </div>
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_Country"></div>
-                            <label for="batchEditCountry" class="col-3 col-form-label">Country</label>
-                            <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditCountry"
-                                    placeholder="e.g. US, IN">
-                            </div>
-                        </div>
-                        <div class="form-group form-row align-items-center">
-                            <div class="col-1"><input type="checkbox" id="batchEditApply_Language"></div>
-                            <label for="batchEditLanguage" class="col-3 col-form-label">Language</label>
-                            <div class="col-8">
-                                <input type="text" class="form-control form-control-sm" id="batchEditLanguage"
-                                    placeholder="e.g., English, Hindi">
+                            <div class="batch-field-body">
+                                <label class="batch-checkbox-wrap" for="batchEditApply_OverallRating" title="Include Rating in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_OverallRating">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <select id="batchEditOverallRating" class="form-control form-control-sm">
+                                        <option value="">Select</option>
+                                        <option value="1">1 Star</option>
+                                        <option value="2">2 Stars</option>
+                                        <option value="3">3 Stars</option>
+                                        <option value="4">4 Stars</option>
+                                        <option value="5">5 Stars</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary mt-3"><i class="fas fa-save"></i> Apply Changes to
-                            Selected</button>
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditRecommendation" class="batch-field-title">My Recommendation</label>
+                            </div>
+                            <div class="batch-field-body">
+                                <label class="batch-checkbox-wrap" for="batchEditApply_Recommendation" title="Include Recommendation in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Recommendation">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <select id="batchEditRecommendation" class="form-control form-control-sm">
+                                        <option value="">Select</option>
+                                        <option value="Ignore">Ignore</option>
+                                        <option value="Less Recommended">Less Recommended</option>
+                                        <option value="Recommended">Recommended</option>
+                                        <option value="Highly Recommended">Highly Recommended</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditPersonalRecommendation" class="batch-field-title">Watch Preference</label>
+                            </div>
+                            <div class="batch-field-body">
+                                <label class="batch-checkbox-wrap" for="batchEditApply_PersonalRecommendation" title="Include Watch Preference in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_PersonalRecommendation">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <select id="batchEditPersonalRecommendation" class="form-control form-control-sm">
+                                        <option value="">Select</option>
+                                        <option value="Watch Alone">Watch Alone</option>
+                                        <option value="Safe to share">Safe to Share</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tags & Metadata -->
+                        <div class="batch-section-header">Tags &amp; Metadata</div>
+
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditKeywords" class="batch-field-title">Add Keywords / Tags</label>
+                            </div>
+                            <div class="batch-field-body align-items-start">
+                                <label class="batch-checkbox-wrap mt-1" for="batchEditApply_Keywords" title="Include Keywords in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Keywords">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <input type="text" class="form-control form-control-sm" id="batchEditKeywords"
+                                        placeholder="e.g. MCU, Oscar 2024, Halloween (comma-separated)">
+                                    <small class="text-muted d-block mt-1">Tags are appended — existing ones are kept.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label class="batch-field-title">Daily Recommendations</label>
+                            </div>
+                            <div class="batch-field-body">
+                                <label class="batch-checkbox-wrap" for="batchEditApply_DoNotRecommendDaily" title="Include Daily Recommendations in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_DoNotRecommendDaily">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <div class="custom-control custom-switch">
+                                        <input type="checkbox" class="custom-control-input" id="batchEditDoNotRecommendDaily">
+                                        <label class="custom-control-label" for="batchEditDoNotRecommendDaily">Exclude from Daily Recommendations</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Watch History & Progress -->
+                        <div class="batch-section-header">Watch History &amp; Progress</div>
+
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label class="batch-field-title">Log Watch Session</label>
+                            </div>
+                            <div class="batch-field-body align-items-start">
+                                <label class="batch-checkbox-wrap mt-1" for="batchEditApply_LogWatchSession" title="Include Watch Session in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_LogWatchSession">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <input type="date" class="form-control form-control-sm mb-1" id="batchEditWatchDate">
+                                    <select class="form-control form-control-sm" id="batchEditWatchRating">
+                                        <option value="">Select</option>
+                                        <option value="1">1 Star</option>
+                                        <option value="2">2 Stars</option>
+                                        <option value="3">3 Stars</option>
+                                        <option value="4">4 Stars</option>
+                                        <option value="5">5 Stars</option>
+                                    </select>
+                                    <small class="text-muted d-block mt-1">Appends a watch session to all selected entries.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="batch-field-unit">
+                            <div class="batch-field-header">
+                                <label for="batchEditSeasonsCompleted" class="batch-field-title">Seasons Completed</label>
+                            </div>
+                            <div class="batch-field-body align-items-start">
+                                <label class="batch-checkbox-wrap mt-1" for="batchEditApply_SeasonsCompleted" title="Include Seasons Completed in update">
+                                    <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_SeasonsCompleted">
+                                    <span class="batch-custom-checkbox"></span>
+                                </label>
+                                <div class="batch-field-input-wrap">
+                                    <input type="number" class="form-control form-control-sm" id="batchEditSeasonsCompleted"
+                                        min="0" max="100" placeholder="e.g. 3">
+                                    <small class="text-muted d-block mt-1">For Series only.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced accordion -->
+                        <div id="batchEditAdvancedAccordion" class="mt-3">
+                            <a data-toggle="collapse" href="#batchEditAdvancedFields" class="btn btn-sm btn-outline-secondary btn-block text-left">
+                                <i class="fas fa-chevron-down mr-1"></i> Advanced Fields (Country, Language, Year)
+                            </a>
+                            <div id="batchEditAdvancedFields" class="collapse mt-2">
+                                <div class="batch-field-unit">
+                                    <div class="batch-field-header">
+                                        <label for="batchEditCountry" class="batch-field-title">Country</label>
+                                    </div>
+                                    <div class="batch-field-body">
+                                        <label class="batch-checkbox-wrap" for="batchEditApply_Country" title="Include Country in update">
+                                            <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Country">
+                                            <span class="batch-custom-checkbox"></span>
+                                        </label>
+                                        <div class="batch-field-input-wrap">
+                                            <input type="text" class="form-control form-control-sm" id="batchEditCountry"
+                                                placeholder="e.g. US, IN">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="batch-field-unit">
+                                    <div class="batch-field-header">
+                                        <label for="batchEditLanguage" class="batch-field-title">Language</label>
+                                    </div>
+                                    <div class="batch-field-body">
+                                        <label class="batch-checkbox-wrap" for="batchEditApply_Language" title="Include Language in update">
+                                            <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Language">
+                                            <span class="batch-custom-checkbox"></span>
+                                        </label>
+                                        <div class="batch-field-input-wrap">
+                                            <input type="text" class="form-control form-control-sm" id="batchEditLanguage"
+                                                placeholder="e.g., English, Hindi">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="batch-field-unit">
+                                    <div class="batch-field-header">
+                                        <label for="batchEditYear" class="batch-field-title">Year of Release</label>
+                                    </div>
+                                    <div class="batch-field-body">
+                                        <label class="batch-checkbox-wrap" for="batchEditApply_Year" title="Include Year in update">
+                                            <input type="checkbox" class="batch-native-checkbox" id="batchEditApply_Year">
+                                            <span class="batch-custom-checkbox"></span>
+                                        </label>
+                                        <div class="batch-field-input-wrap">
+                                            <input type="number" class="form-control form-control-sm" id="batchEditYear" min="1888"
+                                                max="2100" placeholder="e.g. 2023">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-block mt-4 py-2"><i class="fas fa-save mr-1"></i> Apply Changes to Selected</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
     <!-- END CHUNK: Modal - Batch Edit -->
+
 
     <!-- START CHUNK: Modal - About -->
     <div class="modal fade" id="aboutModal" tabindex="-1" role="dialog" aria-labelledby="aboutModalLabel"
@@ -2292,7 +2489,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
 
     <!-- Custom JS modules  -->
-    <script src="js/constant.js?v=2"></script>
+    <script src="js/constant.js?v=5.6.0"></script>
     <script src="js/utils.js?v=2"></script>
     <script src="js/indexeddb.js?v=2"></script>
     <script src="js/data.js?v=5.5.10"></script>
@@ -2301,13 +2498,13 @@
     <script src="js/tmdb.js?v=5.5.11"></script>
     <script src="js/genre.js?v=2"></script>
     <script src="js/analysis.js?v=5.5.08"></script>
-    <script src="js/ui.js?v=5.5.11"></script>
+    <script src="js/ui.js?v=5.6.0"></script>
     <script src="js/reporting.js?v=5.5.09"></script>
-    <script src="js/app.js?v=5.5.11"></script>
-    <script src="js/supabase.js?v=5.5.10"></script>
+    <script src="js/app.js?v=5.6.0"></script>
+    <script src="js/supabase.js?v=5.6.0"></script>
     <script src="js/backfill.js?v=2"></script>
-    <script src="js/backfill-ui.js?v=5.5.11"></script>
-    <script src="js/main.js?v=5.5.11"></script>
+    <script src="js/backfill-ui.js?v=5.6.0"></script>
+    <script src="js/main.js?v=5.6.0"></script>
     <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
     <!-- Global Full-Screen Confetti Celebration Canvas -->

@@ -506,12 +506,25 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("updateEntryBtn")
     ?.addEventListener("click", (e) => window.handleFormSubmit(e, "quickSave")); // Edit mode also uses quickSave logic (just save and close)
-  document
-    .getElementById("batchEditForm")
-    ?.addEventListener("submit", window.handleBatchEditFormSubmit);
+  const batchEditFormEl = document.getElementById("batchEditForm");
+  if (batchEditFormEl) {
+    batchEditFormEl.addEventListener("submit", window.handleBatchEditFormSubmit);
+    // Auto-check field checkbox when user interacts with its input/select
+    const autoCheckField = (e) => {
+      if (e.target.type === "checkbox") return;
+      const unit = e.target.closest(".batch-field-unit");
+      if (unit) {
+        const cb = unit.querySelector(".batch-native-checkbox");
+        if (cb && !cb.checked) cb.checked = true;
+      }
+    };
+    batchEditFormEl.addEventListener("input", autoCheckField);
+    batchEditFormEl.addEventListener("change", autoCheckField);
+  }
   document
     .getElementById("quickUpdateForm")
     ?.addEventListener("submit", window.handleQuickUpdateSave);
+
 
   // Navbar Search
   document
@@ -663,6 +676,24 @@ document.addEventListener("DOMContentLoaded", () => {
     removeFilterGenre,
     populateFilterGenreDropdown,
     () => selectedFilterGenres,
+  );
+  wireUpGenrePicker(
+    "batchEditAddGenreContainer",
+    "batchEditAddGenreSearchInput",
+    "batchEditAddGenreItemsContainer",
+    (g) => addGenre(g, "batchEditAddGenreContainer", selectedBatchAddGenres, "batchEditAddGenreSearchInput"),
+    (g) => removeGenre(g, "batchEditAddGenreContainer", selectedBatchAddGenres, "batchEditAddGenreSearchInput"),
+    () => filterGenreDropdown("batchEditAddGenreContainer", selectedBatchAddGenres, "batchEditAddGenreSearchInput", "batchEditAddGenreItemsContainer"),
+    () => selectedBatchAddGenres,
+  );
+  wireUpGenrePicker(
+    "batchEditRemoveGenreContainer",
+    "batchEditRemoveGenreSearchInput",
+    "batchEditRemoveGenreItemsContainer",
+    (g) => addGenre(g, "batchEditRemoveGenreContainer", selectedBatchRemoveGenres, "batchEditRemoveGenreSearchInput"),
+    (g) => removeGenre(g, "batchEditRemoveGenreContainer", selectedBatchRemoveGenres, "batchEditRemoveGenreSearchInput"),
+    () => filterGenreDropdown("batchEditRemoveGenreContainer", selectedBatchRemoveGenres, "batchEditRemoveGenreSearchInput", "batchEditRemoveGenreItemsContainer"),
+    () => selectedBatchRemoveGenres,
   );
   // END CHUNK: 5: Interactive Genre Picker Wiring
 
@@ -1226,7 +1257,7 @@ document.addEventListener("DOMContentLoaded", () => {
       await forcePushToSupabase();
     });
 
-  // Multi-Select Bar
+  // Multi-Select Bar — Primary
   document
     .getElementById("batchEditSelectedBtn")
     ?.addEventListener("click", prepareBatchEditModal);
@@ -1236,6 +1267,36 @@ document.addEventListener("DOMContentLoaded", () => {
   document
     .getElementById("cancelMultiSelectBtn")
     ?.addEventListener("click", window.disableMultiSelectMode);
+
+  // Multi-Select Bar — Select All / Clear
+  document
+    .getElementById("selectAllBtn")
+    ?.addEventListener("click", window.selectAllEntries);
+  document
+    .getElementById("clearSelectionBtn")
+    ?.addEventListener("click", window.clearSelection);
+
+  // Multi-Select Bar — More Actions (dropdown items)
+  document
+    .getElementById("batchExportJsonBtn")
+    ?.addEventListener("click", (e) => { e.preventDefault(); window.exportSelectedEntries("json"); });
+  document
+    .getElementById("batchExportCsvBtn")
+    ?.addEventListener("click", (e) => { e.preventDefault(); window.exportSelectedEntries("csv"); });
+  document
+    .getElementById("batchRefreshTmdbBtn")
+    ?.addEventListener("click", (e) => { e.preventDefault(); window.batchRefreshTmdb(); });
+  document
+    .getElementById("batchFranchiseLinkBtn")
+    ?.addEventListener("click", (e) => { e.preventDefault(); window.batchLinkAsFranchise(); });
+  document
+    .getElementById("batchMarkWatchedBtn")
+    ?.addEventListener("click", (e) => { e.preventDefault(); window.batchMarkAs("Watched"); });
+  document
+    .getElementById("batchMarkToWatchBtn")
+    ?.addEventListener("click", (e) => { e.preventDefault(); window.batchMarkAs("To Watch"); });
+
+
 
   // Event delegation for watch history actions within the entry modal
   const entryModal = document.getElementById("entryModal");

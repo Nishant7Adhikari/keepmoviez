@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.5.11"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.6.0"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css?v=5.5.11",
+  "./style.css?v=5.6.0",
   "./manifest.json",
 
   // Local CSS
@@ -34,7 +34,7 @@ const CORE_ASSETS = [
   "https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js",
 
   // App Logic Scripts
-  "./js/constant.js",
+  "./js/constant.js?v=5.6.0",
   "./js/utils.js",
   "./js/indexeddb.js",
   "./js/data.js?v=5.5.10",
@@ -43,11 +43,11 @@ const CORE_ASSETS = [
   "./js/tmdb.js?v=5.5.11",
   "./js/genre.js",
   "./js/analysis.js?v=5.5.08",
-  "./js/ui.js?v=5.5.11",
+  "./js/ui.js?v=5.6.0",
   "./js/reporting.js?v=5.5.09",
-  "./js/app.js?v=5.5.11",
-  "./js/supabase.js?v=5.5.10",
-  "./js/main.js?v=5.5.11",
+  "./js/app.js?v=5.6.0",
+  "./js/supabase.js?v=5.6.0",
+  "./js/main.js?v=5.6.0",
 
   // Icons
   "./icons/icon-192x192.png",
@@ -94,12 +94,12 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
 
   const criticalAppScripts = [
-    "app.js?v=5.5.11",
+    "app.js?v=5.6.0",
     "data.js?v=5.5.10",
-    "main.js?v=5.5.11",
-    "supabase.js?v=5.5.10",
+    "main.js?v=5.6.0",
+    "supabase.js?v=5.6.0",
     "indexeddb.js",
-    "ui.js?v=5.5.11",
+    "ui.js?v=5.6.0",
     "utils.js",
   ];
   const isAppScript = criticalAppScripts.some((script) =>

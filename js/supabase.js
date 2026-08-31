@@ -589,6 +589,117 @@ async function forcePushToSupabase() {
 }
 // END CHUNK: Force Push
 
+// START CHUNK: Sync Selected Entries
+/**
+ * Selective sync: push or pull data only for the currently selected entries.
+ * direction: "push" | "pull" | "both"
+ */
+async function syncSelectedEntries(selectedIds, direction = "push") {
+  if (!window.supabaseClient || !currentSupabaseUser) {
+    showToast("Not Logged In", "Please log in to use Sync Selected.", "error");
+    return;
+  }
+  if (!navigator.onLine) {
+    showToast("Offline", "You are offline. Connect to sync.", "warning");
+    return;
+  }
+  if (!selectedIds || selectedIds.length === 0) {
+    showToast("No Selection", "Select entries first.", "warning");
+    return;
+  }
+
+  const syncModeKey = currentSupabaseUser.id + "_sync_mode";
+  if (localStorage.getItem(syncModeKey) === "strict_privacy") {
+    showToast("Privacy Mode", "Disable Strict Privacy Mode to sync.", "error");
+    return;
+  }
+
+  const userId = currentSupabaseUser.id;
+  showLoading(`Syncing ${selectedIds.length} selected entries...`);
+
+  try {
+    let pushedCount = 0, pulledCount = 0;
+
+    // ─── PUSH ──────────────────────────────────────────────
+    if (direction === "push" || direction === "both") {
+      const entriesToPush = movieData
+        .filter((e) => e && selectedIds.includes(e.id))
+        .map((e) => localEntryToSupabaseFormat(e, userId))
+        .filter(Boolean);
+
+      if (entriesToPush.length > 0) {
+        const { error } = await window.supabaseClient
+          .from("movie_entries")
+          .upsert(entriesToPush);
+        if (error) throw new Error(`Push failed: ${error.message}`);
+
+        // Mark pushed entries as synced
+        entriesToPush.forEach(({ id }) => {
+          const idx = movieData.findIndex((m) => m.id === id);
+          if (idx !== -1) movieData[idx]._sync_state = "synced";
+        });
+
+        // Remove pushed IDs from modifiedEntriesList (custom sync mode)
+        if (typeof window.clearModifiedEntriesForIds === "function") {
+          window.clearModifiedEntriesForIds(selectedIds);
+        }
+
+        pushedCount = entriesToPush.length;
+      }
+    }
+
+    // ─── PULL ──────────────────────────────────────────────
+    if (direction === "pull" || direction === "both") {
+      const { data: remoteEntries, error: pullError } = await window.supabaseClient
+        .from("movie_entries")
+        .select("*")
+        .in("id", selectedIds)
+        .eq("user_id", userId);
+
+      if (pullError) throw new Error(`Pull failed: ${pullError.message}`);
+
+      remoteEntries.forEach((remoteEntry) => {
+        const localEntry = supabaseEntryToLocalFormat(remoteEntry);
+        if (!localEntry) return;
+        const idx = movieData.findIndex((m) => m.id === localEntry.id);
+        if (idx !== -1) {
+          // Only overwrite if remote is newer
+          const localLMD = new Date(movieData[idx].lastModifiedDate || 0).getTime();
+          const remoteLMD = new Date(localEntry.lastModifiedDate || 0).getTime();
+          if (remoteLMD > localLMD) {
+            movieData[idx] = { ...localEntry, _sync_state: "synced" };
+            pulledCount++;
+          }
+        } else if (!remoteEntry.is_deleted) {
+          // New entry from cloud
+          movieData.push({ ...localEntry, _sync_state: "synced" });
+          pulledCount++;
+        }
+      });
+    }
+
+    if (pushedCount > 0 || pulledCount > 0) {
+      recalculateAndApplyAllRelationships?.();
+      await saveToIndexedDB();
+      renderMovieCards?.();
+    }
+
+    let msg = [];
+    if (pushedCount > 0) msg.push(`${pushedCount} pushed`);
+    if (pulledCount > 0) msg.push(`${pulledCount} pulled`);
+    const summary = msg.length ? msg.join(", ") : "Nothing to sync";
+    showToast("Sync Selected Done", summary, "success");
+  } catch (error) {
+    console.error("Sync Selected error:", error);
+    showToast("Sync Failed", error.message, "error");
+  } finally {
+    hideLoading();
+  }
+}
+window.syncSelectedEntries = syncSelectedEntries;
+// END CHUNK: Sync Selected Entries
+
+
 // START CHUNK: 3: Authentication and Application State
 let currentSupabaseUser = null;
 let isAppInitializing = false;

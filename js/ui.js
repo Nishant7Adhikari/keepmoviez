@@ -1345,9 +1345,25 @@ window.prepareBatchEditModal = function () {
       .querySelectorAll('input[type="checkbox"]')
       .forEach((cb) => (cb.checked = false));
   }
+  // Reset interactive genre pickers for batch edit
+  selectedBatchAddGenres = [];
+  selectedBatchRemoveGenres = [];
+  if (typeof renderGenreTags === "function") {
+    renderGenreTags(
+      "batchEditAddGenreContainer",
+      selectedBatchAddGenres,
+      "batchEditAddGenreSearchInput",
+    );
+    renderGenreTags(
+      "batchEditRemoveGenreContainer",
+      selectedBatchRemoveGenres,
+      "batchEditRemoveGenreSearchInput",
+    );
+  }
   if (batchEditCount) batchEditCount.textContent = selectedEntryIds.length;
   $("#batchEditModal").modal("show");
 };
+
 
 window.openUnwatchableModal = function () {
   const container = document.getElementById("unwatchableListContainer");

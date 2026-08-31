@@ -1,5 +1,7 @@
 /* js/app.js */
 // START CHUNK: Card Interaction and Multi-Select
+let lastSelectedCardId = null; // Track last selected for Shift+Click
+
 window.handleCardClick = function (event) {
   if (longPressOccurred) {
     event.preventDefault();
@@ -12,12 +14,11 @@ window.handleCardClick = function (event) {
   const movieId = card.dataset.movieId;
 
   if (isMultiSelectMode) {
-    toggleCardSelection(movieId);
+    toggleCardSelection(movieId, event);
     return;
   }
 
   const target = event.target;
-  const parent = event.target.parentElement;
 
   if (target.matches(".edit-btn, .edit-btn *")) {
     prepareEditModal(movieId);
@@ -61,6 +62,7 @@ window.handleCardMouseUp = function () {
 function enableMultiSelectMode(initialMovieId) {
   isMultiSelectMode = true;
   selectedEntryIds = [initialMovieId];
+  lastSelectedCardId = initialMovieId;
   document.getElementById("multiSelectActionsBar").style.display = "flex";
   document.getElementById("addNewEntryBtn").style.display = "none";
   document.body.classList.add("multi-select-active");
@@ -68,26 +70,58 @@ function enableMultiSelectMode(initialMovieId) {
   updateMultiSelectCount();
   showToast(
     "Multi-Select Mode",
-    "Long press on a card to start selection. Tap to add/remove.",
+    "Tap cards to select. Shift+Click for range select.",
     "info",
   );
 }
 
+
 window.disableMultiSelectMode = function () {
   isMultiSelectMode = false;
   selectedEntryIds = [];
+  lastSelectedCardId = null;
   document.getElementById("multiSelectActionsBar").style.display = "none";
   document.getElementById("addNewEntryBtn").style.display = "block";
   document.body.classList.remove("multi-select-active");
   renderMovieCards();
 };
 
-function toggleCardSelection(movieId) {
+function toggleCardSelection(movieId, event) {
+  // Shift+Click: range selection using currently rendered card order
+  if (event && event.shiftKey && lastSelectedCardId && lastSelectedCardId !== movieId) {
+    const allCards = Array.from(
+      document.querySelectorAll(".movie-card[data-movie-id]")
+    );
+    const ids = allCards.map((c) => c.dataset.movieId);
+    const fromIdx = ids.indexOf(lastSelectedCardId);
+    const toIdx = ids.indexOf(movieId);
+    if (fromIdx !== -1 && toIdx !== -1) {
+      const start = Math.min(fromIdx, toIdx);
+      const end = Math.max(fromIdx, toIdx);
+      const rangeIds = ids.slice(start, end + 1);
+      rangeIds.forEach((id) => {
+        if (!selectedEntryIds.includes(id)) {
+          selectedEntryIds.push(id);
+        }
+      });
+      // Update card visuals
+      allCards.forEach((card) => {
+        if (selectedEntryIds.includes(card.dataset.movieId)) {
+          card.classList.add("selected");
+        }
+      });
+      updateMultiSelectCount();
+      lastSelectedCardId = movieId;
+      return;
+    }
+  }
+
   const index = selectedEntryIds.indexOf(movieId);
   if (index > -1) {
     selectedEntryIds.splice(index, 1);
   } else {
     selectedEntryIds.push(movieId);
+    lastSelectedCardId = movieId;
   }
   const card = document.querySelector(
     `.movie-card[data-movie-id="${movieId}"]`,
@@ -105,6 +139,25 @@ function updateMultiSelectCount() {
   document.getElementById("multiSelectCount").textContent =
     `${selectedEntryIds.length} selected`;
 }
+
+// Select All / Clear Selection
+window.selectAllEntries = function () {
+  if (!isMultiSelectMode) return;
+  selectedEntryIds = currentFilteredData
+    .filter((m) => m && m.id)
+    .map((m) => m.id);
+  lastSelectedCardId = null;
+  document.querySelectorAll(".movie-card[data-movie-id]").forEach((card) => {
+    if (selectedEntryIds.includes(card.dataset.movieId)) {
+      card.classList.add("selected");
+    }
+  });
+  updateMultiSelectCount();
+};
+
+window.clearSelection = function () {
+  disableMultiSelectMode();
+};
 // END CHUNK: Card Interaction and Multi-Select
 
 // START CHUNK: Data Sorting and Filtering Logic (Moved from ui.js)
@@ -951,23 +1004,260 @@ window.performDataCheckAndRepair = async function () {
 };
 // END CHUNK: Global Data Management (Check/Repair)
 
+// START CHUNK: Batch Action Functions (Export, TMDB Refresh, Quick Actions, Franchise)
+
+/** Export selected entries as JSON or CSV */
+window.exportSelectedEntries = function (type) {
+  if (!isMultiSelectMode || selectedEntryIds.length === 0) {
+    showToast("No Selection", "Select entries first.", "warning");
+    return;
+  }
+  const selected = movieData
+    .filter((m) => m && selectedEntryIds.includes(m.id) && !m.is_deleted)
+    .map((entry) => {
+      const clean = { ...entry };
+      delete clean._sync_state;
+      delete clean.is_deleted;
+      if (type === "csv") {
+        for (const key in clean) {
+          if (typeof clean[key] === "object" && clean[key] !== null) {
+            clean[key] = JSON.stringify(clean[key]);
+          }
+        }
+      }
+      return clean;
+    });
+
+  if (selected.length === 0) {
+    showToast("No Data", "No valid entries in selection.", "info");
+    return;
+  }
+
+  let fileContent, fileMimeType, fileName;
+  if (type === "json") {
+    fileContent = JSON.stringify(selected, null, 2);
+    fileMimeType = "application/json;charset=utf-8;";
+    fileName = `keepmoviez_selected_${selected.length}.json`;
+  } else {
+    // CSV using Papa if available, else manual
+    if (typeof Papa !== "undefined") {
+      fileContent = Papa.unparse(selected, { header: true });
+    } else {
+      const headers = Object.keys(selected[0]).join(",");
+      const rows = selected.map((r) =>
+        Object.values(r)
+          .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+          .join(","),
+      );
+      fileContent = [headers, ...rows].join("\n");
+    }
+    fileMimeType = "text/csv;charset=utf-8;";
+    fileName = `keepmoviez_selected_${selected.length}.csv`;
+  }
+
+  const blob = new Blob([fileContent], { type: fileMimeType });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(link.href);
+  showToast(
+    "Export Complete",
+    `${selected.length} entries exported as ${type.toUpperCase()}.`,
+    "success",
+  );
+};
+
+/** Batch TMDB Refresh — sequential with 200ms gap to respect rate limits */
+window.batchRefreshTmdb = async function () {
+  if (!isMultiSelectMode || selectedEntryIds.length === 0) {
+    showToast("No Selection", "Select entries first.", "warning");
+    return;
+  }
+  if (!window.callTmdbApiDirect) {
+    showToast("Unavailable", "TMDB API not ready. Please sign in.", "error");
+    return;
+  }
+
+  const toRefresh = movieData.filter(
+    (m) => m && selectedEntryIds.includes(m.id) && m.tmdbId && !m.is_deleted,
+  );
+  const skipped = selectedEntryIds.length - toRefresh.length;
+
+  if (toRefresh.length === 0) {
+    showToast(
+      "No TMDB IDs",
+      "None of the selected entries have a TMDB ID.",
+      "warning",
+    );
+    return;
+  }
+
+  showLoading(`Refreshing TMDB data for ${toRefresh.length} entries...`);
+  let updated = 0;
+  let failed = 0;
+  const currentTimestamp = new Date().toISOString();
+
+  for (let i = 0; i < toRefresh.length; i++) {
+    const entry = toRefresh[i];
+    try {
+      if (i > 0) await new Promise((r) => setTimeout(r, 200));
+      const mediaType =
+        entry.tmdbMediaType || (entry.Category === "Series" ? "tv" : "movie");
+      const data = await callTmdbApiDirect(`/${mediaType}/${entry.tmdbId}`, {
+        append_to_response: "credits,keywords,collection,external_ids",
+      });
+      if (!data) { failed++; continue; }
+
+      const entryIndex = movieData.findIndex((m) => m.id === entry.id);
+      if (entryIndex === -1) { failed++; continue; }
+      const e = movieData[entryIndex];
+
+      // Refresh key TMDB fields
+      if (data.poster_path) e["Poster URL"] = `https://image.tmdb.org/t/p/w500${data.poster_path}`;
+      if (data.vote_average != null) e.tmdb_vote_average = data.vote_average;
+      if (data.vote_count != null) e.tmdb_vote_count = data.vote_count;
+      const runtime = mediaType === "movie" ? data.runtime : (data.episode_run_time?.[0] || null);
+      if (runtime) e.runtime = runtime;
+      const releaseDate = data.release_date || data.first_air_date;
+      if (releaseDate) e.tmdb_release_date = releaseDate;
+      const creditsData = data.credits || {};
+      if (creditsData.cast?.length) e.full_cast = creditsData.cast.slice(0, 15).map((a) => ({ id: a.id, name: a.name, character: a.character, profile_path: a.profile_path }));
+      const crew = creditsData.crew || [];
+      const director = crew.find((c) => c.job === "Director");
+      if (director) e.director_info = { id: director.id, name: director.name, profile_path: director.profile_path };
+      const kw = data.keywords?.keywords || data.keywords?.results || [];
+      if (kw.length) e.keywords = kw.slice(0, 20).map((k) => ({ id: k.id, name: k.name }));
+
+      e.lastModifiedDate = currentTimestamp;
+      if (e._sync_state !== "new") e._sync_state = "edited";
+      updated++;
+    } catch (err) {
+      console.warn(`TMDB refresh failed for "${entry.Name}":`, err.message);
+      failed++;
+    }
+  }
+
+  if (updated > 0) {
+    await saveToIndexedDB();
+    if (typeof trackModification === "function") trackModification(selectedEntryIds);
+    renderMovieCards();
+  }
+
+  hideLoading();
+  let msg = `${updated} updated`;
+  if (failed > 0) msg += `, ${failed} failed`;
+  if (skipped > 0) msg += `, ${skipped} skipped (no TMDB ID)`;
+  showToast("TMDB Refresh Done", msg, updated > 0 ? "success" : "warning");
+};
+
+/** Batch mark as Watched */
+window.batchMarkAs = async function (status) {
+  if (!isMultiSelectMode || selectedEntryIds.length === 0) return;
+  showLoading(`Marking ${selectedEntryIds.length} entries as ${status}...`);
+  try {
+    let count = 0;
+    const ts = new Date().toISOString();
+    selectedEntryIds.forEach((id) => {
+      const idx = movieData.findIndex((m) => m.id === id);
+      if (idx === -1) return;
+      if (movieData[idx].Status === status) return;
+      if (movieData[idx].Status === "To Watch" && status === "Watched")
+        logWatchlistActivity("completed");
+      movieData[idx].Status = status;
+      movieData[idx].lastModifiedDate = ts;
+      if (movieData[idx]._sync_state !== "new") movieData[idx]._sync_state = "edited";
+      count++;
+    });
+    if (count > 0) {
+      await saveToIndexedDB();
+      if (typeof trackModification === "function") trackModification(selectedEntryIds);
+      renderMovieCards();
+      showToast("Done", `${count} entries marked as "${status}".`, "success");
+    } else {
+      showToast("No Change", `All selected entries were already "${status}".`, "info");
+    }
+    disableMultiSelectMode();
+  } catch (err) {
+    showToast("Error", err.message, "error");
+  } finally {
+    hideLoading();
+  }
+};
+
+/** Link all selected entries as a franchise/collection (mutual relatedEntries) */
+window.batchLinkAsFranchise = async function () {
+  if (!isMultiSelectMode || selectedEntryIds.length < 2) {
+    showToast("Need 2+", "Select at least 2 entries to link as a franchise.", "warning");
+    return;
+  }
+  showLoading(`Linking ${selectedEntryIds.length} entries as franchise...`);
+  try {
+    const ts = new Date().toISOString();
+    selectedEntryIds.forEach((id) => {
+      const idx = movieData.findIndex((m) => m.id === id);
+      if (idx === -1) return;
+      const others = selectedEntryIds.filter((oid) => oid !== id);
+      const existing = new Set(movieData[idx].relatedEntries || []);
+      others.forEach((oid) => existing.add(oid));
+      movieData[idx].relatedEntries = Array.from(existing);
+      movieData[idx].lastModifiedDate = ts;
+      if (movieData[idx]._sync_state !== "new") movieData[idx]._sync_state = "edited";
+    });
+    recalculateAndApplyAllRelationships();
+    await saveToIndexedDB();
+    if (typeof trackModification === "function") trackModification(selectedEntryIds);
+    renderMovieCards();
+    showToast("Franchise Linked", `${selectedEntryIds.length} entries linked together.`, "success");
+    disableMultiSelectMode();
+  } catch (err) {
+    showToast("Error", err.message, "error");
+  } finally {
+    hideLoading();
+  }
+};
+
+// END CHUNK: Batch Action Functions
+
 // START CHUNK: Batch Edit Logic
 window.handleBatchEditFormSubmit = async function (event) {
   event.preventDefault();
   if (!isMultiSelectMode || selectedEntryIds.length === 0) return;
 
   const changes = {};
-  const getVal = (id) => document.getElementById(id).value;
-  const isChecked = (id) => document.getElementById(id).checked;
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value : "";
+  };
+  const isChecked = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.checked : false;
+  };
 
   if (isChecked("batchEditApply_Status"))
     changes.Status = getVal("batchEditStatus");
   if (isChecked("batchEditApply_Category"))
     changes.Category = getVal("batchEditCategory");
-  if (isChecked("batchEditApply_AddGenre"))
-    changes.addGenre = getVal("batchEditAddGenre").trim();
-  if (isChecked("batchEditApply_RemoveGenre"))
-    changes.removeGenre = getVal("batchEditRemoveGenre").trim();
+  if (isChecked("batchEditApply_AddGenre")) {
+    const toAdd = Array.isArray(selectedBatchAddGenres) ? [...selectedBatchAddGenres] : [];
+    const rawVal = getVal("batchEditAddGenreSearchInput").trim();
+    if (rawVal && typeof UNIQUE_ALL_GENRES !== "undefined") {
+      const match = UNIQUE_ALL_GENRES.find((g) => g.toLowerCase() === rawVal.toLowerCase());
+      if (match && !toAdd.includes(match)) toAdd.push(match);
+    }
+    if (toAdd.length > 0) changes.addGenres = toAdd;
+  }
+  if (isChecked("batchEditApply_RemoveGenre")) {
+    const toRemove = Array.isArray(selectedBatchRemoveGenres) ? [...selectedBatchRemoveGenres] : [];
+    const rawVal = getVal("batchEditRemoveGenreSearchInput").trim();
+    if (rawVal && typeof UNIQUE_ALL_GENRES !== "undefined") {
+      const match = UNIQUE_ALL_GENRES.find((g) => g.toLowerCase() === rawVal.toLowerCase());
+      if (match && !toRemove.includes(match)) toRemove.push(match);
+    }
+    if (toRemove.length > 0) changes.removeGenres = toRemove;
+  }
   if (isChecked("batchEditApply_OverallRating"))
     changes.overallRating = getVal("batchEditOverallRating");
   if (isChecked("batchEditApply_Recommendation"))
@@ -981,16 +1271,29 @@ window.handleBatchEditFormSubmit = async function (event) {
   if (isChecked("batchEditApply_Year")) {
     const yearStr = getVal("batchEditYear").trim();
     const parsedYear = parseInt(yearStr, 10);
-    changes.Year =
-      yearStr === "" ? null : isNaN(parsedYear) ? entry.Year : parsedYear;
+    changes.Year = yearStr === "" ? null : isNaN(parsedYear) ? null : parsedYear;
+  }
+  // New fields
+  if (isChecked("batchEditApply_DoNotRecommendDaily"))
+    changes.doNotRecommendDaily = document.getElementById("batchEditDoNotRecommendDaily")?.checked ?? false;
+  if (isChecked("batchEditApply_Keywords")) {
+    const kwRaw = getVal("batchEditKeywords").trim();
+    changes.addKeywords = kwRaw
+      ? kwRaw.split(",").map((k) => k.trim()).filter(Boolean)
+      : [];
+  }
+  if (isChecked("batchEditApply_LogWatchSession")) {
+    const watchDate = getVal("batchEditWatchDate");
+    const watchRating = getVal("batchEditWatchRating");
+    if (watchDate) changes.logWatchSession = { date: watchDate, rating: watchRating || null };
+  }
+  if (isChecked("batchEditApply_SeasonsCompleted")) {
+    const sc = parseInt(getVal("batchEditSeasonsCompleted"), 10);
+    if (!isNaN(sc) && sc >= 0) changes.seasonsCompleted = sc;
   }
 
-  if (
-    Object.keys(changes).length === 0 &&
-    !changes.addGenre &&
-    !changes.removeGenre
-  ) {
-    showToast("No Changes", "Check a box to apply its value.", "info");
+  if (Object.keys(changes).length === 0) {
+    showToast("No Changes", "Check a box and provide a value to apply.", "info");
     return;
   }
 
@@ -1004,21 +1307,17 @@ window.handleBatchEditFormSubmit = async function (event) {
       if (entryIndex === -1) return;
       let entry = movieData[entryIndex];
       let entryModified = false;
+
       if ("Status" in changes) {
-        const oldStatus = entry.Status,
-          newStatus = changes.Status;
+        const oldStatus = entry.Status, newStatus = changes.Status;
         if (oldStatus === "To Watch" && newStatus === "Watched")
           logWatchlistActivity("completed");
       }
+
       const standardKeys = [
-        "Status",
-        "Category",
-        "overallRating",
-        "Recommendation",
-        "personalRecommendation",
-        "Year",
-        "Country",
-        "Language",
+        "Status", "Category", "overallRating", "Recommendation",
+        "personalRecommendation", "Year", "Country", "Language",
+        "doNotRecommendDaily", "seasonsCompleted",
       ];
       standardKeys.forEach((key) => {
         if (key in changes && entry[key] !== changes[key]) {
@@ -1026,32 +1325,69 @@ window.handleBatchEditFormSubmit = async function (event) {
           entryModified = true;
         }
       });
-      if ("addGenre" in changes && changes.addGenre) {
+
+      if (changes.addGenres && changes.addGenres.length > 0) {
         let genres = new Set(
-          (entry.Genre || "")
-            .split(",")
-            .map((g) => g.trim())
-            .filter(Boolean),
+          (entry.Genre || "").split(",").map((g) => g.trim()).filter(Boolean),
         );
-        if (!genres.has(changes.addGenre)) {
-          genres.add(changes.addGenre);
+        let modified = false;
+        changes.addGenres.forEach((g) => {
+          if (!genres.has(g)) {
+            genres.add(g);
+            modified = true;
+          }
+        });
+        if (modified) {
           entry.Genre = Array.from(genres).sort().join(", ");
           entryModified = true;
         }
       }
-      if ("removeGenre" in changes && changes.removeGenre) {
+      if (changes.removeGenres && changes.removeGenres.length > 0) {
         let genres = new Set(
-          (entry.Genre || "")
-            .split(",")
-            .map((g) => g.trim())
-            .filter(Boolean),
+          (entry.Genre || "").split(",").map((g) => g.trim()).filter(Boolean),
         );
-        if (genres.has(changes.removeGenre)) {
-          genres.delete(changes.removeGenre);
+        let modified = false;
+        changes.removeGenres.forEach((g) => {
+          if (genres.has(g)) {
+            genres.delete(g);
+            modified = true;
+          }
+        });
+        if (modified) {
           entry.Genre = Array.from(genres).sort().join(", ");
           entryModified = true;
         }
       }
+
+
+      // Append keywords (tag-style, no duplicates)
+      if ("addKeywords" in changes && changes.addKeywords.length > 0) {
+        const existing = new Set((entry.keywords || []).map((k) => (typeof k === "string" ? k : k.name)));
+        const newKws = changes.addKeywords.filter((k) => !existing.has(k));
+        if (newKws.length > 0) {
+          entry.keywords = [...(entry.keywords || []), ...newKws];
+          entryModified = true;
+        }
+      }
+
+      // Append watch session
+      if ("logWatchSession" in changes && changes.logWatchSession) {
+        const session = {
+          id: generateUUID(),
+          date: changes.logWatchSession.date,
+          rating: changes.logWatchSession.rating,
+          note: "",
+        };
+        if (!Array.isArray(entry.watchHistory)) entry.watchHistory = [];
+        entry.watchHistory.push(session);
+        // Update status to Watched if To Watch
+        if (entry.Status === "To Watch") {
+          entry.Status = "Watched";
+          logWatchlistActivity("completed");
+        }
+        entryModified = true;
+      }
+
       if (entryModified) {
         entry.lastModifiedDate = currentLMD;
         if (entry._sync_state !== "new") entry._sync_state = "edited";
@@ -1061,7 +1397,6 @@ window.handleBatchEditFormSubmit = async function (event) {
 
     if (changesMadeCount > 0) {
       await saveToIndexedDB();
-      // NEW: Batch Edits
       if (typeof trackModification === "function")
         trackModification(selectedEntryIds);
       renderMovieCards();
@@ -1087,6 +1422,7 @@ window.handleBatchEditFormSubmit = async function (event) {
   }
 };
 // END CHUNK: Batch Edit Logic
+
 
 // START CHUNK: Recommendation Modal Actions
 window.markDailyRecCompleted = async function (event) {

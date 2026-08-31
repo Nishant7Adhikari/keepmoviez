@@ -1287,6 +1287,8 @@ let activeFilters = {
 };
 let selectedGenres = []; // For the entry modal
 let selectedFilterGenres = []; // For the filter modal
+let selectedBatchAddGenres = []; // For batch edit modal add genre
+let selectedBatchRemoveGenres = []; // For batch edit modal remove genre
 
 // DOM Element References
 let loadingOverlay, themeTransitionOverlay, authContainer, appContent;
