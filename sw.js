@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.1"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.6.2"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css?v=5.6.1",
+  "./style.css?v=5.6.2",
   "./manifest.json",
 
   // Local CSS

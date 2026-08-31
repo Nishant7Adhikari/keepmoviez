@@ -408,6 +408,7 @@ body.multi-select-active #addNewEntryBtn {
   align-items: center;
   gap: 0.5rem;
 }
+
 .modal-back-button {
   position: relative;
   color: inherit;
@@ -417,13 +418,16 @@ body.multi-select-active #addNewEntryBtn {
   z-index: 1;
   flex: 0 0 auto;
 }
+
 .modal-back-button .modal-back-icon {
   display: inline-block;
   padding: 0.25rem 0.5rem;
 }
+
 .modal-header.has-modal-back .modal-title {
   margin-right: 0.5rem;
 }
+
 .modal-header.has-modal-back .close {
   margin-left: auto;
 }
@@ -540,10 +544,11 @@ body.multi-select-active #addNewEntryBtn {
 }
 
 #appToast {
-  position: absolute;
-  top: 0%;
-  right: 0%;
-  z-index: 9999;
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 10050 !important;
+  max-width: 360px;
 }
 
 /* NEW styles for the Entry Form Accordion */
@@ -1033,13 +1038,13 @@ body.multi-select-active #addNewEntryBtn {
   transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.batch-native-checkbox:checked + .batch-custom-checkbox {
+.batch-native-checkbox:checked+.batch-custom-checkbox {
   background-color: var(--primary-color);
   border-color: var(--primary-color);
   box-shadow: 0 0 10px rgba(var(--primary-color-rgb, 0, 150, 136), 0.5);
 }
 
-.batch-native-checkbox:checked + .batch-custom-checkbox::after {
+.batch-native-checkbox:checked+.batch-custom-checkbox::after {
   transform: rotate(45deg) scale(1);
 }
 
@@ -1061,6 +1066,7 @@ body.multi-select-active #addNewEntryBtn {
   background-color: var(--input-focus-bg);
   box-shadow: var(--shadow-light-focus);
 }
+
 /* END: Batch Edit Modal Clean Mobile-First Styles */
 
 
@@ -1522,10 +1528,11 @@ body.multi-select-active #addNewEntryBtn {
 }
 
 #appToast {
-  position: absolute;
-  top: 0%;
-  right: 0%;
-  z-index: 9999;
+  position: fixed !important;
+  top: 20px !important;
+  right: 20px !important;
+  z-index: 10050 !important;
+  max-width: 360px;
 }
 
 /* NEW styles for the Entry Form Accordion */
@@ -3434,7 +3441,8 @@ a:hover {
 
 .suggestion-carousel-wrapper {
   margin-bottom: 2rem;
-  overflow-x: scroll;
+  overflow: hidden;
+  /* clip children; inner .suggestion-card-container handles its own scroll */
 }
 
 .suggestion-carousel-wrapper h6 {
@@ -3614,104 +3622,182 @@ a:hover {
 
 /* --- New Visual Data Charts --- */
 .heatmap-tooltip {
-    position: absolute;
-    background: rgba(0, 0, 0, 0.85);
-    color: #fff;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    pointer-events: none;
-    z-index: 10000;
-    transition: opacity 0.15s ease;
-    white-space: pre-wrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  position: absolute;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  pointer-events: none;
+  z-index: 10000;
+  transition: opacity 0.15s ease;
+  white-space: pre-wrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* --- Watch History Hints & Guidance --- */
 .watch-history-hint {
-    padding: 0.6rem 0.85rem;
-    border-radius: var(--border-radius-md, 6px);
-    font-size: 0.825rem;
-    line-height: 1.45;
-    background: rgba(13, 110, 253, 0.08);
-    border: 1px solid rgba(13, 110, 253, 0.22);
-    color: var(--body-text-color, #e0e0e0);
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--border-radius-md, 6px);
+  font-size: 0.825rem;
+  line-height: 1.45;
+  background: rgba(13, 110, 253, 0.08);
+  border: 1px solid rgba(13, 110, 253, 0.22);
+  color: var(--body-text-color, #e0e0e0);
 }
 
 .watch-history-hint i {
-    color: var(--primary-color, #0d6efd);
-    margin-right: 0.4rem;
+  color: var(--primary-color, #0d6efd);
+  margin-right: 0.4rem;
 }
 
 .watch-history-hint .hint-strong {
-    font-weight: 600;
+  font-weight: 600;
 }
 
 /* --- Hide Browser Native Number Input Spinners --- */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
+  -webkit-appearance: none;
+  margin: 0;
 }
+
 input[type="number"] {
-    -moz-appearance: textfield;
-    appearance: textfield;
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* --- Series Inline Stepper Input Groups --- */
 .series-input-group {
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    width: 100%;
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  width: 100%;
 }
 
 .series-input-group .form-control {
-    border-top-right-radius: 0 !important;
-    border-bottom-right-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
 }
 
 .series-input-group .input-group-append .btn-inline-stepper {
-    border-top-left-radius: 0 !important;
-    border-bottom-left-radius: 0 !important;
-    font-size: 0.76rem;
-    padding: 0.25rem 0.6rem;
-    font-weight: 600;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    line-height: 1.2;
-    transition: all 0.15s ease-in-out;
+  border-top-left-radius: 0 !important;
+  border-bottom-left-radius: 0 !important;
+  font-size: 0.76rem;
+  padding: 0.25rem 0.6rem;
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.2;
+  transition: all 0.15s ease-in-out;
 }
 
 /* --- Vibrant Solid Colors by Default (Not outline) --- */
 .btn-stepper-season {
-    background-color: #6f42c1 !important;
-    border-color: #6f42c1 !important;
-    color: #ffffff !important;
+  background-color: #6f42c1 !important;
+  border-color: #6f42c1 !important;
+  color: #ffffff !important;
 }
 
 .btn-stepper-season:hover {
-    background-color: #59359a !important;
-    border-color: #59359a !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(111, 66, 193, 0.45);
+  background-color: #59359a !important;
+  border-color: #59359a !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(111, 66, 193, 0.45);
 }
 
 .btn-stepper-ep {
-    background-color: var(--primary-color, #0d6efd) !important;
-    border-color: var(--primary-color, #0d6efd) !important;
-    color: #ffffff !important;
+  background-color: var(--primary-color, #0d6efd) !important;
+  border-color: var(--primary-color, #0d6efd) !important;
+  color: #ffffff !important;
 }
 
 .btn-stepper-ep:hover {
-    background-color: #0b5ed7 !important;
-    border-color: #0a58ca !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.45);
+  background-color: #0b5ed7 !important;
+  border-color: #0a58ca !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.45);
 }
 
 .py-05 {
-    padding-top: 0.15rem !important;
-    padding-bottom: 0.15rem !important;
+  padding-top: 0.15rem !important;
+  padding-bottom: 0.15rem !important;
+}
+
+/* ============================================================
+   UX & UI Scrollbar Overhaul (Image 2 Inspiration & Double Scrollbar Fix)
+   ============================================================ */
+
+/* 1. Prevent duplicate outer/inner scrollbars in Details Modal on Desktop */
+@media (min-width: 992px) {
+  .details-modal-container {
+    overflow: hidden !important;
+  }
+}
+
+/* 2. Custom WebKit Scrollbar Styling (Inspired by Image 2) */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 4px;
+}
+
+body.dark-mode ::-webkit-scrollbar-track,
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Scrollbar Thumb: Pill handle with horizontal grip lines */
+::-webkit-scrollbar-thumb {
+  background-color: rgba(140, 140, 140, 0.6);
+  border-radius: 6px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  min-height: 36px;
+  /* 4 Horizontal Grip Lines effect matching Image 2 inspiration */
+  background-image: repeating-linear-gradient(to bottom,
+      transparent 0px,
+      transparent 4px,
+      rgba(255, 255, 255, 0.5) 4px,
+      rgba(255, 255, 255, 0.5) 5px);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 60% 24px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--primary-color, #0d6efd);
+  background-image: repeating-linear-gradient(to bottom,
+      transparent 0px,
+      transparent 4px,
+      rgba(255, 255, 255, 0.9) 4px,
+      rgba(255, 255, 255, 0.9) 5px);
+  box-shadow: 0 0 6px rgba(13, 110, 253, 0.4);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: #0b5ed7;
+}
+
+/* Firefox Scrollbar Support */
+/* Apply thin scrollbar globally but allow individual elements to override to 'none' */
+:root,
+body,
+.table-responsive,
+.details-poster-panel,
+.details-info-panel,
+.modal-body {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(140, 140, 140, 0.6) rgba(0, 0, 0, 0.05);
+}
+
+/* Preserve hidden scrollbars on carousel/scrollable containers that explicitly opt out */
+.suggestion-card-container,
+[style*="scrollbar-width: none"] {
+  scrollbar-width: none !important;
 }
