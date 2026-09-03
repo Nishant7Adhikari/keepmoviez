@@ -4,7 +4,6 @@ const SUPABASE_URL = 'https://ujnjtvlkxhdbdbngdaeb.supabase.co';
 // MODIFIED: Removed comment from key for professionalism
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqbmp0dmxreGhkYmRibmdkYWViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNDM5NjAsImV4cCI6MjA2MzgxOTk2MH0.g1sD1xeJ05lHncxDDMUrhEiPGD8bYdyHWFJoDpq6aHs';
 
-const TMDB_API_KEY = 'public_placeholder'; // <--- IMPORTANT: this key is setup at supabase 
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
 
 const DB_NAME = 'KeepMovieZ_UserCacheDB_v2';
@@ -14,15 +13,6 @@ const IDB_USER_DATA_KEY = 'userMovieData';
 const CUSTOM_SYNC_THRESHOLD_KEY = 'customSyncThreshold';
 const MODIFIED_ENTRIES_LIST_KEY = 'modifiedEntriesList';
 
-/**
- * Standard utility to ensure all localStorage keys are isolated per user.
- * @param {string} baseKey - The core key name
- * @returns {string} - The namespaced key
- */
-window.getScopedKey = (baseKey) => {
-    const userId = window.currentSupabaseUser?.id;
-    return userId ? `${userId}_${baseKey}` : `guest_${baseKey}`;
-};
 // END CHUNK: API and Database Keys
 
 // START CHUNK: Application Feature Constants
@@ -30,38 +20,21 @@ const DAILY_RECOMMENDATION_ID_KEY = 'dailyRecommendationId_v2';
 const DAILY_RECOMMENDATION_DATE_KEY = 'dailyRecommendationDate_v2';
 const DAILY_REC_SKIP_COUNT_KEY = 'dailyRecSkipCount_v2';
 const MAX_DAILY_SKIPS = 5;
-const MAX_PERSONALIZED_RECS = 5;
 
 const DO_NOT_SHOW_AGAIN_KEYS = {
     ENTRY_ADDED: 'dnsa_entryAdded',
     ENTRY_UPDATED: 'dnsa_entryUpdated',
     ENTRY_DELETED: 'dnsa_entryDeleted',
     DATA_ERASED: 'dnsa_dataErased',
-    FLUX_CAPACITOR: 'dnsa_fluxCapacitor',
-    TMDB_API_KEY_WARNING: 'dnsa_tmdbApiKeyWarning',
     DAILY_RECOMMENDATION_INTRO: 'dnsa_dailyRecIntro',
-    LOCAL_CACHE_CORRUPT_CLEARED: 'dnsa_localCacheCorruptCleared',
-    DATA_INTEGRITY_ISSUES_FOUND: 'dnsa_dataIntegrityIssuesFound',
 };
 
 const LONG_PRESS_DURATION = 500;
 
-// Easter Egg Constants
-const PRANK_TITLE_FLICKER_CHANCE = 500;
-const PRANK_TOAST_CHANCE = 100;
 const PRANK_ERROR_CHANCE = 200;
 // END CHUNK: Application Feature Constants
 
 // START CHUNK: Data Schema and Static Data
-const CSV_HEADERS = [
-    "id", "Name", "Category", "Genre", "Status", "currentSeason", "currentEpisode", "Recommendation", "overallRating", "personalRecommendation",
-    "Language", "Year", "Country", "Description", "Poster URL",
-    "watchHistory", "relatedEntries", "Last Watched Date", "Last Watch Rating", "lastModifiedDate",
-    "tmdbId", "tmdbMediaType", "tmdb_release_date", "keywords", "tmdb_collection_id", "tmdb_collection_name",
-    "director_info", "full_cast", "production_companies", "tmdb_vote_average", "tmdb_vote_count", "runtime", "imdb_id"
-];
-
-
 const countryCodeToNameMap = {
   US: "United States",
   NP: "Nepal",
@@ -1372,6 +1345,7 @@ function initializeDOMElements() {
 
     watchInstanceFormFields = {
         date: document.getElementById('watchDate'),
+        time: document.getElementById('watchTime'),
         rating: document.getElementById('watchRating'),
         notes: document.getElementById('watchNotes')
     };

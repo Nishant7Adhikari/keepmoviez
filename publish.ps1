@@ -82,12 +82,27 @@ if ($changedFiles) {
     $filesUpdated = $false
 
     foreach ($line in $changedFiles) {
-        $filePath = $line.Substring(3).Trim()
+        $status = $line.Substring(0, 2)
+        if ($status -match 'D') {
+            continue # Skip deleted files
+        }
+
+        $rawPath = $line.Substring(2).Trim().Trim('"').Trim("'")
+        if ($rawPath -match '->') {
+            $rawPath = ($rawPath -split '->')[-1].Trim().Trim('"').Trim("'")
+        }
+
+        $normalizedPath = $rawPath.Replace('\', '/')
+        # Only cache-bust application scripts and style.css, skip vendor libs in libs/
+        if ($normalizedPath -notmatch '^js/[^/]+\.js$' -and $normalizedPath -ne 'style.css') {
+            continue
+        }
+
+        $filePath = $normalizedPath
         $fileName = [System.IO.Path]::GetFileName($filePath)
 
         Write-Host " - Cache busting: $filePath" -ForegroundColor Gray
 
-        # FIX: escape $fileName just like $filePath to avoid regex metacharacter bugs
         $escapedFilePath = [regex]::Escape($filePath)
         $escapedFileName = [regex]::Escape($fileName)
 

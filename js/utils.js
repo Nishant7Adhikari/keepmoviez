@@ -24,22 +24,6 @@ function hideLoading() {
 // END CHUNK: Loading Indicator
 
 // START CHUNK: UI Enhancements and Helpers
-function initializeContentScrolling() {
-    const contentContainer = document.querySelector('.table-responsive');
-    if (contentContainer) {
-        contentContainer.addEventListener('keydown', function(e) {
-            if (e.target !== contentContainer && e.target.tagName === 'INPUT') return;
-            if (e.key === 'ArrowUp') {
-                e.preventDefault(); this.scrollTop -= 100;
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault(); this.scrollTop += 100;
-            }
-            if (typeof resetInactivityTimer === 'function') resetInactivityTimer();
-        });
-    } else {
-        console.warn("'.table-responsive' container not found for scroll enhancements.");
-    }
-}
 
 function getCountryFullName(code) {
     if (!code || typeof code !== 'string') return code || 'N/A';

@@ -100,9 +100,6 @@ const BACKFILL_FIELDS = [
   },
 ];
 
-// Configuration state
-let availablefieldsToBackfill = [];
-
 /**
  * Scan library to identify what's missing (Preliminary Scan)
  * Returns a summary of missing fields and counts

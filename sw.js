@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.2"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.6.3"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css?v=5.6.2",
+  "./style.css?v=5.6.3",
   "./manifest.json",
 
   // Local CSS
@@ -34,20 +34,19 @@ const CORE_ASSETS = [
   "https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js",
 
   // App Logic Scripts
-  "./js/constant.js?v=5.6.1",
-  "./js/utils.js",
-  "./js/indexeddb.js",
-  "./js/data.js?v=5.5.10",
-  "./js/io1.js",
-  "./js/io2.js?v=5.6.1",
+  "./js/constant.js?v=5.6.3",
+  "./js/utils.js?v=5.6.3",
+  "./js/indexeddb.js?v=2",
+  "./js/data.js?v=5.6.3",
+  "./js/input-output.js?v=5.6.3",
   "./js/tmdb.js?v=5.5.11",
-  "./js/genre.js",
-  "./js/analysis.js?v=5.6.1",
-  "./js/ui.js?v=5.6.1",
-  "./js/reporting.js?v=5.6.1",
-  "./js/app.js?v=5.6.1",
+  "./js/genre.js?v=2",
+  "./js/analysis.js?v=5.6.3",
+  "./js/ui.js?v=5.6.3",
+  "./js/reporting.js?v=5.6.3",
+  "./js/app.js?v=5.6.3",
   "./js/supabase.js?v=5.6.1",
-  "./js/main.js?v=5.6.0",
+  "./js/main.js?v=5.6.2",
 
   // Icons
   "./icons/icon-192x192.png",
@@ -94,16 +93,21 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
 
   const criticalAppScripts = [
-    "app.js?v=5.6.1",
-    "data.js?v=5.5.10",
-    "main.js?v=5.6.0",
-    "supabase.js?v=5.6.1",
+    "app.js?v=5.6.3",
+    "data.js?v=5.6.3",
+    "main.js",
+    "supabase.js",
     "indexeddb.js",
-    "ui.js?v=5.6.1",
-    "utils.js",
+    "ui.js?v=5.6.3",
+    "utils.js?v=5.6.3",
+    "input-output.js?v=5.6.3",
+    "reporting.js?v=5.6.3",
+    "constant.js?v=5.6.3",
+    "analysis.js?v=5.6.3",
   ];
+  const urlPath = request.url.split("?")[0];
   const isAppScript = criticalAppScripts.some((script) =>
-    request.url.endsWith(script),
+    urlPath.endsWith("/" + script) || urlPath.endsWith(script),
   );
   const isApiRequest = request.url.startsWith(SUPABASE_URL);
 

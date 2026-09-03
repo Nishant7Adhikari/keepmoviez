@@ -405,6 +405,7 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
     const entry = {
       Name: nameValue,
       Category: formFieldsGlob.category.value,
+      Status: formFieldsGlob.status.value,
       Genre: Array.isArray(selectedGenres) ? selectedGenres.join(", ") : "",
       currentSeason:
         formFieldsGlob.status.value === "Continue" &&
@@ -770,7 +771,15 @@ window.handleQuickUpdateSave = async function (event) {
     }
 
     // --- PHASE 2: All reads succeeded, now mutate the movie object ---
-    const currentTime = new Date();
+    const timeEl = document.getElementById("quickUpdateTime");
+    const timeValue = timeEl ? timeEl.value.trim() : "";
+    let h = 0, m = 0, s = 0;
+    if (timeValue) {
+      const parts = timeValue.split(":").map((v) => parseInt(v, 10) || 0);
+      h = parts[0] || 0;
+      m = parts[1] || 0;
+      s = parts[2] || 0;
+    }
     const [watchYear, watchMonth, watchDay] = watchDate
       .split("-")
       .map((value) => parseInt(value, 10));
@@ -780,10 +789,10 @@ window.handleQuickUpdateSave = async function (event) {
         watchYear,
         watchMonth - 1,
         watchDay,
-        currentTime.getHours(),
-        currentTime.getMinutes(),
-        currentTime.getSeconds(),
-        currentTime.getMilliseconds(),
+        h,
+        m,
+        s,
+        0,
       ).toISOString(),
       rating: watchRating,
       notes: watchNotes,
@@ -1401,11 +1410,16 @@ window.handleBatchEditFormSubmit = async function (event) {
 
       // Append watch session
       if ("logWatchSession" in changes && changes.logWatchSession) {
+        let sessionDate = changes.logWatchSession.date;
+        if (sessionDate && sessionDate.length === 10 && sessionDate.includes("-")) {
+          const [by, bm, bd] = sessionDate.split("-").map((v) => parseInt(v, 10) || 0);
+          sessionDate = new Date(by, bm - 1, bd, 0, 0, 0, 0).toISOString();
+        }
         const session = {
-          id: generateUUID(),
-          date: changes.logWatchSession.date,
+          watchId: generateUUID(),
+          date: sessionDate,
           rating: changes.logWatchSession.rating,
-          note: "",
+          notes: "",
         };
         if (!Array.isArray(entry.watchHistory)) entry.watchHistory = [];
         entry.watchHistory.push(session);
@@ -1463,14 +1477,6 @@ window.markDailyRecCompleted = async function (event) {
   });
 };
 
-window.markDailyRecSkipped = async function (event) {
-  showToast("Skipped", "Getting you a new recommendation...", "info");
-  if (typeof window.advanceDailyRecommendationModal === "function") {
-    await window.advanceDailyRecommendationModal(event);
-  } else {
-    console.warn("Daily recommendation advance handler is not available.");
-  }
-};
 // END CHUNK: Recommendation Modal Actions
 
 // START CHUNK: Achievement and Usage Helpers

@@ -96,8 +96,13 @@ async function loadFromIndexedDB() {
                     try {
                         let parsedData = JSON.parse(jsonData);
                         if (Array.isArray(parsedData)) {
-                            // --- MODIFIED: Filter out soft-deleted entries on load ---
-                            parsedData = parsedData.filter(entry => !entry.is_deleted);
+                            // --- MODIFIED: Filter out soft-deleted entries and heal missing Status on load ---
+                            parsedData = parsedData.filter(entry => !entry.is_deleted).map(entry => {
+                                if (entry && (!entry.Status || entry.Status === "N/A" || typeof entry.Status !== "string")) {
+                                    entry.Status = (Array.isArray(entry.watchHistory) && entry.watchHistory.length > 0) ? "Watched" : "To Watch";
+                                }
+                                return entry;
+                            });
                             resolve(parsedData);
                         } else {
                             resolve([]);

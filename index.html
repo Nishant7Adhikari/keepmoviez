@@ -1,4 +1,4 @@
-<!-- KeepMoviEZ  v5.6.2 -->
+<!-- KeepMoviEZ  v5.6.3 -->
 <!DOCTYPE html>
 <html lang="en">
 <!-- START CHUNK: Document Head and Core Dependencies -->
@@ -58,7 +58,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=5.6.2">
+    <link rel="stylesheet" href="style.css?v=5.6.3">
 
     <!-- PWA Manifest and Theme -->
     <link rel="manifest" href="manifest.json">
@@ -476,6 +476,7 @@
                     <button type="button" class="btn btn-outline-secondary" id="backfillGoogleBtn">
                         <i class="fab fa-google"></i> Google It
                     </button>
+                    
                     <div>
                         <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
                             <i class="fas fa-cloud-download-alt"></i> Auto-Fetch
@@ -932,9 +933,20 @@
                             <div id="addWatchInstanceForm" class="p-3 border rounded mb-3" style="display:none;">
                                 <h6 id="watchInstanceFormTitle" class="mb-3">Add Watch Record</h6>
                                 <div class="form-row">
-                                    <div class="form-group col-md-6"><label for="watchDate">Date</label><input
+                                    <div class="form-group col-md-4"><label for="watchDate">Date</label><input
                                             type="date" class="form-control" id="watchDate"></div>
-                                    <div class="form-group col-md-6"><label for="watchRating">Rating</label><select
+                                    <div class="form-group col-md-4">
+                                        <label for="watchTime">Completed Time <small class="text-muted">(optional)</small></label>
+                                        <div class="input-group">
+                                            <input type="time" step="1" class="form-control" id="watchTime" value="00:00:00">
+                                            <div class="input-group-append">
+                                                <button type="button" class="btn current-time-btn" id="watchTimeCurrentBtn" title="Set to current time" aria-label="Set to current time">
+                                                    <i class="fas fa-clock"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group col-md-4"><label for="watchRating">Rating</label><select
                                             id="watchRating" class="form-control">
                                             <option value="">Select</option>
                                             <option value="1">1 Star</option>
@@ -1133,9 +1145,22 @@
                         </div>
 
                         <!-- For All: Watch Record Fields -->
-                        <div class="form-group">
-                            <label for="quickUpdateDate">Watch Date</label>
-                            <input type="date" class="form-control" id="quickUpdateDate" required>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label for="quickUpdateDate">Watch Date</label>
+                                <input type="date" class="form-control" id="quickUpdateDate" required>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="quickUpdateTime">Completed Time <small class="text-muted">(optional)</small></label>
+                                <div class="input-group">
+                                    <input type="time" step="1" class="form-control" id="quickUpdateTime" value="00:00:00">
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn current-time-btn" id="quickUpdateTimeCurrentBtn" title="Set to current time" aria-label="Set to current time">
+                                            <i class="fas fa-clock"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label for="quickUpdateRating">Rating (for this session)</label>
@@ -2621,22 +2646,21 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
 
     <!-- Custom JS modules  -->
-    <script src="js/constant.js?v=5.6.1"></script>
-    <script src="js/utils.js?v=2"></script>
+    <script src="js/constant.js?v=5.6.3"></script>
+    <script src="js/utils.js?v=5.6.3"></script>
     <script src="js/indexeddb.js?v=2"></script>
-    <script src="js/data.js?v=5.5.10"></script>
-    <script src="js/io1.js?v=2"></script>
-    <script src="js/io2.js?v=5.6.1"></script>
+    <script src="js/data.js?v=5.6.3"></script>
+    <script src="js/input-output.js?v=5.6.3"></script>
     <script src="js/tmdb.js?v=5.5.11"></script>
     <script src="js/genre.js?v=2"></script>
-    <script src="js/analysis.js?v=5.6.1"></script>
-    <script src="js/ui.js?v=5.6.1"></script>
-    <script src="js/reporting.js?v=5.6.1"></script>
-    <script src="js/app.js?v=5.6.1"></script>
+    <script src="js/analysis.js?v=5.6.3"></script>
+    <script src="js/ui.js?v=5.6.3"></script>
+    <script src="js/reporting.js?v=5.6.3"></script>
+    <script src="js/app.js?v=5.6.3"></script>
     <script src="js/supabase.js?v=5.6.1"></script>
-    <script src="js/backfill.js?v=2"></script>
-    <script src="js/backfill-ui.js?v=5.6.1"></script>
-    <script src="js/main.js?v=5.6.0"></script>
+    <script src="js/backfill.js?v=5.6.3"></script>
+    <script src="js/backfill-ui.js?v=5.6.3"></script>
+    <script src="js/main.js?v=5.6.2"></script>
     <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
     <!-- Global Full-Screen Confetti Celebration Canvas -->

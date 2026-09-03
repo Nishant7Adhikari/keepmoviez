@@ -83,6 +83,7 @@ function prepareAddWatchInstanceForm() {
         String(now.getDate()).padStart(2, "0");
       watchInstanceFormFields.date.value = localDate;
     }
+    if (watchInstanceFormFields.time) watchInstanceFormFields.time.value = "00:00:00";
     // Auto-copy My Overall Rating to watch record rating if overall rating is set
     const overallRatingVal = formFieldsGlob?.overallRating?.value || "";
     if (watchInstanceFormFields.rating)
@@ -129,7 +130,9 @@ function prepareEditWatchInstanceForm(watchId) {
     if (watchInstanceFormTitleEl)
       watchInstanceFormTitleEl.textContent = "Edit Watch Record";
     if (watchInstanceFormFields.date)
-      watchInstanceFormFields.date.value = instanceToEdit.date || "";
+      watchInstanceFormFields.date.value = instanceToEdit.date ? instanceToEdit.date.slice(0, 10) : "";
+    if (watchInstanceFormFields.time)
+      watchInstanceFormFields.time.value = (instanceToEdit.date && instanceToEdit.date.length >= 19) ? instanceToEdit.date.slice(11, 19) : "";
     if (watchInstanceFormFields.rating)
       watchInstanceFormFields.rating.value = instanceToEdit.rating || "";
     if (watchInstanceFormFields.notes)
@@ -157,6 +160,7 @@ function closeWatchInstanceForm() {
   if (editingWatchIdEl) editingWatchIdEl.value = "";
   if (watchInstanceFormFields) {
     if (watchInstanceFormFields.date) watchInstanceFormFields.date.value = "";
+    if (watchInstanceFormFields.time) watchInstanceFormFields.time.value = "00:00:00";
     if (watchInstanceFormFields.rating)
       watchInstanceFormFields.rating.value = "";
     if (watchInstanceFormFields.notes) watchInstanceFormFields.notes.value = "";
@@ -213,14 +217,22 @@ async function saveOrUpdateWatchInstance() {
   }
   const editingId = editingWatchIdEl.value;
   const [watchYear, watchMonth, watchDay] = watchDate.split("-").map((value) => parseInt(value, 10));
+  const timeValue = watchInstanceFormFields.time ? watchInstanceFormFields.time.value.trim() : "";
+  let h = 0, m = 0, s = 0;
+  if (timeValue) {
+    const parts = timeValue.split(":").map((v) => parseInt(v, 10) || 0);
+    h = parts[0] || 0;
+    m = parts[1] || 0;
+    s = parts[2] || 0;
+  }
   const watchTimestamp = new Date(
     watchYear,
     watchMonth - 1,
     watchDay,
-    now.getHours(),
-    now.getMinutes(),
-    now.getSeconds(),
-    now.getMilliseconds(),
+    h,
+    m,
+    s,
+    0,
   ).toISOString();
   const newOrUpdatedInstance = {
     watchId: editingId || generateUUID(),
@@ -1859,10 +1871,22 @@ function roundRect(ctx, x, y, width, height, radius) {
 }
 
 // START CHUNK: Quick Update Modal Logic
+window._quickUpdateNoteAutoManaged = false;
+window._quickUpdateNoteStartStr = "";
+
+function updateQuickUpdateAutoNote() {
+  if (!window._quickUpdateNoteAutoManaged) return;
+  const s = parseInt($("#quickUpdateSeasons").val(), 10) || 1;
+  const e = parseInt($("#quickUpdateEpisodes").val(), 10) || 0;
+  const startStr = window._quickUpdateNoteStartStr || "S1E1";
+  $("#quickUpdateNotes").val(`${startStr} - S${s}E${e}`);
+}
+
 function updateQuickUpdateBadge() {
   const s = parseInt($("#quickUpdateSeasons").val(), 10) || 1;
   const e = parseInt($("#quickUpdateEpisodes").val(), 10) || 0;
   $("#quickUpdateProgressBadge").text(`S${s} E${e}`);
+  updateQuickUpdateAutoNote();
 }
 
 window.updateEditSeriesPreview = function () {
@@ -1899,6 +1923,31 @@ window.prepareQuickUpdateModal = function (id) {
     const episodeVal = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? 0;
     $("#quickUpdateSeasons").val(seasonVal);
     $("#quickUpdateEpisodes").val(episodeVal);
+
+    // Calculate Episode Auto-Note Start Position
+    let startStr = "";
+    const hasHistory = Array.isArray(movie.watchHistory) && movie.watchHistory.length > 0;
+    if (!hasHistory && movie.Status === "To Watch") {
+      startStr = "S1E1";
+    } else if (hasHistory) {
+      const latest = getLatestWatchInstance(movie.watchHistory);
+      if (latest && latest.notes) {
+        const match = /^S[\d?]+E[\d?]+\s*-\s*(S\d+E\d+)$/i.exec(latest.notes.trim());
+        if (match && match[1]) {
+          startStr = match[1].toUpperCase();
+        } else {
+          startStr = "S?E?";
+        }
+      } else {
+        startStr = "S?E?";
+      }
+    } else {
+      startStr = "S?E?";
+    }
+
+    window._quickUpdateNoteStartStr = startStr;
+    window._quickUpdateNoteAutoManaged = true;
+
     updateQuickUpdateBadge();
 
     // Hide extra fields initially for series; they show if "Finished?" is toggled
@@ -1912,6 +1961,9 @@ window.prepareQuickUpdateModal = function (id) {
       movie.personalRecommendation || "",
     );
   } else {
+    window._quickUpdateNoteAutoManaged = false;
+    window._quickUpdateNoteStartStr = "";
+
     // Show extra fields immediately for Movies/Docs/Specials
     $("#quickUpdateConditionalFields").show();
     // Hide the separate overall rating for movies (session rating = overall rating)
@@ -1932,12 +1984,26 @@ window.prepareQuickUpdateModal = function (id) {
     "-" +
     String(now.getDate()).padStart(2, "0");
   $("#quickUpdateDate").val(localDate);
+  $("#quickUpdateTime").val("00:00:00");
 
   modal.modal("show");
 };
 
 // Global Listeners for Series Steppers
 document.addEventListener("DOMContentLoaded", () => {
+  // Current Time button: populates the adjacent time input with the local time now
+  $(document).on("click", ".current-time-btn", function () {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const ss = String(now.getSeconds()).padStart(2, "0");
+    const currentTime = hh + ":" + mm + ":" + ss;
+    const timeInput = $(this).closest(".input-group").find("input[type='time']");
+    if (timeInput.length) {
+      timeInput.val(currentTime).trigger("input").trigger("change");
+    }
+  });
+
   // Quick update modal steppers
   $(document).on("click", "#quickUpdatePlusEpBtn", function () {
     const epInput = $("#quickUpdateEpisodes");
@@ -1956,6 +2022,22 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $(document).on("input change", "#quickUpdateSeasons, #quickUpdateEpisodes", updateQuickUpdateBadge);
+
+  $(document).on("input", "#quickUpdateNotes", function () {
+    const val = $(this).val().trim();
+    if (val === "") {
+      window._quickUpdateNoteAutoManaged = true;
+      updateQuickUpdateAutoNote();
+    } else if (/^S[\d?]+E[\d?]+\s*-\s*S[\d?]+E[\d?]+$/i.test(val)) {
+      window._quickUpdateNoteAutoManaged = true;
+      const parts = val.split("-");
+      if (parts.length === 2) {
+        window._quickUpdateNoteStartStr = parts[0].trim().toUpperCase();
+      }
+    } else {
+      window._quickUpdateNoteAutoManaged = false;
+    }
+  });
 
   // Add/Edit modal steppers
   $(document).on("click", "#btnEditPlusEpisode", function () {
