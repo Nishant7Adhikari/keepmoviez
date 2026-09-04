@@ -210,16 +210,31 @@ function calculateAllStatistics(currentMovieData) {
             movie.watchHistory.forEach(wh => {
                 if (!wh || !wh.date) return;
                 try {
-                    const d = new Date(wh.date);
+                    const cleanDate = String(wh.date).trim();
+                    const dateStr = cleanDate.slice(0, 10);
+                    const parts = dateStr.split("-").map(v => parseInt(v, 10));
+                    if (parts.length !== 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return;
+
+                    const yearNum = parts[0];
+                    const monthNum = parts[1];
+                    const dayNum = parts[2];
+
+                    let hoursNum = 0;
+                    if (cleanDate.length >= 19 && cleanDate.includes("T")) {
+                        const timeParts = cleanDate.slice(11, 19).split(":").map(v => parseInt(v, 10));
+                        if (!isNaN(timeParts[0])) hoursNum = timeParts[0];
+                    }
+
+                    const d = new Date(yearNum, monthNum - 1, dayNum, hoursNum, 0, 0);
                     if (isNaN(d.getTime())) return;
-                    const dateStr = d.toISOString().slice(0, 10);
-                    allWatchInstances.push({ date: dateStr, genre: movie.Genre, time: d.getHours(), movie: movie });
+
+                    allWatchInstances.push({ date: dateStr, genre: movie.Genre, time: hoursNum, movie: movie });
 
                     const ratingKey = (wh.rating && String(wh.rating).trim() !== '') ? String(wh.rating) : 'N/A';
                     watchInstanceRatingCounts[ratingKey] = (watchInstanceRatingCounts[ratingKey] || 0) + 1;
 
-                    const y = d.getFullYear().toString();
-                    const ymISO = `${y}-${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+                    const y = String(yearNum);
+                    const ymISO = `${y}-${String(monthNum).padStart(2, '0')}`;
                     watchesByYear[y] = watchesByYear[y] || { instances: 0, titles: new Set(), ratingsSum: 0, ratedCount: 0 };
                     watchesByYear[y].instances++; watchesByYear[y].titles.add(movie.Name);
                     if (ratingKey !== 'N/A') { watchesByYear[y].ratingsSum += parseFloat(wh.rating); watchesByYear[y].ratedCount++; }
@@ -235,7 +250,7 @@ function calculateAllStatistics(currentMovieData) {
                     if (dayOfWeek === 0 || dayOfWeek === 6) {
                         const sat = new Date(d);
                         if (dayOfWeek === 0) sat.setDate(d.getDate() - 1);
-                        const weekendIdentifier = sat.toISOString().slice(0, 10);
+                        const weekendIdentifier = `${sat.getFullYear()}-${String(sat.getMonth() + 1).padStart(2, '0')}-${String(sat.getDate()).padStart(2, '0')}`;
                         weekendCounts[weekendIdentifier] = (weekendCounts[weekendIdentifier] || 0) + 1;
                     }
                     

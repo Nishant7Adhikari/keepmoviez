@@ -1254,11 +1254,13 @@ function renderActivityHeatmap(canvasId) {
     window.movieData.forEach(movie => {
         if (movie.watchHistory && Array.isArray(movie.watchHistory)) {
             movie.watchHistory.forEach(wh => {
-                if (wh.date) {
-                    const dateStr = new Date(wh.date).toISOString().slice(0, 10);
-                    if (!dailyData[dateStr]) dailyData[dateStr] = { count: 0, titles: [] };
-                    dailyData[dateStr].count++;
-                    dailyData[dateStr].titles.push(movie.Name);
+                if (wh && wh.date) {
+                    const dateStr = String(wh.date).trim().slice(0, 10);
+                    if (dateStr && dateStr.length === 10 && dateStr.includes('-')) {
+                        if (!dailyData[dateStr]) dailyData[dateStr] = { count: 0, titles: [] };
+                        dailyData[dateStr].count++;
+                        dailyData[dateStr].titles.push(movie.Name);
+                    }
                 }
             });
         }
