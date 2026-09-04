@@ -44,8 +44,8 @@ vm.runInContext(code, sandbox);
 
 test('calculateAllStatistics calculates metrics correctly', () => {
     const sampleData = [
-        { id: '1', Name: 'Movie A', Status: 'Watched', Category: 'Movie', overallRating: '5', Runtime: '120', Genre: 'Action, Sci-Fi', watchHistory: [{ date: '2023-01-01', rating: '5' }] },
-        { id: '2', Name: 'Movie B', Status: 'To Watch', Category: 'Movie', overallRating: '4', Runtime: '90', Genre: 'Action', watchHistory: [] }
+        { id: '1', Name: 'Movie A', Status: 'Watched', Category: 'Movie', overallRating: '5', runtime: 120, Genre: 'Action, Sci-Fi', watchHistory: [{ date: '2023-01-01', rating: '5' }] },
+        { id: '2', Name: 'Movie B', Status: 'To Watch', Category: 'Movie', overallRating: '4', runtime: 90, Genre: 'Action', watchHistory: [] }
     ];
 
     const stats = sandbox.calculateAllStatistics(sampleData);
