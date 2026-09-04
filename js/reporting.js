@@ -1,4 +1,4 @@
-/* reporting.js */
+/* reporting.js */ 
 function generateColors(count, alpha = 0.7) {
     const colors = [];
     const baseHues = [200, 30, 260, 60, 150, 330, 90, 0, 230, 180, 45, 280, 120, 20, 300, 100];

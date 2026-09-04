@@ -141,6 +141,7 @@ if (![string]::IsNullOrWhiteSpace($diffOutput)) {
 You are an expert developer. Please generate a concise, descriptive Git commit message based on the following git diff output.
 Use the Conventional Commits format (e.g., feat:, fix:, chore:, docs:).
 Provide only the commit message without any additional conversational text but it should be descriptive (Range 1 - 80 words), multi-lines are recommended if major changes included else single line is preferred for minor changes.
+Always provide output in a copy codeblock format. 
 
 Git diff:
 $diffOutput

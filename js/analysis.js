@@ -1,4 +1,4 @@
-/* analysis.js */
+/* analysis.js */ 
 // START CHUNK: Comprehensive Statistics Engine
 function calculateAllStatistics(currentMovieData) {
     // Filter out Unwatchable entries — they should not contribute to any stats, charts, or achievements

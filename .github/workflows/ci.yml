@@ -26,3 +26,4 @@ jobs:
       - name: Run Automated Unit Tests
         run: |
           node --test tests/*.test.js
+

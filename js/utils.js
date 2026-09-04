@@ -1,4 +1,4 @@
-/* utils.js */
+/* utils.js */ 
 // START CHUNK: Loading Indicator
 function showLoading(message = " Loading...") {
     if (!loadingOverlay) loadingOverlay = document.getElementById('loadingOverlay');
