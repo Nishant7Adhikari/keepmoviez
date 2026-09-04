@@ -359,7 +359,7 @@ function calculateAllStatistics(currentMovieData) {
 
     stats.avgRatingByMonth = Object.values(watchesByMonth).filter(m => m.ratedCount > 0).map(m => ({ label: m.month_year_label, value: (m.ratingsSum / m.ratedCount).toFixed(2), iso: m.month_year_iso })).sort((a, b) => new Date(a.iso) - new Date(b.iso));
     stats.topSingleGenres = formatCounts(watchedGenreCounts);
-    stats.genreCombinations = formatCounts(genreCombinationsCounts).filter(c => c.value >= 1);
+    stats.genreCombinations = formatCounts(genreCombinationsCounts);
     const sortRatings = (a, b) => (b.rating === 'N/A' ? -1 : parseFloat(b.rating)) - (a.rating === 'N/A' ? -1 : parseFloat(a.rating));
     stats.overallRatingDistributionData = Object.entries(overallRatingCounts).map(([rating, count]) => ({ label: getRatingTextLabel(rating), value: count, rating })).sort(sortRatings);
     stats.watchInstanceRatingDistributionData = Object.entries(watchInstanceRatingCounts).map(([rating, count]) => ({ label: getRatingTextLabel(rating), value: count, rating })).sort(sortRatings);
