@@ -359,7 +359,7 @@ function calculateAllStatistics(currentMovieData) {
 
     stats.avgRatingByMonth = Object.values(watchesByMonth).filter(m => m.ratedCount > 0).map(m => ({ label: m.month_year_label, value: (m.ratingsSum / m.ratedCount).toFixed(2), iso: m.month_year_iso })).sort((a, b) => new Date(a.iso) - new Date(b.iso));
     stats.topSingleGenres = formatCounts(watchedGenreCounts);
-    stats.genreCombinations = formatCounts(genreCombinationsCounts).filter(c => c.value > 1);
+    stats.genreCombinations = formatCounts(genreCombinationsCounts);
     const sortRatings = (a, b) => (b.rating === 'N/A' ? -1 : parseFloat(b.rating)) - (a.rating === 'N/A' ? -1 : parseFloat(a.rating));
     stats.overallRatingDistributionData = Object.entries(overallRatingCounts).map(([rating, count]) => ({ label: getRatingTextLabel(rating), value: count, rating })).sort(sortRatings);
     stats.watchInstanceRatingDistributionData = Object.entries(watchInstanceRatingCounts).map(([rating, count]) => ({ label: getRatingTextLabel(rating), value: count, rating })).sort(sortRatings);
@@ -403,44 +403,46 @@ function calculateAllStatistics(currentMovieData) {
 
     // --- Watchlist Growth Calculation ---
     try {
-        const log = JSON.parse(localStorage.getItem('watchlistActivityLog_v1') || '[]');
-        if(Array.isArray(log)) {
-            const cutoffDate30 = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-            const dailyChanges = {};
-            let netChange = 0;
-            
-            for (let i = 29; i >= 0; i--) {
-                const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
-                const dateStr = date.toISOString().slice(0, 10);
-                dailyChanges[dateStr] = 0;
-            }
+        const rawLog = JSON.parse(localStorage.getItem('watchlistActivityLog_v1') || '[]');
+        const log = Array.isArray(rawLog) ? rawLog : [];
+        const cutoffDate30 = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        const dailyChanges = {};
+        let netChange = 0;
 
-            log.forEach(item => {
-                if (new Date(item.date) >= cutoffDate30) {
-                    if (dailyChanges[item.date] !== undefined) {
-                        dailyChanges[item.date] += (item.type === 'completed' ? -1 : 1);
-                    }
-                }
-            });
-
-            const chartLabels = [], chartData = [];
-            let cumulativeChange = 0;
-            Object.keys(dailyChanges).sort().forEach(dateStr => {
-                cumulativeChange += dailyChanges[dateStr];
-                chartLabels.push(new Date(dateStr).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}));
-                chartData.push(cumulativeChange);
-                netChange += dailyChanges[dateStr];
-            });
-
-            stats.watchlistGrowth30 = `${netChange >= 0 ? '+' : ''}${netChange} items`;
-            stats.watchlistGrowthChartData = { labels: chartLabels, data: chartData };
-        } else {
-            stats.watchlistGrowth30 = "N/A";
-            stats.watchlistGrowthChartData = null;
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+            const dateStr = date.toISOString().slice(0, 10);
+            dailyChanges[dateStr] = 0;
         }
+
+        log.forEach(item => {
+            if (item && item.date && new Date(item.date) >= cutoffDate30) {
+                if (dailyChanges[item.date] !== undefined) {
+                    dailyChanges[item.date] += (item.type === 'completed' ? -1 : 1);
+                }
+            }
+        });
+
+        const chartLabels = [], chartData = [];
+        let cumulativeChange = 0;
+        Object.keys(dailyChanges).sort().forEach(dateStr => {
+            cumulativeChange += dailyChanges[dateStr];
+            chartLabels.push(new Date(dateStr + 'T00:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', timeZone: 'UTC'}));
+            chartData.push(cumulativeChange);
+            netChange += dailyChanges[dateStr];
+        });
+
+        stats.watchlistGrowth30 = `${netChange >= 0 ? '+' : ''}${netChange} items`;
+        stats.watchlistGrowthChartData = { labels: chartLabels, data: chartData };
     } catch(e) {
-        stats.watchlistGrowth30 = "N/A";
-        stats.watchlistGrowthChartData = null;
+        stats.watchlistGrowth30 = "+0 items";
+        const chartLabels = [], chartData = [];
+        for (let i = 29; i >= 0; i--) {
+            const date = new Date(now.getTime() - (i * 24 * 60 * 60 * 1000));
+            chartLabels.push(date.toLocaleDateString(undefined, {month: 'short', day: 'numeric'}));
+            chartData.push(0);
+        }
+        stats.watchlistGrowthChartData = { labels: chartLabels, data: chartData };
     }
 
     // --- Normalized Pace Calculation ---
