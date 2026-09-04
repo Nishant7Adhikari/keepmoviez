@@ -523,8 +523,19 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         );
         if (unwatchableTitle)
           unwatchableTitle.textContent = "⚠️ Unwatchable Title Detected";
-        if (unwatchableBody)
-          unwatchableBody.innerHTML = `You already have <strong>"${unwatchableMatch.Name}" (${unwatchableMatch.Year || "N/A"})</strong> in your <span class="badge badge-secondary">Unwatchable</span> section.`;
+        if (unwatchableBody) {
+          unwatchableBody.textContent = "";
+          unwatchableBody.appendChild(document.createTextNode("You already have "));
+          const strongEl = document.createElement("strong");
+          strongEl.textContent = `"${unwatchableMatch.Name || ""}" (${unwatchableMatch.Year || "N/A"})`;
+          unwatchableBody.appendChild(strongEl);
+          unwatchableBody.appendChild(document.createTextNode(" in your "));
+          const badgeEl = document.createElement("span");
+          badgeEl.className = "badge badge-secondary";
+          badgeEl.textContent = "Unwatchable";
+          unwatchableBody.appendChild(badgeEl);
+          unwatchableBody.appendChild(document.createTextNode(" section."));
+        }
         if (unwatchableWhyContainer) {
           unwatchableWhyContainer.style.display = "none";
           unwatchableWhyContainer.querySelector(

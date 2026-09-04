@@ -266,6 +266,7 @@ function populateRelatedEntriesSuggestions() {
         return;
     }
 
+    const fragment = document.createDocumentFragment();
     matchedMovies.forEach(movie => {
         const suggestionItem = document.createElement('a');
         suggestionItem.href = '#';
@@ -280,8 +281,9 @@ function populateRelatedEntriesSuggestions() {
             relatedEntriesNamesInput.focus();
             populateRelatedEntriesSuggestions();
         });
-        relatedEntriesSuggestionsContainer.appendChild(suggestionItem);
+        fragment.appendChild(suggestionItem);
     });
+    relatedEntriesSuggestionsContainer.appendChild(fragment);
 
     relatedEntriesSuggestionsContainer.style.display = 'block';
 }
