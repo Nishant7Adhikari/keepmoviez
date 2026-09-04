@@ -1415,8 +1415,24 @@ window.handleBatchEditFormSubmit = async function (event) {
       if ("logWatchSession" in changes && changes.logWatchSession) {
         let sessionDate = changes.logWatchSession.date;
         if (sessionDate && sessionDate.length === 10 && sessionDate.includes("-")) {
-          const [by, bm, bd] = sessionDate.split("-").map((v) => parseInt(v, 10) || 0);
-          sessionDate = `${by}-${String(bm).padStart(2, "0")}-${String(bd).padStart(2, "0")}T00:00:00`;
+          const parts = sessionDate.split("-");
+          const [by, bm, bd] = parts.map((v) => parseInt(v, 10));
+          const isValidDateOnly = parts.length === 3
+            && parts.every((v) => /^\d+$/.test(v))
+            && !Number.isNaN(by)
+            && !Number.isNaN(bm)
+            && !Number.isNaN(bd)
+            && bm >= 1
+            && bm <= 12
+            && bd >= 1
+            && bd <= 31
+            && (() => {
+              const d = new Date(by, bm - 1, bd);
+              return d.getFullYear() === by && d.getMonth() === bm - 1 && d.getDate() === bd;
+            })();
+          if (isValidDateOnly) {
+            sessionDate = `${by}-${String(bm).padStart(2, "0")}-${String(bd).padStart(2, "0")}T00:00:00`;
+          }
         }
         const session = {
           watchId: generateUUID(),
