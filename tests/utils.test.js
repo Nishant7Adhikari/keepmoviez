@@ -67,3 +67,11 @@ test('generateUUID returns a valid string', () => {
     assert.equal(typeof uuid, 'string');
     assert.ok(uuid.length > 0);
 });
+
+test('formatWatchDateDisplay formats wall-clock dates without timezone offset shifting', () => {
+    assert.equal(sandbox.formatWatchDateDisplay('2026-03-31T21:00:00'), new Date(2026, 2, 31).toLocaleDateString());
+    assert.equal(sandbox.formatWatchDateDisplay('2026-12-05T00:00:00.000Z'), new Date(2026, 11, 5).toLocaleDateString());
+    assert.equal(sandbox.formatWatchDateDisplay('2026-01-01'), new Date(2026, 0, 1).toLocaleDateString());
+    assert.equal(sandbox.formatWatchDateDisplay('invalid-date'), 'Invalid Date');
+    assert.equal(sandbox.formatWatchDateDisplay(null), 'Invalid Date');
+});
