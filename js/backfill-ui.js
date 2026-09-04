@@ -220,13 +220,16 @@ function renderConfigurationScreen(summary) {
   // List items
   summary.forEach((item) => {
     html += `
-            <label class="list-group-item d-flex justify-content-between align-items-center" style="cursor: pointer;">
-                <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input backfill-field-checkbox" id="check_${item.key}" value="${item.key}" checked>
-                    <label class="custom-control-label" for="check_${item.key}">${item.label}</label>
+            <div class="batch-field-unit mb-2 p-2 rounded border" style="background: rgba(40, 167, 69, 0.04);">
+                <div class="d-flex align-items-center justify-content-between">
+                    <label class="batch-checkbox-wrap m-0 mr-3" for="check_${item.key}" title="Include ${item.label}">
+                        <input type="checkbox" class="batch-native-checkbox backfill-field-checkbox" id="check_${item.key}" value="${item.key}" checked>
+                        <span class="batch-custom-checkbox"></span>
+                    </label>
+                    <label for="check_${item.key}" class="m-0 flex-grow-1 font-weight-bold" style="cursor: pointer;">${item.label}</label>
+                    <span class="badge badge-success badge-pill">${item.count} missing</span>
                 </div>
-                <span class="badge badge-primary badge-pill">${item.count}</span>
-            </label>
+            </div>
         `;
   });
   html += `</div>

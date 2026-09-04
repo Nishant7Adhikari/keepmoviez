@@ -1198,6 +1198,7 @@ async function displayDetailedStatsModal() {
     populateList('statsTopSingleGenres', stats.topSingleGenres.slice(0, 10));
     populateList('statsAvgRatingByGenre', stats.topRatedGenresOverall.slice(0, 10).map(g => ({ label: g.label, value: `${g.value} avg (${g.count})` })), 10);
     populateList('genreCombinations', stats.genreCombinations);
+    populateList('statsGenreCombinations', stats.genreCombinations, 10);
 
     // Ratings Tab
     populateList('statsByOverallRating', stats.overallRatingDistributionData);
@@ -1515,6 +1516,10 @@ function renderChartsForModal(statsData, chartInstanceObj) {
     renderSingleChart('chartModalAvgRatingOverTime', 'line', sortedMonthlyRatings.map(d => d.label), [{ label: 'Average Rating', data: sortedMonthlyRatings.map(d => d.value) }], { scales: { y: { beginAtZero: false, min: 1, max: 5 } } });
     const ratedGenres = (statsData.topRatedGenresOverall || []).filter(g => g.count >= 2).slice(0, 7);
     if (ratedGenres.length >= 3) renderSingleChart('chartModalRatingByGenreRadar', 'radar', ratedGenres.map(d => d.label), [{ label: 'Average Overall Rating', data: ratedGenres.map(d => parseFloat(d.value)) }]);
+
+    if (statsData.watchlistGrowthChartData && statsData.watchlistGrowthChartData.labels) {
+        renderSingleChart('chartWatchlistGrowth', 'line', statsData.watchlistGrowthChartData.labels, [{ label: 'Net Watchlist Growth', data: statsData.watchlistGrowthChartData.data, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true }]);
+    }
 }
 
 async function exportStatsAsPdf(filename = 'KeepMovizEZ_Report.pdf') {
