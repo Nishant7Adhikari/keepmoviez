@@ -427,7 +427,7 @@ function calculateAllStatistics(currentMovieData) {
         let cumulativeChange = 0;
         Object.keys(dailyChanges).sort().forEach(dateStr => {
             cumulativeChange += dailyChanges[dateStr];
-            chartLabels.push(new Date(dateStr).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}));
+            chartLabels.push(new Date(dateStr + 'T00:00:00Z').toLocaleDateString(undefined, {month: 'short', day: 'numeric', timeZone: 'UTC'}));
             chartData.push(cumulativeChange);
             netChange += dailyChanges[dateStr];
         });
