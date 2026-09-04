@@ -16,7 +16,7 @@ const sandbox = {
         setItem: () => {},
     },
     crypto: {
-        randomUUID: () => '12345678-1234-4xxx-yxxx-123456789abc'
+        randomUUID: () => '12345678-1234-4abc-9def-123456789abc'
     },
     countryCodeToNameMap: {
         'US': 'United States',
