@@ -53,7 +53,7 @@ function renderWatchHistoryUI(entryWatchHistory = []) {
         "watch-history-item list-group-item list-group-item-action flex-column align-items-start p-2 mb-1";
       const watchId = wh.watchId || generateUUID();
       if (!wh.watchId) wh.watchId = watchId;
-      item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date"}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${wh.notes || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${watchId}" title="Edit"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${watchId}" title="Delete"><i class="fas fa-trash"></i></button></div>`;
+      item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date"}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${wh.notes || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${watchId}" title="Edit" aria-label="Edit watch record"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${watchId}" title="Delete" aria-label="Delete watch record"><i class="fas fa-trash"></i></button></div>`;
       listEl.appendChild(item);
     });
 }
@@ -421,9 +421,9 @@ function renderNextBatch() {
                 <div class="card-footer">
                     ${lastWatchedInfo}
                     <div class="card-actions">
-                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus"></i></button>` : ""}
-                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" data-movie-id="${movie.id}"><i class="fas fa-edit"></i></button>
-                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" data-movie-id="${movie.id}"><i class="fas fa-trash-alt"></i></button>
+                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus"></i></button>` : ""}
+                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit entry" data-movie-id="${movie.id}"><i class="fas fa-edit"></i></button>
+                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete entry" data-movie-id="${movie.id}"><i class="fas fa-trash-alt"></i></button>
                     </div>
                 </div>
             </div>
