@@ -105,6 +105,16 @@ function formatWatchDateDisplay(dateStr) {
     const d = new Date(cleanDate);
     return !isNaN(d.getTime()) ? d.toLocaleDateString() : "Invalid Date";
 }
+
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 // END CHUNK: UI Enhancements and Helpers
 
 // START CHUNK: Toast Notification System
@@ -149,7 +159,7 @@ function showToast(title, message, type = 'info', delayMs, doNotShowAgainKey = n
     }
 
     toastElement.find('#toastTitle').text(title || 'Notification');
-    toastElement.find('#toastBody').html(message || '');
+    toastElement.find('#toastBody').text(message || '');
     toastElement.find('#toastActions').empty(); // Clear previous actions
 
     const toastHeader = toastElement.find('.toast-header');
