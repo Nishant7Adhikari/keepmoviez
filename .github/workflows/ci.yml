@@ -17,11 +17,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Run Syntax Check on JS Files
         run: |
-          for file in js/*.js; do node -c "$file"; done
+          for file in js/*.js; do node -check  "$file"; done
 
       - name: Run Automated Unit Tests
         run: |
