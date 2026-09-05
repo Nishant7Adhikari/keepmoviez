@@ -75,3 +75,10 @@ test('formatWatchDateDisplay formats wall-clock dates without timezone offset sh
     assert.equal(sandbox.formatWatchDateDisplay('invalid-date'), 'Invalid Date');
     assert.equal(sandbox.formatWatchDateDisplay(null), 'Invalid Date');
 });
+
+test('escapeHTML correctly escapes special characters and handles null/undefined', () => {
+    assert.equal(sandbox.escapeHTML('<script>alert("xss")</script>'), '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+    assert.equal(sandbox.escapeHTML("Rock & 'Roll'"), 'Rock &amp; &#039;Roll&#039;');
+    assert.equal(sandbox.escapeHTML(null), '');
+    assert.equal(sandbox.escapeHTML(undefined), '');
+});
