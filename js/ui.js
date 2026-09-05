@@ -53,7 +53,7 @@ function renderWatchHistoryUI(entryWatchHistory = []) {
         "watch-history-item list-group-item list-group-item-action flex-column align-items-start p-2 mb-1";
       const watchId = wh.watchId || generateUUID();
       if (!wh.watchId) wh.watchId = watchId;
-      item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date"}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${wh.notes || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${watchId}" title="Edit"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${watchId}" title="Delete"><i class="fas fa-trash"></i></button></div>`;
+      item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date"}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${escapeHTML(wh.notes) || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${watchId}" title="Edit"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${watchId}" title="Delete"><i class="fas fa-trash"></i></button></div>`;
       listEl.appendChild(item);
     });
 }
@@ -1197,7 +1197,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .forEach((wh) =>
           whList.append(
-            `<li><strong>${formatWatchDateDisplay(wh.date)}</strong> - ${renderStars(wh.rating)} ${wh.notes ? `<small class="text-muted d-block">${wh.notes}</small>` : ""}</li>`,
+            `<li><strong>${formatWatchDateDisplay(wh.date)}</strong> - ${renderStars(wh.rating)} ${wh.notes ? `<small class="text-muted d-block">${escapeHTML(wh.notes)}</small>` : ""}</li>`,
           ),
         );
 
