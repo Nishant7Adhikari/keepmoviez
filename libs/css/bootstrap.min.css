@@ -279,7 +279,8 @@ select {
 [type=reset],
 [type=submit],
 button {
-    -webkit-appearance: button
+    appearance: button;
+    -webkit-appearance: button;
 }
 
 [type=button]:not(:disabled),
@@ -338,6 +339,7 @@ progress {
 
 [type=search] {
     outline-offset: -2px;
+    appearance: none;
     -webkit-appearance: none
 }
 

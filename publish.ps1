@@ -33,10 +33,20 @@ function Invoke-Git {
     $stdoutFile = [System.IO.Path]::GetTempFileName()
     $stderrFile = [System.IO.Path]::GetTempFileName()
 
+    $escapedArgs = @(
+        $Arguments | ForEach-Object {
+            if ($_ -match '[\s"]') {
+                '"{0}"' -f ($_ -replace '(\\*)(")', '$1$1\"' -replace '(\\+)$', '$1$1')
+            } else {
+                $_
+            }
+        }
+    )
+
     try {
         $process = Start-Process `
             -FilePath "git.exe" `
-            -ArgumentList $Arguments `
+            -ArgumentList $escapedArgs `
             -NoNewWindow `
             -Wait `
             -PassThru `
@@ -439,7 +449,11 @@ function Get-NewVersion {
 
     param(
         [Parameter(Mandatory = $true)]
-        [string]$CurrentVersion
+        [string]$CurrentVersion,
+
+        [switch]$Major,
+        [switch]$Minor,
+        [string]$VersionString
     )
 
     $parts = Get-VersionParts $CurrentVersion
@@ -453,32 +467,32 @@ function Get-NewVersion {
         return $VersionString
     }
 
-    $major = $parts.Major
-    $minor = $parts.Minor
-    $patch = $parts.Patch
+    $majorNum = $parts.Major
+    $minorNum = $parts.Minor
+    $patchNum = $parts.Patch
     $patchWidth = $parts.PatchWidth
 
     if ($Major) {
 
-        $major++
-        $minor = 0
-        $patch = 0
+        $majorNum++
+        $minorNum = 0
+        $patchNum = 0
         $patchWidth = 1
     }
     elseif ($Minor) {
 
-        $minor++
-        $patch = 0
+        $minorNum++
+        $patchNum = 0
         $patchWidth = 1
     }
     else {
 
-        $patch++
+        $patchNum++
     }
 
-    $newPatch = $patch.ToString("D$patchWidth")
+    $newPatch = $patchNum.ToString("D$patchWidth")
 
-    return "$major.$minor.$newPatch"
+    return "$majorNum.$minorNum.$newPatch"
 }
 
 # ------------------------------------------------------------
@@ -551,6 +565,10 @@ function Test-VersionReferences {
         ) {
             $errors += "index.html does not contain the expected KeepMoviEZ version comment."
         }
+
+        if ($content -match '(?i)(?:src|href)\s*=\s*["'']\s*=') {
+            $errors += "index.html contains corrupted script or link references with missing path (e.g., src=`"=...`")."
+        }
     }
 
     # sw.js
@@ -562,6 +580,10 @@ function Test-VersionReferences {
             $content -notmatch "(?i)const\s+CACHE_NAME\s*=\s*['""]keepmoviez-local-v$([regex]::Escape($Version))['""];"
         ) {
             $errors += "sw.js does not contain the expected CACHE_NAME version."
+        }
+
+        if ($content -match '["'']\s*=[0-9.]+\s*["'']') {
+            $errors += "sw.js contains corrupted asset paths with missing path (e.g., `"=...`")."
         }
     }
 
@@ -735,7 +757,7 @@ function Update-CacheBusting {
                 $fragment = $match.Groups[4].Value
                 $closingQuote = $match.Groups[5].Value
 
-                return "$prefix$quote$path?v=$Version$fragment$closingQuote"
+                return "$prefix$quote$($path)?v=$($Version)$fragment$closingQuote"
             }
 
             $newIndexContent = [regex]::Replace(
@@ -780,7 +802,7 @@ function Update-CacheBusting {
                 $fragment = $match.Groups[3].Value
                 $closingQuote = $match.Groups[4].Value
 
-                return "$quote$path?v=$Version$fragment$closingQuote"
+                return "$quote$($path)?v=$($Version)$fragment$closingQuote"
             }
 
             $newSwContent = [regex]::Replace(
@@ -802,12 +824,20 @@ function Update-CacheBusting {
 
     if ($indexChanged) {
 
+        if ($indexContent -match '(?i)(?:src|href)\s*=\s*["'']\s*=') {
+            throw "Corrupted URL pattern detected in index.html during cache busting."
+        }
+
         Write-TextFile `
             -Path "index.html" `
             -Content $indexContent
     }
 
     if ($swChanged) {
+
+        if ($swContent -match '["'']\s*=[0-9.]+\s*["'']') {
+            throw "Corrupted asset path detected in sw.js during cache busting."
+        }
 
         Write-TextFile `
             -Path "sw.js" `
@@ -1386,7 +1416,10 @@ $changedSinceVersion | ForEach-Object {
 # ------------------------------------------------------------
 
 $newVersion = Get-NewVersion `
-    -CurrentVersion $currentVersion
+    -CurrentVersion $currentVersion `
+    -Major:$Major `
+    -Minor:$Minor `
+    -VersionString $VersionString
 
 if (-not (Test-VersionFormat $newVersion)) {
     throw "Generated version '$newVersion' is invalid."

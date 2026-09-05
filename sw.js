@@ -35,22 +35,22 @@ const CORE_ASSETS = [
 
   // App Logic Scripts
   "./js/constant.js?v=5.6.3",
-  "=5.6.5",
+  "./js/utils.js?v=5.6.5",
   "./js/indexeddb.js?v=2",
   "./js/data.js?v=5.6.3",
   "./js/input-output.js?v=5.6.3",
   "./js/tmdb.js?v=5.5.11",
   "./js/genre.js?v=2",
-  "=5.6.5",
-  "=5.6.5",
-  "=5.6.5",
-  "=5.6.5",
+  "./js/analysis.js?v=5.6.5",
+  "./js/ui.js?v=5.6.5",
+  "./js/reporting.js?v=5.6.5",
+  "./js/app.js?v=5.6.5",
   "./js/supabase.js?v=5.6.1",
   "./js/main.js?v=5.6.2",
 
   // Icons
   "./icons/icon-192x192.png",
-  "./icons/icon-512x512.png",
+  "./icons/icon-512x512.png"
 ];
 
 self.addEventListener("install", (event) => {
@@ -98,12 +98,12 @@ self.addEventListener("fetch", (event) => {
     "main.js",
     "supabase.js",
     "indexeddb.js",
-    "ui.js?v=5.6.3",
+    "ui.js?v=5.6.5",
     "utils.js?v=5.6.5",
     "input-output.js?v=5.6.3",
     "reporting.js?v=5.6.5",
     "constant.js?v=5.6.3",
-    "analysis.js?v=5.6.5",
+    "analysis.js?v=5.6.5"
   ];
   const urlPath = request.url.split("?")[0];
   const isAppScript = criticalAppScripts.some((script) =>

@@ -9,7 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
       '<p style="color:red; text-align:center; padding-top: 20px;">Critical Error: Application UI cannot be initialized.</p>';
     return;
   }
-  showLoading("Initializing application...");
+  if (typeof showLoading === "function") {
+    showLoading("Initializing application...");
+  }
 
   //START CHUNK: 2: Theme & Sync Settings Setup
   const menuThemeToggleBtn = document.getElementById("menuThemeToggleBtn");

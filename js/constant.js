@@ -1225,7 +1225,21 @@ try {
                     autoRefreshToken: true,
                     persistSession: true,
                     detectSessionInUrl: true,
-                    storage: window.localStorage 
+                    storage: window.localStorage,
+                    // Resilient lock handler: prevents "Acquiring an exclusive Navigator LockManager lock immediately failed"
+                    // when multiple tabs or rapid reloads attempt immediate lock acquisition with acquireTimeout = 0
+                    lock: async (name, acquireTimeout, fn) => {
+                        if (typeof navigator !== 'undefined' && navigator?.locks?.request) {
+                            try {
+                                return await navigator.locks.request(name, async () => {
+                                    return await fn();
+                                });
+                            } catch (e) {
+                                return await fn();
+                            }
+                        }
+                        return await fn();
+                    }
                 }
             });
             console.log("Supabase client initialized successfully.");
