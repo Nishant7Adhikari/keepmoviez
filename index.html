@@ -511,8 +511,8 @@
                     <div class="input-group">
                         <input type="text" id="filterInputNavbar" class="form-control form-control-sm"
                             placeholder="Search...">
-                        <button id="sortDirectionToggle" class="btn" type="button" title="Toggle Sort Direction">
-                            <i class="fas fa-arrow-down"></i>
+                        <button id="sortDirectionToggle" class="btn" type="button" title="Toggle Sort Direction" aria-label="Toggle sort direction">
+                            <i class="fas fa-arrow-down" aria-hidden="true"></i>
                         </button>
                     </div>
                 </form>
@@ -533,7 +533,7 @@
                     </div>
 
                     <button id="filterBtn" class="btn btn-sm btn-outline-info" data-toggle="modal"
-                        data-target="#filterSortModal" title="Filter Collection">
+                        data-target="#filterSortModal" title="Filter Collection" aria-label="Filter collection">
                         <i class="fas fa-filter"></i>
                     </button>
                 </div>
@@ -654,11 +654,11 @@
                     </div>
                 </div>
 
-                <button id="cancelMultiSelectBtn" class="btn btn-sm btn-outline-secondary" title="Exit Selection"><i
+                <button id="cancelMultiSelectBtn" class="btn btn-sm btn-outline-secondary" title="Exit Selection" aria-label="Exit selection"><i
                         class="fas fa-times"></i></button>
             </div>
         </div>
-        <button id="addNewEntryBtn" class="btn btn-primary" data-toggle="modal" data-target="#entryModal"> <i
+        <button id="addNewEntryBtn" class="btn btn-primary" data-toggle="modal" data-target="#entryModal" aria-label="Add new entry"> <i
                 class="fas fa-plus-circle"></i> </button>
     </nav>
     </div> <!-- This closes #appContent -->

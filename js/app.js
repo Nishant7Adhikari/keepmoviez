@@ -796,15 +796,7 @@ window.handleQuickUpdateSave = async function (event) {
       .map((value) => parseInt(value, 10));
     const newWatchRecord = {
       watchId: generateUUID(),
-      date: new Date(
-        watchYear,
-        watchMonth - 1,
-        watchDay,
-        h,
-        m,
-        s,
-        0,
-      ).toISOString(),
+      date: `${watchYear}-${String(watchMonth).padStart(2, "0")}-${String(watchDay).padStart(2, "0")}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`,
       rating: watchRating,
       notes: watchNotes,
     };
@@ -1424,7 +1416,7 @@ window.handleBatchEditFormSubmit = async function (event) {
         let sessionDate = changes.logWatchSession.date;
         if (sessionDate && sessionDate.length === 10 && sessionDate.includes("-")) {
           const [by, bm, bd] = sessionDate.split("-").map((v) => parseInt(v, 10) || 0);
-          sessionDate = new Date(by, bm - 1, bd, 0, 0, 0, 0).toISOString();
+          sessionDate = `${by}-${String(bm).padStart(2, "0")}-${String(bd).padStart(2, "0")}T00:00:00`;
         }
         const session = {
           watchId: generateUUID(),

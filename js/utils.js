@@ -89,6 +89,32 @@ function formatDays(totalDays, format = 'days') {
     const totalMinutes = totalDays * 24 * 60;
     return formatDuration(totalMinutes, format);
 }
+
+function formatWatchDateDisplay(dateStr) {
+    if (!dateStr || typeof dateStr !== 'string') return "Invalid Date";
+    const cleanDate = dateStr.trim();
+    if (!cleanDate) return "Invalid Date";
+    const dateOnly = cleanDate.slice(0, 10);
+    const parts = dateOnly.split("-").map((v) => parseInt(v, 10));
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+        const d = new Date(parts[0], parts[1] - 1, parts[2]);
+        if (!isNaN(d.getTime())) {
+            return d.toLocaleDateString();
+        }
+    }
+    const d = new Date(cleanDate);
+    return !isNaN(d.getTime()) ? d.toLocaleDateString() : "Invalid Date";
+}
+
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 // END CHUNK: UI Enhancements and Helpers
 
 // START CHUNK: Toast Notification System
@@ -133,7 +159,7 @@ function showToast(title, message, type = 'info', delayMs, doNotShowAgainKey = n
     }
 
     toastElement.find('#toastTitle').text(title || 'Notification');
-    toastElement.find('#toastBody').html(message || '');
+    toastElement.find('#toastBody').text(message || '');
     toastElement.find('#toastActions').empty(); // Clear previous actions
 
     const toastHeader = toastElement.find('.toast-header');

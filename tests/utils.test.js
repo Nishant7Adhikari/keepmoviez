@@ -67,3 +67,18 @@ test('generateUUID returns a valid string', () => {
     assert.equal(typeof uuid, 'string');
     assert.ok(uuid.length > 0);
 });
+
+test('formatWatchDateDisplay formats wall-clock dates without timezone offset shifting', () => {
+    assert.equal(sandbox.formatWatchDateDisplay('2026-03-31T21:00:00'), new Date(2026, 2, 31).toLocaleDateString());
+    assert.equal(sandbox.formatWatchDateDisplay('2026-12-05T00:00:00.000Z'), new Date(2026, 11, 5).toLocaleDateString());
+    assert.equal(sandbox.formatWatchDateDisplay('2026-01-01'), new Date(2026, 0, 1).toLocaleDateString());
+    assert.equal(sandbox.formatWatchDateDisplay('invalid-date'), 'Invalid Date');
+    assert.equal(sandbox.formatWatchDateDisplay(null), 'Invalid Date');
+});
+
+test('escapeHTML correctly escapes special characters and handles null/undefined', () => {
+    assert.equal(sandbox.escapeHTML('<script>alert("xss")</script>'), '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+    assert.equal(sandbox.escapeHTML("Rock & 'Roll'"), 'Rock &amp; &#039;Roll&#039;');
+    assert.equal(sandbox.escapeHTML(null), '');
+    assert.equal(sandbox.escapeHTML(undefined), '');
+});
