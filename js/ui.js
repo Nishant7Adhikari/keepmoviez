@@ -421,9 +421,9 @@ function renderNextBatch() {
                 <div class="card-footer">
                     ${lastWatchedInfo}
                     <div class="card-actions">
-                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus"></i></button>` : ""}
-                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit entry" data-movie-id="${movie.id}"><i class="fas fa-edit"></i></button>
-                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete entry" data-movie-id="${movie.id}"><i class="fas fa-trash-alt"></i></button>
+                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
+                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit entry" data-movie-id="${movie.id}"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete entry" data-movie-id="${movie.id}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
                     </div>
                 </div>
             </div>
