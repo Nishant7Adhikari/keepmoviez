@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.6"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.6.7"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -35,16 +35,16 @@ const CORE_ASSETS = [
 
   // App Logic Scripts
   "./js/constant.js?v=5.6.6",
-  "./js/backfill.js?v=5.6.5",
-  "./js/utils.js?v=5.6.5",
+  "./js/backfill.js?v=5.6.7",
+  "./js/utils.js?v=5.6.7",
   "./js/indexeddb.js?v=2",
   "./js/data.js?v=5.6.3",
   "./js/input-output.js?v=5.6.3",
-  "./js/tmdb.js?v=5.5.11",
+  "./js/tmdb.js?v=5.6.7",
   "./js/genre.js?v=2",
   "./js/analysis.js?v=5.6.5",
-  "./js/ui.js?v=5.6.5",
-  "./js/reporting.js?v=5.6.5",
+  "./js/ui.js?v=5.6.7",
+  "./js/reporting.js?v=5.6.7",
   "./js/app.js?v=5.6.5",
   "./js/supabase.js?v=5.6.1",
   "./js/main.js?v=5.6.6",
