@@ -13,38 +13,41 @@ const sandbox = {
     Object,
     parseFloat,
     parseInt,
-    isNaN
+    isNaN,
+    window: {}
 };
+sandbox.window = sandbox;
 
 vm.createContext(sandbox);
 const code = fs.readFileSync(path.join(__dirname, '../js/backfill.js'), 'utf8');
 vm.runInContext(code, sandbox);
 
-test('stringSimilarity & getEditDistance calculate string closeness accurately', () => {
-    assert.equal(sandbox.stringSimilarity('Inception', 'Inception'), 1);
-    assert.ok(sandbox.stringSimilarity('Inception', 'Inception') > 0.8);
-    assert.ok(sandbox.getEditDistance('kitten', 'sitting') === 3);
+test('normalizeCountryCode converts country inputs safely', () => {
+    sandbox.countryCodeToNameMap = { 'US': 'United States', 'CA': 'Canada' };
+    assert.equal(sandbox.normalizeCountryCode('US'), 'US');
+    assert.equal(sandbox.normalizeCountryCode('United States'), 'US');
+    assert.equal(sandbox.normalizeCountryCode('Canada'), 'CA');
 });
 
-test('calculateMatchScore weights title and year match correctly', () => {
-    const scoreExact = sandbox.calculateMatchScore('Inception', '2010', 'Inception', '2010');
-    const scoreDiffYear = sandbox.calculateMatchScore('Inception', '2010', 'Inception', '2020');
-    assert.ok(scoreExact > scoreDiffYear);
+test('isFieldMissing identifies missing or empty fields correctly', () => {
+    const entry = { Name: 'Inception', Year: '', Description: null };
+    assert.equal(sandbox.isFieldMissing(entry, 'Year'), true);
+    assert.equal(sandbox.isFieldMissing(entry, 'Description'), true);
+    assert.equal(sandbox.isFieldMissing(entry, 'Name'), false);
 });
 
-test('parseColumnInput splits comma-separated fields cleanly', () => {
-    const fields = sandbox.parseColumnInput('runtime, director');
-    assert.deepEqual(Array.from(fields), ['runtime', 'director']);
+test('transformFieldValue cleans and formats field values', () => {
+    const fieldConfig = { type: 'number' };
+    assert.equal(sandbox.transformFieldValue('Year', '2010', fieldConfig, {}), 2010);
 });
 
-test('extractTmdbData formats API response to internal structure', () => {
+test('extractFieldFromTmdb retrieves requested metadata from TMDB object', () => {
     const tmdbData = {
-        genres: [{ name: 'Sci-Fi' }, { name: 'Action' }],
         runtime: 148,
         release_date: '2010-07-16',
-        overview: 'A thief who steals corporate secrets...'
+        production_countries: [{ iso_3166_1: 'US', name: 'United States' }]
     };
 
-    const extracted = sandbox.extractTmdbData(tmdbData, 'movie', ['runtime']);
-    assert.equal(extracted.runtime, 148);
+    assert.equal(sandbox.extractFieldFromTmdb('Year', tmdbData, 'movie'), 2010);
+    assert.equal(sandbox.extractFieldFromTmdb('Country', tmdbData, 'movie'), 'US');
 });
