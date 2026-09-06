@@ -621,9 +621,9 @@
                 <span id="multiSelectCount" class="multi-select-badge">0 selected</span>
             </div>
             <div class="multi-select-btn-group">
-                <button id="batchEditSelectedBtn" class="btn btn-sm btn-info"><i class="fas fa-edit"></i> <span
+                <button id="batchEditSelectedBtn" class="btn btn-sm btn-info" aria-label="Edit selected entries"><i class="fas fa-edit"></i> <span
                         class="d-none d-sm-inline">Edit</span></button>
-                <button id="batchDeleteSelectedBtn" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i> <span
+                <button id="batchDeleteSelectedBtn" class="btn btn-sm btn-danger" aria-label="Delete selected entries"><i class="fas fa-trash-alt"></i> <span
                         class="d-none d-sm-inline">Delete</span></button>
 
                 <div class="dropup d-inline-block">
@@ -1065,10 +1065,10 @@
 
                     <div id="addModeButtons" class="d-flex">
                         <button type="button" id="saveAndAddAnotherBtn" class="btn btn-success mr-2"
-                            title="Save & Add Another">
+                            title="Save & Add Another" aria-label="Save & Add Another">
                             <i class="fas fa-plus-square"></i> <span class="d-none d-sm-inline">Add New</span>
                         </button>
-                        <button type="button" id="saveAndEditBtn" class="btn btn-info mr-2" title="Save & Edit Details">
+                        <button type="button" id="saveAndEditBtn" class="btn btn-info mr-2" title="Save & Edit Details" aria-label="Save & Edit Details">
                             <i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span>
                         </button>
                         <button type="submit" form="entryForm" id="quickSaveBtn" class="btn btn-primary"
@@ -1271,22 +1271,22 @@
                                             style="display:none;">
                                             <div class="input-group-series-guide">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
-                                                    data-target="pgSeasonInput" data-step="-1">&minus;</button>
+                                                    data-target="pgSeasonInput" data-step="-1" aria-label="Decrease season">&minus;</button>
                                                 <input type="number" class="form-control form-control-sm pg-input"
                                                     id="pgSeasonInput" value="1" min="1" placeholder="S">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
-                                                    data-target="pgSeasonInput" data-step="1">&plus;</button>
+                                                    data-target="pgSeasonInput" data-step="1" aria-label="Increase season">&plus;</button>
                                             </div>
                                             <div class="input-group-series-guide">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
-                                                    data-target="pgEpisodeInput" data-step="-1">&minus;</button>
+                                                    data-target="pgEpisodeInput" data-step="-1" aria-label="Decrease episode">&minus;</button>
                                                 <input type="number" class="form-control form-control-sm pg-input"
                                                     id="pgEpisodeInput" value="0" min="0" placeholder="E">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
-                                                    data-target="pgEpisodeInput" data-step="1">&plus;</button>
+                                                    data-target="pgEpisodeInput" data-step="1" aria-label="Increase episode">&plus;</button>
                                             </div>
                                             <a id="imdbEpisodeParentalGuideBtn" class="pg-book-icon" href="#"
-                                                target="_blank" rel="noopener noreferrer" title="View Parents Guide">
+                                                target="_blank" rel="noopener noreferrer" title="View Parents Guide" aria-label="View Parents Guide">
                                                 <i class="fas fa-book-open"></i>
                                             </a>
                                         </div>
