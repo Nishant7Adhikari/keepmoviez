@@ -35,6 +35,7 @@ const CORE_ASSETS = [
 
   // App Logic Scripts
   "./js/constant.js?v=5.6.6",
+  "./js/backfill.js?v=5.6.5",
   "./js/utils.js?v=5.6.5",
   "./js/indexeddb.js?v=2",
   "./js/data.js?v=5.6.3",

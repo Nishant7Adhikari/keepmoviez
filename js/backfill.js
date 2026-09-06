@@ -1,1685 +1,999 @@
-/* backfill.js - TMDB Data Backfill Console Utility */
+/* backfill.js */
+
+// Backfill state
+let backfillQueue = [];
+let currentBackfillIndex = 0;
+let backfillStats = {
+  total: 0,
+  completed: 0,
+  skipped: 0,
+};
+
+// Field definitions with priority (higher = more important for stats)
+const BACKFILL_FIELDS = [
+  {
+    key: "runtime",
+    label: "Runtime",
+    inputType: "number",
+    placeholder: "e.g., 148",
+    unit: "minutes",
+    priority: 10,
+    helperText: (entry) =>
+      entry.Category === "Series"
+        ? "Enter average episode runtime"
+        : "Enter total runtime in minutes",
+  },
+  {
+    key: "currentSeason",
+    label: "Current Season",
+    inputType: "number",
+    placeholder: "e.g., 1, 2...",
+    min: 1,
+    priority: 9,
+    onlyFor: ["Series"],
+    statusFilter: ["Continue"],
+  },
+  {
+    key: "currentEpisode",
+    label: "Current Episode",
+    inputType: "number",
+    placeholder: "e.g., 5",
+    min: 0,
+    priority: 9,
+    onlyFor: ["Series"],
+    statusFilter: ["Continue"],
+  },
+  {
+    key: "Year",
+    label: "Year",
+    inputType: "number",
+    placeholder: "YYYY",
+    min: 1888,
+    max: 2100,
+    priority: 8,
+  },
+  {
+    key: "Country",
+    label: "Country",
+    inputType: "text",
+    placeholder: "e.g., US, IN, KR",
+    normalize: true,
+    priority: 7,
+  },
+  {
+    key: "Language",
+    label: "Language",
+    inputType: "text",
+    placeholder: "e.g., Hindi, English",
+    priority: 6,
+  },
+  {
+    key: "Status",
+    label: "Status",
+    inputType: "select",
+    options: ["To Watch", "Watched", "Continue", "Unwatchable"],
+    priority: 7,
+  },
+  { key: "Genre", label: "Genres", inputType: "multi-genre", priority: 5 },
+  {
+    key: "tmdb_release_date",
+    label: "Release Date",
+    inputType: "date",
+    priority: 4,
+  },
+  {
+    key: "director_info",
+    label: "Director Info",
+    inputType: "text",
+    placeholder: "Enter Director Name...",
+    priority: 3,
+    saveFormat: "tmdb-json",
+    helperText:
+      '💡 Tip: Using "Auto-Fetch" will automatically get the Director\'s ID and Profile Photo from TMDB!',
+  },
+  {
+    key: "imdb_id",
+    label: "IMDb ID",
+    inputType: "text",
+    placeholder: "e.g., tt0468569",
+    priority: 2,
+  },
+];
 
 /**
- * Comprehensive TMDB Data Backfill CLI
- * Backfill ANY TMDB data field for entries with valid TMDB IDs
- * Supports 10+ data fields: rating, cast, director, collection, companies, keywords, runtime, release_date, imdb_id, vote_count
+ * Scan library to identify what's missing (Preliminary Scan)
+ * Returns a summary of missing fields and counts
  */
+function scanForMissingFieldsSummary() {
+  if (!Array.isArray(movieData) || movieData.length === 0) return {};
 
-const MIN_RETRY_DELAY = 25;      // Minimum delay between API requests (TMDB allows 50 calls/sec = 20ms, so 100ms is safe)
-const DEFAULT_RETRY_DELAY = 25;  // Default delay (safer for multiple users/concurrent requests)
-
-function parseColumnInput(input) {
-    if (!input) return [];
-    let columns = typeof input === 'string' ? input.split(',').map(col => col.trim().toLowerCase()) : (Array.isArray(input) ? input.map(col => String(col).trim().toLowerCase()) : []);
-    const validColumns = ['category', 'genre', 'language', 'year', 'country', 'description', 'poster_url', 'related_entries', 'tmdb_id', 'rating', 'vote_count', 'cast', 'director', 'collection', 'companies', 'keywords', 'runtime', 'release_date', 'imdb_id'];
-    return columns.filter(col => validColumns.includes(col));
-}
-
-function extractTmdbData(detailData, mediaType, requestedColumns) {
-    const data = { vote_average: null, vote_count: null, full_cast: [], director_info: null, collection_id: null, collection_name: null, collection_total_parts: null, production_companies: [], keywords: [], runtime: null, release_date: null, imdb_id: null, poster_url: null, related_entries: [], category: null, genre: [], language: null, year: null, country: [], description: null };
-    if (!detailData) return data;
-    if (requestedColumns.includes('rating')) data.vote_average = detailData.vote_average || null;
-    if (requestedColumns.includes('vote_count')) data.vote_count = detailData.vote_count || null;
-    if (requestedColumns.includes('cast') && detailData.credits && detailData.credits.cast) {
-        data.full_cast = detailData.credits.cast.slice(0, 15).map(c => ({ id: c.id, name: c.name, character: c.character, profile_path: c.profile_path, order: c.order }));
-    }
-    if (requestedColumns.includes('director') && detailData.credits && detailData.credits.crew) {
-        const director = detailData.credits.crew.find(c => c.job === 'Director');
-        if (director) data.director_info = { id: director.id, name: director.name, profile_path: director.profile_path, job: director.job };
-    }
-    if (requestedColumns.includes('collection') && detailData.collection) {
-        data.collection_id = detailData.collection.id;
-        data.collection_name = detailData.collection.name;
-        data.collection_total_parts = detailData.collection.parts ? detailData.collection.parts.length : null;
-    }
-    if (requestedColumns.includes('companies') && detailData.production_companies) {
-        data.production_companies = detailData.production_companies.map(pc => ({ id: pc.id, name: pc.name, logo_path: pc.logo_path, origin_country: pc.origin_country }));
-    }
-    if (requestedColumns.includes('keywords')) {
-        const keywordsList = detailData.keywords?.keywords || detailData.keywords?.results || [];
-        data.keywords = keywordsList.map(k => ({ id: k.id, name: k.name }));
-    }
-    if (requestedColumns.includes('runtime')) {
-        if (mediaType === 'movie') {
-            data.runtime = detailData.runtime || null;
-        } else if (mediaType === 'tv') {
-            data.runtime = { seasons: detailData.number_of_seasons || null, episodes: detailData.number_of_episodes || null, episode_run_time: detailData.episode_run_time ? detailData.episode_run_time[0] : null };
-        }
-    }
-    if (requestedColumns.includes('release_date')) {
-        data.release_date = mediaType === 'movie' ? (detailData.release_date || null) : (detailData.first_air_date || null);
-    }
-    if (requestedColumns.includes('imdb_id') && detailData.external_ids) {
-        data.imdb_id = detailData.external_ids.imdb_id || null;
-    }
-    if (requestedColumns.includes('poster_url') && detailData.poster_path) {
-        data.poster_url = `https://image.tmdb.org/t/p/w500${detailData.poster_path}`;
-    }
-    if (requestedColumns.includes('related_entries') && detailData.collection && detailData.collection.parts) {
-        data.related_entries = detailData.collection.parts.map(part => ({
-            id: part.id,
-            name: part.title || part.name,
-            release_date: part.release_date || part.first_air_date,
-            poster_path: part.poster_path
-        }));
-    }
-    if (requestedColumns.includes('category') && detailData.genres && detailData.genres.length > 0) {
-        data.category = detailData.genres[0].name;
-    }
-    if (requestedColumns.includes('genre') && detailData.genres) {
-        data.genre = detailData.genres.map(g => ({ id: g.id, name: g.name }));
-    }
-    if (requestedColumns.includes('language') && detailData.original_language) {
-        data.language = detailData.original_language.toUpperCase();
-    }
-    if (requestedColumns.includes('year')) {
-        const dateStr = mediaType === 'movie' ? detailData.release_date : detailData.first_air_date;
-        data.year = dateStr ? new Date(dateStr).getFullYear() : null;
-    }
-    if (requestedColumns.includes('country') && detailData.production_countries) {
-        data.country = detailData.production_countries.map(pc => ({ code: pc.iso_3166_1, name: pc.name }));
-    }
-    if (requestedColumns.includes('description') && detailData.overview) {
-        data.description = detailData.overview;
-    }
-    return data;
-}
-
-console.log('\n✅ TMDB Backfill loaded! Type backfillHelp() for documentation.\n');
-
-/**
- * TMDB Data Backfill CLI
- * Backfill ANY TMDB data field for entries with valid TMDB IDs
- * 
- * Features:
- * - Multiple column backfill modes
- * - Smart filtering and validation
- * - Rate-limited API calls
- * - Detailed progress reporting
- * - Dry-run support
- * - Relationship auto-update
- */
-
-// ============================================================================
-// MAIN FUNCTION: Universal TMDB Data Backfill
-// ============================================================================
-
-async function backfillTmdbData(options = {}) {
-    // === Validate & Normalize Options ===
-    const {
-        columns = ['rating', 'cast', 'director', 'collection', 'companies'],
-        dryRun = false,
-        verbose = true,
-        retryDelay = DEFAULT_RETRY_DELAY,
-        maxResults = 500
-    } = options;
-
-    // === Enforce minimum retry delay ===
-    const safeRetryDelay = Math.max(retryDelay, MIN_RETRY_DELAY);
-
-    if (retryDelay !== safeRetryDelay && retryDelay > 0) {
-        console.warn(
-            `⚠️  retryDelay cannot be less than ${MIN_RETRY_DELAY}ms. Using ${safeRetryDelay}ms`
-        );
-    }
-
-    // === Validate Environment ===
-    if (!Array.isArray(movieData)) {
-        console.error('❌ movieData not available or not an array');
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    if (typeof window.callTmdbApiDirect !== 'function') {
-        console.error(
-            '❌ TMDB API function not available. Make sure tmdb.js is loaded'
-        );
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    // === Parse Columns ===
-    const backfillColumns = parseColumnInput(columns);
-
-    if (backfillColumns.length === 0) {
-        console.error(
-            '❌ No valid columns specified. Use: ' +
-            'category, genre, language, year, country, description, ' +
-            'poster_url, related_entries, tmdb_id, rating, vote_count, ' +
-            'cast, director, collection, companies, keywords, runtime, ' +
-            'release_date, imdb_id'
-        );
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    // === Find Entries That Need Backfilling ===
-    const entriesToBackfill = movieData
-        .filter(entry => entry.tmdbId && (
-            (backfillColumns.includes('category') &&
-                !entry.category) ||
-
-            (backfillColumns.includes('genre') &&
-                (!entry.genre || entry.genre.length === 0)) ||
-
-            (backfillColumns.includes('language') &&
-                !entry.language) ||
-
-            (backfillColumns.includes('year') &&
-                !entry.year) ||
-
-            (backfillColumns.includes('country') &&
-                (!entry.country || entry.country.length === 0)) ||
-
-            (backfillColumns.includes('description') &&
-                !entry.description) ||
-
-            (backfillColumns.includes('poster_url') &&
-                !entry.poster_url) ||
-
-            (backfillColumns.includes('related_entries') &&
-                (!entry.related_entries ||
-                    entry.related_entries.length === 0)) ||
-
-            (backfillColumns.includes('rating') &&
-                !entry.tmdb_vote_average) ||
-
-            (backfillColumns.includes('vote_count') &&
-                !entry.tmdb_vote_count) ||
-
-            (backfillColumns.includes('cast') &&
-                (!entry.full_cast ||
-                    entry.full_cast.length === 0)) ||
-
-            (backfillColumns.includes('director') &&
-                !entry.director_info) ||
-
-            (backfillColumns.includes('collection') &&
-                !entry.tmdb_collection_id) ||
-
-            (backfillColumns.includes('companies') &&
-                (!entry.production_companies ||
-                    entry.production_companies.length === 0)) ||
-
-            (backfillColumns.includes('keywords') &&
-                (!entry.keywords ||
-                    entry.keywords.length === 0)) ||
-
-            (backfillColumns.includes('runtime') &&
-                !entry.runtime) ||
-
-            (backfillColumns.includes('release_date') &&
-                !entry.tmdb_release_date) ||
-
-            (backfillColumns.includes('imdb_id') &&
-                !entry.imdb_id)
-        ))
-        .slice(0, maxResults);
-
-    // === Nothing To Process ===
-    if (entriesToBackfill.length === 0) {
-        console.log(
-            '✅ No entries found that need backfilling for selected columns'
-        );
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    // === Print Header ===
-    console.log(`\n${'═'.repeat(80)}`);
-    console.log(`🚀 TMDB DATA BACKFILL`);
-    console.log(`${'═'.repeat(80)}`);
-    console.log(
-        `📊 Entries to process: ${entriesToBackfill.length}/${movieData.length}`
-    );
-    console.log(
-        `📋 Columns:            ${backfillColumns.join(', ')}`
-    );
-    console.log(
-        `⏱️  Retry delay:        ${safeRetryDelay}ms`
-    );
-    console.log(
-        `🏃 Dry run:             ${dryRun ? 'YES (no changes)' : 'NO (live changes)'}`
-    );
-    console.log(`${'═'.repeat(80)}\n`);
-
-    // === Results ===
-    const results = {
-        total: entriesToBackfill.length,
-        successful: 0,
-        skipped: 0,
-        failed: 0,
-        updated: [],
-        errors: []
+  const summary = {};
+  BACKFILL_FIELDS.forEach((field) => {
+    summary[field.key] = {
+      key: field.key,
+      label: field.label,
+      count: 0,
+      priority: field.priority,
     };
-
-    // === Fields That Should Always Be Refreshed ===
-    //
-    // These values can change on TMDB over time.
-    // Existing values are therefore refreshed when explicitly
-    // requested through the selected columns.
-    //
-    const replaceFields = [
-        'poster_url',
-        'related_entries',
-        'tmdb_vote_count',
-        'tmdb_vote_average',
-        'tmdb_collection_total_parts'
-    ];
-
-    // === Process Entries ===
-    for (let i = 0; i < entriesToBackfill.length; i++) {
-        const entry = entriesToBackfill[i];
-
-        const progress =
-            `[${(i + 1).toString().padStart(3)}/` +
-            `${entriesToBackfill.length.toString().padStart(3)}]`;
-
-        try {
-            // === Rate Limiting ===
-            if (i > 0) {
-                await new Promise(resolve =>
-                    setTimeout(resolve, safeRetryDelay)
-                );
-            }
-
-            if (verbose) {
-                console.log(
-                    `${progress} Fetching: "${entry.Name}" ` +
-                    `(TMDB: ${entry.tmdbId})`
-                );
-            }
-
-            // === Determine Initial Media Type ===
-            let mediaType =
-                entry.tmdbMediaType ||
-                (entry.Category === 'Series' ? 'tv' : 'movie');
-
-            // === Fetch TMDB Details ===
-            let detailData = await callTmdbApiDirect(
-                `/${mediaType}/${entry.tmdbId}`,
-                {
-                    append_to_response:
-                        'credits,keywords,collection,external_ids'
-                }
-            );
-
-            // =========================================================
-            // MOVIE ↔ TV FALLBACK
-            // =========================================================
-            //
-            // If tmdbMediaType is missing and the first request fails,
-            // try the opposite media type.
-            //
-            // Example:
-            //
-            // /movie/123  → fails
-            // /tv/123     → succeeds
-            //
-            // Then save the correct media type.
-            //
-            if (!detailData && !entry.tmdbMediaType) {
-                const fallbackMediaType =
-                    mediaType === 'movie' ? 'tv' : 'movie';
-
-                if (verbose) {
-                    console.log(
-                        `  ↻ First lookup failed. ` +
-                        `Retrying as ${fallbackMediaType}...`
-                    );
-                }
-
-                detailData = await callTmdbApiDirect(
-                    `/${fallbackMediaType}/${entry.tmdbId}`,
-                    {
-                        append_to_response:
-                            'credits,keywords,collection,external_ids'
-                    }
-                );
-
-                if (detailData) {
-                    mediaType = fallbackMediaType;
-
-                    // Save the discovered media type
-                    if (!dryRun) {
-                        const entryIndex = movieData.findIndex(
-                            m => m.id === entry.id
-                        );
-
-                        if (entryIndex !== -1) {
-                            movieData[entryIndex].tmdbMediaType =
-                                fallbackMediaType;
-                        }
-                    }
-
-                    if (verbose) {
-                        console.log(
-                            `  ✓ Correct media type detected: ${mediaType}`
-                        );
-                    }
-                }
-            }
-
-            // === No TMDB Data ===
-            if (!detailData) {
-                results.skipped++;
-
-                if (verbose) {
-                    console.log(`  ⚠️  No data received from TMDB`);
-                }
-
-                continue;
-            }
-
-            // === Extract TMDB Data ===
-            const tmdbData = extractTmdbData(
-                detailData,
-                mediaType,
-                backfillColumns
-            );
-
-            // =========================================================
-            // DRY RUN
-            // =========================================================
-            if (dryRun) {
-                const fields = [];
-
-                if (backfillColumns.includes('category') &&
-                    tmdbData.category) {
-                    fields.push('category');
-                }
-
-                if (backfillColumns.includes('genre') &&
-                    tmdbData.genre?.length > 0) {
-                    fields.push('genre');
-                }
-
-                if (backfillColumns.includes('language') &&
-                    tmdbData.language) {
-                    fields.push('language');
-                }
-
-                if (backfillColumns.includes('year') &&
-                    tmdbData.year) {
-                    fields.push('year');
-                }
-
-                if (backfillColumns.includes('country') &&
-                    tmdbData.country?.length > 0) {
-                    fields.push('country');
-                }
-
-                if (backfillColumns.includes('description') &&
-                    tmdbData.description) {
-                    fields.push('description');
-                }
-
-                if (backfillColumns.includes('poster_url') &&
-                    tmdbData.poster_url) {
-                    fields.push('poster_url');
-                }
-
-                if (backfillColumns.includes('related_entries') &&
-                    tmdbData.related_entries?.length > 0) {
-                    fields.push('related_entries');
-                }
-
-                if (backfillColumns.includes('rating') &&
-                    tmdbData.vote_average !== null &&
-                    tmdbData.vote_average !== undefined) {
-                    fields.push('rating');
-                }
-
-                if (backfillColumns.includes('vote_count') &&
-                    tmdbData.vote_count !== null &&
-                    tmdbData.vote_count !== undefined) {
-                    fields.push('vote_count');
-                }
-
-                if (backfillColumns.includes('cast') &&
-                    tmdbData.full_cast?.length > 0) {
-                    fields.push('cast');
-                }
-
-                if (backfillColumns.includes('director') &&
-                    tmdbData.director_info) {
-                    fields.push('director');
-                }
-
-                if (backfillColumns.includes('collection') &&
-                    tmdbData.collection_id) {
-                    fields.push('collection');
-                }
-
-                if (backfillColumns.includes('companies') &&
-                    tmdbData.production_companies?.length > 0) {
-                    fields.push('companies');
-                }
-
-                if (backfillColumns.includes('keywords') &&
-                    tmdbData.keywords?.length > 0) {
-                    fields.push('keywords');
-                }
-
-                if (backfillColumns.includes('runtime') &&
-                    tmdbData.runtime) {
-                    fields.push('runtime');
-                }
-
-                if (backfillColumns.includes('release_date') &&
-                    tmdbData.release_date) {
-                    fields.push('release_date');
-                }
-
-                if (backfillColumns.includes('imdb_id') &&
-                    tmdbData.imdb_id) {
-                    fields.push('imdb_id');
-                }
-
-                results.successful++;
-
-                if (verbose) {
-                    console.log(
-                        `  ✓ Would update: ${
-                            fields.length > 0
-                                ? fields.join(', ')
-                                : 'nothing'
-                        }`
-                    );
-                }
-
-                continue;
-            }
-
-            // =========================================================
-            // FIND CURRENT ENTRY
-            // =========================================================
-            const entryIndex = movieData.findIndex(
-                m => m.id === entry.id
-            );
-
-            if (entryIndex === -1) {
-                results.skipped++;
-
-                if (verbose) {
-                    console.log(`  ⚠️  Entry no longer exists`);
-                }
-
-                continue;
-            }
-
-            const currentEntry = movieData[entryIndex];
-            const currentTimestamp = new Date().toISOString();
-            const changedFields = [];
-
-            // =========================================================
-            // BASIC INFORMATION
-            // =========================================================
-
-            // Category — fill only if missing
-            if (
-                backfillColumns.includes('category') &&
-                tmdbData.category &&
-                !currentEntry.category
-            ) {
-                currentEntry.category = tmdbData.category;
-                changedFields.push('category');
-            }
-
-            // Genre — fill only if missing
-            if (
-                backfillColumns.includes('genre') &&
-                tmdbData.genre?.length > 0 &&
-                (!currentEntry.genre ||
-                    currentEntry.genre.length === 0)
-            ) {
-                currentEntry.genre = tmdbData.genre;
-                changedFields.push('genre');
-            }
-
-            // Language — fill only if missing
-            if (
-                backfillColumns.includes('language') &&
-                tmdbData.language &&
-                !currentEntry.language
-            ) {
-                currentEntry.language = tmdbData.language;
-                changedFields.push('language');
-            }
-
-            // Year — fill only if missing
-            if (
-                backfillColumns.includes('year') &&
-                tmdbData.year &&
-                !currentEntry.year
-            ) {
-                currentEntry.year = tmdbData.year;
-                changedFields.push('year');
-            }
-
-            // Country — fill only if missing
-            if (
-                backfillColumns.includes('country') &&
-                tmdbData.country?.length > 0 &&
-                (!currentEntry.country ||
-                    currentEntry.country.length === 0)
-            ) {
-                currentEntry.country = tmdbData.country;
-                changedFields.push('country');
-            }
-
-            // Description — fill only if missing
-            if (
-                backfillColumns.includes('description') &&
-                tmdbData.description &&
-                !currentEntry.description
-            ) {
-                currentEntry.description = tmdbData.description;
-                changedFields.push('description');
-            }
-
-            // =========================================================
-            // POSTER
-            // =========================================================
-
-            if (
-                backfillColumns.includes('poster_url') &&
-                tmdbData.poster_url &&
-                (
-                    replaceFields.includes('poster_url') ||
-                    !currentEntry.poster_url
-                )
-            ) {
-                currentEntry.poster_url = tmdbData.poster_url;
-                changedFields.push('poster_url');
-            }
-
-            // =========================================================
-            // RELATED ENTRIES
-            // =========================================================
-
-            if (
-                backfillColumns.includes('related_entries') &&
-                tmdbData.related_entries?.length > 0 &&
-                (
-                    replaceFields.includes('related_entries') ||
-                    !currentEntry.related_entries ||
-                    currentEntry.related_entries.length === 0
-                )
-            ) {
-                currentEntry.related_entries =
-                    tmdbData.related_entries;
-
-                changedFields.push('related_entries');
-            }
-
-            // =========================================================
-            // RATING
-            // =========================================================
-
-            if (
-                backfillColumns.includes('rating') &&
-                tmdbData.vote_average !== null &&
-                tmdbData.vote_average !== undefined
-            ) {
-                if (
-                    replaceFields.includes('tmdb_vote_average') ||
-                    !currentEntry.tmdb_vote_average
-                ) {
-                    currentEntry.tmdb_vote_average =
-                        tmdbData.vote_average;
-
-                    changedFields.push('rating');
-                }
-            }
-
-            // =========================================================
-            // VOTE COUNT
-            // =========================================================
-
-            if (
-                backfillColumns.includes('vote_count') &&
-                tmdbData.vote_count !== null &&
-                tmdbData.vote_count !== undefined
-            ) {
-                if (
-                    replaceFields.includes('tmdb_vote_count') ||
-                    !currentEntry.tmdb_vote_count
-                ) {
-                    currentEntry.tmdb_vote_count =
-                        tmdbData.vote_count;
-
-                    changedFields.push('vote_count');
-                }
-            }
-
-            // =========================================================
-            // CAST
-            // =========================================================
-
-            if (
-                backfillColumns.includes('cast') &&
-                tmdbData.full_cast?.length > 0 &&
-                (
-                    !currentEntry.full_cast ||
-                    currentEntry.full_cast.length === 0
-                )
-            ) {
-                currentEntry.full_cast = tmdbData.full_cast;
-                changedFields.push('cast');
-            }
-
-            // =========================================================
-            // DIRECTOR
-            // =========================================================
-
-            if (
-                backfillColumns.includes('director') &&
-                tmdbData.director_info &&
-                !currentEntry.director_info
-            ) {
-                currentEntry.director_info =
-                    tmdbData.director_info;
-
-                changedFields.push('director');
-            }
-
-            // =========================================================
-            // COLLECTION
-            // =========================================================
-
-            if (
-                backfillColumns.includes('collection') &&
-                tmdbData.collection_id
-            ) {
-                // Collection doesn't exist yet
-                if (!currentEntry.tmdb_collection_id) {
-                    currentEntry.tmdb_collection_id =
-                        tmdbData.collection_id;
-
-                    currentEntry.tmdb_collection_name =
-                        tmdbData.collection_name;
-
-                    currentEntry.tmdb_collection_total_parts =
-                        tmdbData.collection_total_parts;
-
-                    changedFields.push('collection');
-                }
-
-                // Collection exists, but total parts may have changed
-                else if (
-                    replaceFields.includes(
-                        'tmdb_collection_total_parts'
-                    ) &&
-                    tmdbData.collection_total_parts !== null &&
-                    tmdbData.collection_total_parts !== undefined
-                ) {
-                    if (
-                        currentEntry.tmdb_collection_total_parts !==
-                        tmdbData.collection_total_parts
-                    ) {
-                        currentEntry.tmdb_collection_total_parts =
-                            tmdbData.collection_total_parts;
-
-                        changedFields.push(
-                            'collection (total_parts)'
-                        );
-                    }
-                }
-            }
-
-            // =========================================================
-            // PRODUCTION COMPANIES
-            // =========================================================
-
-            if (
-                backfillColumns.includes('companies') &&
-                tmdbData.production_companies?.length > 0 &&
-                (
-                    !currentEntry.production_companies ||
-                    currentEntry.production_companies.length === 0
-                )
-            ) {
-                currentEntry.production_companies =
-                    tmdbData.production_companies;
-
-                changedFields.push('companies');
-            }
-
-            // =========================================================
-            // KEYWORDS
-            // =========================================================
-
-            if (
-                backfillColumns.includes('keywords') &&
-                tmdbData.keywords?.length > 0 &&
-                (
-                    !currentEntry.keywords ||
-                    currentEntry.keywords.length === 0
-                )
-            ) {
-                currentEntry.keywords = tmdbData.keywords;
-                changedFields.push('keywords');
-            }
-
-            // =========================================================
-            // RUNTIME
-            // =========================================================
-
-            if (
-                backfillColumns.includes('runtime') &&
-                tmdbData.runtime &&
-                !currentEntry.runtime
-            ) {
-                currentEntry.runtime = tmdbData.runtime;
-                changedFields.push('runtime');
-            }
-
-            // =========================================================
-            // RELEASE DATE
-            // =========================================================
-
-            if (
-                backfillColumns.includes('release_date') &&
-                tmdbData.release_date &&
-                !currentEntry.tmdb_release_date
-            ) {
-                currentEntry.tmdb_release_date =
-                    tmdbData.release_date;
-
-                changedFields.push('release_date');
-            }
-
-            // =========================================================
-            // IMDB ID
-            // =========================================================
-
-            if (
-                backfillColumns.includes('imdb_id') &&
-                tmdbData.imdb_id &&
-                !currentEntry.imdb_id
-            ) {
-                currentEntry.imdb_id = tmdbData.imdb_id;
-                changedFields.push('imdb_id');
-            }
-
-            // =========================================================
-            // SAVE ENTRY CHANGES
-            // =========================================================
-
-            if (changedFields.length > 0) {
-                currentEntry.lastModifiedDate =
-                    currentTimestamp;
-
-                if (currentEntry._sync_state !== 'new') {
-                    currentEntry._sync_state = 'edited';
-                }
-
-                results.updated.push({
-                    id: entry.id,
-                    name: entry.Name,
-                    fields: changedFields
-                });
-
-                results.successful++;
-
-                if (verbose) {
-                    console.log(
-                        `  ✓ Updated: ${changedFields.join(', ')}`
-                    );
-                }
-            } else {
-                results.skipped++;
-
-                if (verbose) {
-                    console.log(`  ⊘ No new data to add`);
-                }
-            }
-
-        } catch (error) {
-            results.failed++;
-
-            const errorMsg =
-                `[${i + 1}/${entriesToBackfill.length}] ` +
-                `"${entry.Name}": ${error.message}`;
-
-            console.error(`  ❌ ${errorMsg}`);
-
-            results.errors.push(errorMsg);
-        }
-    }
-
-    // =============================================================
-    // SAVE TO DATABASE & REFRESH UI
-    // =============================================================
-
-    if (!dryRun && results.successful > 0) {
-        try {
-            if (
-                typeof recalculateAndApplyAllRelationships ===
-                'function'
-            ) {
-                recalculateAndApplyAllRelationships();
-            }
-
-            if (typeof sortMovies === 'function') {
-                sortMovies(
-                    currentSortColumn,
-                    currentSortDirection
-                );
-            }
-
-            await saveToIndexedDB();
-
-            if (window.globalStatsData) {
-                window.globalStatsData = {};
-            }
-
-            if (
-                typeof checkAndNotifyNewAchievements ===
-                'function'
-            ) {
-                await checkAndNotifyNewAchievements();
-            }
-
-            if (typeof renderMovieCards === 'function') {
-                renderMovieCards();
-            }
-
-            console.log(
-                `\n✅ Data saved to local database and UI updated`
-            );
-
-        } catch (error) {
-            console.error(
-                `⚠️  Failed to save to database:`,
-                error
-            );
-        }
-    }
-
-    // =============================================================
-    // SUMMARY
-    // =============================================================
-
-    console.log(`\n${'═'.repeat(80)}`);
-    console.log(`📋 BACKFILL SUMMARY`);
-    console.log(`${'═'.repeat(80)}`);
-    console.log(`Total Processed:  ${results.total}`);
-    console.log(`✓ Successful:     ${results.successful}`);
-    console.log(`⊘ Skipped:        ${results.skipped}`);
-    console.log(`❌ Failed:        ${results.failed}`);
-    console.log(
-        `🔍 Mode:          ${dryRun ? 'DRY RUN (No changes)' : 'LIVE (Changes saved)'}`
-    );
-    console.log(`${'═'.repeat(80)}\n`);
-
-    // === Updated Entries ===
-    if (results.updated.length > 0 && !dryRun) {
-        console.log(
-            `📝 Updated Entries (${results.updated.length}):`
-        );
-
-        results.updated.slice(0, 10).forEach(item => {
-            console.log(
-                `  • "${item.name}" → ${item.fields.join(', ')}`
-            );
-        });
-
-        if (results.updated.length > 10) {
-            console.log(
-                `  ... and ${results.updated.length - 10} more`
-            );
-        }
-    }
-
-    // === Errors ===
-    if (results.errors.length > 0) {
-        console.log(
-            `\n⚠️  Errors (${results.errors.length}):`
-        );
-
-        results.errors.slice(0, 5).forEach(error => {
-            console.log(`  • ${error}`);
-        });
-
-        if (results.errors.length > 5) {
-            console.log(
-                `  ... and ${results.errors.length - 5} more`
-            );
-        }
-    }
-
-    console.log(
-        `\n💡 Next: Run comprehensiveSync() to sync to cloud`
-    );
-
-    return results;
-}
-async function backfillTmdbIds(options = {}) {
-    const {
-        dryRun = false,
-        verbose = true,
-        mediaType = 'multi', // 'movie', 'tv', or 'multi'
-        retryDelay = DEFAULT_RETRY_DELAY,
-        maxResults = 50
-    } = options;
-
-    // ------------------------------------------------------------
-    // Configuration / validation
-    // ------------------------------------------------------------
-
-    const safeRetryDelay = Math.max(retryDelay, MIN_RETRY_DELAY);
-
-    if (retryDelay !== safeRetryDelay && retryDelay > 0) {
-        console.warn(
-            `⚠️ retryDelay cannot be less than ${MIN_RETRY_DELAY}ms. ` +
-            `Using ${safeRetryDelay}ms`
-        );
-    }
-
-    if (!Array.isArray(movieData)) {
-        console.error('❌ movieData is not available or not an array');
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    if (typeof window.callTmdbApiDirect !== 'function') {
-        console.error(
-            '❌ TMDB API function not available. Make sure tmdb.js is loaded'
-        );
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    if (!['movie', 'tv', 'multi'].includes(mediaType)) {
-        console.error(
-            `❌ Invalid mediaType "${mediaType}". Use "movie", "tv", or "multi".`
-        );
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    const safeMaxResults = Math.max(0, Number(maxResults) || 0);
-
-    // ------------------------------------------------------------
-    // Find entries that need TMDB IDs
-    // ------------------------------------------------------------
-
-    const entriesToBackfill = movieData
-        .filter(entry =>
-            entry &&
-            !entry.tmdbId &&
-            entry.Name &&
-            entry.Year
-        )
-        .slice(0, safeMaxResults);
-
-    if (entriesToBackfill.length === 0) {
-        console.log('✅ No entries found that need TMDB ID backfill');
-
-        return {
-            total: 0,
-            successful: 0,
-            skipped: 0,
-            failed: 0,
-            updated: [],
-            errors: []
-        };
-    }
-
-    // ------------------------------------------------------------
-    // Start log
-    // ------------------------------------------------------------
-
-    console.log(
-        `\n${'═'.repeat(80)}\n` +
-        `🔍 TMDB ID SEARCH & BACKFILL\n` +
-        `${'═'.repeat(80)}\n` +
-        `📝 Entries: ${entriesToBackfill.length}\n` +
-        `🔍 Type: ${mediaType}\n` +
-        `⏱️ Delay: ${safeRetryDelay}ms\n` +
-        `🏃 Dry run: ${dryRun ? 'YES' : 'NO'}\n` +
-        `${'═'.repeat(80)}\n`
-    );
-
-    const results = {
-        total: entriesToBackfill.length,
-        successful: 0,
-        skipped: 0,
-        failed: 0,
-        updated: [],
-        errors: []
-    };
-
-    // ------------------------------------------------------------
-    // Process each entry
-    // ------------------------------------------------------------
-
-    for (let i = 0; i < entriesToBackfill.length; i++) {
-        const entry = entriesToBackfill[i];
-
-        try {
-            // Rate limiting
-            if (i > 0 && safeRetryDelay > 0) {
-                await new Promise(resolve =>
-                    setTimeout(resolve, safeRetryDelay)
-                );
-            }
-
-            const progress =
-                `[${String(i + 1).padStart(3)}/${entriesToBackfill.length}]`;
-
-            if (verbose) {
-                console.log(
-                    `${progress} Searching: "${entry.Name}" (${entry.Year})`
-                );
-            }
-
-            // --------------------------------------------------------
-            // Build correct TMDB search parameters
-            // --------------------------------------------------------
-
-            const searchParams = {
-                query: String(entry.Name).trim()
-            };
-
-            if (mediaType === 'movie') {
-                searchParams.primary_release_year = entry.Year;
-            } else if (mediaType === 'tv') {
-                searchParams.first_air_date_year = entry.Year;
-            }
-
-            // IMPORTANT:
-            // /search/multi does not support movie/tv year parameters.
-            // We therefore search by name and use match scoring below.
-            const searchResults = await window.callTmdbApiDirect(
-                `/search/${mediaType}`,
-                searchParams
-            );
-
-            if (
-                !searchResults ||
-                !Array.isArray(searchResults.results) ||
-                searchResults.results.length === 0
-            ) {
-                if (verbose) {
-                    console.log(`  ⚠️ No results found`);
-                }
-
-                results.skipped++;
-                continue;
-            }
-
-            // --------------------------------------------------------
-            // Find the BEST result instead of blindly using results[0]
-            // --------------------------------------------------------
-
-            const candidates = searchResults.results
-                .filter(result =>
-                    result &&
-                    result.id &&
-                    (
-                        mediaType !== 'multi' ||
-                        result.media_type === 'movie' ||
-                        result.media_type === 'tv'
-                    )
-                )
-                .map(result => {
-                    const resultTitle =
-                        result.title ||
-                        result.name ||
-                        '';
-
-                    const resultYear =
-                        result.release_date
-                            ? new Date(result.release_date).getFullYear()
-                            : result.first_air_date
-                                ? new Date(result.first_air_date).getFullYear()
-                                : null;
-
-                    const matchScore = calculateMatchScore(
-                        entry.Name,
-                        entry.Year,
-                        resultTitle,
-                        resultYear
-                    );
-
-                    return {
-                        result,
-                        resultTitle,
-                        resultYear,
-                        matchScore
-                    };
-                })
-                .sort((a, b) => b.matchScore - a.matchScore);
-
-            if (candidates.length === 0) {
-                if (verbose) {
-                    console.log(`  ⚠️ No usable movie/TV results found`);
-                }
-
-                results.skipped++;
-                continue;
-            }
-
-            const bestMatch = candidates[0];
-
-            const topResult = bestMatch.result;
-            const resultTitle = bestMatch.resultTitle;
-            const resultYear = bestMatch.resultYear;
-            const matchScore = bestMatch.matchScore;
-            const tmdbId = topResult.id;
-
-            if (verbose) {
-                console.log(
-                    `  ✓ Best match: "${resultTitle}" ` +
-                    `(${resultYear || 'N/A'}) - ` +
-                    `ID: ${tmdbId} - ` +
-                    `Match: ${matchScore.toFixed(1)}%`
-                );
-            }
-
-            // --------------------------------------------------------
-            // Prepare result information
-            // --------------------------------------------------------
-
-            const resultInfo = {
-                id: entry.id,
-                name: entry.Name,
-                year: entry.Year,
-                tmdbId: tmdbId,
-                matchScore: matchScore
-            };
-
-            // --------------------------------------------------------
-            // DRY RUN
-            // --------------------------------------------------------
-
-            if (dryRun) {
-                results.updated.push(resultInfo);
-                results.successful++;
-                continue;
-            }
-
-            // --------------------------------------------------------
-            // LIVE UPDATE
-            // --------------------------------------------------------
-
-            const entryIndex = movieData.findIndex(
-                movie => movie.id === entry.id
-            );
-
-            if (entryIndex === -1) {
-                results.failed++;
-
-                const errorMsg =
-                    `${progress} Entry disappeared before update: ` +
-                    `"${entry.Name}" (${entry.Year})`;
-
-                console.error(`  ❌ ${errorMsg}`);
-                results.errors.push(errorMsg);
-
-                continue;
-            }
-
-            const currentTimestamp = new Date().toISOString();
-
-            // Only modify these TMDB-related fields.
-            // All other existing fields remain untouched.
-            movieData[entryIndex].tmdbId = tmdbId;
-            movieData[entryIndex].tmdbMatchScore = matchScore;
-            movieData[entryIndex].tmdbSearchDate = currentTimestamp;
-            movieData[entryIndex].lastModifiedDate = currentTimestamp;
-
-            // Preserve existing sync behavior.
-            if (movieData[entryIndex]._sync_state !== 'new') {
-                movieData[entryIndex]._sync_state = 'edited';
-            }
-
-            results.updated.push(resultInfo);
-            results.successful++;
-
-        } catch (error) {
-            results.failed++;
-
-            const errorMessage =
-                error && error.message
-                    ? error.message
-                    : String(error);
-
-            const errorMsg =
-                `[${i + 1}/${entriesToBackfill.length}] ` +
-                `"${entry.Name}" (${entry.Year}): ${errorMessage}`;
-
-            console.error(`  ❌ ${errorMsg}`);
-            results.errors.push(errorMsg);
-        }
-    }
-
-    // ------------------------------------------------------------
-    // Save / update application
-    // ------------------------------------------------------------
-
-    if (!dryRun && results.successful > 0) {
-        try {
-            if (
-                typeof recalculateAndApplyAllRelationships === 'function'
-            ) {
-                recalculateAndApplyAllRelationships();
-            }
-
-            if (typeof sortMovies === 'function') {
-                sortMovies(
-                    currentSortColumn,
-                    currentSortDirection
-                );
-            }
-
-            await saveToIndexedDB();
-
-            if (window.globalStatsData) {
-                window.globalStatsData = {};
-            }
-
-            if (
-                typeof checkAndNotifyNewAchievements === 'function'
-            ) {
-                await checkAndNotifyNewAchievements();
-            }
-
-            if (typeof renderMovieCards === 'function') {
-                renderMovieCards();
-            }
-
-            console.log(
-                `\n✅ Data saved to local database and UI updated`
-            );
-
-        } catch (error) {
-            console.error(
-                `⚠️ Failed to save to local database:`,
-                error
-            );
-        }
-    }
-
-    // ------------------------------------------------------------
-    // Summary
-    // ------------------------------------------------------------
-
-    console.log(
-        `\n${'═'.repeat(80)}\n` +
-        `📋 BACKFILL RESULTS\n` +
-        `${'═'.repeat(80)}\n` +
-        `Total:   ${results.total}\n` +
-        `✓ Success: ${results.successful}\n` +
-        `⊘ Skipped: ${results.skipped}\n` +
-        `❌ Failed:  ${results.failed}\n` +
-        `🔍 Mode: ${dryRun ? 'DRY RUN' : 'LIVE'}\n` +
-        `${'═'.repeat(80)}\n`
-    );
-
-    if (results.updated.length > 0) {
-        console.log(
-            `📝 ${dryRun ? 'Would update' : 'Updated'} ` +
-            `${results.updated.length} entries:`
-        );
-
-        results.updated.slice(0, 10).forEach(item => {
-            console.log(
-                `  • "${item.name}" (${item.year}) → ` +
-                `${item.tmdbId} ` +
-                `(${item.matchScore.toFixed(1)}%)`
-            );
-        });
-
-        if (results.updated.length > 10) {
-            console.log(
-                `  ... +${results.updated.length - 10} more`
-            );
-        }
-    }
-
-    if (results.errors.length > 0) {
-        console.log(`\n⚠️ Errors:`);
-
-        results.errors.slice(0, 5).forEach(error => {
-            console.log(`  • ${error}`);
-        });
-
-        if (results.errors.length > 5) {
-            console.log(
-                `  ... +${results.errors.length - 5} more`
-            );
-        }
-    }
-
-    console.log(
-        '\n💡 Next: Run backfillTmdbData() to fill other fields\n'
-    );
-
-    return results;
-}
-
-/**
- * Calculate match score between search query and result (0-100)
- * Considers title similarity and year match
- */
-function calculateMatchScore(origName, origYear, resultName, resultYear) {
-    let score = 0;
-    const maxScore = 100;
-
-    // Normalize names for comparison
-    const normOrigName = origName.toLowerCase().trim();
-    const normResultName = resultName.toLowerCase().trim();
-
-    // Exact name match
-    if (normOrigName === normResultName) {
-        score += 60;
-    }
-    // Name starts with search term
-    else if (normResultName.startsWith(normOrigName)) {
-        score += 50;
-    }
-    // Search term in result name
-    else if (normResultName.includes(normOrigName)) {
-        score += 40;
-    }
-    // Similarity score (simple Levenshtein-ish)
-    else {
-        const similarity = stringSimilarity(normOrigName, normResultName);
-        score += similarity * 35; // max 35 points
-    }
-
-    // Year match
-    if (origYear && resultYear) {
-        const yearDiff = Math.abs(origYear - resultYear);
-        if (yearDiff === 0) {
-            score += 40; // Exact year match
-        } else if (yearDiff === 1) {
-            score += 25; // 1 year difference
-        } else if (yearDiff <= 2) {
-            score += 10; // 2 years difference
-        }
-    }
-
-    return Math.min(score, maxScore);
-}
-
-/**
- * Simple string similarity calculation (0-1)
- */
-function stringSimilarity(str1, str2) {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-
-    if (longer.length === 0) return 1.0;
-
-    const editDistance = getEditDistance(longer, shorter);
-    return (longer.length - editDistance) / longer.length;
-}
-
-/**
- * Calculate Levenshtein distance between two strings
- */
-function getEditDistance(s1, s2) {
-    const costs = {};
-
-    for (let i = 0; i <= s1.length; i++) {
-        let lastValue = i;
-        for (let j = 0; j <= s2.length; j++) {
-            if (i === 0) {
-                costs[j] = j;
-            } else if (j > 0) {
-                let newValue = costs[j - 1];
-                if (s1.charAt(i - 1) !== s2.charAt(j - 1)) {
-                    newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                }
-                costs[j - 1] = lastValue;
-                lastValue = newValue;
-            }
-        }
-        if (i > 0) costs[s2.length] = lastValue;
-    }
-
-    return costs[s2.length];
-}
-
-/**
- * Get backfill status and statistics
- */
-function getBackfillStatus() {
-    if (!Array.isArray(movieData)) {
-        console.error('movieData not available');
+  });
+
+  movieData.forEach((entry) => {
+    BACKFILL_FIELDS.forEach((field) => {
+      // Apply restrictions
+      if (field.onlyFor && !field.onlyFor.includes(entry.Category)) return;
+      if (field.statusFilter && !field.statusFilter.includes(entry.Status))
         return;
-    }
 
-    const total = movieData.length;
+      if (isFieldMissing(entry, field.key)) {
+        summary[field.key].count++;
+      }
+    });
+  });
 
-    const withTmdbId = movieData.filter(entry => entry.tmdbId);
-    const withoutTmdbId = movieData.filter(entry => !entry.tmdbId);
-
-    const withoutNameYear = withoutTmdbId.filter(
-        entry => !entry.Name || !entry.Year
-    );
-
-    const searchable = withoutTmdbId.length - withoutNameYear.length;
-    const unsearchable = withoutNameYear.length;
-
-    const missingRating = withTmdbId.filter(
-        e => !e.tmdb_vote_average
-    ).length;
-
-    const missingCast = withTmdbId.filter(
-        e => !e.full_cast || e.full_cast.length === 0
-    ).length;
-
-    const missingDirector = withTmdbId.filter(
-        e => !e.director_info
-    ).length;
-
-    const missingCollection = withTmdbId.filter(
-        e => !e.tmdb_collection_id
-    ).length;
-
-    const missingCompanies = withTmdbId.filter(
-        e => !e.production_companies ||
-             e.production_companies.length === 0
-    ).length;
-
-    const percentage = (value, totalValue) =>
-        totalValue > 0
-            ? ((value / totalValue) * 100).toFixed(1)
-            : '0.0';
-
-    const completeRating = withTmdbId.length - missingRating;
-    const completeCast = withTmdbId.length - missingCast;
-    const completeDirector = withTmdbId.length - missingDirector;
-    const completeCollection = withTmdbId.length - missingCollection;
-    const completeCompanies = withTmdbId.length - missingCompanies;
-
-    console.log(
-        `\n${'═'.repeat(80)}\n` +
-        `📊 BACKFILL STATUS\n` +
-        `${'═'.repeat(80)}\n` +
-
-        `🆔 TMDB IDs:\n` +
-        `  Total: ${total}\n` +
-        `  ✓ With ID: ${withTmdbId.length} ` +
-        `(${percentage(withTmdbId.length, total)}%)\n` +
-        `  ❌ Missing: ${withoutTmdbId.length}\n` +
-        `     └─ Searchable: ${searchable}\n` +
-        `     └─ Unsearchable: ${unsearchable}\n\n` +
-
-        `📋 DATA (${withTmdbId.length} entries):\n` +
-
-        `  ⭐ Rating: ${completeRating}/${withTmdbId.length} ` +
-        `(${percentage(completeRating, withTmdbId.length)}%)\n` +
-
-        `  👥 Cast: ${completeCast}/${withTmdbId.length} ` +
-        `(${percentage(completeCast, withTmdbId.length)}%)\n` +
-
-        `  🎬 Director: ${completeDirector}/${withTmdbId.length} ` +
-        `(${percentage(completeDirector, withTmdbId.length)}%)\n` +
-
-        `  🎞️ Collection: ${completeCollection}/${withTmdbId.length} ` +
-        `(${percentage(completeCollection, withTmdbId.length)}%)\n` +
-
-        `  🏢 Companies: ${completeCompanies}/${withTmdbId.length} ` +
-        `(${percentage(completeCompanies, withTmdbId.length)}%)\n` +
-
-        `\n${'═'.repeat(80)}\n`
-    );
-
-    return {
-        total,
-        withTmdbId: withTmdbId.length,
-        withoutTmdbId: withoutTmdbId.length,
-
-        searchable,
-        unsearchable,
-
-        missingData: {
-            rating: missingRating,
-            cast: missingCast,
-            director: missingDirector,
-            collection: missingCollection,
-            companies: missingCompanies
-        }
-    };
+  return Object.values(summary)
+    .filter((item) => item.count > 0)
+    .sort((a, b) => b.priority - a.priority);
 }
 
 /**
- * Export entries without TMDB ID for review
+ * Build the actual processing queue based on selected fields
  */
-function exportMissingTmdbIds() {
-    if (!Array.isArray(movieData)) {
-        console.error('movieData not available');
+function buildBackfillQueue(selectedFieldKeys) {
+  const queue = [];
+  movieData.forEach((entry) => {
+    BACKFILL_FIELDS.forEach((field) => {
+      // Only process fields the user selected
+      if (!selectedFieldKeys.includes(field.key)) return;
+
+      // Apply restrictions
+      if (field.onlyFor && !field.onlyFor.includes(entry.Category)) return;
+      if (field.statusFilter && !field.statusFilter.includes(entry.Status))
         return;
-    }
 
-    const missing = movieData
-        .filter(entry => !entry.tmdbId && entry.Name && entry.Year)
-        .map(entry => ({
-            id: entry.id,
-            Name: entry.Name,
-            Year: entry.Year,
-            Category: entry.Category,
-            Status: entry.Status
-        }));
-
-    console.log(`\n📋 Entries Missing TMDB ID (${missing.length} total):`);
-    console.table(missing);
-
-    return missing;
+      if (isFieldMissing(entry, field.key)) {
+        queue.push({
+          entryId: entry.id,
+          entryName: entry.Name,
+          entryCategory: entry.Category,
+          entryYear: entry.Year,
+          fieldKey: field.key,
+          fieldLabel: field.label,
+          fieldConfig: field,
+        });
+      }
+    });
+  });
+  // Sort logic: High priority fields first, then alphabetical by name
+  return queue.sort((a, b) => {
+    const priorityDiff = b.fieldConfig.priority - a.fieldConfig.priority;
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.entryName.localeCompare(b.entryName);
+  });
 }
 
-// Console help function
-function backfillHelp() {
-    console.log(`
-╔════════════════════════════════════════════════════════════╗
-║           TMDB ID BACKFILL UTILITY - HELP                  ║
-╚════════════════════════════════════════════════════════════╝
+/**
+ * Open the backfill modal - Starts with Configuration Screen
+ */
+function openBackfillModal() {
+  if (!movieData || movieData.length === 0) {
+    showToast("No Data", "Add some entries to your library first.", "info");
+    return;
+  }
 
-📖 FUNCTIONS:
+  window.isModalSyncHold = true;
+  window.backfillSessionDirtyCount = 0;
 
-1️⃣  backfillTmdbIds(options)
-    Backfill missing TMDB IDs using Name + Year search
-    
-    Options:
-    {
-        dryRun: true|false      // Preview changes (default: false)
-        verbose: true|false     // Show detailed logs (default: true)
-        mediaType: 'multi'      // 'multi', 'movie', or 'tv' (default: 'multi')
-        retryDelay: 500         // ms between API calls (default: 500)
-        maxResults: 50          // Max entries to process (default: 50)
-    }
-    
-    Examples:
-    • backfillTmdbIds()                    // Process up to 50 entries
-    • backfillTmdbIds({ dryRun: true })   // Preview without saving
-    • backfillTmdbIds({ maxResults: 100 }) // Process up to 100 entries
-    • backfillTmdbIds({ mediaType: 'movie' }) // Only search for movies
+  const missingSummary = scanForMissingFieldsSummary();
 
-2️⃣  getBackfillStatus()
-    View overall status of TMDB ID coverage
-    
-    Example:
-    • getBackfillStatus()
+  if (missingSummary.length === 0) {
+    showToast(
+      "All Set!",
+      "No missing data found. Your library looks complete!",
+      "success",
+    );
+    return;
+  }
 
-3️⃣  exportMissingTmdbIds()
-    Export list of entries missing TMDB IDs
-    
-    Example:
-    • exportMissingTmdbIds()
-
-4️⃣  backfillHelp()
-    Display this help message
-
-🔑 QUICK START:
-    1. Run: getBackfillStatus()          // Check how many need backfill
-    2. Run: backfillTmdbIds({ dryRun: true })  // Preview changes
-    3. Run: backfillTmdbIds()            // Apply changes
-    4. Sync data to cloud when ready
-
-⚠️  IMPORTANT:
-    • This requires TMDB API to be configured
-    • Rate limiting is applied (500ms between requests)
-    • Changes are marked for cloud sync automatically
-    • Use dryRun: true to preview changes first
-    `);
+  // Show modal
+  if (typeof $ !== "undefined") {
+    $("#backfillModal").modal("show");
+    renderConfigurationScreen(missingSummary);
+  }
 }
 
-// Auto-display help when script loads
-console.log('\n✅ Backfill utility loaded! Type backfillHelp() for usage instructions.\n');
+/**
+ * Render Configuration Screen (Checkboxes)
+ */
+function renderConfigurationScreen(summary) {
+  const bodyEl = document.querySelector("#backfillModal .modal-body");
+  const footerEl = document.querySelector("#backfillModal .modal-footer");
+
+  // Header
+  let html = `
+        <div class="text-center mb-4">
+            <h5>Select Fields to Backfill</h5>
+            <p class="text-muted small">We found missing data for the following fields. Choose what you want to work on.</p>
+        </div>
+        <div class="list-group mb-3" style="max-height: 400px; overflow-y: auto;">
+    `;
+
+  // List items
+  summary.forEach((item) => {
+    html += `
+            <div class="batch-field-unit mb-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <label class="batch-checkbox-wrap m-0 mr-3" for="check_${item.key}" title="Include ${item.label}">
+                        <input type="checkbox" class="batch-native-checkbox backfill-field-checkbox" id="check_${item.key}" value="${item.key}" checked>
+                        <span class="batch-custom-checkbox"></span>
+                    </label>
+                    <label for="check_${item.key}" class="m-0 flex-grow-1 batch-field-title" style="cursor: pointer;">${item.label}</label>
+                    <span class="badge badge-success badge-pill">${item.count} missing</span>
+                </div>
+            </div>
+        `;
+  });
+  html += `</div>
+        <div class="text-right">
+            <button class="btn btn-sm btn-outline-secondary mr-2" id="backfillSelectAllBtn">Select All</button>
+            <button class="btn btn-sm btn-outline-secondary" id="backfillDeselectAllBtn">Deselect All</button>
+        </div>
+    `;
+
+  bodyEl.innerHTML = html;
+
+  // Footer actions for Config Screen
+  footerEl.innerHTML = `
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="startBackfillBtn">
+            <i class="fas fa-play"></i> Start Backfill
+        </button>
+    `;
+
+  // Wire up Select/Deselect All
+  document.getElementById("backfillSelectAllBtn").onclick = () => {
+    document
+      .querySelectorAll(".backfill-field-checkbox")
+      .forEach((cb) => (cb.checked = true));
+  };
+  document.getElementById("backfillDeselectAllBtn").onclick = () => {
+    document
+      .querySelectorAll(".backfill-field-checkbox")
+      .forEach((cb) => (cb.checked = false));
+  };
+
+  // Wire up Start Button
+  document.getElementById("startBackfillBtn").onclick = () => {
+    const selectedKeys = Array.from(
+      document.querySelectorAll(".backfill-field-checkbox:checked"),
+    ).map((cb) => cb.value);
+    if (selectedKeys.length === 0) {
+      showToast(
+        "Selections Required",
+        "Please select at least one field to backfill.",
+        "warning",
+      );
+      return;
+    }
+
+    // Build Queue and Start
+    backfillQueue = buildBackfillQueue(selectedKeys);
+    currentBackfillIndex = 0;
+    backfillStats = { total: backfillQueue.length, completed: 0, skipped: 0 };
+
+    // Restore standard footer for the card view
+    renderStandardBackfillFooter();
+
+    // Render first card
+    renderBackfillCard();
+  };
+}
+
+/**
+ * Restore standard footer controls for the card view
+ */
+function renderStandardBackfillFooter() {
+  const footerEl = document.querySelector("#backfillModal .modal-footer");
+  footerEl.innerHTML = `
+        <button type="button" class="btn btn-outline-secondary mr-auto" id="backfillGoogleBtn">
+            <i class="fab fa-google"></i> Google It
+        </button>
+        <div>
+            <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
+                <i class="fas fa-cloud-download-alt"></i> Auto-Fetch
+            </button>
+            <button type="button" class="btn btn-secondary mr-2" onclick="skipCurrentField()">
+                <i class="fas fa-forward"></i> Skip
+            </button>
+            <button type="button" class="btn btn-success" onclick="saveAndNext()">
+                <i class="fas fa-check"></i> Next
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Render the current backfill card (Restored Structure)
+ */
+function renderBackfillCard() {
+  // Re-create the standard modal body structure if it was replaced by config screen
+  const bodyEl = document.querySelector("#backfillModal .modal-body");
+  if (!document.getElementById("backfillInputContainer")) {
+    bodyEl.innerHTML = `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <small class="text-muted">Progress</small>
+                    <span id="backfillProgress" class="badge badge-primary">0 / 0</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div id="backfillProgressBar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-body text-center">
+                    <h4 id="backfillEntryName" class="mb-1">Loading...</h4>
+                    <p id="backfillEntryMeta" class="text-muted small mb-0">Category · Year</p>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label id="backfillFieldLabel" class="font-weight-bold h5 mb-3 d-block text-center">Field Name</label>
+                <div id="backfillInputContainer"></div>
+                <small id="backfillHelperText" class="form-text text-muted mt-2" style="display:none;"></small>
+            </div>
+        `;
+  }
+
+  // Logic continues...
+  if (currentBackfillIndex >= backfillQueue.length) {
+    showBackfillComplete();
+    return;
+  }
+
+  const current = backfillQueue[currentBackfillIndex];
+  const entry = movieData.find((e) => e.id === current.entryId);
+  if (!entry) {
+    skipCurrentField();
+    return;
+  }
+
+  // Update progress
+  document.getElementById("backfillProgress").textContent =
+    `${currentBackfillIndex + 1} / ${backfillQueue.length}`;
+  document.getElementById("backfillProgressBar").style.width =
+    `${((currentBackfillIndex + 1) / backfillQueue.length) * 100}%`;
+
+  // Update entry info
+  document.getElementById("backfillEntryName").textContent = current.entryName;
+  const displayYear = entry.Year || "";
+  document.getElementById("backfillEntryMeta").textContent =
+    `${current.entryCategory}${displayYear ? " · " + displayYear : ""}`;
+
+  // Update field label
+  document.getElementById("backfillFieldLabel").textContent =
+    current.fieldLabel;
+
+  // Render input based on type
+  const inputContainer = document.getElementById("backfillInputContainer");
+  inputContainer.innerHTML = renderFieldInput(current.fieldConfig, entry);
+
+  // Initialize genre tags if needed
+  if (current.fieldConfig.inputType === "multi-genre") {
+    let rawGenres = entry.Genre;
+    if (typeof rawGenres === "string") {
+      rawGenres = rawGenres
+        .split(",")
+        .map((g) => g.trim())
+        .filter(Boolean);
+    } else if (!Array.isArray(rawGenres)) {
+      rawGenres = [];
+    }
+    window.backfillSelectedGenres = [...rawGenres];
+    renderGenreTags(
+      "backfillGenreContainer",
+      window.backfillSelectedGenres,
+      "backfillGenreInput",
+    );
+    const hiddenGenreInput = document.getElementById("backfillInput");
+    if (hiddenGenreInput) {
+      hiddenGenreInput.value = JSON.stringify(window.backfillSelectedGenres);
+    }
+
+    // Wire up specific events for the backfill genre input
+    const genreInput = document.getElementById("backfillGenreInput");
+    if (genreInput) {
+      genreInput.addEventListener("input", () =>
+        filterGenreDropdown(
+          "backfillGenreContainer",
+          window.backfillSelectedGenres,
+          "backfillGenreInput",
+          "backfillGenreItems",
+        ),
+      );
+      genreInput.addEventListener("focus", () => {
+        filterGenreDropdown(
+          "backfillGenreContainer",
+          window.backfillSelectedGenres,
+          "backfillGenreInput",
+          "backfillGenreItems",
+        );
+        const dropdown = document.getElementById("backfillGenreItems");
+        if (dropdown) dropdown.classList.add("show");
+      });
+      // Keydown handling is slightly custom due to needing to add to specific list
+      genreInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const val = genreInput.value.trim();
+          const match = UNIQUE_ALL_GENRES.find(
+            (g) => g.toLowerCase() === val.toLowerCase(),
+          );
+          if (match) {
+            addGenre(
+              match,
+              "backfillGenreContainer",
+              window.backfillSelectedGenres,
+              "backfillGenreInput",
+            );
+            // Update hidden input used by saveAndNext
+            document.getElementById("backfillInput").value = JSON.stringify(
+              window.backfillSelectedGenres,
+            );
+          }
+        } else if (e.key === "Backspace" && genreInput.value === "") {
+          if (window.backfillSelectedGenres.length > 0) {
+            const lastGenre =
+              window.backfillSelectedGenres[
+                window.backfillSelectedGenres.length - 1
+              ];
+            removeGenre(
+              lastGenre,
+              "backfillGenreContainer",
+              window.backfillSelectedGenres,
+              "backfillGenreInput",
+            );
+            // Update hidden input
+            document.getElementById("backfillInput").value = JSON.stringify(
+              window.backfillSelectedGenres,
+            );
+          }
+        }
+      });
+
+      // Close dropdown when clicking outside (specific to backfill modal context if needed, though global listener might handle it)
+      document.addEventListener("click", (e) => {
+        const dropdown = document.getElementById("backfillGenreItems");
+        const container = document.getElementById("backfillGenreContainer");
+        if (
+          dropdown &&
+          container &&
+          !container.contains(e.target) &&
+          !dropdown.contains(e.target)
+        ) {
+          dropdown.classList.remove("show");
+        }
+      });
+    }
+  }
+
+  // Show/hide helper text
+  const helperTextEl = document.getElementById("backfillHelperText");
+  if (current.fieldConfig.helperText) {
+    helperTextEl.textContent =
+      typeof current.fieldConfig.helperText === "function"
+        ? current.fieldConfig.helperText(entry)
+        : current.fieldConfig.helperText;
+    helperTextEl.style.display = "block";
+  } else {
+    helperTextEl.style.display = "none";
+  }
+
+  // Update Google button
+  updateGoogleButton(current);
+
+  // Focus input
+  setTimeout(() => {
+    const input = inputContainer.querySelector("input, select, textarea");
+    if (input) input.focus();
+  }, 100);
+}
+
+/**
+ * Check if a field is missing
+ */
+function isFieldMissing(entry, fieldKey) {
+  const value = entry[fieldKey];
+
+  // Handle special cases for different field types
+  if (fieldKey === "runtime") {
+    if (!value) return true;
+    if (entry.Category === "Series") {
+      // For series, runtime is an object - check if episode_run_time exists
+      return !value.episode_run_time;
+    }
+    return false;
+  }
+
+  if (fieldKey === "Genre") {
+    return !value || (Array.isArray(value) && value.length === 0);
+  }
+
+  if (fieldKey === "Country") {
+    return !value || value.trim().length === 0;
+  }
+
+  if (fieldKey === "Year") {
+    // Year can be a string or number, check both
+    return !value || value === "" || value === 0;
+  }
+
+  if (
+    fieldKey === "currentSeason" ||
+    fieldKey === "currentEpisode" ||
+    fieldKey === "seasonsCompleted" ||
+    fieldKey === "currentSeasonEpisodesWatched"
+  ) {
+    // These are numbers, but 0 is valid for episode - only missing if undefined/null
+    return value === undefined || value === null || value === "";
+  }
+
+  if (fieldKey === "director_info") {
+    // Director info is an object
+    return !value || !value.name;
+  }
+
+  // Default: check for null, undefined, or empty string
+  return !value || (typeof value === "string" && value.trim().length === 0);
+}
+
+/**
+ * Render input field based on type
+ */
+function renderFieldInput(fieldConfig, entry) {
+  const { inputType, placeholder, min, max, unit, options } = fieldConfig;
+
+  switch (inputType) {
+    case "number":
+      return `
+                <div class="input-group">
+                    <input 
+                        type="number" 
+                        class="form-control form-control-lg" 
+                        id="backfillInput" 
+                        placeholder="${placeholder || ""}"
+                        ${min ? `min="${min}"` : ""}
+                        ${max ? `max="${max}"` : ""}
+                    >
+                    ${unit ? `<div class="input-group-append"><span class="input-group-text">${unit}</span></div>` : ""}
+                </div>
+            `;
+
+    case "text":
+      return `
+                <input 
+                    type="text" 
+                    class="form-control form-control-lg" 
+                    id="backfillInput" 
+                    placeholder="${placeholder || ""}"
+                    autocomplete="off"
+                >
+            `;
+
+    case "date":
+      return `
+                <input 
+                    type="date" 
+                    class="form-control form-control-lg" 
+                    id="backfillInput"
+                >
+            `;
+
+    case "select":
+      return `
+                <select class="form-control form-control-lg" id="backfillInput">
+                    <option value="">Select</option>
+                    ${options.map((opt) => `<option value="${opt}">${opt}</option>`).join("")}
+                </select>
+            `;
+
+    case "multi-genre":
+      return `
+                <div id="backfillGenreContainer" class="genre-backfill-container" tabindex="0">
+                    <input 
+                        id="backfillGenreInput" 
+                        type="text" 
+                        placeholder="Click to add genres..." 
+                        autocomplete="off"
+                    >
+                </div>
+                <!-- Wrapper for positioning (Relative) -->
+                <div id="backfillGenreDropdown">
+                    <!-- Items List (Absolute) populated by genre.js -->
+                    <div id="backfillGenreItems" class="list-group mt-1"></div>
+                </div>
+                <input type="hidden" id="backfillInput">
+            `;
+
+    default:
+      return `<input type="text" class="form-control form-control-lg" id="backfillInput">`;
+  }
+}
+
+/**
+ * Update Google search button
+ */
+function updateGoogleButton(current) {
+  const googleBtn = document.getElementById("backfillGoogleBtn");
+  const query = `${current.entryName} ${current.fieldLabel}`;
+  googleBtn.onclick = () => {
+    window.open(
+      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+      "_blank",
+    );
+  };
+}
+
+/**
+ * Save current field and move to next
+ */
+async function saveAndNext() {
+  const current = backfillQueue[currentBackfillIndex];
+  const entry = movieData.find((e) => e.id === current.entryId);
+  if (!entry) {
+    skipCurrentField();
+    return;
+  }
+
+  // Get value based on input type
+  let value = null;
+  if (current.fieldConfig.inputType === "multi-genre") {
+    // Genre is handled separately
+    value = window.backfillSelectedGenres || [];
+  } else {
+    const inputEl = document.getElementById("backfillInput");
+    value = inputEl ? inputEl.value.trim() : "";
+  }
+
+  // Validate
+  if (!value || (Array.isArray(value) && value.length === 0)) {
+    showToast("Empty Field", "Please enter a value or click Skip.", "warning");
+    return;
+  }
+
+  // Save value
+  try {
+    const entryIndex = movieData.findIndex((e) => e.id === entry.id);
+    if (entryIndex === -1) {
+      skipCurrentField();
+      return;
+    }
+
+    // Apply transformations
+    const finalValue = transformFieldValue(
+      current.fieldKey,
+      value,
+      current.fieldConfig,
+      entry,
+    );
+
+    // Update entry
+    movieData[entryIndex][current.fieldKey] = finalValue;
+    movieData[entryIndex].lastModifiedDate = new Date().toISOString();
+    if (movieData[entryIndex]._sync_state !== "new") {
+      movieData[entryIndex]._sync_state = "edited";
+    }
+
+    // Track modification for custom sync
+    if (typeof window.trackModification === "function") {
+      window.trackModification(entry.id);
+    }
+
+    backfillStats.completed++;
+    window.backfillSessionDirtyCount =
+      (window.backfillSessionDirtyCount || 0) + 1;
+
+    // Safety ceiling: silently flush batch every 25 completed items without interrupting the wizard
+    if (window.backfillSessionDirtyCount >= 25) {
+      if (typeof saveToIndexedDB === "function") saveToIndexedDB();
+      if (
+        typeof comprehensiveSync === "function" &&
+        window.currentSupabaseUser
+      ) {
+        console.log(
+          "Backfill 25-item safety window reached: silently syncing batch...",
+        );
+        comprehensiveSync(true);
+      }
+      window.backfillSessionDirtyCount = 0;
+    }
+
+    // Move to next
+    currentBackfillIndex++;
+    renderBackfillCard();
+  } catch (error) {
+    console.error("Error saving backfill data:", error);
+    showToast("Save Error", error.message, "error");
+  }
+}
+
+/**
+ * Transform field value before saving
+ */
+function transformFieldValue(fieldKey, value, fieldConfig, entry) {
+  switch (fieldKey) {
+    case "Country":
+      // Normalize country codes
+      return normalizeCountryCode(value);
+
+    case "runtime":
+      // For series, save as object
+      if (entry.Category === "Series") {
+        return {
+          seasons: entry.runtime?.seasons || null,
+          episodes: entry.runtime?.episodes || null,
+          episode_run_time: parseInt(value),
+        };
+      }
+      return parseInt(value);
+
+    case "Year":
+    case "currentSeason":
+    case "currentEpisode":
+    case "seasonsCompleted":
+    case "currentSeasonEpisodesWatched":
+      return parseInt(value);
+
+    case "director_info":
+      // Save as TMDB format
+      if (fieldConfig.saveFormat === "tmdb-json") {
+        return {
+          id: null, // We don't have ID from manual input
+          name: value,
+          profile_path: null,
+          job: "Director",
+        };
+      }
+      return value;
+
+    case "Genre":
+      // Store in same format as add/edit flow: comma-separated string.
+      return Array.isArray(value)
+        ? value.map((g) => g.trim()).filter(Boolean).join(", ")
+        : String(value || "")
+            .split(",")
+            .map((g) => g.trim())
+            .filter(Boolean)
+            .join(", ");
+
+    default:
+      return value;
+  }
+}
+
+/**
+ * Normalize country code (IN, India → IN)
+ */
+function normalizeCountryCode(input) {
+  const trimmed = input.trim().toUpperCase();
+
+  // Check if it's already a 2-letter code
+  if (trimmed.length === 2) return trimmed;
+
+  // Check against country name map
+  if (typeof countryCodeToNameMap !== "undefined") {
+    for (const [code, name] of Object.entries(countryCodeToNameMap)) {
+      if (
+        name.toUpperCase() === trimmed ||
+        name.toUpperCase().startsWith(trimmed)
+      ) {
+        return code;
+      }
+    }
+  }
+
+  // Fallback: return as-is
+  return trimmed.substring(0, 2);
+}
+
+/**
+ * Skip current field
+ */
+function skipCurrentField() {
+  backfillStats.skipped++;
+  currentBackfillIndex++;
+  renderBackfillCard();
+}
+
+// Make functions globally accessible for inline onclick handlers
+window.openBackfillModal = openBackfillModal;
+window.saveAndNext = saveAndNext;
+window.skipCurrentField = skipCurrentField;
+window.autoFetchTmdb = autoFetchTmdb;
+
+/**
+ * Auto-fetch from TMDB for current entry
+ */
+async function autoFetchTmdb() {
+  const current = backfillQueue[currentBackfillIndex];
+  const entry = movieData.find((e) => e.id === current.entryId);
+
+  if (!entry || !entry.tmdbId) {
+    showToast(
+      "No TMDB ID",
+      "This entry doesn't have a TMDB ID. Cannot auto-fetch.",
+      "warning",
+    );
+    return;
+  }
+
+  showLoading("Fetching from TMDB...");
+
+  try {
+    // Determine media type
+    const mediaType =
+      entry.tmdbMediaType || (entry.Category === "Series" ? "tv" : "movie");
+
+    // Fetch details
+    const detailData = await callTmdbApiDirect(
+      `/${mediaType}/${entry.tmdbId}`,
+      { append_to_response: "credits,keywords,external_ids" },
+    );
+
+    if (!detailData) {
+      throw new Error("No data received from TMDB");
+    }
+
+    // Extract the specific field we need
+    const value = extractFieldFromTmdb(current.fieldKey, detailData, mediaType);
+
+    if (!value) {
+      showToast(
+        "Not Available",
+        `${current.fieldLabel} not found in TMDB data.`,
+        "info",
+      );
+      hideLoading();
+      return;
+    }
+
+    // Populate input
+    populateInputWithValue(current.fieldConfig, value);
+
+    showToast(
+      "Fetched!",
+      `${current.fieldLabel} loaded from TMDB.`,
+      "success",
+      2000,
+    );
+    hideLoading();
+  } catch (error) {
+    console.error("Auto-fetch error:", error);
+    showToast("Fetch Error", error.message, "error");
+    hideLoading();
+  }
+}
+
+/**
+ * Extract specific field from TMDB data
+ */
+function extractFieldFromTmdb(fieldKey, detailData, mediaType) {
+  switch (fieldKey) {
+    case "Year":
+      const dateStr =
+        mediaType === "movie"
+          ? detailData.release_date
+          : detailData.first_air_date;
+      return dateStr ? new Date(dateStr).getFullYear() : null;
+
+    case "Country":
+      if (
+        detailData.production_countries &&
+        detailData.production_countries.length > 0
+      ) {
+        return detailData.production_countries[0].iso_3166_1;
+      }
+      return null;
+
+    case "Language":
+      if (detailData.original_language) {
+        const langObj = (detailData.spoken_languages || []).find(
+          (l) => l.iso_639_1 === detailData.original_language,
+        );
+        return langObj
+          ? langObj.english_name || langObj.name
+          : detailData.original_language.toUpperCase();
+      }
+      return null;
+
+    case "runtime":
+      if (mediaType === "movie") {
+        return detailData.runtime || null;
+      } else {
+        return detailData.episode_run_time?.[0] || null;
+      }
+
+    case "Genre":
+      return detailData.genres ? detailData.genres.map((g) => g.name) : [];
+
+    case "tmdb_release_date":
+      return mediaType === "movie"
+        ? detailData.release_date
+        : detailData.first_air_date;
+
+    case "director_info":
+      if (detailData.credits?.crew) {
+        const director = detailData.credits.crew.find(
+          (c) => c.job === "Director",
+        );
+        return director ? director.name : null;
+      }
+      return null;
+
+    case "imdb_id":
+      return detailData.external_ids?.imdb_id || null;
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Populate input with fetched value
+ */
+function populateInputWithValue(fieldConfig, value) {
+  if (fieldConfig.inputType === "multi-genre" && Array.isArray(value)) {
+    // Handle genre specially
+    window.backfillSelectedGenres = value;
+    renderGenreTags(
+      "backfillGenreContainer",
+      window.backfillSelectedGenres,
+      "backfillGenreInput",
+    );
+    document.getElementById("backfillInput").value = JSON.stringify(
+      window.backfillSelectedGenres,
+    );
+    return;
+  }
+
+  const inputEl = document.getElementById("backfillInput");
+  if (inputEl) {
+    inputEl.value = value;
+  }
+}
+
+/**
+ * Show completion screen
+ */
+function showBackfillComplete() {
+  const modal = document.getElementById("backfillModal");
+  if (!modal) return;
+
+  const bodyEl = modal.querySelector(".modal-body");
+  bodyEl.innerHTML = `
+        <div class="text-center py-5">
+            <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+            <h4 class="mt-4">Backfill Complete!</h4>
+            <div class="mt-4">
+                <p class="mb-2"><strong>Total Fields:</strong> ${backfillStats.total}</p>
+                <p class="mb-2 text-success"><strong>Completed:</strong> ${backfillStats.completed}</p>
+                <p class="mb-2 text-muted"><strong>Skipped:</strong> ${backfillStats.skipped}</p>
+            </div>
+            <button class="btn btn-primary mt-4" data-dismiss="modal">Close</button>
+        </div>
+    `;
+
+  // Save to DB
+  saveToIndexedDB().then(() => {
+    console.log("Backfill data saved to IndexedDB");
+    if (typeof renderMovieCards === "function") renderMovieCards();
+    if (typeof window.releaseModalSyncHoldAndFlush === "function") {
+      window.releaseModalSyncHoldAndFlush();
+    }
+    window.backfillSessionDirtyCount = 0;
+  });
+}
+
+/**
+ * Genre backfill helpers
+ */
+window.backfillSelectedGenres = [];
+
+console.log("✅ Backfill UI loaded!");
