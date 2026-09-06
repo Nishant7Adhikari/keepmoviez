@@ -1864,15 +1864,64 @@ function roundRect(ctx, x, y, width, height, radius) {
 }
 
 // START CHUNK: Quick Update Modal Logic
-window._quickUpdateNoteAutoManaged = false;
-window._quickUpdateNoteStartStr = "";
+window._quickUpdateState = {
+  isAutoManaged: false,
+  initialSeason: 1,
+  initialEpisode: 0,
+  startEp: 1,
+  seasonHistory: [],
+};
+
+function parseLatestWatchNoteForProgress(notes) {
+  if (!notes || typeof notes !== "string") return null;
+  const regex = /S(\d+)E(\d+)/gi;
+  let lastMatch = null;
+  let match;
+  while ((match = regex.exec(notes)) !== null) {
+    lastMatch = match;
+  }
+  if (lastMatch) {
+    return {
+      season: parseInt(lastMatch[1], 10),
+      episode: parseInt(lastMatch[2], 10),
+    };
+  }
+  return null;
+}
 
 function updateQuickUpdateAutoNote() {
-  if (!window._quickUpdateNoteAutoManaged) return;
+  const state = window._quickUpdateState;
+  if (!state || !state.isAutoManaged) return;
+
   const s = parseInt($("#quickUpdateSeasons").val(), 10) || 1;
   const e = parseInt($("#quickUpdateEpisodes").val(), 10) || 0;
-  const startStr = window._quickUpdateNoteStartStr || "S1E1";
-  $("#quickUpdateNotes").val(`${startStr} - S${s}E${e}`);
+  const isFinished = $("#quickUpdateFinishedToggle").is(":checked");
+
+  let startForCurrentSeason;
+  if (state.seasonHistory && state.seasonHistory.length > 0) {
+    startForCurrentSeason = 1;
+  } else if (s > state.initialSeason) {
+    startForCurrentSeason = 1;
+  } else if (s === state.initialSeason) {
+    startForCurrentSeason = e < state.startEp ? e : state.startEp;
+  } else {
+    startForCurrentSeason = e < 1 ? e : 1;
+  }
+
+  let activeSegment;
+  if (e < startForCurrentSeason) {
+    activeSegment = `S${s}E${e} - S${s}E${e}`;
+  } else {
+    activeSegment = `S${s}E${startForCurrentSeason} - S${s}E${e}`;
+  }
+
+  const allSegments = [...(state.seasonHistory || []), activeSegment];
+  let noteStr = allSegments.join(" : ");
+  if (isFinished) {
+    noteStr += ", Series completed";
+  }
+
+  $("#quickUpdateNotes").val(noteStr);
 }
 
 function updateQuickUpdateBadge() {
@@ -1912,34 +1961,45 @@ window.prepareQuickUpdateModal = function (id) {
   $("#quickUpdateFinishedToggleWrapper").toggle(isSeries);
 
   if (isSeries) {
-    const seasonVal = movie.currentSeason ?? (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : 1);
-    const episodeVal = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? 0;
-    $("#quickUpdateSeasons").val(seasonVal);
-    $("#quickUpdateEpisodes").val(episodeVal);
+    let seasonVal = movie.currentSeason;
+    let episodeVal = movie.currentEpisode;
 
-    // Calculate Episode Auto-Note Start Position
-    let startStr = "";
-    const hasHistory = Array.isArray(movie.watchHistory) && movie.watchHistory.length > 0;
-    if (!hasHistory && movie.Status === "To Watch") {
-      startStr = "S1E1";
-    } else if (hasHistory) {
-      const latest = getLatestWatchInstance(movie.watchHistory);
-      if (latest && latest.notes) {
-        const match = /^S[\d?]+E[\d?]+\s*-\s*(S\d+E\d+)$/i.exec(latest.notes.trim());
-        if (match && match[1]) {
-          startStr = match[1].toUpperCase();
-        } else {
-          startStr = "S?E?";
-        }
-      } else {
-        startStr = "S?E?";
-      }
-    } else {
-      startStr = "S?E?";
+    if (seasonVal == null && movie.seasonsCompleted != null) {
+      seasonVal = movie.seasonsCompleted + 1;
+    }
+    if (episodeVal == null && movie.currentSeasonEpisodesWatched != null) {
+      episodeVal = movie.currentSeasonEpisodesWatched;
     }
 
-    window._quickUpdateNoteStartStr = startStr;
-    window._quickUpdateNoteAutoManaged = true;
+    if (seasonVal == null || episodeVal == null) {
+      const hasHistory = Array.isArray(movie.watchHistory) && movie.watchHistory.length > 0;
+      if (hasHistory) {
+        const latest = getLatestWatchInstance(movie.watchHistory);
+        const parsed = parseLatestWatchNoteForProgress(latest?.notes);
+        if (parsed) {
+          if (seasonVal == null) seasonVal = parsed.season;
+          if (episodeVal == null) episodeVal = parsed.episode;
+        }
+      }
+    }
+
+    seasonVal = seasonVal ?? 1;
+    episodeVal = episodeVal ?? 0;
+
+    const initialSeason = seasonVal;
+    const initialEpisode = episodeVal;
+    const startEp = initialEpisode + 1;
+
+    window._quickUpdateState = {
+      isAutoManaged: true,
+      initialSeason,
+      initialEpisode,
+      startEp,
+      seasonHistory: [],
+    };
+
+    $("#quickUpdateSeasons").val(seasonVal);
+    $("#quickUpdateEpisodes").val(episodeVal);
 
     updateQuickUpdateBadge();
 
@@ -1954,8 +2014,13 @@ window.prepareQuickUpdateModal = function (id) {
       movie.personalRecommendation || "",
     );
   } else {
-    window._quickUpdateNoteAutoManaged = false;
-    window._quickUpdateNoteStartStr = "";
+    window._quickUpdateState = {
+      isAutoManaged: false,
+      initialSeason: 1,
+      initialEpisode: 0,
+      startEp: 1,
+      seasonHistory: [],
+    };
 
     // Show extra fields immediately for Movies/Docs/Specials
     $("#quickUpdateConditionalFields").show();
@@ -2006,29 +2071,47 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $(document).on("click", "#quickUpdateNextSeasonBtn", function () {
+    const state = window._quickUpdateState;
     const seasonInput = $("#quickUpdateSeasons");
     const epInput = $("#quickUpdateEpisodes");
     const currentSeason = parseInt(seasonInput.val(), 10) || 1;
+    const lastEp = parseInt(epInput.val(), 10) || 0;
+
+    if (state && state.isAutoManaged) {
+      let startForCurrentSeason;
+      if (state.seasonHistory && state.seasonHistory.length > 0) {
+        startForCurrentSeason = 1;
+      } else if (currentSeason > state.initialSeason) {
+        startForCurrentSeason = 1;
+      } else if (currentSeason === state.initialSeason) {
+        startForCurrentSeason = lastEp < state.startEp ? lastEp : state.startEp;
+      } else {
+        startForCurrentSeason = lastEp < 1 ? lastEp : 1;
+      }
+
+      const segment = `S${currentSeason}E${startForCurrentSeason} - S${currentSeason}E${lastEp}, Season ${currentSeason} completed`;
+      if (!state.seasonHistory) state.seasonHistory = [];
+      state.seasonHistory.push(segment);
+    }
+
     seasonInput.val(currentSeason + 1);
     epInput.val(1);
     updateQuickUpdateBadge();
   });
 
   $(document).on("input change", "#quickUpdateSeasons, #quickUpdateEpisodes", updateQuickUpdateBadge);
+  $(document).on("change", "#quickUpdateFinishedToggle", updateQuickUpdateBadge);
 
   $(document).on("input", "#quickUpdateNotes", function () {
+    const state = window._quickUpdateState;
+    if (!state) return;
     const val = $(this).val().trim();
     if (val === "") {
-      window._quickUpdateNoteAutoManaged = true;
+      state.isAutoManaged = true;
       updateQuickUpdateAutoNote();
-    } else if (/^S[\d?]+E[\d?]+\s*-\s*S[\d?]+E[\d?]+$/i.test(val)) {
-      window._quickUpdateNoteAutoManaged = true;
-      const parts = val.split("-");
-      if (parts.length === 2) {
-        window._quickUpdateNoteStartStr = parts[0].trim().toUpperCase();
-      }
     } else {
-      window._quickUpdateNoteAutoManaged = false;
+      // If user manually modifies note to non-empty custom string, disable auto-manage unless it matches current auto note
+      state.isAutoManaged = false;
     }
   });
 
