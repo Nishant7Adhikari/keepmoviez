@@ -1428,10 +1428,10 @@ window.openUnwatchableModal = function () {
           <div class="d-flex w-100 justify-content-between align-items-center">
             <h6 class="mb-1 text-warning">${escapeHTML(entry.Name)} <small class="text-muted">(${escapeHTML(entry.Year || "N/A")})</small></h6>
             <div>
-              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${entry.id}'); });" title="Edit Entry">
+              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${entry.id}'); });" title="Edit Entry" aria-label="Edit entry">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${entry.id}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently">
+              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${entry.id}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete entry permanently">
                 <i class="fas fa-trash-alt"></i>
               </button>
             </div>
