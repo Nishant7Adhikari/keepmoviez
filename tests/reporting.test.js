@@ -34,6 +34,8 @@ const sandbox = {
 };
 
 vm.createContext(sandbox);
+const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
+vm.runInContext(utilsCode, sandbox);
 const code = fs.readFileSync(path.join(__dirname, '../js/reporting.js'), 'utf8');
 vm.runInContext(code, sandbox);
 
@@ -62,4 +64,26 @@ test('shuffleDailyRecommendationMovies returns randomized array', () => {
     const list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
     const shuffled = sandbox.shuffleDailyRecommendationMovies(list);
     assert.equal(shuffled.length, 10);
+});
+
+test('renderDailyRecommendationCard escapes HTML characters in movie details', () => {
+    const card = {
+        movie: {
+            Name: '<script>alert("xss")</script>',
+            Category: '<b onmouseover="alert(1)">Movie</b>',
+            Genre: 'Action, <img src=x onerror=alert(1)>',
+            Year: '2025',
+            Description: '<p>Dangerous</p>'
+        },
+        pickReason: 'Because you like <i>Sci-Fi</i>',
+        remainingCards: []
+    };
+
+    const html = sandbox.renderDailyRecommendationCard(card, 0);
+    assert.ok(html.includes('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'));
+    assert.ok(!html.includes('<script>'));
+    assert.ok(html.includes('&lt;b onmouseover=&quot;alert(1)&quot;&gt;Movie&lt;/b&gt;'));
+    assert.ok(!html.includes('<b onmouseover'));
+    assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;'));
+    assert.ok(!html.includes('<img src=x'));
 });

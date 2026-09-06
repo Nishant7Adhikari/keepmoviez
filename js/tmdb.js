@@ -170,11 +170,11 @@ function displayTmdbResults(results) {
         const resultItem = document.createElement('div');
         resultItem.className = 'list-group-item list-group-item-action search-results-item d-flex align-items-start p-2';
         resultItem.innerHTML = `
-            <img src="${posterPath}" class="tmdb-poster-thumb mr-2" alt="Poster for ${title}" style="width:50px; height:auto;">
+            <img src="${posterPath}" class="tmdb-poster-thumb mr-2" alt="Poster for ${escapeHTML(title)}" style="width:50px; height:auto;">
             <div class="flex-grow-1">
                 ${item.media_type === 'tv' ? '<i class="fas fa-tv text-info mr-1" title="TV Series"></i>' : '<i class="fas fa-film text-warning mr-1" title="Movie"></i>'}
-                <strong>${title}</strong> <span class="text-muted">(${year})</span>
-                <p class="mb-0 mt-1 text-muted small">${overview}</p>
+                <strong>${escapeHTML(title)}</strong> <span class="text-muted">(${escapeHTML(year)})</span>
+                <p class="mb-0 mt-1 text-muted small">${escapeHTML(overview)}</p>
             </div>`;
         resultItem.addEventListener('click', () => {
             applyTmdbSelection(item);
@@ -355,7 +355,7 @@ async function applyTmdbSelection(item, force = false) {
             const titleEl = document.getElementById("duplicateNameConfirmModalLabel");
             const bodyEl = document.querySelector("#duplicateNameConfirmModal .modal-body");
             if (titleEl) titleEl.textContent = "Local Entry Found";
-            if (bodyEl) bodyEl.innerHTML = `An entry for <strong>"${exactNameYearMatch.Name}"</strong> (${exactNameYearMatch.Year || 'N/A'}) already exists in your library. Do you still want to fetch and apply this TMDB data?`;
+            if (bodyEl) bodyEl.innerHTML = `An entry for <strong>"${escapeHTML(exactNameYearMatch.Name)}"</strong> (${escapeHTML(exactNameYearMatch.Year) || 'N/A'}) already exists in your library. Do you still want to fetch and apply this TMDB data?`;
 
             const confirmBtn = document.getElementById("confirmDuplicateSaveBtn");
             const cancelBtn = document.getElementById("cancelDuplicateSaveBtn");

@@ -113,15 +113,15 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
             </button>
             <div class="daily-pick-backdrop" style="background-image: ${card.backdropUrl ? `url('${card.backdropUrl}')` : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'};">
                 <div class="daily-pick-header-content">
-                    <div class="daily-pick-meta">${movie.Category || 'N/A'} &bull; ${movie.Year || 'N/A'}</div>
-                    <h2 class="daily-pick-title">${movie.Name}</h2>
+                    <div class="daily-pick-meta">${escapeHTML(movie.Category) || 'N/A'} &bull; ${escapeHTML(movie.Year) || 'N/A'}</div>
+                    <h2 class="daily-pick-title">${escapeHTML(movie.Name)}</h2>
                 </div>
             </div>
             
             <div class="daily-pick-body">
                 <div class="d-flex justify-content-between align-items-center mt-3">
                     <div class="daily-pick-badge-row">
-                        ${(movie.Genre || '').split(',').map(g => `<span class="badge badge-pill badge-secondary" style="background: rgba(128, 128, 128, 0.12); color: var(--body-text-color); border: 1px solid rgba(128, 128, 128, 0.2);">${g.trim()}</span>`).join('')}
+                        ${(movie.Genre || '').split(',').map(g => `<span class="badge badge-pill badge-secondary" style="background: rgba(128, 128, 128, 0.12); color: var(--body-text-color); border: 1px solid rgba(128, 128, 128, 0.2);">${escapeHTML(g.trim())}</span>`).join('')}
                     </div>
                     
                     <div class="gauge-container" title="TMDB Rating: ${card.rating > 0 ? card.rating.toFixed(1) : 'N/A'}/10">
@@ -143,16 +143,16 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                 </div>
                 
                 <div class="daily-pick-reason-box">
-                    <i class="fas fa-magic text-primary mr-1"></i> ${card.pickReason}
+                    <i class="fas fa-magic text-primary mr-1"></i> ${escapeHTML(card.pickReason)}
                 </div>
                 
                 <div class="daily-pick-description">
-                    ${movie.Description || 'No description available. Open details view to fetch more info.'}
+                    ${escapeHTML(movie.Description) || 'No description available. Open details view to fetch more info.'}
                 </div>
                 
                 <div class="daily-pick-standby-strip">
                     <span class="daily-pick-standby-label">Up next</span>
-                    ${hasStandbyCards ? card.remainingCards.map(nextCard => `<span class="daily-pick-standby-chip">${nextCard.movie.Name}</span>`).join('') : '<span class="daily-pick-standby-empty">No standby picks left</span>'}
+                    ${hasStandbyCards ? card.remainingCards.map(nextCard => `<span class="daily-pick-standby-chip">${escapeHTML(nextCard.movie.Name)}</span>`).join('') : '<span class="daily-pick-standby-empty">No standby picks left</span>'}
                 </div>
                 
                 <div class="d-flex justify-content-between align-items-center mt-4">
@@ -521,7 +521,7 @@ function renderSuggestionCard(item) {
 
     card.innerHTML = `
         <div class="match-score-badge ${matchColorClass}">${matchScore}% Match</div>
-        <img src="${posterPath}" alt="Poster for ${name}" loading="lazy">
+        <img src="${posterPath}" alt="Poster for ${escapeHTML(name)}" loading="lazy">
         
         <!-- Hover Quick Actions Overlay -->
         <div class="quick-action-overlay">
@@ -534,8 +534,8 @@ function renderSuggestionCard(item) {
         </div>
         
         <div class="suggestion-card-info">
-            <strong>${name}</strong>
-            <small class="text-muted">${year || 'N/A'}</small>
+            <strong>${escapeHTML(name)}</strong>
+            <small class="text-muted">${escapeHTML(year) || 'N/A'}</small>
         </div>
     `;
 
@@ -1140,7 +1140,7 @@ async function displayDetailedStatsModal() {
         itemsToShow.forEach(item => {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
-            li.innerHTML = `${item.label} <span class="badge badge-primary badge-pill">${item.value}</span>`;
+            li.innerHTML = `${escapeHTML(item.label)} <span class="badge badge-primary badge-pill">${escapeHTML(item.value)}</span>`;
             listEl.appendChild(li);
         });
     };
@@ -1161,7 +1161,8 @@ async function displayDetailedStatsModal() {
             columnDefs.forEach(def => {
                 const td = document.createElement('td');
                 td.setAttribute('data-label', def.label);
-                td.innerHTML = row[def.key] !== undefined && row[def.key] !== null ? row[def.key] : 'N/A';
+                const cellVal = row[def.key] !== undefined && row[def.key] !== null ? row[def.key] : 'N/A';
+                td.textContent = cellVal;
                 tr.appendChild(td);
             });
             tbody.appendChild(tr);
