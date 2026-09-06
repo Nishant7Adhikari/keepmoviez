@@ -406,13 +406,13 @@ function renderNextBatch() {
 
     card.innerHTML = `
             <div class="card-thumbnail">
-                <img data-src="${posterUrl}" alt="Poster for ${movie.Name}" class="lazy">
-                <span class="card-year-badge">${movie.Year || "N/A"}</span>
+                <img data-src="${posterUrl}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
+                <span class="card-year-badge">${escapeHTML(movie.Year) || "N/A"}</span>
             </div>
             <div class="card-content">
                 <div>
                     <div class="card-header">
-                        <span class="card-title" title="${movie.Name}">${movie.Name || "N/A"}</span>
+                        <span class="card-title" title="${escapeHTML(movie.Name)}">${escapeHTML(movie.Name) || "N/A"}</span>
                     </div>
                     <div class="card-info">
                         <span class="status-badge ${statusClass}">${statusBadgeText}</span>
@@ -1428,10 +1428,10 @@ window.openUnwatchableModal = function () {
           <div class="d-flex w-100 justify-content-between align-items-center">
             <h6 class="mb-1 text-warning">${escapeHTML(entry.Name)} <small class="text-muted">(${escapeHTML(entry.Year || "N/A")})</small></h6>
             <div>
-              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${entry.id}'); });" title="Edit Entry">
+              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${entry.id}'); });" title="Edit Entry" aria-label="Edit entry">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${entry.id}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently">
+              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${entry.id}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete entry permanently">
                 <i class="fas fa-trash-alt"></i>
               </button>
             </div>
