@@ -406,13 +406,13 @@ function renderNextBatch() {
 
     card.innerHTML = `
             <div class="card-thumbnail">
-                <img data-src="${posterUrl}" alt="Poster for ${movie.Name}" class="lazy">
-                <span class="card-year-badge">${movie.Year || "N/A"}</span>
+                <img data-src="${posterUrl}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
+                <span class="card-year-badge">${escapeHTML(movie.Year) || "N/A"}</span>
             </div>
             <div class="card-content">
                 <div>
                     <div class="card-header">
-                        <span class="card-title" title="${movie.Name}">${movie.Name || "N/A"}</span>
+                        <span class="card-title" title="${escapeHTML(movie.Name)}">${escapeHTML(movie.Name) || "N/A"}</span>
                     </div>
                     <div class="card-info">
                         <span class="status-badge ${statusClass}">${statusBadgeText}</span>
