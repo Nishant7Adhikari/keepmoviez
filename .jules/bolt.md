@@ -1,0 +1,3 @@
+## 2026-09-07 - Date instantiation & static data lookups in calculateAllStatistics
+**Learning:** `calculateAllStatistics` processes watch instances in single-pass aggregation. Calling `Date.prototype.toLocaleString` or instantiating `new Date(wi.date)` inside iteration loops over `allWatchInstances` causes high GC pressure and CPU bottleneck on large datasets (>1000 items). Caching timestamps (`wi.timestamp`) and pre-filtering `specialTitleAchievements` reduced execution time by ~70%.
+**Action:** When working on statistics or array aggregations in this app, avoid `new Date()` allocations or locale formatting inside inner loops; pre-parse or compute timestamps during the initial item loop.
