@@ -53,11 +53,33 @@ function localEntryToSupabaseFormat(localEntry, userId) {
     const num = isFloat ? parseFloat(value) : parseInt(value, 10);
     return isNaN(num) ? null : num;
   };
-  const runtimeValue =
-    typeof entryToFormat.runtime === "object" ||
-    typeof entryToFormat.runtime === "number"
-      ? entryToFormat.runtime
-      : parseNumeric(entryToFormat.runtime);
+
+  let runtimeValue =
+    typeof entryToFormat.runtime === "object" && entryToFormat.runtime !== null
+      ? { ...entryToFormat.runtime }
+      : typeof entryToFormat.runtime === "number"
+        ? entryToFormat.runtime
+        : parseNumeric(entryToFormat.runtime);
+
+  const epCounts = Array.isArray(entryToFormat.episodesPerSeason)
+    ? entryToFormat.episodesPerSeason
+    : Array.isArray(entryToFormat.episodes_per_season)
+      ? entryToFormat.episodes_per_season
+      : null;
+
+  const seriesStatusVal = entryToFormat.seriesStatus || entryToFormat.series_status || null;
+
+  if (epCounts || seriesStatusVal) {
+    if (typeof runtimeValue !== "object" || runtimeValue === null) {
+      runtimeValue = typeof runtimeValue === "number" ? { episode_run_time: runtimeValue } : {};
+    }
+    if (epCounts) {
+      runtimeValue.episodes_per_season = epCounts;
+    }
+    if (seriesStatusVal) {
+      runtimeValue.series_status = seriesStatusVal;
+    }
+  }
 
   const supabaseRow = {
     id: entryToFormat.id,
@@ -115,12 +137,6 @@ function localEntryToSupabaseFormat(localEntry, userId) {
     runtime: runtimeValue,
     is_deleted: entryToFormat.is_deleted || false,
     imdb_id: entryToFormat.imdb_id || null,
-    episodes_per_season: Array.isArray(entryToFormat.episodesPerSeason)
-      ? entryToFormat.episodesPerSeason
-      : Array.isArray(entryToFormat.episodes_per_season)
-        ? entryToFormat.episodes_per_season
-        : [],
-    series_status: entryToFormat.seriesStatus || entryToFormat.series_status || null,
   };
   return supabaseRow;
 }
@@ -164,6 +180,30 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
   ) {
     localRuntime = supabaseEntry.runtime;
   }
+
+  let extractedEpisodes = [];
+  if (typeof localRuntime === "object" && localRuntime !== null) {
+    if (Array.isArray(localRuntime.episodes_per_season)) {
+      extractedEpisodes = localRuntime.episodes_per_season;
+    } else if (typeof localRuntime.episodes_per_season === "string" && localRuntime.episodes_per_season.startsWith("[")) {
+      try { extractedEpisodes = JSON.parse(localRuntime.episodes_per_season); } catch (e) { extractedEpisodes = []; }
+    }
+  }
+  if (extractedEpisodes.length === 0) {
+    if (Array.isArray(supabaseEntry.episodes_per_season)) {
+      extractedEpisodes = supabaseEntry.episodes_per_season;
+    } else if (typeof supabaseEntry.episodes_per_season === "string" && supabaseEntry.episodes_per_season.startsWith("[")) {
+      try { extractedEpisodes = JSON.parse(supabaseEntry.episodes_per_season); } catch (e) { extractedEpisodes = []; }
+    }
+  }
+
+  let extractedSeriesStatus = null;
+  if (typeof localRuntime === "object" && localRuntime !== null && localRuntime.series_status) {
+    extractedSeriesStatus = localRuntime.series_status;
+  } else if (supabaseEntry.series_status) {
+    extractedSeriesStatus = supabaseEntry.series_status;
+  }
+
   return {
     id: supabaseEntry.id,
     Name: supabaseEntry.name || "Untitled (from Cloud)",
@@ -239,16 +279,10 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
     runtime: localRuntime,
     is_deleted: supabaseEntry.is_deleted || false,
     imdb_id: supabaseEntry.imdb_id || null,
-    episodesPerSeason: Array.isArray(supabaseEntry.episodes_per_season)
-      ? supabaseEntry.episodes_per_season
-      : (typeof supabaseEntry.episodes_per_season === "string" && supabaseEntry.episodes_per_season.startsWith("[")
-          ? JSON.parse(supabaseEntry.episodes_per_season)
-          : []),
-    episodes_per_season: Array.isArray(supabaseEntry.episodes_per_season)
-      ? supabaseEntry.episodes_per_season
-      : [],
-    seriesStatus: supabaseEntry.series_status || null,
-    series_status: supabaseEntry.series_status || null,
+    episodesPerSeason: extractedEpisodes,
+    episodes_per_season: extractedEpisodes,
+    seriesStatus: extractedSeriesStatus,
+    series_status: extractedSeriesStatus,
     _sync_state: "synced",
   };
 }
