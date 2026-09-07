@@ -137,7 +137,7 @@ async function fetchMovieInfoFromTmdb(query, searchYear) {
 
     } catch (error) {
         console.error("Error fetching from TMDB (proxy search):", error);
-        if (tmdbResultsEl) tmdbResultsEl.innerHTML = `<div class="list-group-item text-danger small">Search Error: ${error.message}</div>`;
+        if (tmdbResultsEl) tmdbResultsEl.innerHTML = `<div class="list-group-item text-danger small">Search Error: ${escapeHTML(error.message)}</div>`;
     } finally {
         // Hide spinner after API call completes
         if (spinnerEl) spinnerEl.style.display = 'none';

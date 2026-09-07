@@ -26,6 +26,8 @@ const sandbox = {
 };
 
 vm.createContext(sandbox);
+const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
+vm.runInContext(utilsCode, sandbox);
 const code = fs.readFileSync(path.join(__dirname, '../js/input-output.js'), 'utf8');
 vm.runInContext(code, sandbox);
 
@@ -69,4 +71,23 @@ test('generateAndDownloadFile executes without crashing', () => {
     assert.doesNotThrow(() => {
         sandbox.generateAndDownloadFile('json');
     });
+});
+
+test('populateImportSummary escapes HTML characters in smartImportState.fileName', async () => {
+    let htmlContent = '';
+    sandbox.document.getElementById = (id) => {
+        if (id === 'importSummary') {
+            return {
+                set innerHTML(val) { htmlContent = val; },
+                get innerHTML() { return htmlContent; }
+            };
+        }
+        return null;
+    };
+    sandbox.movieData = [];
+    sandbox.hideLoading = () => {};
+    sandbox.$ = () => ({ modal: () => {}, off: () => ({ on: () => {} }) });
+    await sandbox.initiateSmartImport([], '<img src="x" onerror="alert(1)">.csv');
+    assert.ok(!htmlContent.includes('<img src="x" onerror="alert(1)">'));
+    assert.ok(htmlContent.includes('&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;'));
 });

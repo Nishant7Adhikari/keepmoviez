@@ -18,7 +18,8 @@ function calculateAllStatistics(currentMovieData) {
     const isStrictlyWatched = (movie) => movie.Status === 'Watched';
 
     // --- Single Pass Data Aggregation ---
-    const categoryCounts = {}, statusCounts = {}, overallRatingCounts = {}, watchInstanceRatingCounts = {};
+    const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const categoryCounts = {}, watchedCategoryCounts = {}, statusCounts = {}, overallRatingCounts = {}, watchInstanceRatingCounts = {};
     const singleGenreCounts = {}, watchedGenreCounts = {}, genreRatingsSum = {}, genreRatedEntriesCount = {};
     const countryCounts = {}, languageCounts = {};
     const actorCounts = {}, directorCounts = {}, productionCompanyCounts = {}, tmdbCollectionCounts = {};
@@ -30,6 +31,7 @@ function calculateAllStatistics(currentMovieData) {
     
     let ratedTitlesCount = 0, highlyRecCount = 0, fiveStarCount = 0, longSeriesCount = 0;
     let pre1980Count = 0, recent5YearsCount = 0, detailedDescriptionCount = 0, manualLinksCount = 0, hiddenGemCount = 0;
+    let nightWatchCount = 0, earlyMorningWatchCount = 0;
     const currentYear = new Date().getFullYear();
     const directorWatchCounts = new Map(), studioWatchCounts = new Map();
     const tmdbCollectionMovieIds = new Map(); // Track distinct movie IDs per collection
@@ -47,8 +49,10 @@ function calculateAllStatistics(currentMovieData) {
 
     // Special Title Trackers (Dynamic mapping from achievement definitions)
     const specialTitleStatus = {};
-    ACHIEVEMENTS.forEach(ach => {
-        if (ach.type === 'special_title_watch') specialTitleStatus[ach.id] = false;
+    // Performance optimization: Pre-filter special title achievements once instead of iterating all achievements per movie
+    const specialTitleAchievements = ACHIEVEMENTS.filter(ach => ach.type === 'special_title_watch');
+    specialTitleAchievements.forEach(ach => {
+        specialTitleStatus[ach.id] = false;
     });
 
     currentMovieData.forEach(movie => {
@@ -104,31 +108,31 @@ function calculateAllStatistics(currentMovieData) {
             }
         }
 
-        categoryCounts[movie.Category || 'N/A'] = (categoryCounts[movie.Category || 'N/A'] || 0) + 1;
+        const catKey = movie.Category || 'N/A';
+        categoryCounts[catKey] = (categoryCounts[catKey] || 0) + 1;
         statusCounts[movie.Status || 'N/A'] = (statusCounts[movie.Status || 'N/A'] || 0) + 1;
         if(movie.Description && movie.Description.length > 30) detailedDescriptionCount++;
         if(Array.isArray(movie.relatedEntries)) manualLinksCount += movie.relatedEntries.length;
 
         // Special Title Checks
         if (isWatchedOrContinue(movie)) {
-            ACHIEVEMENTS.forEach(ach => {
-                if (ach.type === 'special_title_watch') {
-                    // 1. Precise Match (ID)
-                    const idMatch = (ach.tmdbId && movie.tmdbId == ach.tmdbId) || (ach.imdbId && movie.imdb_id == ach.imdbId);
-                    
-                    // 2. Fallback Match (Name - Case Insensitive)
-                    let nameMatch = false;
-                    if (!idMatch && Array.isArray(ach.titleNames)) {
-                        const titleLower = (movie.Name || '').toLowerCase().trim().replace(/\.$/, '');
-                        nameMatch = ach.titleNames.some(target => {
-                            const targetLower = target.toLowerCase().trim().replace(/\.$/, '');
-                            return titleLower === targetLower;
-                        });
-                    }
+            watchedCategoryCounts[catKey] = (watchedCategoryCounts[catKey] || 0) + 1;
+            specialTitleAchievements.forEach(ach => {
+                // 1. Precise Match (ID)
+                const idMatch = (ach.tmdbId && movie.tmdbId == ach.tmdbId) || (ach.imdbId && movie.imdb_id == ach.imdbId);
 
-                    if (idMatch || nameMatch) {
-                        specialTitleStatus[ach.id] = true;
-                    }
+                // 2. Fallback Match (Name - Case Insensitive)
+                let nameMatch = false;
+                if (!idMatch && Array.isArray(ach.titleNames)) {
+                    const titleLower = (movie.Name || '').toLowerCase().trim().replace(/\.$/, '');
+                    nameMatch = ach.titleNames.some(target => {
+                        const targetLower = target.toLowerCase().trim().replace(/\.$/, '');
+                        return titleLower === targetLower;
+                    });
+                }
+
+                if (idMatch || nameMatch) {
+                    specialTitleStatus[ach.id] = true;
                 }
             });
         }
@@ -236,9 +240,15 @@ function calculateAllStatistics(currentMovieData) {
                     }
 
                     const d = new Date(yearNum, monthNum - 1, dayNum, hoursNum, 0, 0);
-                    if (isNaN(d.getTime())) return;
+                    const timestamp = d.getTime();
+                    if (isNaN(timestamp)) return;
 
-                    allWatchInstances.push({ date: dateStr, genre: movie.Genre, time: hoursNum, movie: movie });
+                    // Performance optimization: store pre-calculated timestamp to avoid repeated new Date() instantiations
+                    allWatchInstances.push({ date: dateStr, timestamp, genre: movie.Genre, time: hoursNum, movie: movie });
+
+                    // Inline tracking of watch time periods avoids running .filter() twice across allWatchInstances later
+                    if (hoursNum >= 0 && hoursNum < 4) nightWatchCount++;
+                    else if (hoursNum >= 4 && hoursNum < 9) earlyMorningWatchCount++;
 
                     const ratingKey = (wh.rating && String(wh.rating).trim() !== '') ? String(wh.rating) : 'N/A';
                     watchInstanceRatingCounts[ratingKey] = (watchInstanceRatingCounts[ratingKey] || 0) + 1;
@@ -249,7 +259,8 @@ function calculateAllStatistics(currentMovieData) {
                     watchesByYear[y].instances++; watchesByYear[y].titles.add(movie.Name);
                     if (ratingKey !== 'N/A') { watchesByYear[y].ratingsSum += parseFloat(wh.rating); watchesByYear[y].ratedCount++; }
                     
-                    watchesByMonth[ymISO] = watchesByMonth[ymISO] || { instances: 0, titles: new Set(), month_year_iso: ymISO, month_year_label: `${d.toLocaleString('default', { month: 'short' })} ${y}`, ratingsSum: 0, ratedCount: 0 };
+                    // Performance optimization: use static month lookup array instead of d.toLocaleString()
+                    watchesByMonth[ymISO] = watchesByMonth[ymISO] || { instances: 0, titles: new Set(), month_year_iso: ymISO, month_year_label: `${MONTH_NAMES[monthNum - 1]} ${y}`, ratingsSum: 0, ratedCount: 0 };
                     watchesByMonth[ymISO].instances++; watchesByMonth[ymISO].titles.add(movie.Name);
                     if (ratingKey !== 'N/A') {
                         watchesByMonth[ymISO].ratingsSum += parseFloat(wh.rating);
@@ -280,7 +291,7 @@ function calculateAllStatistics(currentMovieData) {
     achievementData.distinct_titles_rewatched = Object.values(rewatchCountsPerTitle).filter(c => c > 1).length;
     achievementData.single_title_rewatch_count = Math.max(0, ...Object.values(rewatchCountsPerTitle));
     achievementData.category_watched_count = {};
-    Object.keys(categoryCounts).forEach(cat => { achievementData.category_watched_count[cat] = currentMovieData.filter(m => isWatchedOrContinue(m) && m.Category === cat).length; });
+    Object.keys(categoryCounts).forEach(cat => { achievementData.category_watched_count[cat] = watchedCategoryCounts[cat] || 0; });
     achievementData.long_series_watched_count = longSeriesCount;
     achievementData.genre_watched_count = watchedGenreCounts;
     achievementData.genre_variety_count = uniqueGenresWatched.size;
@@ -312,8 +323,8 @@ function calculateAllStatistics(currentMovieData) {
     achievementData.country_variety_count = uniqueCountriesWatched.size;
     achievementData.language_variety_count = uniqueLanguagesWatched.size;
     achievementData.time_of_day_watch = {
-        night: allWatchInstances.filter(wi => wi.time >= 0 && wi.time < 4).length,
-        early_morning: allWatchInstances.filter(wi => wi.time >= 4 && wi.time < 9).length,
+        night: nightWatchCount,
+        early_morning: earlyMorningWatchCount,
     };
     achievementData.detailed_description_count = detailedDescriptionCount;
     achievementData.tmdb_collection_streak_count = tmdbCollectionMovieIds.size > 0 ? Math.max(0, ...Array.from(tmdbCollectionMovieIds.values()).map(s => s.size)) : 0;
@@ -398,15 +409,20 @@ function calculateAllStatistics(currentMovieData) {
     
     // --- Pace & Prediction Calculations ---
     const now = new Date();
+    const nowTime = now.getTime();
+
+    // Performance optimization: Use numeric timestamps instead of instantiating new Date objects in loops
     const calculatePace = (days) => {
-        const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
+        const cutoffTime = nowTime - (days * 24 * 60 * 60 * 1000);
         let minutesInPeriod = 0;
-        allWatchInstances.filter(wi => new Date(wi.date) >= cutoffDate).forEach(wi => {
-            const movie = wi.movie;
-            if (!movie) return;
-            if (movie.Category === 'Series') { /* Series are not re-counted in pace for rewatches */ } 
-            else if (typeof movie.runtime === 'number' && movie.runtime > 0) {
-                minutesInPeriod += movie.runtime;
+        allWatchInstances.forEach(wi => {
+            if (wi.timestamp >= cutoffTime) {
+                const movie = wi.movie;
+                if (!movie) return;
+                if (movie.Category === 'Series') { /* Series are not re-counted in pace for rewatches */ }
+                else if (typeof movie.runtime === 'number' && movie.runtime > 0) {
+                    minutesInPeriod += movie.runtime;
+                }
             }
         });
         return minutesInPeriod / days;
@@ -471,15 +487,17 @@ function calculateAllStatistics(currentMovieData) {
     }
 
     // --- Normalized Pace Calculation ---
+    // Performance optimization: Use numeric timestamps instead of instantiating new Date objects in loops
     const getNormalizedPaceData = (days) => {
-        const cutoffDate = new Date(now.getTime() - (days * 24 * 60 * 60 * 1000));
-        const relevantInstances = allWatchInstances.filter(wi => new Date(wi.date) >= cutoffDate);
+        const cutoffTime = nowTime - (days * 24 * 60 * 60 * 1000);
+        const daysMs = days * 24 * 60 * 60 * 1000;
         const bins = Array(10).fill(0);
         
-        relevantInstances.forEach(wi => {
-            const dayIndex = Math.floor((new Date(wi.date) - cutoffDate) / (1000 * 60 * 60 * 24));
-            const binIndex = Math.min(9, Math.floor(dayIndex / (days / 10)));
-            bins[binIndex]++;
+        allWatchInstances.forEach(wi => {
+            if (wi.timestamp >= cutoffTime) {
+                const binIndex = Math.min(9, Math.floor((wi.timestamp - cutoffTime) / (daysMs / 10)));
+                bins[binIndex]++;
+            }
         });
 
         for (let i = 1; i < bins.length; i++) {

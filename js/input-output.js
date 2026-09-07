@@ -161,7 +161,7 @@ function populateImportSummary() {
     const totalCount = analyzedEntries.length + skippedCount;
 
     summaryDiv.innerHTML = `
-        <h5>Analysis of "${smartImportState.fileName}"</h5>
+        <h5>Analysis of "${escapeHTML(smartImportState.fileName)}"</h5>
         <ul class="list-group">
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 Total Rows in File
