@@ -477,6 +477,13 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
           episode_run_time: !isNaN(avgEp) ? avgEp : null,
         };
       }
+      if (typeof window.getSeasonEpisodesCountsFromUI === "function") {
+        const epCounts = window.getSeasonEpisodesCountsFromUI();
+        if (epCounts && epCounts.length > 0) {
+          entry.episodesPerSeason = epCounts;
+          entry.episodes_per_season = epCounts;
+        }
+      }
     } else {
       const runtime = parseInt(formFieldsGlob.runtimeMovie.value, 10);
       if (!isNaN(runtime)) entry.runtime = runtime;
@@ -801,6 +808,19 @@ window.handleQuickUpdateSave = async function (event) {
       notes: watchNotes,
     };
     if (!Array.isArray(movie.watchHistory)) movie.watchHistory = [];
+
+    // Inject pending season completion tag to previous watch record if queued
+    const state = window._quickUpdateState;
+    if (state && state.pendingPrevSeasonCompletedTag && movie.watchHistory.length > 0) {
+      const latest = getLatestWatchInstance(movie.watchHistory);
+      if (latest) {
+        const tag = state.pendingPrevSeasonCompletedTag;
+        if (!latest.notes || !latest.notes.includes(tag)) {
+          latest.notes = latest.notes ? `${latest.notes.trim()}, ${tag}` : tag;
+        }
+      }
+    }
+
     movie.watchHistory.push(newWatchRecord);
 
     // Apply collected fields

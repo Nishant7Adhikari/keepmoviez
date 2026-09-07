@@ -704,6 +704,9 @@ document.addEventListener("DOMContentLoaded", () => {
     $(document).on("hidden.bs.modal", ".modal", function () {
       if ($(".modal.show").length > 0) {
         $("body").addClass("modal-open");
+      } else {
+        $("body").removeClass("modal-open");
+        $(".modal-backdrop").remove();
       }
     });
 

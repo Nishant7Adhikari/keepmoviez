@@ -69,11 +69,21 @@ function calculateAllStatistics(currentMovieData) {
                     ? movie.currentEpisode
                     : (typeof movie.currentSeasonEpisodesWatched === 'number' ? movie.currentSeasonEpisodesWatched : 0);
 
+                const epCounts = movie.episodesPerSeason || movie.episodes_per_season;
                 const { seasons, episodes, episode_run_time: episodeRunTime } = movie.runtime;
-                if (seasons > 0 && episodes > 0 && episodeRunTime > 0) {
+                const avgRunTime = episodeRunTime || 30;
+
+                if (Array.isArray(epCounts) && epCounts.length > 0) {
+                    let watchedEps = 0;
+                    for (let s = 0; s < completedSeasons && s < epCounts.length; s++) {
+                        watchedEps += epCounts[s] || 0;
+                    }
+                    watchedEps += currentSeasonEpisodes;
+                    totalWatchTimeMinutes += watchedEps * avgRunTime;
+                } else if (seasons > 0 && episodes > 0 && avgRunTime > 0) {
                     const avgEpisodesPerSeason = episodes / seasons;
                     const totalEpisodesWatched = (completedSeasons * avgEpisodesPerSeason) + currentSeasonEpisodes;
-                    totalWatchTimeMinutes += totalEpisodesWatched * episodeRunTime;
+                    totalWatchTimeMinutes += totalEpisodesWatched * avgRunTime;
                 }
             }
         } else {

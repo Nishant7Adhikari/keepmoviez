@@ -741,6 +741,10 @@ window.prepareAddModal = function (showModal = true) {
     handlePosterUrlInput(); // Clear preview
   }
 
+  if (typeof window.renderSeasonBreakdownCards === "function") {
+    window.renderSeasonBreakdownCards(1, [10]);
+  }
+
   toggleConditionalFields();
   if (showModal) {
     entryModal.modal("show");
@@ -748,6 +752,48 @@ window.prepareAddModal = function (showModal = true) {
   } else {
     formFieldsGlob.name?.focus();
   }
+};
+
+window.renderSeasonBreakdownCards = function (totalSeasons = 1, existingCounts = []) {
+  const container = document.getElementById("seasonBreakdownContainer");
+  if (!container) return;
+
+  const count = Math.max(1, parseInt(totalSeasons, 10) || 1);
+  let html = "";
+
+  for (let s = 1; s <= count; s++) {
+    const val = existingCounts[s - 1] != null ? parseInt(existingCounts[s - 1], 10) : 10;
+    html += `
+      <div class="d-flex align-items-center justify-content-between p-2 mb-1 bg-white rounded shadow-sm border season-breakdown-card">
+        <span class="font-weight-600 text-dark small"><i class="fas fa-tv text-muted mr-2"></i>Season ${s}</span>
+        <div class="input-group input-group-sm" style="width: 130px;">
+          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${val || 10}" min="1">
+          <div class="input-group-append">
+            <span class="input-group-text bg-light text-muted small py-0 px-2">eps</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+  window.updateTotalEpisodesBadge();
+};
+
+window.updateTotalEpisodesBadge = function () {
+  let total = 0;
+  $(".season-ep-count").each(function () {
+    total += parseInt($(this).val(), 10) || 0;
+  });
+  $("#calcTotalEpsBadge").text(`${total} eps`);
+};
+
+window.getSeasonEpisodesCountsFromUI = function () {
+  const counts = [];
+  $(".season-ep-count").each(function () {
+    counts.push(parseInt($(this).val(), 10) || 10);
+  });
+  return counts;
 };
 
 window.prepareEditModal = function (id, showModal = true) {
@@ -773,7 +819,6 @@ window.prepareEditModal = function (id, showModal = true) {
   formFieldsGlob.name.value = movie.Name || "";
   formFieldsGlob.category.value = movie.Category || "Movie";
   formFieldsGlob.status.value = movie.Status || "To Watch";
-  // ... (rest of the fields as before)
   formFieldsGlob.recommendation.value = movie.Recommendation || "";
   formFieldsGlob.overallRating.value = movie.overallRating || "";
   formFieldsGlob.personalRecommendation.value =
@@ -785,6 +830,10 @@ window.prepareEditModal = function (id, showModal = true) {
   if (formFieldsGlob.currentSeason) formFieldsGlob.currentSeason.value = seasonVal !== "" ? seasonVal : "";
   if (formFieldsGlob.currentEpisode) formFieldsGlob.currentEpisode.value = epVal !== "" ? epVal : "";
   if (typeof updateEditSeriesPreview === "function") updateEditSeriesPreview();
+
+  const seasonCount = parseInt(seasonVal, 10) || 1;
+  const existingCounts = movie.episodesPerSeason || movie.episodes_per_season || [];
+  window.renderSeasonBreakdownCards(seasonCount, existingCounts);
 
   formFieldsGlob.year.value = movie.Year || "";
   formFieldsGlob.country.value = movie.Country || "";
@@ -1507,6 +1556,7 @@ function toggleConditionalFields() {
   const isSeries = category === "Series";
   $("#movieRuntimeGroup").toggle(!isSeries);
   $("#seriesRuntimeGroup").toggle(isSeries);
+  $("#seasonBreakdownGroup").toggle(isSeries);
 
   // This is part of the new Add/Edit logic, but fits here
   // It's mainly for the Add modal, but harmless in the Edit modal
@@ -1996,8 +2046,10 @@ window.prepareQuickUpdateModal = function (id) {
       initialEpisode,
       startEp,
       seasonHistory: [],
+      pendingPrevSeasonCompletedTag: null,
     };
 
+    $("#quickUpdateInjectNotice").hide();
     $("#quickUpdateSeasons").val(seasonVal);
     $("#quickUpdateEpisodes").val(episodeVal);
 
@@ -2020,7 +2072,9 @@ window.prepareQuickUpdateModal = function (id) {
       initialEpisode: 0,
       startEp: 1,
       seasonHistory: [],
+      pendingPrevSeasonCompletedTag: null,
     };
+    $("#quickUpdateInjectNotice").hide();
 
     // Show extra fields immediately for Movies/Docs/Specials
     $("#quickUpdateConditionalFields").show();
@@ -2062,12 +2116,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Quick update modal steppers
+  $(document).on("input change", ".season-ep-count", function () {
+    if (typeof window.updateTotalEpisodesBadge === "function") {
+      window.updateTotalEpisodesBadge();
+    }
+  });
+
+  $(document).on("input change", "#currentSeason", function () {
+    const sCount = parseInt($(this).val(), 10) || 1;
+    if (typeof window.renderSeasonBreakdownCards === "function") {
+      const existing = typeof window.getSeasonEpisodesCountsFromUI === "function" ? window.getSeasonEpisodesCountsFromUI() : [];
+      window.renderSeasonBreakdownCards(sCount, existing);
+    }
+  });
+
   $(document).on("click", "#quickUpdatePlusEpBtn", function () {
+    const seasonInput = $("#quickUpdateSeasons");
     const epInput = $("#quickUpdateEpisodes");
+    const currentSeason = parseInt(seasonInput.val(), 10) || 1;
     const currentVal = parseInt(epInput.val(), 10) || 0;
-    epInput.val(currentVal + 1);
-    updateQuickUpdateBadge();
+
+    const entryId = $("#quickUpdateEntryId").val();
+    const movie = Array.isArray(movieData) ? movieData.find((m) => m && m.id === entryId) : null;
+    const epCounts = movie ? (movie.episodesPerSeason || movie.episodes_per_season || []) : [];
+    const maxEpForSeason = epCounts[currentSeason - 1] ? parseInt(epCounts[currentSeason - 1], 10) : null;
+
+    if (maxEpForSeason && currentVal >= maxEpForSeason) {
+      // Reached season max: automatically step to Next Season
+      $("#quickUpdateNextSeasonBtn").trigger("click");
+    } else {
+      epInput.val(currentVal + 1);
+      updateQuickUpdateBadge();
+    }
   });
 
   $(document).on("click", "#quickUpdateNextSeasonBtn", function () {
@@ -2078,20 +2158,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const lastEp = parseInt(epInput.val(), 10) || 0;
 
     if (state && state.isAutoManaged) {
-      let startForCurrentSeason;
-      if (state.seasonHistory && state.seasonHistory.length > 0) {
-        startForCurrentSeason = 1;
-      } else if (currentSeason > state.initialSeason) {
-        startForCurrentSeason = 1;
-      } else if (currentSeason === state.initialSeason) {
-        startForCurrentSeason = lastEp < state.startEp ? lastEp : state.startEp;
-      } else {
-        startForCurrentSeason = lastEp < 1 ? lastEp : 1;
-      }
+      const hasPreviousLoggedHistory = state.seasonHistory && state.seasonHistory.length > 0;
+      const isFirstSeasonInSession = !hasPreviousLoggedHistory && currentSeason === state.initialSeason;
+      const watchedEpInSession = isFirstSeasonInSession ? lastEp > state.initialEpisode : lastEp >= 1;
 
-      const segment = `S${currentSeason}E${startForCurrentSeason} - S${currentSeason}E${lastEp}, Season ${currentSeason} completed`;
-      if (!state.seasonHistory) state.seasonHistory = [];
-      state.seasonHistory.push(segment);
+      if (watchedEpInSession) {
+        let startForCurrentSeason;
+        if (hasPreviousLoggedHistory) {
+          startForCurrentSeason = 1;
+        } else if (currentSeason > state.initialSeason) {
+          startForCurrentSeason = 1;
+        } else {
+          startForCurrentSeason = lastEp < state.startEp ? lastEp : state.startEp;
+        }
+
+        const segment = `S${currentSeason}E${startForCurrentSeason} - S${currentSeason}E${lastEp}, Season ${currentSeason} completed`;
+        if (!state.seasonHistory) state.seasonHistory = [];
+        state.seasonHistory.push(segment);
+      } else {
+        // 0 episodes watched in currentSeason today: queue tag injection into previous watch log
+        const tag = `Season ${currentSeason} completed`;
+        state.pendingPrevSeasonCompletedTag = tag;
+        $("#quickUpdateInjectNoticeText").text(`", ${tag}" will be appended to your previous watch log (S${currentSeason}E${lastEp}) upon saving.`);
+        $("#quickUpdateInjectNotice").show();
+      }
     }
 
     seasonInput.val(currentSeason + 1);

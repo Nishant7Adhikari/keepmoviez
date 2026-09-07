@@ -2144,7 +2144,7 @@ a:hover {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  z-index: 1051;
+  z-index: 1039;
   transition:
     background-color 0.4s ease-in-out,
     opacity 0.4s ease-out,
@@ -2467,9 +2467,9 @@ a:hover {
   z-index: 1040;
 }
 
-/* MODIFIED: Lowered the theme overlay z-index to be BELOW modals */
+/* MODIFIED: Lowered the theme overlay z-index to be BELOW modals and backdrop */
 #themeTransitionOverlay {
-  z-index: 1049;
+  z-index: 1039;
 }
 
 #loadingOverlay {

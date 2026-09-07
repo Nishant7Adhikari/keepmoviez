@@ -331,7 +331,11 @@ function normalizeImportedRow(row) {
         keywords: (typeof row.keywords === 'string' && row.keywords.startsWith('[')) ? JSON.parse(row.keywords) : (Array.isArray(row.keywords) ? row.keywords : []),
         director_info: (typeof row.director_info === 'string' && row.director_info.startsWith('{')) ? JSON.parse(row.director_info) : (row.director_info || null),
         full_cast: (typeof row.full_cast === 'string' && row.full_cast.startsWith('[')) ? JSON.parse(row.full_cast) : (Array.isArray(row.full_cast) ? row.full_cast : []),
-        production_companies: (typeof row.production_companies === 'string' && row.production_companies.startsWith('[')) ? JSON.parse(row.production_companies) : (Array.isArray(row.production_companies) ? row.production_companies : [])
+        production_companies: (typeof row.production_companies === 'string' && row.production_companies.startsWith('[')) ? JSON.parse(row.production_companies) : (Array.isArray(row.production_companies) ? row.production_companies : []),
+        episodesPerSeason: (typeof row.episodesPerSeason === 'string' && row.episodesPerSeason.startsWith('[')) ? JSON.parse(row.episodesPerSeason) : (Array.isArray(row.episodesPerSeason) ? row.episodesPerSeason : ((typeof row.episodes_per_season === 'string' && row.episodes_per_season.startsWith('[')) ? JSON.parse(row.episodes_per_season) : (Array.isArray(row.episodes_per_season) ? row.episodes_per_season : []))),
+        episodes_per_season: (typeof row.episodes_per_season === 'string' && row.episodes_per_season.startsWith('[')) ? JSON.parse(row.episodes_per_season) : (Array.isArray(row.episodes_per_season) ? row.episodes_per_season : (Array.isArray(row.episodesPerSeason) ? row.episodesPerSeason : [])),
+        seriesStatus: row.seriesStatus || row.series_status || null,
+        series_status: row.series_status || row.seriesStatus || null
     };
     
     if (typeof row.watchHistory === 'string' && row.watchHistory.startsWith('[')) {

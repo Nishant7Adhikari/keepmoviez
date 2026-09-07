@@ -237,9 +237,17 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
         if (mediaType === 'movie') {
             tmdbRuntime = detailData.runtime || null;
         } else if (mediaType === 'tv') {
+            let epPerSeason = [];
+            if (Array.isArray(detailData.seasons)) {
+                epPerSeason = detailData.seasons
+                    .filter(s => s.season_number > 0)
+                    .sort((a, b) => a.season_number - b.season_number)
+                    .map(s => s.episode_count || 0);
+            }
             tmdbRuntime = {
                 seasons: detailData.number_of_seasons || null,
                 episodes: detailData.number_of_episodes || null,
+                episodes_per_season: epPerSeason,
                 episode_run_time: detailData.episode_run_time && detailData.episode_run_time.length > 0 ? detailData.episode_run_time[0] : null
             };
         }
@@ -294,7 +302,11 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
         tmdb_collection_name: tmdbCollectionName,
         tmdb_collection_total_parts: tmdbCollectionTotalParts,
         imdb_id: detailData.external_ids?.imdb_id || null,
-        tmdb_release_date: releaseDate || null
+        tmdb_release_date: releaseDate || null,
+        episodesPerSeason: mediaType === 'tv' && typeof tmdbRuntime === 'object' && tmdbRuntime ? (tmdbRuntime.episodes_per_season || []) : [],
+        episodes_per_season: mediaType === 'tv' && typeof tmdbRuntime === 'object' && tmdbRuntime ? (tmdbRuntime.episodes_per_season || []) : [],
+        seriesStatus: detailData.status || null,
+        series_status: detailData.status || null
     };
 }
 
@@ -427,9 +439,17 @@ async function applyTmdbSelection(item, force = false) {
                 tmdb_collection_name: processed.tmdb_collection_name,
                 tmdb_collection_total_parts: processed.tmdb_collection_total_parts,
                 imdb_id: processed.imdb_id,
-                tmdb_release_date: processed.tmdb_release_date
+                tmdb_release_date: processed.tmdb_release_date,
+                episodesPerSeason: processed.episodesPerSeason || [],
+                seriesStatus: processed.seriesStatus || null
             };
         }
+
+        if (processed.Category === 'Series' && typeof window.renderSeasonBreakdownCards === 'function') {
+            const seasonCount = (processed.runtime && typeof processed.runtime === 'object') ? (processed.runtime.seasons || (processed.episodesPerSeason ? processed.episodesPerSeason.length : 1)) : ((processed.episodesPerSeason ? processed.episodesPerSeason.length : 1));
+            window.renderSeasonBreakdownCards(seasonCount, processed.episodesPerSeason || []);
+        }
+
         if (typeof showToast === 'function') showToast("Info Applied", `${processed.Name} details pre-filled. Review and save.`, "info", 3000);
     } catch (error) {
         console.error("Error applying TMDB selection:", error);

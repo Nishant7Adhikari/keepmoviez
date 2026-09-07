@@ -115,6 +115,12 @@ function localEntryToSupabaseFormat(localEntry, userId) {
     runtime: runtimeValue,
     is_deleted: entryToFormat.is_deleted || false,
     imdb_id: entryToFormat.imdb_id || null,
+    episodes_per_season: Array.isArray(entryToFormat.episodesPerSeason)
+      ? entryToFormat.episodesPerSeason
+      : Array.isArray(entryToFormat.episodes_per_season)
+        ? entryToFormat.episodes_per_season
+        : [],
+    series_status: entryToFormat.seriesStatus || entryToFormat.series_status || null,
   };
   return supabaseRow;
 }
@@ -228,11 +234,21 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
         : null,
     tmdb_vote_count:
       supabaseEntry.tmdb_vote_count !== null
-        ? parseInt(supabaseEntry.tmdb_vote_count)
+        ? parseInt(supabaseEntry.tmdb_vote_count, 10)
         : null,
     runtime: localRuntime,
     is_deleted: supabaseEntry.is_deleted || false,
     imdb_id: supabaseEntry.imdb_id || null,
+    episodesPerSeason: Array.isArray(supabaseEntry.episodes_per_season)
+      ? supabaseEntry.episodes_per_season
+      : (typeof supabaseEntry.episodes_per_season === "string" && supabaseEntry.episodes_per_season.startsWith("[")
+          ? JSON.parse(supabaseEntry.episodes_per_season)
+          : []),
+    episodes_per_season: Array.isArray(supabaseEntry.episodes_per_season)
+      ? supabaseEntry.episodes_per_season
+      : [],
+    seriesStatus: supabaseEntry.series_status || null,
+    series_status: supabaseEntry.series_status || null,
     _sync_state: "synced",
   };
 }

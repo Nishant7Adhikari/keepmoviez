@@ -499,6 +499,33 @@
                 card to quickly increment episodes or log a re-watch.
               </div>
             </div>
+
+            <div class="edu-box mt-4" id="quick-update-auto-notes">
+              <h5>
+                <i class="fas fa-sticky-note text-primary"></i> Smart Auto Notes & Season Completion Tracking
+              </h5>
+              <p>
+                When using the <strong>Quick Update modal</strong> for series, KeepMoviEZ automatically logs exact episode ranges and season completions:
+              </p>
+              <ul>
+                <li>
+                  <strong>Episode Continuations:</strong> Resumes progress from your next unwatched episode (e.g. if you previously logged <code>S1E5</code>, updating to E8 generates <code>S1E6 - S1E8</code>).
+                </li>
+                <li>
+                  <strong>Single Episode Logs:</strong> Logged as explicit ranges (e.g. <code>S1E6 - S1E6</code>).
+                </li>
+                <li>
+                  <strong>Cross-Season Watching (Same Session):</strong> Clicking <em>Next Season</em> after watching season finale episodes in the same session logs both season progress and completion tags: <code>S1E10 - S1E12, Season 1 completed : S2E1 - S2E4</code>.
+                </li>
+                <li>
+                  <strong>Starting a New Season (Separate Session):</strong> If you completed Season 1 previously (at <code>S1E23</code>) and open Quick Update in a new session to start Season 2:
+                  <ul>
+                    <li>Today's note only logs Season 2 progress: <code>S2E1 - S2E5</code> (preventing false 0-episode Season 1 entries today).</li>
+                    <li>The app automatically appends <code>, Season 1 completed</code> to your <strong>previous watch log</strong> (for <code>S1E23</code>) when you click <em>Save Progress</em>.</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
           </section>
 
           <!-- 6. Architecture -->

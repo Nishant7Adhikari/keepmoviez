@@ -305,3 +305,41 @@ test('State Re-initialization Prevents Stale Modal Leakage', () => {
     sandbox.updateQuickUpdateAutoNote();
     assert.equal(domValues.quickUpdateNotes, "S3E11 - S3E12");
 });
+
+test('0-Episode Season Transition Queues Previous Completion Tag Without False S1 Log', () => {
+    const { sandbox, domValues } = createTestEnvironment();
+    sandbox.movieData = [{
+        id: "series_1",
+        Name: "Test Series",
+        Category: "Series",
+        Status: "Continue",
+        currentSeason: 1,
+        currentEpisode: 23,
+        watchHistory: [{ date: "2026-01-01", notes: "S1E20 - S1E23" }]
+    }];
+
+    sandbox.prepareQuickUpdateModal("series_1");
+    // Initial modal values: S1 E23
+    assert.equal(sandbox._quickUpdateState.initialSeason, 1);
+    assert.equal(sandbox._quickUpdateState.initialEpisode, 23);
+
+    // Simulate clicking Next Season without incrementing E23 first today
+    const state = sandbox._quickUpdateState;
+    const currentSeason = 1;
+    const lastEp = 23;
+    const hasPreviousLoggedHistory = state.seasonHistory && state.seasonHistory.length > 0;
+    const isFirstSeasonInSession = !hasPreviousLoggedHistory && currentSeason === state.initialSeason;
+    const watchedEpInSession = isFirstSeasonInSession ? lastEp > state.initialEpisode : lastEp >= 1;
+
+    assert.equal(watchedEpInSession, false); // 0 episodes watched in S1 today
+
+    // Queue tag and transition
+    state.pendingPrevSeasonCompletedTag = "Season 1 completed";
+    domValues.quickUpdateSeasons = "2";
+    domValues.quickUpdateEpisodes = "5";
+    sandbox.updateQuickUpdateAutoNote();
+
+    // Today's note should ONLY log S2E1 - S2E5 (no false S1E23 - S1E23)
+    assert.equal(domValues.quickUpdateNotes, "S2E1 - S2E5");
+    assert.equal(state.pendingPrevSeasonCompletedTag, "Season 1 completed");
+});
