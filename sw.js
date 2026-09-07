@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.8"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.6.9"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css?v=5.6.3",
+  "./style.css?v=5.6.9",
   "./manifest.json",
 
   // Local CSS
@@ -39,15 +39,15 @@ const CORE_ASSETS = [
   "./js/utils.js?v=5.6.7",
   "./js/indexeddb.js?v=2",
   "./js/data.js?v=5.6.3",
-  "./js/input-output.js?v=5.6.3",
-  "./js/tmdb.js?v=5.6.7",
+  "./js/input-output.js?v=5.6.9",
+  "./js/tmdb.js?v=5.6.9",
   "./js/genre.js?v=2",
-  "./js/analysis.js?v=5.6.5",
-  "./js/ui.js?v=5.6.8",
-  "./js/reporting.js?v=5.6.7",
-  "./js/app.js?v=5.6.5",
-  "./js/supabase.js?v=5.6.1",
-  "./js/main.js?v=5.6.6",
+  "./js/analysis.js?v=5.6.9",
+  "./js/ui.js?v=5.6.9",
+  "./js/reporting.js?v=5.6.9",
+  "./js/app.js?v=5.6.9",
+  "./js/supabase.js?v=5.6.9",
+  "./js/main.js?v=5.6.9",
 
   // Icons
   "./icons/icon-192x192.png",
