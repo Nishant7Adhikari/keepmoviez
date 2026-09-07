@@ -1162,7 +1162,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
       .find("#detailsCastCrewContent")
       .html("")
       .append(
-        `<p><strong>Director:</strong> <span id="detailsDirector" class="person-link">${director ? director.name : "N/A"}</span></p>
+        `<p><strong>Director:</strong> <span id="detailsDirector" class="person-link">${director ? escapeHTML(director.name) : "N/A"}</span></p>
              <h6>Main Cast</h6><div id="detailsCastList" class="row person-list"></div>`,
       );
     if (cast.length > 0)
@@ -1172,7 +1172,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
           modal
             .find("#detailsCastList")
             .append(
-              `<div class="col-md-6 col-12 mb-1"><a href="#" class="person-link" data-person-id="${member.id}" data-person-name="${member.name}">${member.name}</a> <small class="text-muted">(${member.character || "N/A"})</small></div>`,
+              `<div class="col-md-6 col-12 mb-1"><a href="#" class="person-link" data-person-id="${escapeHTML(member.id)}" data-person-name="${escapeHTML(member.name)}">${escapeHTML(member.name)}</a> <small class="text-muted">(${escapeHTML(member.character || "N/A")})</small></div>`,
             ),
         );
 
@@ -1186,7 +1186,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
     if (relatedEntries.length > 0)
       relatedEntries.forEach((m) =>
         relatedContent.append(
-          `<div><a href="#" class="related-item-link" data-movie-id="${m.id}">${m.Name}</a></div>`,
+          `<div><a href="#" class="related-item-link" data-movie-id="${escapeHTML(m.id)}">${escapeHTML(m.Name)}</a></div>`,
         ),
       );
 
@@ -1298,7 +1298,7 @@ window.openPersonDetailsModal = async function (personId, personName) {
       if (filmographyInLog.length > 0)
         filmographyInLog.forEach((entry) =>
           filmographyList.append(
-            `<li><a href="#" class="person-filmography-link" data-movie-id="${entry.id}">${entry.Name} (${entry.release_year}) - <small class="text-muted">${entry.role}</small></a></li>`,
+            `<li><a href="#" class="person-filmography-link" data-movie-id="${escapeHTML(entry.id)}">${escapeHTML(entry.Name)} (${escapeHTML(entry.release_year)}) - <small class="text-muted">${escapeHTML(entry.role)}</small></a></li>`,
           ),
         );
       else

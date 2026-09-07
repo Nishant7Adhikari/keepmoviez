@@ -1370,9 +1370,9 @@ function renderActivityHeatmap(canvasId) {
         }
         
         if (hovered) {
-            let tooltipHtml = `<strong>${hovered.date}</strong><br/>Watches: ${hovered.count}`;
+            let tooltipHtml = `<strong>${escapeHTML(hovered.date)}</strong><br/>Watches: ${hovered.count}`;
             if (hovered.count > 0) {
-                tooltipHtml += `<br/><br/>${hovered.titles.join('<br/>')}`;
+                tooltipHtml += `<br/><br/>${hovered.titles.map(t => escapeHTML(t)).join('<br/>')}`;
             }
             tooltip.innerHTML = tooltipHtml;
             tooltip.style.left = (e.pageX + 15) + 'px';
