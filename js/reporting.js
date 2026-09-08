@@ -325,7 +325,7 @@ async function displayDailyRecommendationModal() {
             </button>
             <div class="p-5 text-center">
                 <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
-                <p class="text-muted">${dailyRecMsg}</p>
+                <p class="text-muted">${escapeHTML(dailyRecMsg)}</p>
                 <button class="btn btn-secondary mt-3" data-dismiss="modal">Close</button>
             </div>`;
     }
@@ -1061,7 +1061,7 @@ function _createAchievementBadgeElement(ach) {
         <span class="fa-stack fa-2x">
             <i class="${ach.icon} fa-stack-2x"></i>
         </span>
-        <span>${ach.name}</span>
+        <span>${escapeHTML(ach.name)}</span>
         ${progressBarHTML}`;
 
     return badge;
@@ -1778,8 +1778,8 @@ window.celebrateAchievementUnlock = function (achievement) {
                 <i class="${achievement.icon || 'fas fa-trophy'}"></i>
             </div>
             <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #ffc107; font-weight: 700; margin-bottom: 0.5rem;">🏆 Achievement Unlocked!</div>
-            <div class="achievement-showcase-title">${achievement.name}</div>
-            <div class="achievement-showcase-desc">${achievement.description}</div>
+            <div class="achievement-showcase-title">${escapeHTML(achievement.name)}</div>
+            <div class="achievement-showcase-desc">${escapeHTML(achievement.description)}</div>
             <button class="achievement-showcase-btn" id="achievementShowcaseDismissBtn">Awesome!</button>
         </div>
     `;
