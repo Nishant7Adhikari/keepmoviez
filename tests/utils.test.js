@@ -30,6 +30,34 @@ vm.createContext(sandbox);
 const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
 vm.runInContext(utilsCode, sandbox);
 
+const dataCode = fs.readFileSync(path.join(__dirname, '../js/data.js'), 'utf8');
+vm.runInContext(dataCode, sandbox);
+
+test('recalculateAndApplyAllRelationships updates connected components and singletons correctly', () => {
+    sandbox.movieData = [
+        { id: '1', Name: 'Movie 1', relatedEntries: ['2', '999', '1'] },
+        { id: '2', Name: 'Movie 2', relatedEntries: ['3'] },
+        { id: '3', Name: 'Movie 3', relatedEntries: [] },
+        { id: '4', Name: 'Movie 4', relatedEntries: ['5'] },
+        { id: '5', Name: 'Movie 5', relatedEntries: ['4'] },
+        { id: '6', Name: 'Movie 6', relatedEntries: [] },
+    ];
+
+    sandbox.recalculateAndApplyAllRelationships();
+
+    // Component 1: {1, 2, 3}
+    assert.deepEqual(Array.from(sandbox.movieData[0].relatedEntries).sort(), ['2', '3']);
+    assert.deepEqual(Array.from(sandbox.movieData[1].relatedEntries).sort(), ['1', '3']);
+    assert.deepEqual(Array.from(sandbox.movieData[2].relatedEntries).sort(), ['1', '2']);
+
+    // Component 2: {4, 5}
+    assert.deepEqual(Array.from(sandbox.movieData[3].relatedEntries).sort(), ['5']);
+    assert.deepEqual(Array.from(sandbox.movieData[4].relatedEntries).sort(), ['4']);
+
+    // Singleton: {6}
+    assert.deepEqual(Array.from(sandbox.movieData[5].relatedEntries), []);
+});
+
 test('getCountryFullName resolves country code correctly', () => {
     assert.equal(sandbox.getCountryFullName('US'), 'United States');
     assert.equal(sandbox.getCountryFullName('CA'), 'Canada');

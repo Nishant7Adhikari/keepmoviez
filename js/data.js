@@ -183,11 +183,13 @@ function recalculateAndApplyAllRelationships() {
     if (!Array.isArray(movieData) || movieData.length === 0) return;
 
     const adj = new Map();
-    const movieIds = new Set(movieData.map(m => m.id));
+    const movieIds = new Set(movieData.filter(m => m && m.id).map(m => m.id));
+    const movieMap = new Map();
 
-    // Step 1: Build adjacency list from existing relationships
+    // Step 1: Build adjacency list and movie map from existing relationships
     movieData.forEach(movie => {
         if (!movie || !movie.id) return;
+        movieMap.set(movie.id, movie);
         if (!adj.has(movie.id)) adj.set(movie.id, new Set());
 
         const validRelatedIds = (movie.relatedEntries || [])
@@ -201,14 +203,14 @@ function recalculateAndApplyAllRelationships() {
         movie.relatedEntries = validRelatedIds;
     });
 
-    // Step 2: Find all connected components using Breadth-First Search (BFS)
+    // Step 2: Find connected components via BFS and assign relatedEntries directly (O(N) instead of O(N^2))
+    // Performance optimization: Direct component assignment eliminates O(N^2) searching across allComponents.
     const visited = new Set();
-    const allComponents = [];
 
     movieData.forEach(movie => {
         if (!movie || !movie.id || visited.has(movie.id)) return;
 
-        const currentComponent = new Set();
+        const currentComponent = [];
         const queue = [movie.id];
         visited.add(movie.id);
 
@@ -216,27 +218,30 @@ function recalculateAndApplyAllRelationships() {
         while (head < queue.length) {
             const nodeId = queue[head++];
             if (!nodeId) continue;
-            currentComponent.add(nodeId);
+            currentComponent.push(nodeId);
 
-            const neighbors = adj.get(nodeId) || new Set();
-            neighbors.forEach(neighborId => {
-                if (neighborId && !visited.has(neighborId)) {
-                    visited.add(neighborId);
-                    queue.push(neighborId);
+            const neighbors = adj.get(nodeId);
+            if (neighbors) {
+                neighbors.forEach(neighborId => {
+                    if (neighborId && !visited.has(neighborId)) {
+                        visited.add(neighborId);
+                        queue.push(neighborId);
+                    }
+                });
+            }
+        }
+
+        // Direct assignment per component
+        if (currentComponent.length === 1) {
+            const m = movieMap.get(currentComponent[0]);
+            if (m) m.relatedEntries = [];
+        } else {
+            currentComponent.forEach(id => {
+                const m = movieMap.get(id);
+                if (m) {
+                    m.relatedEntries = currentComponent.filter(otherId => otherId !== id);
                 }
             });
-        }
-        if (currentComponent.size > 0) allComponents.push(Array.from(currentComponent));
-    });
-
-    // Step 3: Update each movie's relatedEntries to be its entire component (minus itself)
-    movieData.forEach(movie => {
-        if (!movie || !movie.id) return;
-        const component = allComponents.find(comp => comp.includes(movie.id));
-        if (component) {
-            movie.relatedEntries = component.filter(id => id && id !== movie.id && movieIds.has(id));
-        } else {
-            movie.relatedEntries = (movie.relatedEntries || []).filter(id => id && id !== movie.id && movieIds.has(id));
         }
     });
 }
