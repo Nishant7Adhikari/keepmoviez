@@ -7,8 +7,11 @@ const vm = require('node:vm');
 const mockElement = {
     addEventListener: () => {},
     appendChild: () => {},
+    remove: () => {},
     style: {},
-    classList: { add: () => {}, remove: () => {} }
+    dataset: {},
+    classList: { add: () => {}, remove: () => {} },
+    getContext: () => ({ clearRect: () => {}, save: () => {}, restore: () => {}, translate: () => {}, rotate: () => {}, fillRect: () => {} })
 };
 
 const sandbox = {
@@ -21,7 +24,11 @@ const sandbox = {
     parseFloat,
     parseInt,
     isNaN,
-    window: {},
+    performance,
+    setTimeout,
+    clearTimeout,
+    requestAnimationFrame: (cb) => cb(),
+    window: { requestAnimationFrame: (cb) => cb(), addEventListener: () => {}, removeEventListener: () => {} },
     MAX_DAILY_SKIPS: 3,
     getDailyRecommendationModalState: () => ({ skipCount: 0 }),
     document: {
@@ -86,4 +93,47 @@ test('renderDailyRecommendationCard escapes HTML characters in movie details', (
     assert.ok(!html.includes('<b onmouseover'));
     assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;'));
     assert.ok(!html.includes('<img src=x'));
+});
+
+test('_createAchievementBadgeElement escapes HTML in achievement name', () => {
+    const ach = {
+        name: '<script>alert("badge_xss")</script>',
+        description: 'Test description',
+        icon: 'fas fa-trophy',
+        isAchieved: true,
+        progress: 1,
+        threshold: 1
+    };
+    const badge = sandbox._createAchievementBadgeElement(ach);
+    assert.ok(badge.innerHTML.includes('&lt;script&gt;alert(&quot;badge_xss&quot;)&lt;/script&gt;'));
+    assert.ok(!badge.innerHTML.includes('<script>'));
+});
+
+test('celebrateAchievementUnlock escapes HTML in achievement title and description', () => {
+    let createdHtml = '';
+    const originalCreateElement = sandbox.document.createElement;
+    sandbox.document.createElement = () => ({
+        className: '',
+        dataset: {},
+        classList: { add: () => {}, remove: () => {} },
+        set innerHTML(val) { createdHtml = val; },
+        get innerHTML() { return createdHtml; },
+        querySelector: () => mockElement,
+        addEventListener: () => {}
+    });
+    sandbox.document.body = { appendChild: () => {} };
+
+    const ach = {
+        name: '<img src=x onerror=alert(1)>',
+        description: '<svg onload=alert(2)>',
+        icon: 'fas fa-trophy'
+    };
+
+    sandbox.window.celebrateAchievementUnlock(ach);
+    sandbox.document.createElement = originalCreateElement;
+
+    assert.ok(createdHtml.includes('&lt;img src=x onerror=alert(1)&gt;'));
+    assert.ok(!createdHtml.includes('<img src=x'));
+    assert.ok(createdHtml.includes('&lt;svg onload=alert(2)&gt;'));
+    assert.ok(!createdHtml.includes('<svg onload'));
 });

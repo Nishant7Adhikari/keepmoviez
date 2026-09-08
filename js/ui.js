@@ -1066,7 +1066,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
     const genreContainer = modal.find("#detailsGenre").empty();
     if (genres.length > 0)
       genres.forEach((g) =>
-        genreContainer.append(`<span class="genre-pill">${g}</span>`),
+        genreContainer.append(`<span class="genre-pill">${escapeHTML(g)}</span>`),
       );
 
     const trailerUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(title + " " + year + " trailer")}`;
