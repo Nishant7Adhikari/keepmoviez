@@ -110,3 +110,13 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(null), '');
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
+
+test('index.html buttons have accessible aria-labels for screen readers', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));
+    assert.ok(html.includes('id="sortColumnDropdown"') && html.includes('aria-label="Sort by column"'));
+    assert.ok(html.includes('id="refreshRecommendationsBtnModal"') && html.includes('aria-label="Refresh suggestions"'));
+    assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
+    assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
+    assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
+});
