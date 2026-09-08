@@ -126,7 +126,7 @@ function createTestEnvironment() {
     return { sandbox, domValues, listeners };
 }
 
-test('supabaseEntryToLocalFormat & localEntryToSupabaseFormat map episodes_per_season & series_status correctly', () => {
+test('supabaseEntryToLocalFormat & localEntryToSupabaseFormat map episodes_per_season & series_status correctly via runtime JSON object', () => {
     const { sandbox } = createTestEnvironment();
     const supabaseData = {
         id: "test_series_123",
@@ -135,8 +135,13 @@ test('supabaseEntryToLocalFormat & localEntryToSupabaseFormat map episodes_per_s
         status: "Continue",
         current_season: 2,
         current_episode: 5,
-        episodes_per_season: [7, 13, 13, 13, 16],
-        series_status: "Ended"
+        runtime: {
+            seasons: 5,
+            episodes: 62,
+            episode_run_time: 47,
+            episodes_per_season: [7, 13, 13, 13, 16],
+            series_status: "Ended"
+        }
     };
 
     const localFormat = sandbox.supabaseEntryToLocalFormat(supabaseData);
@@ -146,9 +151,12 @@ test('supabaseEntryToLocalFormat & localEntryToSupabaseFormat map episodes_per_s
     assert.equal(localFormat.seriesStatus, "Ended");
 
     const backToSupabase = sandbox.localEntryToSupabaseFormat(localFormat, "user_123");
-    assert.equal(backToSupabase.episodes_per_season.length, 5);
-    assert.equal(backToSupabase.episodes_per_season[0], 7);
-    assert.equal(backToSupabase.series_status, "Ended");
+    assert.equal(backToSupabase.episodes_per_season, undefined);
+    assert.equal(backToSupabase.series_status, undefined);
+    assert.equal(typeof backToSupabase.runtime, "object");
+    assert.equal(backToSupabase.runtime.episodes_per_season.length, 5);
+    assert.equal(backToSupabase.runtime.episodes_per_season[0], 7);
+    assert.equal(backToSupabase.runtime.series_status, "Ended");
 });
 
 test('normalizeImportedRow handles episodesPerSeason safely', () => {
