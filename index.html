@@ -520,7 +520,8 @@
                 <div class="d-flex align-items-center">
                     <div class="dropdown mr-2">
                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button"
-                            id="sortColumnDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            id="sortColumnDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                            title="Sort by column" aria-label="Sort by column">
                             N
                         </button>
                         <div class="dropdown-menu dropdown-menu-right" aria-labelledby="sortColumnDropdown">
@@ -583,7 +584,7 @@
                     <!-- Help & Docs -->
                     <div class="d-flex justify-content-center mt-2 mb-3">
                         <button style="color: var(--warning-color)" id="quickAboutBtn"
-                            class="btn btn-sm btn-light mr-2 border">
+                            class="btn btn-sm btn-light mr-2 border" title="About KeepMoviEZ" aria-label="About KeepMoviEZ">
                             <i class="fas fa-info-circle text-info"></i> First time?
                         </button>
                         <a style="color: var(--warning-color)" href="docs/index.html" target="_blank"
@@ -628,7 +629,7 @@
 
                 <div class="dropup d-inline-block">
                     <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="moreMultiActionsDropdown"
-                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="More actions" aria-label="More actions">
                         <i class="fas fa-ellipsis-h d-inline d-sm-none"></i><span class="d-none d-sm-inline">More</span>
                     </button>
                     <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="moreMultiActionsDropdown">
@@ -1084,13 +1085,13 @@
                             <i class="fas fa-edit"></i> <span class="d-none d-sm-inline">Edit</span>
                         </button>
                         <button type="submit" form="entryForm" id="quickSaveBtn" class="btn btn-primary"
-                            title="Quick Save">
+                            title="Quick Save" aria-label="Quick save entry">
                             <i class="fas fa-save"></i> Save
                         </button>
                     </div>
 
                     <button type="submit" form="entryForm" class="btn btn-primary" id="updateEntryBtn"
-                        style="display:none;"><i class="fas fa-save"></i> Update Entry</button>
+                        style="display:none;" aria-label="Update entry"><i class="fas fa-save"></i> Update Entry</button>
                 </div>
             </div>
         </div>
@@ -1719,7 +1720,7 @@
                                 preferences.</p>
                         </div>
                         <button id="refreshRecommendationsBtnModal"
-                            class="btn btn-sm btn-outline-primary suggestion-refresh-btn">
+                            class="btn btn-sm btn-outline-primary suggestion-refresh-btn" title="Refresh suggestions" aria-label="Refresh suggestions">
                             <i class="fas fa-sync-alt"></i> Refresh
                         </button>
                     </div>
