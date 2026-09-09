@@ -111,6 +111,49 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
+test('openUnwatchableModal escapes special characters in entry.id to prevent XSS', () => {
+    const unwatchableContainer = { innerHTML: '' };
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: (id) => {
+                if (id === 'unwatchableListContainer') return unwatchableContainer;
+                return null;
+            },
+            addEventListener: () => {}
+        },
+        $: () => ({ modal: () => {} }),
+        movieData: [
+            {
+                id: "bad_id' onclick='alert(1)'",
+                Name: "Bad Unwatchable Movie",
+                Status: "Unwatchable",
+                Year: "2024",
+                Category: "Movie",
+                is_deleted: false,
+                watchHistory: [{ notes: "Not available" }]
+            }
+        ]
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.openUnwatchableModal();
+
+    assert.ok(unwatchableContainer.innerHTML.includes("prepareEditModal('bad_id&#039; onclick=&#039;alert(1)&#039;')"));
+    assert.ok(!unwatchableContainer.innerHTML.includes("prepareEditModal('bad_id' onclick='alert(1)')"));
+});
+
 test('index.html buttons and search input have accessible aria-labels for screen readers', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));

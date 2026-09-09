@@ -49,11 +49,20 @@ function calculateAllStatistics(currentMovieData) {
 
     // Special Title Trackers (Dynamic mapping from achievement definitions)
     const specialTitleStatus = {};
-    // Performance optimization: Pre-filter special title achievements once instead of iterating all achievements per movie
-    const specialTitleAchievements = ACHIEVEMENTS.filter(ach => ach.type === 'special_title_watch');
-    specialTitleAchievements.forEach(ach => {
-        specialTitleStatus[ach.id] = false;
-    });
+    // Performance optimization: Pre-filter & pre-normalize special title achievements once to avoid redundant string transformations
+    const preparedSpecialTitleAchievements = (typeof ACHIEVEMENTS !== 'undefined' ? ACHIEVEMENTS : [])
+        .filter(ach => ach.type === 'special_title_watch')
+        .map(ach => {
+            specialTitleStatus[ach.id] = false;
+            return {
+                id: ach.id,
+                tmdbId: ach.tmdbId,
+                imdbId: ach.imdbId,
+                normalizedTitleNames: Array.isArray(ach.titleNames)
+                    ? ach.titleNames.map(target => target.toLowerCase().trim().replace(/\.$/, ''))
+                    : []
+            };
+        });
 
     currentMovieData.forEach(movie => {
         if (!movie || !movie.id) return;
@@ -117,18 +126,22 @@ function calculateAllStatistics(currentMovieData) {
         // Special Title Checks
         if (isWatchedOrContinue(movie)) {
             watchedCategoryCounts[catKey] = (watchedCategoryCounts[catKey] || 0) + 1;
-            specialTitleAchievements.forEach(ach => {
+
+            // Performance optimization: lazy-compute title lowercasing and skip already unlocked titles
+            let movieTitleLower = null;
+            preparedSpecialTitleAchievements.forEach(ach => {
+                if (specialTitleStatus[ach.id]) return;
+
                 // 1. Precise Match (ID)
                 const idMatch = (ach.tmdbId && movie.tmdbId == ach.tmdbId) || (ach.imdbId && movie.imdb_id == ach.imdbId);
 
                 // 2. Fallback Match (Name - Case Insensitive)
                 let nameMatch = false;
-                if (!idMatch && Array.isArray(ach.titleNames)) {
-                    const titleLower = (movie.Name || '').toLowerCase().trim().replace(/\.$/, '');
-                    nameMatch = ach.titleNames.some(target => {
-                        const targetLower = target.toLowerCase().trim().replace(/\.$/, '');
-                        return titleLower === targetLower;
-                    });
+                if (!idMatch && ach.normalizedTitleNames.length > 0) {
+                    if (movieTitleLower === null) {
+                        movieTitleLower = (movie.Name || '').toLowerCase().trim().replace(/\.$/, '');
+                    }
+                    nameMatch = ach.normalizedTitleNames.includes(movieTitleLower);
                 }
 
                 if (idMatch || nameMatch) {
@@ -138,12 +151,15 @@ function calculateAllStatistics(currentMovieData) {
         }
 
         if (isWatchedOrContinue(movie)) {
-            const overallRatingKey = (movie.overallRating && String(movie.overallRating).trim() !== '') ? String(movie.overallRating) : 'N/A';
-            if (overallRatingKey !== 'N/A') {
+            const rawOverall = (movie.overallRating && String(movie.overallRating).trim() !== '') ? String(movie.overallRating).trim() : '';
+            const overallRatingKey = rawOverall !== '' ? rawOverall : 'N/A';
+            const parsedOverallRating = rawOverall !== '' ? parseFloat(rawOverall) : null;
+
+            if (overallRatingKey !== 'N/A' && parsedOverallRating !== null && !isNaN(parsedOverallRating)) {
                 ratedTitlesCount++;
                 if (overallRatingKey === '5') fiveStarCount++;
                 const categoryKey = movie.Category || 'N/A';
-                categoryRatingsSum[categoryKey] = (categoryRatingsSum[categoryKey] || 0) + parseFloat(movie.overallRating);
+                categoryRatingsSum[categoryKey] = (categoryRatingsSum[categoryKey] || 0) + parsedOverallRating;
                 categoryRatedEntriesCount[categoryKey] = (categoryRatedEntriesCount[categoryKey] || 0) + 1;
             }
             if (movie.Recommendation === 'Highly Recommended') highlyRecCount++;
@@ -163,8 +179,8 @@ function calculateAllStatistics(currentMovieData) {
                     singleGenreCounts[g] = (singleGenreCounts[g] || 0) + 1;
                     watchedGenreCounts[g] = (watchedGenreCounts[g] || 0) + 1;
                     uniqueGenresWatched.add(g);
-                    if (overallRatingKey !== 'N/A') {
-                        genreRatingsSum[g] = (genreRatingsSum[g] || 0) + parseFloat(movie.overallRating);
+                    if (parsedOverallRating !== null && !isNaN(parsedOverallRating)) {
+                        genreRatingsSum[g] = (genreRatingsSum[g] || 0) + parsedOverallRating;
                         genreRatedEntriesCount[g] = (genreRatedEntriesCount[g] || 0) + 1;
                     }
                 });
@@ -198,8 +214,8 @@ function calculateAllStatistics(currentMovieData) {
                     const normalizedName = productionCompanyNormalizationMap[c.name] || c.name;
                     productionCompanyCounts[normalizedName] = (productionCompanyCounts[normalizedName] || 0) + 1;
                     studioWatchCounts.set(normalizedName, (studioWatchCounts.get(normalizedName) || 0) + 1);
-                    if (overallRatingKey !== 'N/A') {
-                        studioRatingsSum[normalizedName] = (studioRatingsSum[normalizedName] || 0) + parseFloat(movie.overallRating);
+                    if (parsedOverallRating !== null && !isNaN(parsedOverallRating)) {
+                        studioRatingsSum[normalizedName] = (studioRatingsSum[normalizedName] || 0) + parsedOverallRating;
                         studioRatedEntriesCount[normalizedName] = (studioRatedEntriesCount[normalizedName] || 0) + 1;
                     }
                 }
@@ -226,17 +242,15 @@ function calculateAllStatistics(currentMovieData) {
                 try {
                     const cleanDate = String(wh.date).trim();
                     const dateStr = cleanDate.slice(0, 10);
-                    const parts = dateStr.split("-").map(v => parseInt(v, 10));
-                    if (parts.length !== 3 || isNaN(parts[0]) || isNaN(parts[1]) || isNaN(parts[2])) return;
-
-                    const yearNum = parts[0];
-                    const monthNum = parts[1];
-                    const dayNum = parts[2];
+                    const yearNum = parseInt(dateStr.slice(0, 4), 10);
+                    const monthNum = parseInt(dateStr.slice(5, 7), 10);
+                    const dayNum = parseInt(dateStr.slice(8, 10), 10);
+                    if (isNaN(yearNum) || isNaN(monthNum) || isNaN(dayNum)) return;
 
                     let hoursNum = 0;
                     if (cleanDate.length >= 19 && cleanDate.includes("T")) {
-                        const timeParts = cleanDate.slice(11, 19).split(":").map(v => parseInt(v, 10));
-                        if (!isNaN(timeParts[0])) hoursNum = timeParts[0];
+                        const h = parseInt(cleanDate.slice(11, 13), 10);
+                        if (!isNaN(h)) hoursNum = h;
                     }
 
                     const d = new Date(yearNum, monthNum - 1, dayNum, hoursNum, 0, 0);
