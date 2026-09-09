@@ -111,7 +111,7 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
-test('index.html buttons have accessible aria-labels for screen readers', () => {
+test('index.html buttons and search input have accessible aria-labels for screen readers', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));
     assert.ok(html.includes('id="sortColumnDropdown"') && html.includes('aria-label="Sort by column"'));
@@ -119,4 +119,14 @@ test('index.html buttons have accessible aria-labels for screen readers', () => 
     assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
     assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
     assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
+    assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
+    assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
+    assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
+});
+
+test('js/ui.js renders card action buttons with accessible names containing entry names', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    assert.ok(uiCode.includes('aria-label="Edit ${escapeHTML(movie.Name)}"'));
+    assert.ok(uiCode.includes('aria-label="Delete ${escapeHTML(movie.Name)}"'));
+    assert.ok(uiCode.includes('aria-label="Quick update progress for ${escapeHTML(movie.Name)}"'));
 });
