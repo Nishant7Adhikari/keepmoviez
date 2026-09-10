@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/';
 
 const DB_NAME = 'KeepMovieZ_UserCacheDB_v2';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE_NAME = 'movieEntries';
 const IDB_USER_DATA_KEY = 'userMovieData';
 const CUSTOM_SYNC_THRESHOLD_KEY = 'customSyncThreshold';

@@ -1,41 +1,79 @@
 /* js/indexeddb.js */
 // START CHUNK: Open IndexedDB Database
+// Holds a single in-flight promise to prevent concurrent open races
+let _dbOpenPromise = null;
+
 async function openDatabase() {
-    return new Promise((resolve, reject) => {
-        if (!window.indexedDB) {
-            console.error("IndexedDB not supported by this browser.");
-            showToast("Browser Incompatible", "Local data storage (IndexedDB) is not supported. App may not work correctly.", "error");
-            return reject("IndexedDB not supported.");
-        }
+    if (!window.indexedDB) {
+        console.error("IndexedDB not supported by this browser.");
+        showToast("Browser Incompatible", "Local data storage (IndexedDB) is not supported. App may not work correctly.", "error");
+        throw new Error("IndexedDB not supported.");
+    }
 
-        // FIX: Reuse existing connection to prevent deadlock on reload/re-init
-        if (db) {
-            resolve(db);
-            return;
-        }
+    // Reuse an already-open, validated connection
+    if (db && db.objectStoreNames.contains(STORE_NAME)) {
+        return db;
+    }
 
+    // Coalesce concurrent calls into a single open operation
+    if (_dbOpenPromise) {
+        return _dbOpenPromise;
+    }
+
+    _dbOpenPromise = new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onupgradeneeded = (event) => {
             const tempDb = event.target.result;
             if (!tempDb.objectStoreNames.contains(STORE_NAME)) {
-                tempDb.createObjectStore(STORE_NAME); // Key-value store, key will be IDB_USER_DATA_KEY
+                tempDb.createObjectStore(STORE_NAME);
             }
             console.log("IndexedDB upgrade needed and processed.");
         };
 
+        request.onblocked = () => {
+            console.warn("IndexedDB open blocked. Close other tabs using this app.");
+        };
+
         request.onsuccess = (event) => {
-            db = event.target.result; // Assign to global 'db'
+            const openedDb = event.target.result;
+
+            // Guard: verify the store actually exists (handles corrupt/partial states)
+            if (!openedDb.objectStoreNames.contains(STORE_NAME)) {
+                console.warn("IndexedDB opened but store missing. Deleting and rebuilding DB...");
+                openedDb.close();
+                db = null;
+                _dbOpenPromise = null;
+
+                const deleteRequest = indexedDB.deleteDatabase(DB_NAME);
+                deleteRequest.onsuccess = () => {
+                    console.log("Corrupt DB deleted. Reopening fresh...");
+                    openDatabase().then(resolve).catch(reject);
+                };
+                deleteRequest.onerror = (e) => {
+                    console.error("Failed to delete corrupt DB:", e.target.error);
+                    reject(e.target.error);
+                };
+                return;
+            }
+
+            db = openedDb;
             console.log("IndexedDB opened successfully.");
             resolve(db);
         };
 
         request.onerror = (event) => {
+            _dbOpenPromise = null;
             console.error("IndexedDB error:", event.target.error);
             showToast("Local Cache Error", "Could not open local data cache. Offline features might be limited.", "error");
             reject(event.target.error);
         };
+    }).finally(() => {
+        // Clear the in-flight promise once settled (success or fail)
+        _dbOpenPromise = null;
     });
+
+    return _dbOpenPromise;
 }
 // END CHUNK: Open IndexedDB Database
 

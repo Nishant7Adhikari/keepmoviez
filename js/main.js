@@ -1347,8 +1347,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     showToast("Connection Restored", "You are back online.", "success");
     
-    // Auto-sync when connection is restored
-    if (typeof comprehensiveSync === "function" && window.currentSupabaseUser) {
+    // Auto-sync when connection is restored — but not during an active modal session
+    // (backfill, edit, etc.). The modal close will flush via releaseModalSyncHoldAndFlush.
+    if (typeof comprehensiveSync === "function" && window.currentSupabaseUser && !window.isModalSyncHold) {
       console.log("Connection restored. Triggering auto-sync...");
       comprehensiveSync(true);
     }
@@ -1370,19 +1371,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
+      // Never auto-sync on tab return while a modal is open (backfill, edit, etc.)
+      // Data is already persisted in IndexedDB; cloud sync will flush on modal close.
+      if (window.isModalSyncHold) return;
+
       const getSyncModeKeyVisibility = () => window.currentSupabaseUser ? window.currentSupabaseUser.id + "_sync_mode" : "keepmoviez_sync_mode";
       const currentSyncModeVis = localStorage.getItem(getSyncModeKeyVisibility());
       
       if (typeof currentSupabaseUser !== 'undefined' && currentSupabaseUser && currentSyncModeVis === "normal") {
           const LAST_STARTUP_SYNC_KEY = "keepmoviez_last_startup_sync";
-          const STARTUP_SYNC_COOLDOWN_MS = 12000;
+          const STARTUP_SYNC_COOLDOWN_MS = 30000; // 30s — reduce chatter on frequent tab switches
           const lastStartupSync = localStorage.getItem(LAST_STARTUP_SYNC_KEY);
           const now = Date.now();
           const timeSinceLastSync = lastStartupSync ? now - parseInt(lastStartupSync) : (STARTUP_SYNC_COOLDOWN_MS + 1);
           
           if (timeSinceLastSync >= STARTUP_SYNC_COOLDOWN_MS) {
               setTimeout(() => {
-                  if (window.isSyncingInProgress) return;
+                  // Re-check hold inside the timeout — modal may have opened in the 1s gap
+                  if (window.isSyncingInProgress || window.isModalSyncHold) return;
                   localStorage.setItem(LAST_STARTUP_SYNC_KEY, now.toString());
                   if (typeof comprehensiveSync === 'function') comprehensiveSync(true);
               }, 1000);
