@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.12"; // Version bumped to force update
+const CACHE_NAME = "keepmoviez-local-v5.6.13"; // Version bumped to force update
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -40,12 +40,12 @@ const CORE_ASSETS = [
   "./js/indexeddb.js?v=2",
   "./js/data.js?v=5.6.11",
   "./js/input-output.js?v=5.6.9",
-  "./js/tmdb.js?v=5.6.9",
+  "./js/tmdb.js?v=5.6.13",
   "./js/genre.js?v=2",
   "./js/analysis.js?v=5.6.12",
-  "./js/ui.js?v=5.6.12",
-  "./js/reporting.js?v=5.6.11",
-  "./js/app.js?v=5.6.9",
+  "./js/ui.js?v=5.6.13",
+  "./js/reporting.js?v=5.6.13",
+  "./js/app.js?v=5.6.13",
   "./js/supabase.js?v=5.6.10",
   "./js/main.js?v=5.6.9",
 
