@@ -54,7 +54,8 @@ function renderWatchHistoryUI(entryWatchHistory = []) {
       const watchId = wh.watchId || generateUUID();
       const safeWatchId = escapeHTML(watchId);
       if (!wh.watchId) wh.watchId = watchId;
-      item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date"}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${escapeHTML(wh.notes) || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${safeWatchId}" title="Edit" aria-label="Edit watch record"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${safeWatchId}" title="Delete" aria-label="Delete watch record"><i class="fas fa-trash"></i></button></div>`;
+      const watchDateFormatted = wh.date ? formatWatchDateDisplay(wh.date) : "date";
+      item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date"}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${escapeHTML(wh.notes) || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${safeWatchId}" title="Edit" aria-label="Edit watch record for ${watchDateFormatted}"><i class="fas fa-edit"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${safeWatchId}" title="Delete" aria-label="Delete watch record for ${watchDateFormatted}"><i class="fas fa-trash"></i></button></div>`;
       listEl.appendChild(item);
     });
 }
@@ -422,9 +423,9 @@ function renderNextBatch() {
                 <div class="card-footer">
                     ${lastWatchedInfo}
                     <div class="card-actions">
-                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
-                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit entry" data-movie-id="${movie.id}"><i class="fas fa-edit" aria-hidden="true"></i></button>
-                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete entry" data-movie-id="${movie.id}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress for ${escapeHTML(movie.Name)}" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
+                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit ${escapeHTML(movie.Name)}" data-movie-id="${movie.id}"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete ${escapeHTML(movie.Name)}" data-movie-id="${movie.id}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
                     </div>
                 </div>
             </div>
@@ -1477,11 +1478,11 @@ window.openUnwatchableModal = function () {
           <div class="d-flex w-100 justify-content-between align-items-center">
             <h6 class="mb-1 text-warning">${escapeHTML(entry.Name)} <small class="text-muted">(${escapeHTML(entry.Year || "N/A")})</small></h6>
             <div>
-              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${escapeHTML(entry.id)}'); });" title="Edit Entry" aria-label="Edit entry">
+              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${escapeHTML(entry.id)}'); });" title="Edit Entry" aria-label="Edit ${escapeHTML(entry.Name)}">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${escapeHTML(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete entry permanently">
-                <i class="fas fa-trash-alt"></i>
+              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${escapeHTML(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete ${escapeHTML(entry.Name)} permanently">
+                  <i class="fas fa-trash"></i>
               </button>
             </div>
           </div>
