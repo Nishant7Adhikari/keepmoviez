@@ -406,7 +406,7 @@ function renderNextBatch() {
 
     card.innerHTML = `
             <div class="card-thumbnail">
-                <img data-src="${posterUrl}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
+                <img data-src="${escapeHTML(posterUrl)}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
                 <span class="card-year-badge">${escapeHTML(movie.Year) || "N/A"}</span>
             </div>
             <div class="card-content">
@@ -1211,7 +1211,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
       .find("#detailsCastCrewContent")
       .html("")
       .append(
-        `<p><strong>Director:</strong> <span id="detailsDirector" class="person-link">${director ? escapeHTML(director.name) : "N/A"}</span></p>
+        `<p><strong>Director:</strong> ${director ? `<a href="#" class="person-link" data-person-id="${escapeHTML(director.id)}" data-person-name="${escapeHTML(director.name)}">${escapeHTML(director.name)}</a>` : "N/A"}</p>
              <h6>Main Cast</h6><div id="detailsCastList" class="row person-list"></div>`,
       );
     if (cast.length > 0)
