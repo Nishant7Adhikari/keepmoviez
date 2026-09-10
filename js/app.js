@@ -477,19 +477,42 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
       const seasons = parseInt(formFieldsGlob.runtimeSeriesSeasons.value, 10);
       const episodes = parseInt(formFieldsGlob.runtimeSeriesEpisodes.value, 10);
       const avgEp = parseInt(formFieldsGlob.runtimeSeriesAvgEp.value, 10);
-      if (!isNaN(seasons) || !isNaN(episodes) || !isNaN(avgEp)) {
-        entry.runtime = {
-          seasons: !isNaN(seasons) ? seasons : null,
-          episodes: !isNaN(episodes) ? episodes : null,
-          episode_run_time: !isNaN(avgEp) ? avgEp : null,
-        };
-      }
+      let epCounts = [];
       if (typeof window.getSeasonEpisodesCountsFromUI === "function") {
-        const epCounts = window.getSeasonEpisodesCountsFromUI();
-        if (epCounts && epCounts.length > 0) {
-          entry.episodesPerSeason = epCounts;
-          entry.episodes_per_season = epCounts;
-        }
+        epCounts = window.getSeasonEpisodesCountsFromUI();
+      }
+      const existingRuntime =
+        typeof entry.runtime === "object" && entry.runtime !== null
+          ? entry.runtime
+          : {};
+      const finalSeasons = !isNaN(seasons)
+        ? seasons
+        : epCounts.length > 0
+          ? epCounts.length
+          : existingRuntime.seasons || null;
+      const finalEpisodes = !isNaN(episodes)
+        ? episodes
+        : epCounts.length > 0
+          ? epCounts.reduce((a, b) => a + b, 0)
+          : existingRuntime.episodes || null;
+      const finalAvgEp = !isNaN(avgEp)
+        ? avgEp
+        : existingRuntime.episode_run_time || null;
+
+      entry.runtime = {
+        ...existingRuntime,
+        seasons: finalSeasons,
+        episodes: finalEpisodes,
+        episode_run_time: finalAvgEp,
+      };
+
+      if (epCounts && epCounts.length > 0) {
+        entry.runtime.episodes_per_season = epCounts;
+        entry.episodesPerSeason = epCounts;
+        entry.episodes_per_season = epCounts;
+      } else if (existingRuntime.episodes_per_season) {
+        entry.episodesPerSeason = existingRuntime.episodes_per_season;
+        entry.episodes_per_season = existingRuntime.episodes_per_season;
       }
     } else {
       const runtime = parseInt(formFieldsGlob.runtimeMovie.value, 10);

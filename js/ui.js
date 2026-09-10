@@ -761,46 +761,121 @@ window.prepareAddModal = function (showModal = true) {
   }
 };
 
-window.renderSeasonBreakdownCards = function (totalSeasons = 1, existingCounts = []) {
-  const container = document.getElementById("seasonBreakdownContainer");
+window.renderSeasonBreakdownCards = function (
+  totalSeasons = 1,
+  existingCounts = [],
+  containerId = "seasonBreakdownContainer",
+  badgeId = "calcTotalEpsBadge"
+) {
+  const container = document.getElementById(containerId);
   if (!container) return;
 
   const count = Math.max(1, parseInt(totalSeasons, 10) || 1);
   let html = "";
 
+  // Quick-action bar for speed and fast-forwarding
+  html += `
+    <div class="season-quick-bar">
+      <div class="sqb-presets">
+        <span class="small font-weight-bold text-muted mr-1"><i class="fas fa-bolt text-warning"></i> Fast-Fill:</span>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="10">All 10</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="8">All 8</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="12">All 12</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="6">All 6</button>
+      </div>
+      <div class="sqb-actions">
+        <div class="season-paste-group">
+          <input type="text" class="form-control form-control-sm season-quick-paste-input" placeholder="e.g. 10, 10, 8" title="Type comma-separated episode counts and press Enter or click Apply" data-container="${containerId}" data-badge="${badgeId}">
+          <button type="button" class="btn btn-sm btn-primary season-apply-paste-btn" data-container="${containerId}" data-badge="${badgeId}" title="Apply pasted values"><i class="fas fa-check"></i></button>
+        </div>
+        <div class="season-add-remove-group">
+          <button type="button" class="btn btn-sm btn-outline-primary season-add-btn" data-container="${containerId}" data-badge="${badgeId}" title="Add Season"><i class="fas fa-plus"></i> Season</button>
+          <button type="button" class="btn btn-sm btn-outline-danger season-remove-btn" data-container="${containerId}" data-badge="${badgeId}" title="Remove Last Season"><i class="fas fa-minus"></i></button>
+        </div>
+      </div>
+    </div>
+    <div class="season-cards-list">
+  `;
+
   for (let s = 1; s <= count; s++) {
     const val = existingCounts[s - 1] != null ? parseInt(existingCounts[s - 1], 10) : 10;
     html += `
-      <div class="d-flex align-items-center justify-content-between p-2 mb-1 bg-white rounded shadow-sm border season-breakdown-card">
-        <span class="font-weight-600 text-dark small"><i class="fas fa-tv text-muted mr-2"></i>Season ${s}</span>
-        <div class="input-group input-group-sm" style="width: 130px;">
-          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${val || 10}" min="1">
+      <div class="d-flex align-items-center justify-content-between season-breakdown-card" data-season="${s}">
+        <span class="font-weight-600 season-label small"><i class="fas fa-tv text-primary mr-2"></i>S${s}</span>
+        <div class="input-group input-group-sm" style="width: 150px;">
+          <div class="input-group-prepend">
+            <button type="button" class="btn btn-outline-secondary season-step-down season-stepper-btn" data-season="${s}" title="Decrease">−</button>
+          </div>
+          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${isNaN(val) ? 10 : val}" min="1" max="200">
           <div class="input-group-append">
-            <span class="input-group-text bg-light text-muted small py-0 px-2">eps</span>
+            <button type="button" class="btn btn-outline-secondary season-step-up season-stepper-btn" data-season="${s}" title="Increase">+</button>
+            <span class="input-group-text text-muted small py-0 px-2 eps-label">ep</span>
           </div>
         </div>
       </div>
     `;
   }
 
+  html += `</div>`;
   container.innerHTML = html;
-  window.updateTotalEpisodesBadge();
+  window.updateTotalEpisodesBadge(containerId, badgeId);
 };
 
-window.updateTotalEpisodesBadge = function () {
+window.updateTotalEpisodesBadge = function (
+  containerId = "seasonBreakdownContainer",
+  badgeId = "calcTotalEpsBadge"
+) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
   let total = 0;
-  $(".season-ep-count").each(function () {
-    total += parseInt($(this).val(), 10) || 0;
-  });
-  $("#calcTotalEpsBadge").text(`${total} eps`);
+  $(container)
+    .find(".season-ep-count")
+    .each(function () {
+      total += parseInt($(this).val(), 10) || 0;
+    });
+
+  const badge = document.getElementById(badgeId);
+  if (badge) {
+    badge.textContent = `${total} eps`;
+  }
+
+  if (containerId === "seasonBreakdownContainer") {
+    const totalEpInput = document.getElementById("runtimeSeriesEpisodes");
+    if (totalEpInput) {
+      totalEpInput.value = total;
+    }
+  }
 };
 
-window.getSeasonEpisodesCountsFromUI = function () {
+window.getSeasonEpisodesCountsFromUI = function (
+  containerId = "seasonBreakdownContainer"
+) {
+  const container = document.getElementById(containerId);
+  if (!container) return [];
   const counts = [];
-  $(".season-ep-count").each(function () {
-    counts.push(parseInt($(this).val(), 10) || 10);
-  });
+  $(container)
+    .find(".season-ep-count")
+    .each(function () {
+      counts.push(parseInt($(this).val(), 10) || 10);
+    });
   return counts;
+};
+
+/**
+ * Apply pasted season episode counts. Shared by Enter key and Apply button.
+ */
+window._applySeasonPaste = function (raw, containerId, badgeId) {
+  if (!raw || !raw.trim()) return;
+  const nums = raw.match(/\d+/g);
+  if (!nums || nums.length === 0) return;
+  const counts = nums.map((n) => parseInt(n, 10)).filter((n) => n > 0);
+  if (counts.length > 0 && typeof window.renderSeasonBreakdownCards === "function") {
+    window.renderSeasonBreakdownCards(counts.length, counts, containerId, badgeId);
+    if (containerId === "seasonBreakdownContainer" && typeof formFieldsGlob !== "undefined" && formFieldsGlob.runtimeSeriesSeasons) {
+      formFieldsGlob.runtimeSeriesSeasons.value = counts.length;
+    }
+  }
 };
 
 window.prepareEditModal = function (id, showModal = true) {
@@ -838,8 +913,20 @@ window.prepareEditModal = function (id, showModal = true) {
   if (formFieldsGlob.currentEpisode) formFieldsGlob.currentEpisode.value = epVal !== "" ? epVal : "";
   if (typeof updateEditSeriesPreview === "function") updateEditSeriesPreview();
 
-  const seasonCount = parseInt(seasonVal, 10) || 1;
-  const existingCounts = movie.episodesPerSeason || movie.episodes_per_season || [];
+  const existingCounts =
+    (movie.runtime && Array.isArray(movie.runtime.episodes_per_season) && movie.runtime.episodes_per_season.length > 0)
+      ? movie.runtime.episodes_per_season
+      : (Array.isArray(movie.episodesPerSeason) && movie.episodesPerSeason.length > 0)
+        ? movie.episodesPerSeason
+        : (Array.isArray(movie.episodes_per_season) && movie.episodes_per_season.length > 0)
+          ? movie.episodes_per_season
+          : [];
+
+  const runtimeSeasons = movie.runtime && typeof movie.runtime === "object" ? parseInt(movie.runtime.seasons, 10) : null;
+  const seasonCount = (runtimeSeasons && !isNaN(runtimeSeasons) && runtimeSeasons > 0)
+    ? runtimeSeasons
+    : (existingCounts.length > 0 ? existingCounts.length : (parseInt(seasonVal, 10) || 1));
+
   window.renderSeasonBreakdownCards(seasonCount, existingCounts);
 
   formFieldsGlob.year.value = movie.Year || "";
@@ -2123,17 +2210,96 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  $(document).on("input change", ".season-ep-count", function () {
-    if (typeof window.updateTotalEpisodesBadge === "function") {
-      window.updateTotalEpisodesBadge();
+  // Stepper buttons on season cards
+  $(document).on("click", ".season-step-down", function () {
+    const input = $(this).closest(".input-group").find(".season-ep-count");
+    const currentVal = parseInt(input.val(), 10) || 1;
+    if (currentVal > 1) {
+      input.val(currentVal - 1).trigger("input").trigger("change");
     }
   });
 
-  $(document).on("input change", "#currentSeason", function () {
+  $(document).on("click", ".season-step-up", function () {
+    const input = $(this).closest(".input-group").find(".season-ep-count");
+    const currentVal = parseInt(input.val(), 10) || 0;
+    input.val(currentVal + 1).trigger("input").trigger("change");
+  });
+
+  // Quick Presets ("All 10", "All 8", etc.)
+  $(document).on("click", ".btn-quick-preset", function () {
+    const val = parseInt($(this).data("val"), 10) || 10;
+    const containerId = $(this).data("container") || "seasonBreakdownContainer";
+    const badgeId = $(this).data("badge") || "calcTotalEpsBadge";
+    $(`#${containerId}`).find(".season-ep-count").val(val).trigger("change");
+    if (typeof window.updateTotalEpisodesBadge === "function") {
+      window.updateTotalEpisodesBadge(containerId, badgeId);
+    }
+  });
+
+  // Quick Paste input — only apply on Enter key (not every keystroke)
+  $(document).on("keydown", ".season-quick-paste-input", function (e) {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const containerId = $(this).data("container") || "seasonBreakdownContainer";
+    const badgeId = $(this).data("badge") || "calcTotalEpsBadge";
+    window._applySeasonPaste($(this).val(), containerId, badgeId);
+    $(this).val(""); // clear after applying
+  });
+
+  // Apply Paste button click
+  $(document).on("click", ".season-apply-paste-btn", function () {
+    const containerId = $(this).data("container") || "seasonBreakdownContainer";
+    const badgeId = $(this).data("badge") || "calcTotalEpsBadge";
+    const pasteInput = $(this).closest(".season-paste-group").find(".season-quick-paste-input");
+    window._applySeasonPaste(pasteInput.val(), containerId, badgeId);
+    pasteInput.val(""); // clear after applying
+  });
+
+  // Add Season button
+  $(document).on("click", ".season-add-btn", function () {
+    const containerId = $(this).data("container") || "seasonBreakdownContainer";
+    const badgeId = $(this).data("badge") || "calcTotalEpsBadge";
+    const existing = typeof window.getSeasonEpisodesCountsFromUI === "function" ? window.getSeasonEpisodesCountsFromUI(containerId) : [];
+    existing.push(10);
+    if (typeof window.renderSeasonBreakdownCards === "function") {
+      window.renderSeasonBreakdownCards(existing.length, existing, containerId, badgeId);
+      if (containerId === "seasonBreakdownContainer" && formFieldsGlob.runtimeSeriesSeasons) {
+        formFieldsGlob.runtimeSeriesSeasons.value = existing.length;
+      }
+    }
+  });
+
+  // Remove Season button
+  $(document).on("click", ".season-remove-btn", function () {
+    const containerId = $(this).data("container") || "seasonBreakdownContainer";
+    const badgeId = $(this).data("badge") || "calcTotalEpsBadge";
+    const existing = typeof window.getSeasonEpisodesCountsFromUI === "function" ? window.getSeasonEpisodesCountsFromUI(containerId) : [];
+    if (existing.length > 1) {
+      existing.pop();
+      if (typeof window.renderSeasonBreakdownCards === "function") {
+        window.renderSeasonBreakdownCards(existing.length, existing, containerId, badgeId);
+        if (containerId === "seasonBreakdownContainer" && formFieldsGlob.runtimeSeriesSeasons) {
+          formFieldsGlob.runtimeSeriesSeasons.value = existing.length;
+        }
+      }
+    }
+  });
+
+  $(document).on("input change", ".season-ep-count", function () {
+    const container = $(this).closest("#seasonBreakdownContainer, #backfillSeasonBreakdownContainer")[0];
+    const containerId = container ? container.id : "seasonBreakdownContainer";
+    const badgeId = containerId === "backfillSeasonBreakdownContainer" ? "backfillCalcTotalEpsBadge" : "calcTotalEpsBadge";
+    if (typeof window.updateTotalEpisodesBadge === "function") {
+      window.updateTotalEpisodesBadge(containerId, badgeId);
+    }
+  });
+
+  // Re-render season cards when Total Seasons field is updated in Edit Modal
+  $(document).on("input change", "#runtimeSeriesSeasons", function () {
     const sCount = parseInt($(this).val(), 10) || 1;
     if (typeof window.renderSeasonBreakdownCards === "function") {
-      const existing = typeof window.getSeasonEpisodesCountsFromUI === "function" ? window.getSeasonEpisodesCountsFromUI() : [];
-      window.renderSeasonBreakdownCards(sCount, existing);
+      const existing = typeof window.getSeasonEpisodesCountsFromUI === "function" ? window.getSeasonEpisodesCountsFromUI("seasonBreakdownContainer") : [];
+      window.renderSeasonBreakdownCards(sCount, existing, "seasonBreakdownContainer", "calcTotalEpsBadge");
     }
   });
 

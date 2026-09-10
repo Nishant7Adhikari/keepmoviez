@@ -20,8 +20,17 @@ const BACKFILL_FIELDS = [
     priority: 10,
     helperText: (entry) =>
       entry.Category === "Series"
-        ? "Enter average episode runtime"
+        ? "Enter average episode runtime in minutes"
         : "Enter total runtime in minutes",
+  },
+  {
+    key: "episodes_per_season",
+    label: "Episodes Per Season",
+    inputType: "season-episodes",
+    priority: 9,
+    onlyFor: ["Series"],
+    helperText:
+      'Tip: Use "Auto-Fetch" to load season counts from TMDB instantly, or use Fast-Fill presets/paste.',
   },
   {
     key: "currentSeason",
@@ -83,13 +92,26 @@ const BACKFILL_FIELDS = [
   },
   {
     key: "director_info",
-    label: "Director Info",
-    inputType: "text",
-    placeholder: "Enter Director Name...",
-    priority: 3,
+    label: "Director(s) / Creator(s)",
+    inputType: "director-chips",
+    priority: 4,
     saveFormat: "tmdb-json",
     helperText:
-      '💡 Tip: Using "Auto-Fetch" will automatically get the Director\'s ID and Profile Photo from TMDB!',
+      '💡 Tip: Supports multiple directors/creators. "Auto-Fetch" pulls photos and names from TMDB in 1 click!',
+  },
+  {
+    key: "Description",
+    label: "Description / Overview",
+    inputType: "textarea",
+    placeholder: "Enter plot overview or synopsis...",
+    priority: 3,
+  },
+  {
+    key: "Poster URL",
+    label: "Poster URL",
+    inputType: "poster-preview",
+    placeholder: "https://...",
+    priority: 3,
   },
   {
     key: "imdb_id",
@@ -474,6 +496,100 @@ function renderBackfillCard() {
     }
   }
 
+  // Initialize season-episodes breakdown
+  if (current.fieldConfig.inputType === "season-episodes") {
+    const existingCounts =
+      entry.runtime &&
+      Array.isArray(entry.runtime.episodes_per_season) &&
+      entry.runtime.episodes_per_season.length > 0
+        ? entry.runtime.episodes_per_season
+        : Array.isArray(entry.episodesPerSeason) &&
+            entry.episodesPerSeason.length > 0
+          ? entry.episodesPerSeason
+          : Array.isArray(entry.episodes_per_season) &&
+              entry.episodes_per_season.length > 0
+            ? entry.episodes_per_season
+            : [];
+    const sCount =
+      entry.runtime?.seasons ||
+      (existingCounts.length > 0
+        ? existingCounts.length
+        : parseInt(entry.currentSeason, 10) || 1);
+    if (typeof window.renderSeasonBreakdownCards === "function") {
+      window.renderSeasonBreakdownCards(
+        sCount,
+        existingCounts,
+        "backfillSeasonBreakdownContainer",
+        "backfillCalcTotalEpsBadge",
+      );
+    }
+    const hiddenInput = document.getElementById("backfillInput");
+    if (
+      hiddenInput &&
+      typeof window.getSeasonEpisodesCountsFromUI === "function"
+    ) {
+      hiddenInput.value = JSON.stringify(
+        window.getSeasonEpisodesCountsFromUI(
+          "backfillSeasonBreakdownContainer",
+        ),
+      );
+    }
+  }
+
+  // Initialize director chips
+  if (current.fieldConfig.inputType === "director-chips") {
+    window.backfillSelectedDirectors = [];
+    if (entry.director_info) {
+      if (Array.isArray(entry.director_info)) {
+        window.backfillSelectedDirectors = [...entry.director_info];
+      } else if (
+        typeof entry.director_info === "object" &&
+        entry.director_info.name
+      ) {
+        if (Array.isArray(entry.director_info.directors)) {
+          window.backfillSelectedDirectors = [
+            ...entry.director_info.directors,
+          ];
+        } else {
+          window.backfillSelectedDirectors = [entry.director_info];
+        }
+      } else if (
+        typeof entry.director_info === "string" &&
+        entry.director_info.trim()
+      ) {
+        window.backfillSelectedDirectors = entry.director_info
+          .split(",")
+          .map((n) => ({
+            id: null,
+            name: n.trim(),
+            profile_path: null,
+            job: "Director",
+          }));
+      }
+    }
+    renderBackfillDirectorChips();
+  }
+
+  // Initialize poster preview
+  if (current.fieldConfig.inputType === "poster-preview") {
+    const val = entry["Poster URL"] || "";
+    const inputEl = document.getElementById("backfillInput");
+    if (inputEl) inputEl.value = val;
+    const img = document.getElementById("backfillPosterImg");
+    const wrap = document.getElementById("backfillPosterImgWrap");
+    if (img && wrap && val) {
+      img.src = val;
+      wrap.style.display = "block";
+    }
+  }
+
+  // Initialize textarea
+  if (current.fieldConfig.inputType === "textarea") {
+    const val = entry[current.fieldKey] || "";
+    const inputEl = document.getElementById("backfillInput");
+    if (inputEl && val) inputEl.value = val;
+  }
+
   // Show/hide helper text
   const helperTextEl = document.getElementById("backfillHelperText");
   if (current.fieldConfig.helperText) {
@@ -503,6 +619,21 @@ function isFieldMissing(entry, fieldKey) {
   const value = entry[fieldKey];
 
   // Handle special cases for different field types
+  if (fieldKey === "episodes_per_season") {
+    if (entry.Category !== "Series") return false;
+    const fromRuntime =
+      entry.runtime &&
+      typeof entry.runtime === "object" &&
+      Array.isArray(entry.runtime.episodes_per_season) &&
+      entry.runtime.episodes_per_season.length > 0;
+    const fromTopLevel =
+      (Array.isArray(entry.episodesPerSeason) &&
+        entry.episodesPerSeason.length > 0) ||
+      (Array.isArray(entry.episodes_per_season) &&
+        entry.episodes_per_season.length > 0);
+    return !fromRuntime && !fromTopLevel;
+  }
+
   if (fieldKey === "runtime") {
     if (!value) return true;
     if (entry.Category === "Series") {
@@ -536,8 +667,18 @@ function isFieldMissing(entry, fieldKey) {
   }
 
   if (fieldKey === "director_info") {
-    // Director info is an object
-    return !value || !value.name;
+    if (!value) return true;
+    if (typeof value === "string") return value.trim().length === 0;
+    if (Array.isArray(value)) return value.length === 0;
+    return !value.name || String(value.name).trim().length === 0;
+  }
+
+  if (fieldKey === "Description") {
+    return !value || String(value).trim().length === 0;
+  }
+
+  if (fieldKey === "Poster URL") {
+    return !value || String(value).trim().length === 0;
   }
 
   // Default: check for null, undefined, or empty string
@@ -612,6 +753,57 @@ function renderFieldInput(fieldConfig, entry) {
                 <input type="hidden" id="backfillInput">
             `;
 
+    case "season-episodes":
+      return `
+        <div id="backfillSeasonBreakdownWrapper">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="small font-weight-bold text-muted"><i class="fas fa-list-ol text-primary mr-1"></i> Per-Season Episodes</span>
+            <span id="backfillCalcTotalEpsBadge" class="badge badge-primary font-weight-bold px-2 py-1">0 eps</span>
+          </div>
+          <div id="backfillSeasonBreakdownContainer" class="p-2 rounded border bg-light" style="max-height: 240px; overflow-y: auto;">
+          </div>
+          <input type="hidden" id="backfillInput">
+        </div>
+      `;
+
+    case "director-chips":
+      return `
+        <div class="mb-2">
+          <div id="backfillDirectorChips" class="director-chips-container" tabindex="0">
+            <input type="text" id="backfillDirectorInput" class="director-chip-input" placeholder="Type director name and press Enter...">
+          </div>
+          <small class="form-text text-muted mt-1">Type name &amp; press Enter to add. Use "Auto-Fetch" for 1-click TMDB lookup.</small>
+          <input type="hidden" id="backfillInput">
+        </div>
+      `;
+
+    case "textarea":
+      return `
+        <textarea 
+          class="form-control form-control-lg" 
+          id="backfillInput" 
+          rows="4" 
+          placeholder="${placeholder || ""}"
+        ></textarea>
+      `;
+
+    case "poster-preview":
+      return `
+        <div>
+          <input 
+            type="text" 
+            class="form-control form-control-lg mb-2" 
+            id="backfillInput" 
+            placeholder="${placeholder || "https://..."}"
+            autocomplete="off"
+            oninput="const img = document.getElementById('backfillPosterImg'); const wrap = document.getElementById('backfillPosterImgWrap'); if (img && wrap) { img.src = this.value; wrap.style.display = this.value ? 'block' : 'none'; }"
+          >
+          <div id="backfillPosterImgWrap" class="text-center p-2 border rounded bg-light" style="display: none;">
+            <img id="backfillPosterImg" src="" alt="Poster preview" style="max-height: 180px; max-width: 100%; border-radius: 6px;" onerror="this.parentElement.style.display='none';">
+          </div>
+        </div>
+      `;
+
     default:
       return `<input type="text" class="form-control form-control-lg" id="backfillInput">`;
   }
@@ -645,8 +837,16 @@ async function saveAndNext() {
   // Get value based on input type
   let value = null;
   if (current.fieldConfig.inputType === "multi-genre") {
-    // Genre is handled separately
     value = window.backfillSelectedGenres || [];
+  } else if (current.fieldConfig.inputType === "season-episodes") {
+    value =
+      typeof window.getSeasonEpisodesCountsFromUI === "function"
+        ? window.getSeasonEpisodesCountsFromUI(
+            "backfillSeasonBreakdownContainer",
+          )
+        : [];
+  } else if (current.fieldConfig.inputType === "director-chips") {
+    value = window.backfillSelectedDirectors || [];
   } else {
     const inputEl = document.getElementById("backfillInput");
     value = inputEl ? inputEl.value.trim() : "";
@@ -676,6 +876,30 @@ async function saveAndNext() {
 
     // Update entry
     movieData[entryIndex][current.fieldKey] = finalValue;
+
+    // Special handling for episodes_per_season
+    if (current.fieldKey === "episodes_per_season") {
+      movieData[entryIndex].episodesPerSeason = finalValue;
+      movieData[entryIndex].episodes_per_season = finalValue;
+      const existingRuntime =
+        typeof movieData[entryIndex].runtime === "object" &&
+        movieData[entryIndex].runtime !== null
+          ? { ...movieData[entryIndex].runtime }
+          : {};
+      existingRuntime.episodes_per_season = finalValue;
+      if (!existingRuntime.seasons && finalValue.length > 0) {
+        existingRuntime.seasons = finalValue.length;
+      }
+      if (!existingRuntime.episodes && finalValue.length > 0) {
+        existingRuntime.episodes = finalValue.reduce((a, b) => a + b, 0);
+      }
+      movieData[entryIndex].runtime = existingRuntime;
+    }
+
+    if (current.fieldKey === "Poster URL") {
+      movieData[entryIndex]["Poster URL"] = finalValue;
+    }
+
     movieData[entryIndex].lastModifiedDate = new Date().toISOString();
     if (movieData[entryIndex]._sync_state !== "new") {
       movieData[entryIndex]._sync_state = "edited";
@@ -723,35 +947,87 @@ function transformFieldValue(fieldKey, value, fieldConfig, entry) {
       // Normalize country codes
       return normalizeCountryCode(value);
 
+    case "episodes_per_season": {
+      if (Array.isArray(value)) {
+        return value
+          .map((n) => parseInt(n, 10))
+          .filter((n) => !isNaN(n) && n > 0);
+      }
+      if (typeof value === "string") {
+        const nums = value.match(/\d+/g);
+        return nums ? nums.map((n) => parseInt(n, 10)).filter((n) => n > 0) : [];
+      }
+      return [];
+    }
+
     case "runtime":
       // For series, save as object
       if (entry.Category === "Series") {
+        const existingRuntime =
+          typeof entry.runtime === "object" && entry.runtime !== null
+            ? { ...entry.runtime }
+            : {};
         return {
-          seasons: entry.runtime?.seasons || null,
-          episodes: entry.runtime?.episodes || null,
-          episode_run_time: parseInt(value),
+          ...existingRuntime,
+          seasons: existingRuntime.seasons || null,
+          episodes: existingRuntime.episodes || null,
+          episode_run_time: parseInt(value, 10),
         };
       }
-      return parseInt(value);
+      return parseInt(value, 10);
 
     case "Year":
     case "currentSeason":
     case "currentEpisode":
     case "seasonsCompleted":
     case "currentSeasonEpisodesWatched":
-      return parseInt(value);
+      return parseInt(value, 10);
 
-    case "director_info":
-      // Save as TMDB format
-      if (fieldConfig.saveFormat === "tmdb-json") {
+    case "director_info": {
+      if (Array.isArray(value)) {
+        if (value.length === 0) return null;
+        const primary = value[0];
+        const allNames = value
+          .map((d) => (typeof d === "object" && d ? d.name : String(d)))
+          .filter(Boolean)
+          .join(", ");
         return {
-          id: null, // We don't have ID from manual input
-          name: value,
+          id: primary.id || null,
+          name: allNames || primary.name,
+          profile_path: primary.profile_path || null,
+          job: primary.job || "Director",
+          directors: value,
+        };
+      }
+      if (typeof value === "object" && value !== null) {
+        return value;
+      }
+      if (typeof value === "string" && value.trim()) {
+        const names = value.split(",").map((s) => s.trim()).filter(Boolean);
+        if (names.length > 1) {
+          const list = names.map((n) => ({
+            id: null,
+            name: n,
+            profile_path: null,
+            job: "Director",
+          }));
+          return {
+            id: null,
+            name: names.join(", "),
+            profile_path: null,
+            job: "Director",
+            directors: list,
+          };
+        }
+        return {
+          id: null,
+          name: value.trim(),
           profile_path: null,
           job: "Director",
         };
       }
-      return value;
+      return null;
+    }
 
     case "Genre":
       // Store in same format as add/edit flow: comma-separated string.
@@ -918,14 +1194,54 @@ function extractFieldFromTmdb(fieldKey, detailData, mediaType) {
         ? detailData.release_date
         : detailData.first_air_date;
 
-    case "director_info":
-      if (detailData.credits?.crew) {
-        const director = detailData.credits.crew.find(
-          (c) => c.job === "Director",
-        );
-        return director ? director.name : null;
+    case "episodes_per_season":
+      if (Array.isArray(detailData.seasons)) {
+        return detailData.seasons
+          .filter((s) => s.season_number > 0)
+          .sort((a, b) => a.season_number - b.season_number)
+          .map((s) => s.episode_count || 0);
       }
       return null;
+
+    case "director_info": {
+      const directors = [];
+      if (detailData.credits?.crew) {
+        const crewDirs = detailData.credits.crew.filter(
+          (c) => c.job === "Director",
+        );
+        crewDirs.forEach((d) => {
+          if (d && d.name && !directors.some((x) => x.name === d.name)) {
+            directors.push({
+              id: d.id || null,
+              name: d.name,
+              profile_path: d.profile_path || null,
+              job: d.job || "Director",
+            });
+          }
+        });
+      }
+      if (mediaType === "tv" && Array.isArray(detailData.created_by)) {
+        detailData.created_by.forEach((c) => {
+          if (c && c.name && !directors.some((x) => x.name === c.name)) {
+            directors.push({
+              id: c.id || null,
+              name: c.name,
+              profile_path: c.profile_path || null,
+              job: "Creator",
+            });
+          }
+        });
+      }
+      return directors.length > 0 ? directors : null;
+    }
+
+    case "Description":
+      return detailData.overview || null;
+
+    case "Poster URL":
+      return detailData.poster_path
+        ? `https://image.tmdb.org/t/p/w500${detailData.poster_path}`
+        : null;
 
     case "imdb_id":
       return detailData.external_ids?.imdb_id || null;
@@ -950,6 +1266,42 @@ function populateInputWithValue(fieldConfig, value) {
     document.getElementById("backfillInput").value = JSON.stringify(
       window.backfillSelectedGenres,
     );
+    return;
+  }
+
+  if (fieldConfig.inputType === "season-episodes" && Array.isArray(value)) {
+    if (typeof window.renderSeasonBreakdownCards === "function") {
+      window.renderSeasonBreakdownCards(
+        value.length,
+        value,
+        "backfillSeasonBreakdownContainer",
+        "backfillCalcTotalEpsBadge",
+      );
+    }
+    const hiddenInput = document.getElementById("backfillInput");
+    if (hiddenInput) {
+      hiddenInput.value = JSON.stringify(value);
+    }
+    return;
+  }
+
+  if (fieldConfig.inputType === "director-chips" && Array.isArray(value)) {
+    window.backfillSelectedDirectors = value;
+    renderBackfillDirectorChips();
+    return;
+  }
+
+  if (fieldConfig.inputType === "poster-preview") {
+    const inputEl = document.getElementById("backfillInput");
+    if (inputEl) {
+      inputEl.value = value;
+      const img = document.getElementById("backfillPosterImg");
+      const wrap = document.getElementById("backfillPosterImgWrap");
+      if (img && wrap) {
+        img.src = value;
+        wrap.style.display = value ? "block" : "none";
+      }
+    }
     return;
   }
 
@@ -995,5 +1347,80 @@ function showBackfillComplete() {
  * Genre backfill helpers
  */
 window.backfillSelectedGenres = [];
+
+/**
+ * Director chips backfill helpers
+ */
+window.backfillSelectedDirectors = [];
+
+function renderBackfillDirectorChips() {
+  if (typeof document === "undefined") return;
+  const container = document.getElementById("backfillDirectorChips");
+  if (!container) return;
+  const directors = window.backfillSelectedDirectors || [];
+
+  let chipsHtml = "";
+  directors.forEach((dir, idx) => {
+    const avatar =
+      dir && dir.profile_path
+        ? dir.profile_path.startsWith("http")
+          ? dir.profile_path
+          : `https://image.tmdb.org/t/p/w185${dir.profile_path}`
+        : null;
+    const name = typeof dir === "object" && dir ? dir.name : String(dir);
+    chipsHtml += `
+      <span class="director-chip" data-index="${idx}">
+        ${avatar ? `<img src="${typeof escapeHTML === "function" ? escapeHTML(avatar) : avatar}" alt="${typeof escapeHTML === "function" ? escapeHTML(name) : name}" onerror="this.style.display='none'">` : `<i class="fas fa-user text-muted mr-1" style="font-size: 0.75rem;"></i>`}
+        <span>${typeof escapeHTML === "function" ? escapeHTML(name) : name}</span>
+        <span class="chip-remove" onclick="removeBackfillDirector(${idx})" title="Remove">&times;</span>
+      </span>
+    `;
+  });
+
+  chipsHtml += `<input type="text" id="backfillDirectorInput" class="director-chip-input" placeholder="${directors.length === 0 ? "Type director name and press Enter..." : "+ Add another..."}">`;
+  container.innerHTML = chipsHtml;
+
+  const hiddenInput = document.getElementById("backfillInput");
+  if (hiddenInput) {
+    hiddenInput.value = JSON.stringify(directors);
+  }
+
+  const inputEl = document.getElementById("backfillDirectorInput");
+  if (inputEl) {
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const val = inputEl.value.trim();
+        if (val) {
+          window.backfillSelectedDirectors.push({
+            id: null,
+            name: val,
+            profile_path: null,
+            job: "Director",
+          });
+          renderBackfillDirectorChips();
+          setTimeout(() => {
+            const nextInput = document.getElementById(
+              "backfillDirectorInput",
+            );
+            if (nextInput) nextInput.focus();
+          }, 50);
+        }
+      }
+    });
+  }
+}
+
+function removeBackfillDirector(index) {
+  if (
+    window.backfillSelectedDirectors &&
+    window.backfillSelectedDirectors[index]
+  ) {
+    window.backfillSelectedDirectors.splice(index, 1);
+    renderBackfillDirectorChips();
+  }
+}
+window.removeBackfillDirector = removeBackfillDirector;
+window.renderBackfillDirectorChips = renderBackfillDirectorChips;
 
 console.log("✅ Backfill UI loaded!");

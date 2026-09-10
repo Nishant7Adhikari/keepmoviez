@@ -3655,3 +3655,353 @@ body,
 [style*="scrollbar-width: none"] {
   scrollbar-width: none !important;
 }
+
+/* Prevent light blasting in dark theme — use true dark surfaces, not bg-light */
+.dark-theme .bg-light,
+.dark-theme #editPosterPreviewContainer,
+.dark-theme #seasonBreakdownContainer,
+.dark-theme #backfillSeasonBreakdownContainer,
+.dark-theme #backfillPosterImgWrap {
+  background-color: #1c1c1e !important;
+  border-color: #333336 !important;
+  color: #e0e0e0 !important;
+}
+
+/* Season Breakdown & Backfill Enhancements */
+.season-breakdown-card {
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 6px;
+}
+.season-breakdown-card:hover {
+  border-color: var(--primary-color, #007b8a);
+  box-shadow: 0 1px 4px rgba(0, 123, 138, 0.08);
+}
+.dark-theme .season-breakdown-card {
+  background-color: #252528 !important;
+  border-color: #3a3a3d !important;
+  color: #f0f0f0 !important;
+}
+.dark-theme .season-breakdown-card:hover {
+  border-color: var(--primary-color, #007b8a) !important;
+  box-shadow: 0 1px 6px rgba(0, 123, 138, 0.15) !important;
+}
+.dark-theme .season-breakdown-card .season-label {
+  color: #e2e2e2 !important;
+}
+.dark-theme .season-ep-count {
+  background-color: #1c1c1e !important;
+  border-color: #3a3a3d !important;
+  color: #ffffff !important;
+}
+.dark-theme .season-stepper-btn {
+  background-color: #2c2c2f !important;
+  border-color: #3a3a3d !important;
+  color: #e0e0e0 !important;
+}
+.dark-theme .season-stepper-btn:hover {
+  background-color: #3a3a3d !important;
+  color: #ffffff !important;
+}
+.dark-theme .season-breakdown-card .input-group-text,
+.dark-theme .season-breakdown-card .eps-label {
+  background-color: #222225 !important;
+  border-color: #3a3a3d !important;
+  color: #8e8e93 !important;
+}
+
+/* Season Quick Bar */
+.season-quick-bar {
+  background-color: rgba(0, 0, 0, 0.03);
+  padding: 10px 12px;
+  border-radius: var(--border-radius-sm, 6px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.dark-theme .season-quick-bar {
+  background-color: #1c1c1e !important;
+  border-color: #333336 !important;
+}
+
+.sqb-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.sqb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.season-paste-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.season-paste-group .season-quick-paste-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  max-width: 130px;
+  font-size: 0.8rem;
+  height: 32px;
+}
+.season-paste-group .season-apply-paste-btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+}
+
+.season-add-remove-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.season-quick-pill {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 14px;
+  cursor: pointer;
+  background-color: var(--card-bg, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  color: var(--body-text-color, #475569);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.season-quick-pill:hover {
+  background-color: var(--primary-color, #007b8a);
+  border-color: var(--primary-color, #007b8a);
+  color: #ffffff;
+}
+.dark-theme .season-quick-pill {
+  background-color: #2c2c2f !important;
+  border-color: #3a3a3d !important;
+  color: #d0d0d0 !important;
+}
+.dark-theme .season-quick-pill:hover {
+  background-color: var(--primary-color, #007b8a) !important;
+  border-color: var(--primary-color, #007b8a) !important;
+  color: #ffffff !important;
+}
+
+.dark-theme .season-quick-paste-input {
+  background-color: #1c1c1e !important;
+  border-color: #3a3a3d !important;
+  color: #f0f0f0 !important;
+}
+.dark-theme .season-quick-paste-input::placeholder {
+  color: #6e6e73 !important;
+}
+.dark-theme .season-apply-paste-btn {
+  background-color: var(--primary-color, #007b8a) !important;
+  border-color: var(--primary-color, #007b8a) !important;
+}
+
+/* Season cards list container */
+.season-cards-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Director Chips Component */
+.director-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  border-radius: var(--border-radius-sm, 6px);
+  background-color: var(--input-bg, #ffffff);
+  border: 1px solid var(--border-color, #cbd5e1);
+  min-height: 44px;
+}
+.dark-theme .director-chips-container {
+  background-color: #1c1c1e !important;
+  border-color: #3a3a3d !important;
+}
+.director-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 4px;
+  background-color: #e2e8f0;
+  border-radius: 16px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+.dark-theme .director-chip {
+  background-color: #2c2c2f !important;
+  color: #f1f5f9 !important;
+}
+.director-chip img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.director-chip .chip-remove {
+  cursor: pointer;
+  margin-left: 2px;
+  color: #64748b;
+  font-size: 0.75rem;
+}
+.director-chip .chip-remove:hover {
+  color: #ef4444;
+}
+.director-chip-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--body-text-color, #333333);
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+.dark-theme .director-chip-input {
+  color: #f1f5f9 !important;
+}
+
+/* Dark theme for backfill modal card body */
+.dark-theme #backfillModal .card {
+  background-color: #252528 !important;
+  border-color: #333336 !important;
+}
+.dark-theme #backfillModal .card-body {
+  color: #e0e0e0 !important;
+}
+.dark-theme #backfillModal .text-muted {
+  color: #8e8e93 !important;
+}
+
+/* Dark theme for poster preview in backfill */
+.dark-theme #backfillPosterImgWrap {
+  background-color: #1c1c1e !important;
+  border-color: #333336 !important;
+}
+
+/* Dark theme for backfill textarea */
+.dark-theme #backfillModal textarea.form-control {
+  background-color: #1c1c1e !important;
+  border-color: #3a3a3d !important;
+  color: #f0f0f0 !important;
+}
+
+/* Dark theme for season add/remove buttons */
+.dark-theme .season-add-btn.btn-outline-primary {
+  color: var(--primary-color, #007b8a) !important;
+  border-color: var(--primary-color, #007b8a) !important;
+}
+.dark-theme .season-add-btn.btn-outline-primary:hover {
+  background-color: var(--primary-color, #007b8a) !important;
+  color: #ffffff !important;
+}
+.dark-theme .season-remove-btn.btn-outline-danger {
+  color: #ef4444 !important;
+  border-color: #ef4444 !important;
+}
+.dark-theme .season-remove-btn.btn-outline-danger:hover {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* ========== MOBILE-FIRST RESPONSIVE ========== */
+
+/* Small screens: stack the quick bar vertically */
+@media (max-width: 575.98px) {
+  .season-quick-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 8px;
+  }
+  .sqb-presets {
+    justify-content: center;
+    gap: 4px;
+  }
+  .sqb-actions {
+    margin-left: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .season-paste-group {
+    flex: 1 1 100%;
+  }
+  .season-paste-group .season-quick-paste-input {
+    max-width: none;
+    flex: 1;
+  }
+  .season-add-remove-group {
+    justify-content: center;
+    flex: 1 1 100%;
+  }
+  .season-add-remove-group .btn {
+    flex: 1;
+  }
+
+  /* Season cards: full width, comfortable touch targets */
+  .season-breakdown-card {
+    padding: 10px;
+  }
+  .season-breakdown-card .input-group {
+    width: 140px !important;
+  }
+  .season-breakdown-card .season-stepper-btn {
+    min-width: 36px;
+    min-height: 36px;
+  }
+  .season-breakdown-card .season-ep-count {
+    font-size: 1rem;
+  }
+
+  /* Director chips: wrap nicely */
+  .director-chips-container {
+    padding: 6px;
+  }
+  .director-chip {
+    font-size: 0.78rem;
+  }
+  .director-chip-input {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  /* Poster preview sizing on mobile */
+  #backfillPosterImgWrap img,
+  #editPosterPreviewContainer img {
+    max-height: 140px !important;
+  }
+
+  /* Backfill season wrapper max height increase for mobile */
+  #backfillSeasonBreakdownContainer,
+  #seasonBreakdownContainer {
+    max-height: 200px !important;
+  }
+}
+
+/* Medium screens: mild adjustments */
+@media (min-width: 576px) and (max-width: 767.98px) {
+  .sqb-actions {
+    margin-left: auto;
+  }
+  .season-paste-group .season-quick-paste-input {
+    max-width: 120px;
+  }
+}
