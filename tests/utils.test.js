@@ -272,6 +272,7 @@ test('index.html buttons and search input have accessible aria-labels for screen
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
     assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
+    assert.ok(html.includes('id="timeFormatToggle"') && html.includes('aria-label="Toggle time format unit"'));
 });
 
 test('js/ui.js renders card action buttons with accessible names containing entry names', () => {
