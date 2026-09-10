@@ -21,16 +21,22 @@ const imageObserver = new IntersectionObserver(
 // END CHUNK: Image Lazy Loader
 
 // START CHUNK: Watch History Management (UI)
+// Performance optimization: Single-pass linear scan instead of filter + copy + sort
 function getLatestWatchInstance(watchHistoryArray) {
   if (!Array.isArray(watchHistoryArray) || watchHistoryArray.length === 0)
     return null;
-  const validHistory = watchHistoryArray.filter(
-    (wh) => wh && wh.date && !isNaN(new Date(wh.date).getTime()),
-  );
-  if (validHistory.length === 0) return null;
-  return [...validHistory].sort(
-    (a, b) => new Date(b.date) - new Date(a.date),
-  )[0];
+  let latest = null;
+  let maxTime = -Infinity;
+  for (let i = 0; i < watchHistoryArray.length; i++) {
+    const wh = watchHistoryArray[i];
+    if (!wh || !wh.date) continue;
+    const time = new Date(wh.date).getTime();
+    if (!isNaN(time) && time > maxTime) {
+      maxTime = time;
+      latest = wh;
+    }
+  }
+  return latest;
 }
 function renderWatchHistoryUI(entryWatchHistory = []) {
   const listEl = document.getElementById("watchHistoryList");

@@ -166,28 +166,35 @@ function sortMovies(column, direction) {
     console.error("movieData is not an array. Cannot sort.");
     return;
   }
+
+  const ascEmpty = Infinity;
+  const descEmpty = -Infinity;
+
+  // Performance optimization: Pre-calculate expensive date/latest-watch values into a Map
+  // to avoid O(N log N) redundant calculations in the sort comparator loop
+  const valueMap = new Map();
+
+  if (column === "LastWatchedDate") {
+    const defaultVal = direction === "asc" ? ascEmpty : descEmpty;
+    for (let i = 0; i < movieData.length; i++) {
+      const m = movieData[i];
+      if (!m) continue;
+      const latest = getLatestWatchInstance(m.watchHistory);
+      const timestamp = latest ? new Date(latest.date).getTime() : NaN;
+      valueMap.set(m, !isNaN(timestamp) ? timestamp : defaultVal);
+    }
+  }
+
   movieData.sort((a, b) => {
     if (!a && !b) return 0;
     if (!a) return 1;
     if (!b) return -1;
     let valA, valB;
-    const ascEmpty = Infinity;
-    const descEmpty = -Infinity;
 
     switch (column) {
       case "LastWatchedDate":
-        const latestA = getLatestWatchInstance(a.watchHistory);
-        const latestB = getLatestWatchInstance(b.watchHistory);
-        valA = latestA
-          ? new Date(latestA.date).getTime()
-          : direction === "asc"
-            ? ascEmpty
-            : descEmpty;
-        valB = latestB
-          ? new Date(latestB.date).getTime()
-          : direction === "asc"
-            ? ascEmpty
-            : descEmpty;
+        valA = valueMap.get(a);
+        valB = valueMap.get(b);
         break;
       case "lastModifiedDate":
         valA = a.lastModifiedDate
