@@ -141,6 +141,83 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
+test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS', () => {
+    const cardContainer = {
+        innerHTML: '',
+        appendChild: function(fragment) {
+            const children = fragment.children || [];
+            children.forEach(c => {
+                this.innerHTML += c.outerHTML || c.innerHTML;
+            });
+        },
+        querySelectorAll: () => []
+    };
+
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: (id) => {
+                if (id === 'movieCardContainer') return cardContainer;
+                if (id === 'initialMessage') return { style: {} };
+                if (id === 'loadMoreBtn') return null;
+                return null;
+            },
+            querySelector: () => ({ appendChild: () => {} }),
+            createElement: (tag) => {
+                const el = {
+                    tagName: tag.toUpperCase(),
+                    className: '',
+                    dataset: {},
+                    classList: { add: () => {} },
+                    innerHTML: '',
+                    get outerHTML() { return `<${tag.toLowerCase()} class="${this.className}">${this.innerHTML}</${tag.toLowerCase()}>`; }
+                };
+                return el;
+            },
+            createDocumentFragment: () => {
+                const children = [];
+                return {
+                    children,
+                    appendChild: (c) => children.push(c)
+                };
+            },
+            addEventListener: () => {}
+        },
+        isMultiSelectMode: false,
+        selectedEntryIds: [],
+        applyFilters: (data) => data,
+        movieData: [
+            {
+                id: 'test_1',
+                Name: 'Malicious Poster Movie',
+                Status: 'To Watch',
+                Year: '2024',
+                Category: 'Movie',
+                is_deleted: false,
+                'Poster URL': 'https://example.com/poster.png" onerror="alert(1)',
+                watchHistory: []
+            }
+        ]
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.renderMovieCards();
+
+    assert.ok(cardContainer.innerHTML.includes('data-src="https://example.com/poster.png&quot; onerror=&quot;alert(1)"'));
+    assert.ok(!cardContainer.innerHTML.includes('data-src="https://example.com/poster.png" onerror="alert(1)"'));
+});
+
 test('openUnwatchableModal escapes special characters in entry.id to prevent XSS', () => {
     const unwatchableContainer = { innerHTML: '' };
     const testSandbox = {
