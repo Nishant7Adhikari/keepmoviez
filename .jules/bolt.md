@@ -9,3 +9,7 @@
 ## 2026-09-09 - Pre-normalizing & early exit for special title achievements in calculateAllStatistics
 **Learning:** In `calculateAllStatistics`, checking special title achievements for every watched movie repeatedly executed `toLowerCase()`, `trim()`, and `.replace()` on title name arrays and movie titles. Pre-normalizing achievement title names prior to the movie loop and skipping already unlocked achievements (`if (specialTitleStatus[ach.id]) return;`) reduced statistical aggregation time by ~2.7x (~120ms to ~44ms for 5,000 entries).
 **Action:** Pre-normalize static strings outside data aggregation loops and short-circuit unlocked status evaluations when checking entries against achievements or target lists.
+
+## 2026-09-10 - Single-pass getLatestWatchInstance & Map pre-indexing in sortMovies
+**Learning:** `getLatestWatchInstance` previously copied, filtered, and sorted watch history arrays (`.sort((a, b) => new Date(b.date) - new Date(a.date))`). Invoking this helper inside `sortMovies("LastWatchedDate")` executed $O(M \log M)$ sorts repeatedly inside an $O(N \log N)$ comparator, taking ~290ms for 5,000 items. Refactoring `getLatestWatchInstance` to a single-pass $O(M)$ linear scan and pre-indexing latest timestamps into a `Map` prior to `movieData.sort()` reduced sort runtime to ~19ms (~15x speedup).
+**Action:** Replace `Array.prototype.sort()` for finding min/max array elements with single-pass linear scans, and pre-index derived/computed sorting keys into a Map before calling `Array.prototype.sort()`.

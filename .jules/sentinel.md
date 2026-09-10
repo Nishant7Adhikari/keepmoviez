@@ -12,3 +12,8 @@
 **Vulnerability:** Unescaped genre string interpolation in `openDetailsModal` (`<span class="genre-pill">${g}</span>`), recommendation fallback messages in `displayDailyRecommendationModal`, and achievement names/descriptions in trophy badges and unlock celebration overlays enabled DOM-based XSS.
 **Learning:** Dynamic strings rendered into modals or overlays—such as genre labels or achievement metadata—can contain user-controlled or external data.
 **Prevention:** Always wrap dynamic variables inserted into DOM via `innerHTML` or jQuery `.append()` with `escapeHTML()` from `js/utils.js`.
+
+## 2026-09-10 - HTML Escaping for Poster and Backdrop Image URL Attributes
+**Vulnerability:** Unescaped user-controlled or third-party image URLs (`posterUrl`, `posterPath`, `backdropUrl`) interpolated into HTML attribute strings (`data-src="${posterUrl}"`, `src="${posterPath}"`, `url('${card.backdropUrl}')`) allowed attribute breakout and DOM-based XSS (e.g. via `onerror=` handlers).
+**Learning:** Image URLs originating from user input (`movie["Poster URL"]`) or API responses can contain quotes and HTML syntax that break out of HTML attributes when rendered into `innerHTML`.
+**Prevention:** Wrap all image URLs interpolated into HTML template literals or attribute strings with `escapeHTML()` from `js/utils.js`.

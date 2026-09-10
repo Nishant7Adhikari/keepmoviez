@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-// Setup minimal browser globals needed for utils.js
+// Setup minimal browser globals needed for utils.js and ui.js
 const sandbox = {
     console,
     Math,
@@ -22,8 +22,19 @@ const sandbox = {
         'US': 'United States',
         'CA': 'Canada'
     },
-    PRANK_ERROR_CHANCE: 100
+    PRANK_ERROR_CHANCE: 100,
+    IntersectionObserver: class {
+        constructor() {}
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    },
+    document: {
+        getElementById: () => null,
+        addEventListener: () => {}
+    }
 };
+sandbox.window = sandbox;
 
 vm.createContext(sandbox);
 
@@ -96,6 +107,25 @@ test('generateUUID returns a valid string', () => {
     assert.ok(uuid.length > 0);
 });
 
+test('getLatestWatchInstance finds the latest watch history instance cleanly and efficiently', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, sandbox);
+
+    assert.equal(sandbox.getLatestWatchInstance(null), null);
+    assert.equal(sandbox.getLatestWatchInstance([]), null);
+    assert.equal(sandbox.getLatestWatchInstance([{ notes: 'no date' }]), null);
+
+    const history = [
+        { date: '2023-05-10T12:00:00', rating: '3', notes: 'First' },
+        { date: '2025-01-15T20:00:00', rating: '5', notes: 'Latest' },
+        { date: '2024-08-20T10:00:00', rating: '4', notes: 'Second' }
+    ];
+
+    const latest = sandbox.getLatestWatchInstance(history);
+    assert.equal(latest.notes, 'Latest');
+    assert.equal(latest.date, '2025-01-15T20:00:00');
+});
+
 test('formatWatchDateDisplay formats wall-clock dates without timezone offset shifting', () => {
     assert.equal(sandbox.formatWatchDateDisplay('2026-03-31T21:00:00'), new Date(2026, 2, 31).toLocaleDateString());
     assert.equal(sandbox.formatWatchDateDisplay('2026-12-05T00:00:00.000Z'), new Date(2026, 11, 5).toLocaleDateString());
@@ -109,6 +139,83 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML("Rock & 'Roll'"), 'Rock &amp; &#039;Roll&#039;');
     assert.equal(sandbox.escapeHTML(null), '');
     assert.equal(sandbox.escapeHTML(undefined), '');
+});
+
+test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS', () => {
+    const cardContainer = {
+        innerHTML: '',
+        appendChild: function(fragment) {
+            const children = fragment.children || [];
+            children.forEach(c => {
+                this.innerHTML += c.outerHTML || c.innerHTML;
+            });
+        },
+        querySelectorAll: () => []
+    };
+
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: (id) => {
+                if (id === 'movieCardContainer') return cardContainer;
+                if (id === 'initialMessage') return { style: {} };
+                if (id === 'loadMoreBtn') return null;
+                return null;
+            },
+            querySelector: () => ({ appendChild: () => {} }),
+            createElement: (tag) => {
+                const el = {
+                    tagName: tag.toUpperCase(),
+                    className: '',
+                    dataset: {},
+                    classList: { add: () => {} },
+                    innerHTML: '',
+                    get outerHTML() { return `<${tag.toLowerCase()} class="${this.className}">${this.innerHTML}</${tag.toLowerCase()}>`; }
+                };
+                return el;
+            },
+            createDocumentFragment: () => {
+                const children = [];
+                return {
+                    children,
+                    appendChild: (c) => children.push(c)
+                };
+            },
+            addEventListener: () => {}
+        },
+        isMultiSelectMode: false,
+        selectedEntryIds: [],
+        applyFilters: (data) => data,
+        movieData: [
+            {
+                id: 'test_1',
+                Name: 'Malicious Poster Movie',
+                Status: 'To Watch',
+                Year: '2024',
+                Category: 'Movie',
+                is_deleted: false,
+                'Poster URL': 'https://example.com/poster.png" onerror="alert(1)',
+                watchHistory: []
+            }
+        ]
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.renderMovieCards();
+
+    assert.ok(cardContainer.innerHTML.includes('data-src="https://example.com/poster.png&quot; onerror=&quot;alert(1)"'));
+    assert.ok(!cardContainer.innerHTML.includes('data-src="https://example.com/poster.png" onerror="alert(1)"'));
 });
 
 test('openUnwatchableModal escapes special characters in entry.id to prevent XSS', () => {
@@ -154,7 +261,7 @@ test('openUnwatchableModal escapes special characters in entry.id to prevent XSS
     assert.ok(!unwatchableContainer.innerHTML.includes("prepareEditModal('bad_id' onclick='alert(1)')"));
 });
 
-test('index.html buttons have accessible aria-labels for screen readers', () => {
+test('index.html buttons and search input have accessible aria-labels for screen readers', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));
     assert.ok(html.includes('id="sortColumnDropdown"') && html.includes('aria-label="Sort by column"'));
@@ -162,5 +269,15 @@ test('index.html buttons have accessible aria-labels for screen readers', () => 
     assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
     assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
     assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
+    assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
+    assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
+    assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
     assert.ok(html.includes('id="timeFormatToggle"') && html.includes('aria-label="Toggle time format unit"'));
+});
+
+test('js/ui.js renders card action buttons with accessible names containing entry names', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    assert.ok(uiCode.includes('aria-label="Edit ${escapeHTML(movie.Name)}"'));
+    assert.ok(uiCode.includes('aria-label="Delete ${escapeHTML(movie.Name)}"'));
+    assert.ok(uiCode.includes('aria-label="Quick update progress for ${escapeHTML(movie.Name)}"'));
 });

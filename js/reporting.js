@@ -111,7 +111,7 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
             <button type="button" class="daily-pick-close-btn" data-dismiss="modal" aria-label="Close" title="Close">
                 <i class="fas fa-times"></i>
             </button>
-            <div class="daily-pick-backdrop" style="background-image: ${card.backdropUrl ? `url('${card.backdropUrl}')` : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'};">
+            <div class="daily-pick-backdrop" style="background-image: ${card.backdropUrl ? `url('${escapeHTML(card.backdropUrl)}')` : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'};">
                 <div class="daily-pick-header-content">
                     <div class="daily-pick-meta">${escapeHTML(movie.Category) || 'N/A'} &bull; ${escapeHTML(movie.Year) || 'N/A'}</div>
                     <h2 class="daily-pick-title">${escapeHTML(movie.Name)}</h2>
@@ -521,7 +521,7 @@ function renderSuggestionCard(item) {
 
     card.innerHTML = `
         <div class="match-score-badge ${matchColorClass}">${matchScore}% Match</div>
-        <img src="${posterPath}" alt="Poster for ${escapeHTML(name)}" loading="lazy">
+        <img src="${escapeHTML(posterPath)}" alt="Poster for ${escapeHTML(name)}" loading="lazy">
         
         <!-- Hover Quick Actions Overlay -->
         <div class="quick-action-overlay">
