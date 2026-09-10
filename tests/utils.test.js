@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 
-// Setup minimal browser globals needed for utils.js
+// Setup minimal browser globals needed for utils.js and ui.js
 const sandbox = {
     console,
     Math,
@@ -22,8 +22,19 @@ const sandbox = {
         'US': 'United States',
         'CA': 'Canada'
     },
-    PRANK_ERROR_CHANCE: 100
+    PRANK_ERROR_CHANCE: 100,
+    IntersectionObserver: class {
+        constructor() {}
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    },
+    document: {
+        getElementById: () => null,
+        addEventListener: () => {}
+    }
 };
+sandbox.window = sandbox;
 
 vm.createContext(sandbox);
 
@@ -94,6 +105,25 @@ test('generateUUID returns a valid string', () => {
     const uuid = sandbox.generateUUID();
     assert.equal(typeof uuid, 'string');
     assert.ok(uuid.length > 0);
+});
+
+test('getLatestWatchInstance finds the latest watch history instance cleanly and efficiently', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, sandbox);
+
+    assert.equal(sandbox.getLatestWatchInstance(null), null);
+    assert.equal(sandbox.getLatestWatchInstance([]), null);
+    assert.equal(sandbox.getLatestWatchInstance([{ notes: 'no date' }]), null);
+
+    const history = [
+        { date: '2023-05-10T12:00:00', rating: '3', notes: 'First' },
+        { date: '2025-01-15T20:00:00', rating: '5', notes: 'Latest' },
+        { date: '2024-08-20T10:00:00', rating: '4', notes: 'Second' }
+    ];
+
+    const latest = sandbox.getLatestWatchInstance(history);
+    assert.equal(latest.notes, 'Latest');
+    assert.equal(latest.date, '2025-01-15T20:00:00');
 });
 
 test('formatWatchDateDisplay formats wall-clock dates without timezone offset shifting', () => {
