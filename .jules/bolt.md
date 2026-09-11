@@ -13,3 +13,7 @@
 ## 2026-09-10 - Single-pass getLatestWatchInstance & Map pre-indexing in sortMovies
 **Learning:** `getLatestWatchInstance` previously copied, filtered, and sorted watch history arrays (`.sort((a, b) => new Date(b.date) - new Date(a.date))`). Invoking this helper inside `sortMovies("LastWatchedDate")` executed $O(M \log M)$ sorts repeatedly inside an $O(N \log N)$ comparator, taking ~290ms for 5,000 items. Refactoring `getLatestWatchInstance` to a single-pass $O(M)$ linear scan and pre-indexing latest timestamps into a `Map` prior to `movieData.sort()` reduced sort runtime to ~19ms (~15x speedup).
 **Action:** Replace `Array.prototype.sort()` for finding min/max array elements with single-pass linear scans, and pre-index derived/computed sorting keys into a Map before calling `Array.prototype.sort()`.
+
+## 2026-09-11 - Pre-parsing lastModifiedDate into Map before Array.prototype.sort
+**Learning:** Sorting by `lastModifiedDate` previously executed `new Date(a.lastModifiedDate).getTime()` directly inside `movieData.sort()`, causing $O(N \log N)$ redundant date parses (~140ms for 5,000 entries). Pre-parsing `lastModifiedDate` into a `Map` in an $O(N)$ pass prior to calling `movieData.sort()` reduced sort runtime to ~64ms (~2.2x speedup).
+**Action:** Pre-parse date strings into numeric timestamps in a Map before sorting array entries by date fields.
