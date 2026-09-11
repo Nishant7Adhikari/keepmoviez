@@ -108,7 +108,7 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
     const movie = card.movie;
     const hasStandbyCards = Array.isArray(card.remainingCards) && card.remainingCards.length > 0;
     return `
-            <button type="button" class="daily-pick-close-btn" data-dismiss="modal" aria-label="Close" title="Close">
+            <button type="button" class="daily-pick-close-btn" data-dismiss="modal" aria-label="Close recommendation for ${escapeHTML(movie.Name)}" title="Close">
                 <i class="fas fa-times"></i>
             </button>
             <div class="daily-pick-backdrop" style="background-image: ${card.backdropUrl ? `url('${escapeHTML(card.backdropUrl)}')` : 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'};">
@@ -159,10 +159,10 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                     <small class="text-muted">Skips left: <strong>${MAX_DAILY_SKIPS - dailyRecSkipCount}</strong></small>
                     <div>
                         ${hasStandbyCards
-            ? `<button class="btn btn-warning skip-daily-rec-modal mr-2" data-movie-id="${movie.id}" title="Skip this pick for today"><i class="fas fa-forward"></i> Skip</button>`
+            ? `<button class="btn btn-warning skip-daily-rec-modal mr-2" data-movie-id="${movie.id}" title="Skip this pick for today" aria-label="Skip recommendation for ${escapeHTML(movie.Name)}"><i class="fas fa-forward"></i> Skip</button>`
             : `<button class="btn btn-warning mr-2" disabled title="No more skips left"><i class="fas fa-ban"></i> No more skips</button>`}
-                        <button class="btn btn-info view-btn-modal mr-2" data-movie-id="${movie.id}" title="View Details"><i class="fas fa-eye"></i> View</button>
-                        <button class="btn btn-success mark-completed-daily-rec-modal" data-movie-id="${movie.id}" title="Mark as Watched"><i class="fas fa-check-circle"></i> Watched It!</button>
+                        <button class="btn btn-info view-btn-modal mr-2" data-movie-id="${movie.id}" title="View Details" aria-label="View details for ${escapeHTML(movie.Name)}"><i class="fas fa-eye"></i> View</button>
+                        <button class="btn btn-success mark-completed-daily-rec-modal" data-movie-id="${movie.id}" title="Mark as Watched" aria-label="Mark ${escapeHTML(movie.Name)} as watched"><i class="fas fa-check-circle"></i> Watched It!</button>
                     </div>
                 </div>
                 ${hasStandbyCards ? '' : '<div class="daily-pick-no-more-skips">No more skipping. The recommendation bureau has closed for business.</div>'}
@@ -525,10 +525,10 @@ function renderSuggestionCard(item) {
         
         <!-- Hover Quick Actions Overlay -->
         <div class="quick-action-overlay">
-            <button class="quick-action-btn quick-action-add" title="Add to Watchlist" aria-label="Add to Watchlist">
+            <button class="quick-action-btn quick-action-add" title="Add ${escapeHTML(name)} to Watchlist" aria-label="Add ${escapeHTML(name)} to Watchlist">
                 <i class="fas fa-plus"></i>
             </button>
-            <button class="quick-action-btn quick-action-watch" title="Mark as Watched" aria-label="Mark as Watched">
+            <button class="quick-action-btn quick-action-watch" title="Mark ${escapeHTML(name)} as Watched" aria-label="Mark ${escapeHTML(name)} as Watched">
                 <i class="fas fa-check"></i>
             </button>
         </div>

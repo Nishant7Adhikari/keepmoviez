@@ -576,6 +576,7 @@ function renderFilterGenreTags() {
     closeBtn.type = "button";
     closeBtn.className = "close";
     closeBtn.innerHTML = '<span aria-hidden="true">×</span>';
+    closeBtn.setAttribute("aria-label", `Remove genre filter ${genre}`);
     closeBtn.onclick = (e) => {
       e.stopPropagation();
       removeFilterGenre(genre);

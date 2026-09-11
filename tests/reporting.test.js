@@ -8,6 +8,8 @@ const mockElement = {
     addEventListener: () => {},
     appendChild: () => {},
     remove: () => {},
+    setAttribute: () => {},
+    querySelector: () => mockElement,
     style: {},
     dataset: {},
     classList: { add: () => {}, remove: () => {} },
@@ -28,7 +30,9 @@ const sandbox = {
     setTimeout,
     clearTimeout,
     requestAnimationFrame: (cb) => cb(),
+    $: () => ({ tooltip: () => {} }),
     window: { requestAnimationFrame: (cb) => cb(), addEventListener: () => {}, removeEventListener: () => {} },
+    TMDB_IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/',
     MAX_DAILY_SKIPS: 3,
     getDailyRecommendationModalState: () => ({ skipCount: 0 }),
     document: {
@@ -73,9 +77,10 @@ test('shuffleDailyRecommendationMovies returns randomized array', () => {
     assert.equal(shuffled.length, 10);
 });
 
-test('renderDailyRecommendationCard escapes HTML characters in movie details', () => {
+test('renderDailyRecommendationCard escapes HTML characters in movie details and includes context-specific aria-labels', () => {
     const card = {
         movie: {
+            id: 'rec_1',
             Name: '<script>alert("xss")</script>',
             Category: '<b onmouseover="alert(1)">Movie</b>',
             Genre: 'Action, <img src=x onerror=alert(1)>',
@@ -83,7 +88,9 @@ test('renderDailyRecommendationCard escapes HTML characters in movie details', (
             Description: '<p>Dangerous</p>'
         },
         pickReason: 'Because you like <i>Sci-Fi</i>',
-        remainingCards: []
+        remainingCards: [
+            { movie: { id: 'rec_2', Name: 'Standby Movie' } }
+        ]
     };
 
     const html = sandbox.renderDailyRecommendationCard(card, 0);
@@ -93,6 +100,25 @@ test('renderDailyRecommendationCard escapes HTML characters in movie details', (
     assert.ok(!html.includes('<b onmouseover'));
     assert.ok(html.includes('&lt;img src=x onerror=alert(1)&gt;'));
     assert.ok(!html.includes('<img src=x'));
+    assert.ok(html.includes('aria-label="Close recommendation for &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"'));
+    assert.ok(html.includes('aria-label="Skip recommendation for &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"'));
+    assert.ok(html.includes('aria-label="View details for &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;"'));
+    assert.ok(html.includes('aria-label="Mark &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; as watched"'));
+});
+
+test('renderSuggestionCard sets item-specific aria-labels on quick action buttons', () => {
+    const item = {
+        id: 101,
+        title: 'Inception',
+        media_type: 'movie',
+        poster_path: '/inception.jpg',
+        release_date: '2010-07-16',
+        vote_average: 8.8
+    };
+
+    const card = sandbox.renderSuggestionCard(item);
+    assert.ok(card.innerHTML.includes('aria-label="Add Inception to Watchlist"'));
+    assert.ok(card.innerHTML.includes('aria-label="Mark Inception as Watched"'));
 });
 
 test('_createAchievementBadgeElement escapes HTML in achievement name', () => {
