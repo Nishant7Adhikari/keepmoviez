@@ -239,16 +239,25 @@ function renderConfigurationScreen(summary) {
         <div class="list-group mb-3" style="max-height: 400px; overflow-y: auto;">
     `;
 
+  const safeEscape = (str) =>
+    typeof escapeHTML === "function"
+      ? escapeHTML(str)
+      : str == null
+        ? ""
+        : String(str);
+
   // List items
   summary.forEach((item) => {
+    const safeKey = safeEscape(item.key);
+    const safeLabel = safeEscape(item.label);
     html += `
             <div class="batch-field-unit mb-2">
                 <div class="d-flex align-items-center justify-content-between">
-                    <label class="batch-checkbox-wrap m-0 mr-3" for="check_${item.key}" title="Include ${item.label}">
-                        <input type="checkbox" class="batch-native-checkbox backfill-field-checkbox" id="check_${item.key}" value="${item.key}" checked>
+                    <label class="batch-checkbox-wrap m-0 mr-3" for="check_${safeKey}" title="Include ${safeLabel}">
+                        <input type="checkbox" class="batch-native-checkbox backfill-field-checkbox" id="check_${safeKey}" value="${safeKey}" checked>
                         <span class="batch-custom-checkbox"></span>
                     </label>
-                    <label for="check_${item.key}" class="m-0 flex-grow-1 batch-field-title" style="cursor: pointer;">${item.label}</label>
+                    <label for="check_${safeKey}" class="m-0 flex-grow-1 batch-field-title" style="cursor: pointer;">${safeLabel}</label>
                     <span class="badge badge-success badge-pill">${item.count} missing</span>
                 </div>
             </div>
@@ -690,6 +699,12 @@ function isFieldMissing(entry, fieldKey) {
  */
 function renderFieldInput(fieldConfig, entry) {
   const { inputType, placeholder, min, max, unit, options } = fieldConfig;
+  const safeEscape = (str) =>
+    typeof escapeHTML === "function"
+      ? escapeHTML(str)
+      : str == null
+        ? ""
+        : String(str);
 
   switch (inputType) {
     case "number":
@@ -699,11 +714,11 @@ function renderFieldInput(fieldConfig, entry) {
                         type="number" 
                         class="form-control form-control-lg" 
                         id="backfillInput" 
-                        placeholder="${placeholder || ""}"
-                        ${min ? `min="${min}"` : ""}
-                        ${max ? `max="${max}"` : ""}
+                        placeholder="${safeEscape(placeholder || "")}"
+                        ${min ? `min="${safeEscape(min)}"` : ""}
+                        ${max ? `max="${safeEscape(max)}"` : ""}
                     >
-                    ${unit ? `<div class="input-group-append"><span class="input-group-text">${unit}</span></div>` : ""}
+                    ${unit ? `<div class="input-group-append"><span class="input-group-text">${safeEscape(unit)}</span></div>` : ""}
                 </div>
             `;
 
@@ -713,7 +728,7 @@ function renderFieldInput(fieldConfig, entry) {
                     type="text" 
                     class="form-control form-control-lg" 
                     id="backfillInput" 
-                    placeholder="${placeholder || ""}"
+                    placeholder="${safeEscape(placeholder || "")}"
                     autocomplete="off"
                 >
             `;
@@ -731,7 +746,7 @@ function renderFieldInput(fieldConfig, entry) {
       return `
                 <select class="form-control form-control-lg" id="backfillInput">
                     <option value="">Select</option>
-                    ${options.map((opt) => `<option value="${opt}">${opt}</option>`).join("")}
+                    ${(options || []).map((opt) => `<option value="${safeEscape(opt)}">${safeEscape(opt)}</option>`).join("")}
                 </select>
             `;
 
@@ -783,7 +798,7 @@ function renderFieldInput(fieldConfig, entry) {
           class="form-control form-control-lg" 
           id="backfillInput" 
           rows="4" 
-          placeholder="${placeholder || ""}"
+          placeholder="${safeEscape(placeholder || "")}"
         ></textarea>
       `;
 
@@ -794,7 +809,7 @@ function renderFieldInput(fieldConfig, entry) {
             type="text" 
             class="form-control form-control-lg mb-2" 
             id="backfillInput" 
-            placeholder="${placeholder || "https://..."}"
+            placeholder="${safeEscape(placeholder || "https://...")}"
             autocomplete="off"
             oninput="const img = document.getElementById('backfillPosterImg'); const wrap = document.getElementById('backfillPosterImgWrap'); if (img && wrap) { img.src = this.value; wrap.style.display = this.value ? 'block' : 'none'; }"
           >

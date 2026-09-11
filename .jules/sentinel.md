@@ -17,3 +17,8 @@
 **Vulnerability:** Unescaped user-controlled or third-party image URLs (`posterUrl`, `posterPath`, `backdropUrl`) interpolated into HTML attribute strings (`data-src="${posterUrl}"`, `src="${posterPath}"`, `url('${card.backdropUrl}')`) allowed attribute breakout and DOM-based XSS (e.g. via `onerror=` handlers).
 **Learning:** Image URLs originating from user input (`movie["Poster URL"]`) or API responses can contain quotes and HTML syntax that break out of HTML attributes when rendered into `innerHTML`.
 **Prevention:** Wrap all image URLs interpolated into HTML template literals or attribute strings with `escapeHTML()` from `js/utils.js`.
+
+## 2026-09-11 - HTML Sanitization for Backfill Input Attributes and Select Options
+**Vulnerability:** Unescaped string interpolation in `renderFieldInput` (`<option value="${opt}">${opt}</option>` and `placeholder="${placeholder}"`) enabled attribute breakout and DOM-based XSS when backfill field configurations or dynamic option lists contained special characters or double quotes.
+**Learning:** Dynamic input generation for forms and wizard dialogs must escape all placeholder, value, min/max attributes, and option text elements.
+**Prevention:** Always wrap dynamic option labels, select values, and input element attributes with `escapeHTML()` from `js/utils.js` when building form HTML strings.

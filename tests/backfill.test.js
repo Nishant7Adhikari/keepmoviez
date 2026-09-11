@@ -19,6 +19,8 @@ const sandbox = {
 sandbox.window = sandbox;
 
 vm.createContext(sandbox);
+const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
+vm.runInContext(utilsCode, sandbox);
 const code = fs.readFileSync(path.join(__dirname, '../js/backfill.js'), 'utf8');
 vm.runInContext(code, sandbox);
 
@@ -130,4 +132,21 @@ test('transformFieldValue processes episodes_per_season and multi-director struc
     const commaDir = sandbox.transformFieldValue('director_info', 'Joel Coen, Ethan Coen', fieldConfig, {});
     assert.equal(commaDir.name, 'Joel Coen, Ethan Coen');
     assert.equal(commaDir.directors.length, 2);
+});
+
+test('renderFieldInput escapes select option values and input placeholders', () => {
+    const selectConfig = {
+        inputType: 'select',
+        options: ['Option "<script>alert(1)</script>"', 'Normal & Safe']
+    };
+    const selectHtml = sandbox.renderFieldInput(selectConfig, {});
+    assert.ok(selectHtml.includes('value="Option &quot;&lt;script&gt;alert(1)&lt;/script&gt;&quot;"'));
+    assert.ok(selectHtml.includes('Normal &amp; Safe'));
+
+    const textConfig = {
+        inputType: 'text',
+        placeholder: 'e.g. "<img src=x onerror=alert(1)>"'
+    };
+    const textHtml = sandbox.renderFieldInput(textConfig, {});
+    assert.ok(textHtml.includes('placeholder="e.g. &quot;&lt;img src=x onerror=alert(1)&gt;&quot;"'));
 });
