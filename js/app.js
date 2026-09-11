@@ -183,6 +183,14 @@ function sortMovies(column, direction) {
       const timestamp = latest ? new Date(latest.date).getTime() : NaN;
       valueMap.set(m, !isNaN(timestamp) ? timestamp : defaultVal);
     }
+  } else if (column === "lastModifiedDate") {
+    const defaultVal = direction === "asc" ? ascEmpty : descEmpty;
+    for (let i = 0; i < movieData.length; i++) {
+      const m = movieData[i];
+      if (!m) continue;
+      const ts = m.lastModifiedDate ? Date.parse(m.lastModifiedDate) : NaN;
+      valueMap.set(m, !isNaN(ts) ? ts : defaultVal);
+    }
   }
 
   movieData.sort((a, b) => {
@@ -193,20 +201,9 @@ function sortMovies(column, direction) {
 
     switch (column) {
       case "LastWatchedDate":
+      case "lastModifiedDate":
         valA = valueMap.get(a);
         valB = valueMap.get(b);
-        break;
-      case "lastModifiedDate":
-        valA = a.lastModifiedDate
-          ? new Date(a.lastModifiedDate).getTime()
-          : direction === "asc"
-            ? ascEmpty
-            : descEmpty;
-        valB = b.lastModifiedDate
-          ? new Date(b.lastModifiedDate).getTime()
-          : direction === "asc"
-            ? ascEmpty
-            : descEmpty;
         break;
       case "Year":
         valA =

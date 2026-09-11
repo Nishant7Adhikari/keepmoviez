@@ -281,3 +281,30 @@ test('js/ui.js renders card action buttons with accessible names containing entr
     assert.ok(uiCode.includes('aria-label="Delete ${escapeHTML(movie.Name)}"'));
     assert.ok(uiCode.includes('aria-label="Quick update progress for ${escapeHTML(movie.Name)}"'));
 });
+
+test('sortMovies accurately sorts entries by lastModifiedDate and Name using valueMap', () => {
+    const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+    const testSandbox = {
+        console,
+        movieData: [
+            { id: '1', Name: 'Movie B', lastModifiedDate: '2026-01-01T10:00:00Z' },
+            { id: '2', Name: 'Movie A', lastModifiedDate: '2026-06-01T10:00:00Z' },
+            { id: '3', Name: 'Movie C', lastModifiedDate: '2025-12-01T10:00:00Z' },
+            { id: '4', Name: 'Movie D', lastModifiedDate: null }
+        ],
+        getLatestWatchInstance: () => null
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(appCode, testSandbox);
+
+    testSandbox.sortMovies('lastModifiedDate', 'desc');
+    assert.deepEqual(testSandbox.movieData.map(m => m.id), ['2', '1', '3', '4']);
+
+    testSandbox.sortMovies('lastModifiedDate', 'asc');
+    assert.deepEqual(testSandbox.movieData.map(m => m.id), ['3', '1', '2', '4']);
+
+    testSandbox.sortMovies('Name', 'asc');
+    assert.deepEqual(testSandbox.movieData.map(m => m.id), ['2', '1', '3', '4']);
+});
