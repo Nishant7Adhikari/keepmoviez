@@ -49,7 +49,8 @@ function createTestEnvironment() {
             find: function() {
                 return {
                     text: function() {},
-                    attr: function() {}
+                    attr: function() {},
+                    each: function() {}
                 };
             },
             each: function(cb) { return $(selector); },
@@ -190,4 +191,38 @@ test('calculateAllStatistics calculates exact watch time using episodesPerSeason
 
     const stats = sandbox.calculateAllStatistics(sandbox.currentMovieData);
     assert.equal(stats.totalWatchTimeMinutes, 780);
+});
+
+test('renderSeasonBreakdownCards includes accessible aria-labels on controls', () => {
+    const { sandbox } = createTestEnvironment();
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, sandbox);
+
+    let innerHTMLResult = '';
+    const mockContainer = {
+        set innerHTML(val) {
+            innerHTMLResult = val;
+        },
+        get innerHTML() {
+            return innerHTMLResult;
+        }
+    };
+
+    sandbox.document.getElementById = function(id) {
+        if (id === 'seasonBreakdownContainer') {
+            return mockContainer;
+        }
+        return { style: {}, innerHTML: '', value: '' };
+    };
+
+    sandbox.renderSeasonBreakdownCards(2, [10, 8], 'seasonBreakdownContainer', 'calcTotalEpsBadge');
+
+    assert.ok(innerHTMLResult.includes('aria-label="Set all seasons to 10 episodes"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Paste comma-separated episode counts"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Apply pasted episode counts"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Add season"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Remove last season"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Decrease Season 1 episode count"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Season 1 episode count"'));
+    assert.ok(innerHTMLResult.includes('aria-label="Increase Season 1 episode count"'));
 });
