@@ -17,3 +17,7 @@
 ## 2026-09-11 - Pre-parsing lastModifiedDate into Map before Array.prototype.sort
 **Learning:** Sorting by `lastModifiedDate` previously executed `new Date(a.lastModifiedDate).getTime()` directly inside `movieData.sort()`, causing $O(N \log N)$ redundant date parses (~140ms for 5,000 entries). Pre-parsing `lastModifiedDate` into a `Map` in an $O(N)$ pass prior to calling `movieData.sort()` reduced sort runtime to ~64ms (~2.2x speedup).
 **Action:** Pre-parse date strings into numeric timestamps in a Map before sorting array entries by date fields.
+
+## 2026-09-12 - Single-pass filtering & short-circuiting in applyFilters
+**Learning:** `applyFilters` previously chained up to 5 consecutive `Array.prototype.filter` passes over `movieData`, re-allocating intermediate arrays on each filter tier and executing expensive text lowercasing (`filterQuery`) and genre string splits (`m.Genre.split(",")`) across all entries. Consolidating filters into a single-pass `data.filter()` callback and short-circuiting fast property equality checks (`Category`, `Country`, `Language`) before executing text search or genre splits reduced filter processing time by ~2.25x (~1.04s to ~0.46s for 1,000 calls over 5,000 items).
+**Action:** Consolidate multi-stage array filtering into single-pass pipelines and order predicate conditions so that cheap property equality checks short-circuit before expensive string parsing/searching functions.
