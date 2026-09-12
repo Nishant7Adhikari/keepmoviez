@@ -778,20 +778,20 @@ window.renderSeasonBreakdownCards = function (
   html += `
     <div class="season-quick-bar">
       <div class="sqb-presets">
-        <span class="small font-weight-bold text-muted mr-1"><i class="fas fa-bolt text-warning"></i> Fast-Fill:</span>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="10">All 10</button>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="8">All 8</button>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="12">All 12</button>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="6">All 6</button>
+        <span class="small font-weight-bold text-muted mr-1"><i class="fas fa-bolt text-warning" aria-hidden="true"></i> Fast-Fill:</span>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="10" aria-label="Set all seasons to 10 episodes">All 10</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="8" aria-label="Set all seasons to 8 episodes">All 8</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="12" aria-label="Set all seasons to 12 episodes">All 12</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="6" aria-label="Set all seasons to 6 episodes">All 6</button>
       </div>
       <div class="sqb-actions">
         <div class="season-paste-group">
-          <input type="text" class="form-control form-control-sm season-quick-paste-input" placeholder="e.g. 10, 10, 8" title="Type comma-separated episode counts and press Enter or click Apply" data-container="${containerId}" data-badge="${badgeId}">
-          <button type="button" class="btn btn-sm btn-primary season-apply-paste-btn" data-container="${containerId}" data-badge="${badgeId}" title="Apply pasted values"><i class="fas fa-check"></i></button>
+          <input type="text" class="form-control form-control-sm season-quick-paste-input" placeholder="e.g. 10, 10, 8" title="Type comma-separated episode counts and press Enter or click Apply" data-container="${containerId}" data-badge="${badgeId}" aria-label="Paste comma-separated episode counts">
+          <button type="button" class="btn btn-sm btn-primary season-apply-paste-btn" data-container="${containerId}" data-badge="${badgeId}" title="Apply pasted values" aria-label="Apply pasted episode counts"><i class="fas fa-check" aria-hidden="true"></i></button>
         </div>
         <div class="season-add-remove-group">
-          <button type="button" class="btn btn-sm btn-outline-primary season-add-btn" data-container="${containerId}" data-badge="${badgeId}" title="Add Season"><i class="fas fa-plus"></i> Season</button>
-          <button type="button" class="btn btn-sm btn-outline-danger season-remove-btn" data-container="${containerId}" data-badge="${badgeId}" title="Remove Last Season"><i class="fas fa-minus"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-primary season-add-btn" data-container="${containerId}" data-badge="${badgeId}" title="Add Season" aria-label="Add season"><i class="fas fa-plus" aria-hidden="true"></i> Season</button>
+          <button type="button" class="btn btn-sm btn-outline-danger season-remove-btn" data-container="${containerId}" data-badge="${badgeId}" title="Remove Last Season" aria-label="Remove last season"><i class="fas fa-minus" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>
@@ -802,14 +802,14 @@ window.renderSeasonBreakdownCards = function (
     const val = existingCounts[s - 1] != null ? parseInt(existingCounts[s - 1], 10) : 10;
     html += `
       <div class="d-flex align-items-center justify-content-between season-breakdown-card" data-season="${s}">
-        <span class="font-weight-600 season-label small"><i class="fas fa-tv text-primary mr-2"></i>S${s}</span>
+        <span class="font-weight-600 season-label small"><i class="fas fa-tv text-primary mr-2" aria-hidden="true"></i>S${s}</span>
         <div class="input-group input-group-sm" style="width: 150px;">
           <div class="input-group-prepend">
-            <button type="button" class="btn btn-outline-secondary season-step-down season-stepper-btn" data-season="${s}" title="Decrease">−</button>
+            <button type="button" class="btn btn-outline-secondary season-step-down season-stepper-btn" data-season="${s}" title="Decrease Season ${s} episode count" aria-label="Decrease Season ${s} episode count">−</button>
           </div>
-          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${isNaN(val) ? 10 : val}" min="1" max="200">
+          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${isNaN(val) ? 10 : val}" min="1" max="200" aria-label="Season ${s} episode count">
           <div class="input-group-append">
-            <button type="button" class="btn btn-outline-secondary season-step-up season-stepper-btn" data-season="${s}" title="Increase">+</button>
+            <button type="button" class="btn btn-outline-secondary season-step-up season-stepper-btn" data-season="${s}" title="Increase Season ${s} episode count" aria-label="Increase Season ${s} episode count">+</button>
             <span class="input-group-text text-muted small py-0 px-2 eps-label">ep</span>
           </div>
         </div>
@@ -1753,8 +1753,8 @@ function showShareOptionsModal(blob, fileName) {
             <img src="${URL.createObjectURL(blob)}" class="img-fluid rounded mb-3" style="max-height: 300px;" alt="Image Preview">
         </div>
         <div class="d-grid gap-2">
-            ${canShare ? '<button id="shareGeneratedImageBtn" class="btn btn-success btn-lg mb-2"><i class="fas fa-share-alt"></i> Share Image</button>' : ""}
-            <button id="downloadGeneratedImageBtn" class="btn btn-primary btn-lg"><i class="fas fa-download"></i> Download PNG</button>
+            ${canShare ? '<button id="shareGeneratedImageBtn" class="btn btn-success btn-lg mb-2" aria-label="Share generated summary image"><i class="fas fa-share-alt" aria-hidden="true"></i> Share Image</button>' : ""}
+            <button id="downloadGeneratedImageBtn" class="btn btn-primary btn-lg" aria-label="Download generated summary image as PNG"><i class="fas fa-download" aria-hidden="true"></i> Download PNG</button>
         </div>
     `;
 
