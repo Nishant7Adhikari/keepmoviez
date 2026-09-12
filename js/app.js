@@ -255,57 +255,58 @@ function sortMovies(column, direction) {
   });
 }
 
+// Performance optimization: Single-pass linear filter eliminates multi-pass array allocations
+// and short-circuits fast property equality checks before performing lowercasing or string splits.
 function applyFilters(data) {
-  let filteredData = data.filter((m) => !m.is_deleted);
+  if (!Array.isArray(data)) return [];
 
-  if (filterQuery) {
-    const lowerFilterQuery = filterQuery.toLowerCase();
-    filteredData = filteredData.filter((movie) => {
-      if (!movie) return false;
-      return (
-        (movie.Name &&
-          String(movie.Name).toLowerCase().includes(lowerFilterQuery)) ||
-        (movie.Year &&
-          String(movie.Year).toLowerCase().includes(lowerFilterQuery)) ||
-        (movie.Status &&
-          String(movie.Status).toLowerCase().includes(lowerFilterQuery)) ||
-        (movie.Genre &&
-          String(movie.Genre).toLowerCase().includes(lowerFilterQuery))
-      );
-    });
-  }
+  const lowerQuery = filterQuery ? String(filterQuery).toLowerCase() : null;
+  const reqCategory = activeFilters.category !== "all" ? activeFilters.category : null;
+  const reqCountry = activeFilters.country !== "all" ? activeFilters.country : null;
+  const reqLanguage = activeFilters.language !== "all" ? activeFilters.language : null;
+  const filterGenres = activeFilters.genres;
+  const numFilterGenres = filterGenres ? filterGenres.length : 0;
+  const isAndLogic = activeFilters.genreLogic === "AND";
 
-  if (activeFilters.category !== "all")
-    filteredData = filteredData.filter(
-      (m) => m.Category === activeFilters.category,
-    );
-  if (activeFilters.country !== "all")
-    filteredData = filteredData.filter(
-      (m) => m.Country === activeFilters.country,
-    );
-  if (activeFilters.language !== "all")
-    filteredData = filteredData.filter(
-      (m) => m.Language === activeFilters.language,
-    );
+  return data.filter((m) => {
+    if (!m || m.is_deleted) return false;
 
-  if (activeFilters.genres.length > 0) {
-    filteredData = filteredData.filter((m) => {
+    // Fast property checks first (inexpensive equality comparisons)
+    if (reqCategory && m.Category !== reqCategory) return false;
+    if (reqCountry && m.Country !== reqCountry) return false;
+    if (reqLanguage && m.Language !== reqLanguage) return false;
+
+    // Search query check
+    if (lowerQuery) {
+      const matchName = m.Name && String(m.Name).toLowerCase().includes(lowerQuery);
+      const matchYear = !matchName && m.Year && String(m.Year).toLowerCase().includes(lowerQuery);
+      const matchStatus = !matchName && !matchYear && m.Status && String(m.Status).toLowerCase().includes(lowerQuery);
+      const matchGenre = !matchName && !matchYear && !matchStatus && m.Genre && String(m.Genre).toLowerCase().includes(lowerQuery);
+      if (!matchName && !matchYear && !matchStatus && !matchGenre) return false;
+    }
+
+    // Genre filter check
+    if (numFilterGenres > 0) {
       if (!m.Genre) return false;
       const movieGenres = m.Genre.split(",").map((g) => g.trim());
-      if (activeFilters.genreLogic === "AND") {
-        return activeFilters.genres.every((filterGenre) =>
-          movieGenres.includes(filterGenre),
-        );
+      if (isAndLogic) {
+        for (let i = 0; i < numFilterGenres; i++) {
+          if (!movieGenres.includes(filterGenres[i])) return false;
+        }
       } else {
-        // OR logic
-        return activeFilters.genres.some((filterGenre) =>
-          movieGenres.includes(filterGenre),
-        );
+        let match = false;
+        for (let i = 0; i < numFilterGenres; i++) {
+          if (movieGenres.includes(filterGenres[i])) {
+            match = true;
+            break;
+          }
+        }
+        if (!match) return false;
       }
-    });
-  }
+    }
 
-  return filteredData;
+    return true;
+  });
 }
 // END CHUNK: Data Sorting and Filtering Logic
 

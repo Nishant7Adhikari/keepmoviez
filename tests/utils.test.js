@@ -308,3 +308,34 @@ test('sortMovies accurately sorts entries by lastModifiedDate and Name using val
     testSandbox.sortMovies('Name', 'asc');
     assert.deepEqual(testSandbox.movieData.map(m => m.id), ['2', '1', '3', '4']);
 });
+
+test('applyFilters filters items correctly in single pass with short-circuiting', () => {
+    const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+    const testSandbox = {
+        console,
+        filterQuery: 'Inception',
+        activeFilters: {
+            category: 'Movie',
+            country: 'US',
+            language: 'all',
+            genres: ['Sci-Fi'],
+            genreLogic: 'AND'
+        }
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(appCode, testSandbox);
+
+    const items = [
+        { id: '1', Name: 'Inception', Category: 'Movie', Country: 'US', Language: 'English', Genre: 'Action, Sci-Fi', is_deleted: false },
+        { id: '2', Name: 'Inception', Category: 'Series', Country: 'US', Language: 'English', Genre: 'Action, Sci-Fi', is_deleted: false },
+        { id: '3', Name: 'Interstellar', Category: 'Movie', Country: 'US', Language: 'English', Genre: 'Sci-Fi', is_deleted: false },
+        { id: '4', Name: 'Inception', Category: 'Movie', Country: 'US', Language: 'English', Genre: 'Action', is_deleted: false },
+        { id: '5', Name: 'Inception', Category: 'Movie', Country: 'US', Language: 'English', Genre: 'Sci-Fi', is_deleted: true }
+    ];
+
+    const result = testSandbox.applyFilters(items);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].id, '1');
+});
