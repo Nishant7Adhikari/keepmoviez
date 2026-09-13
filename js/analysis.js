@@ -323,11 +323,10 @@ function calculateAllStatistics(currentMovieData) {
     let maxStreak = 0, currentStreak = 0;
     if(sortedDates.length > 0) {
         maxStreak = 1; currentStreak = 1;
-        for (let i = 1; i < sortedDates.length; i++) {
-            const date1 = new Date(sortedDates[i-1]);
-            const date2 = new Date(sortedDates[i]);
-            const diffTime = Math.abs(date2 - date1);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        // Performance optimization: Pre-parse ISO dates to numeric millisecond timestamps once before iteration to avoid repeated new Date() instantiations inside the loop
+        const sortedTimestamps = sortedDates.map(d => Date.parse(d + 'T00:00:00Z'));
+        for (let i = 1; i < sortedTimestamps.length; i++) {
+            const diffDays = Math.round((sortedTimestamps[i] - sortedTimestamps[i - 1]) / 86400000);
             if (diffDays === 1) currentStreak++; else currentStreak = 1;
             if (currentStreak > maxStreak) maxStreak = currentStreak;
         }
@@ -351,10 +350,10 @@ function calculateAllStatistics(currentMovieData) {
         const dates = Array.from(genreWatchesByDate[genre]).sort();
         if(dates.length < 3) continue;
         let hasValidStreak = false;
+        // Performance optimization: Pre-parse genre streak dates to numeric timestamps to avoid repeated new Date() allocations
+        const timestamps = dates.map(d => Date.parse(d + 'T00:00:00Z'));
         for(let i=0; i <= dates.length - 3; i++) {
-            const firstDate = new Date(dates[i]);
-            const thirdDate = new Date(dates[i+2]);
-            const daysDifference = (thirdDate - firstDate) / (1000 * 3600 * 24);
+            const daysDifference = (timestamps[i+2] - timestamps[i]) / 86400000;
             if(daysDifference <= 7) {
                 hasValidStreak = true;
                 break;
@@ -400,14 +399,15 @@ function calculateAllStatistics(currentMovieData) {
     stats.watchesByYear = Object.entries(watchesByYear).map(([year, data]) => ({ year, instances: data.instances, unique_titles: data.titles.size, avg_rating: data.ratedCount > 0 ? (data.ratingsSum / data.ratedCount).toFixed(2) : 'N/A' })).sort((a,b) => b.year - a.year);
 
     // **FIXED**: Correctly calculate the size of the unique titles set.
+    // Performance optimization: Use string comparison on ISO YYYY-MM strings instead of instantiating new Date objects inside sort comparator
     stats.watchesByMonth = Object.values(watchesByMonth)
         .map(monthData => ({
             ...monthData,
             unique_titles: monthData.titles.size 
         }))
-        .sort((a, b) => new Date(b.month_year_iso) - new Date(a.month_year_iso));
+        .sort((a, b) => b.month_year_iso.localeCompare(a.month_year_iso));
 
-    stats.avgRatingByMonth = Object.values(watchesByMonth).filter(m => m.ratedCount > 0).map(m => ({ label: m.month_year_label, value: (m.ratingsSum / m.ratedCount).toFixed(2), iso: m.month_year_iso })).sort((a, b) => new Date(a.iso) - new Date(b.iso));
+    stats.avgRatingByMonth = Object.values(watchesByMonth).filter(m => m.ratedCount > 0).map(m => ({ label: m.month_year_label, value: (m.ratingsSum / m.ratedCount).toFixed(2), iso: m.month_year_iso })).sort((a, b) => a.iso.localeCompare(b.iso));
     stats.topSingleGenres = formatCounts(watchedGenreCounts);
     stats.genreCombinations = formatCounts(genreCombinationsCounts);
     const sortRatings = (a, b) => (b.rating === 'N/A' ? -1 : parseFloat(b.rating)) - (a.rating === 'N/A' ? -1 : parseFloat(a.rating));
@@ -470,8 +470,10 @@ function calculateAllStatistics(currentMovieData) {
             dailyChanges[dateStr] = 0;
         }
 
+        // Performance optimization: Compare numeric timestamps instead of instantiating new Date(item.date) inside the loop
+        const cutoffTime30 = cutoffDate30.getTime();
         log.forEach(item => {
-            if (item && item.date && new Date(item.date) >= cutoffDate30) {
+            if (item && item.date && Date.parse(item.date) >= cutoffTime30) {
                 if (dailyChanges[item.date] !== undefined) {
                     dailyChanges[item.date] += (item.type === 'completed' ? -1 : 1);
                 }
