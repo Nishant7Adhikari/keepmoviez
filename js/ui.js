@@ -1536,15 +1536,17 @@ window.openUnwatchableModal = function () {
   const container = document.getElementById("unwatchableListContainer");
   if (!container) return;
 
-  const escapeHTML = (str) => {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-  };
+  const safeEscape = (str) =>
+    typeof escapeHTML === "function"
+      ? escapeHTML(str)
+      : str == null
+        ? ""
+        : String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
   const unwatchableEntries = movieData.filter(
     (m) => !m.is_deleted && m.Status === "Unwatchable",
@@ -1570,19 +1572,19 @@ window.openUnwatchableModal = function () {
       html += `
         <div class="list-group-item list-group-item-action flex-column align-items-start bg-dark text-white border-secondary mb-2 rounded">
           <div class="d-flex w-100 justify-content-between align-items-center">
-            <h6 class="mb-1 text-warning">${escapeHTML(entry.Name)} <small class="text-muted">(${escapeHTML(entry.Year || "N/A")})</small></h6>
+            <h6 class="mb-1 text-warning">${safeEscape(entry.Name)} <small class="text-muted">(${safeEscape(entry.Year || "N/A")})</small></h6>
             <div>
-              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${escapeHTML(entry.id)}'); });" title="Edit Entry" aria-label="Edit ${escapeHTML(entry.Name)}">
+              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${safeEscape(entry.id)}'); });" title="Edit Entry" aria-label="Edit ${safeEscape(entry.Name)}">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${escapeHTML(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete ${escapeHTML(entry.Name)} permanently">
+              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${safeEscape(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete ${safeEscape(entry.Name)} permanently">
                   <i class="fas fa-trash"></i>
               </button>
             </div>
           </div>
-          <p class="mb-1 small"><strong>Category:</strong> ${escapeHTML(entry.Category || "N/A")}</p>
+          <p class="mb-1 small"><strong>Category:</strong> ${safeEscape(entry.Category || "N/A")}</p>
           <div class="alert alert-secondary p-2 mt-2 mb-0 small text-dark">
-             <strong>Reason:</strong> ${escapeHTML(reason)}
+             <strong>Reason:</strong> ${safeEscape(reason)}
           </div>
         </div>
       `;
