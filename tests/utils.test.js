@@ -261,8 +261,9 @@ test('openUnwatchableModal escapes special characters in entry.id to prevent XSS
     assert.ok(!unwatchableContainer.innerHTML.includes("prepareEditModal('bad_id' onclick='alert(1)')"));
 });
 
-test('index.html buttons and search input have accessible aria-labels for screen readers', () => {
+test('index.html buttons, modals, and skip-link have accessible aria attributes for screen readers', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('href="#movieCardContainer"') && html.includes('class="skip-link"'));
     assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));
     assert.ok(html.includes('id="sortColumnDropdown"') && html.includes('aria-label="Sort by column"'));
     assert.ok(html.includes('id="refreshRecommendationsBtnModal"') && html.includes('aria-label="Refresh suggestions"'));
@@ -273,6 +274,42 @@ test('index.html buttons and search input have accessible aria-labels for screen
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
     assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
     assert.ok(html.includes('id="timeFormatToggle"') && html.includes('aria-label="Toggle time format unit"'));
+    assert.ok(html.includes('id="confirmForcePullModal"') && html.includes('aria-modal="true"'));
+    assert.ok(html.includes('id="confirmForcePushModal"') && html.includes('aria-modal="true"'));
+});
+
+test('renderMovieCards empty state renders Clear Filters & Search CTA button', () => {
+    const cardContainer = { innerHTML: '' };
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: (id) => {
+                if (id === 'movieCardContainer') return cardContainer;
+                if (id === 'initialMessage') return { style: {} };
+                return null;
+            },
+            querySelector: () => null,
+            addEventListener: () => {}
+        },
+        applyFilters: () => [],
+        movieData: [{ id: '1', Name: 'Movie 1', Status: 'Watched', is_deleted: false }]
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.renderMovieCards();
+
+    assert.ok(cardContainer.innerHTML.includes('id="emptyStateClearFiltersBtn"'));
+    assert.ok(cardContainer.innerHTML.includes('onclick="resetFilters()"'));
 });
 
 test('js/ui.js renders card action buttons with accessible names containing entry names', () => {
