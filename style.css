@@ -95,6 +95,24 @@ html {
 /* END CHUNK: 1: Global Variables & Theming */
 
 /*START CHUNK: 2: Base & Typography Styles*/
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: 10px;
+  background: var(--primary-color);
+  color: #ffffff !important;
+  padding: 8px 16px;
+  border-radius: var(--border-radius-sm);
+  z-index: 10000;
+  transition: top 0.2s ease;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 10px;
+  outline: 2px solid var(--warning-color);
+}
+
 body {
   background: linear-gradient(to bottom right,
       var(--body-bg-gradient-start),

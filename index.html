@@ -72,6 +72,7 @@
 <!-- END CHUNK: Document Head and Core Dependencies -->
 
 <body>
+    <a href="#movieCardContainer" class="skip-link">Skip to main content</a>
 
     <!-- START CHUNK: Overlays -->
     <div id="loadingOverlay" class="loading-overlay">
@@ -217,7 +218,7 @@
 
     <!-- START CHUNK: Import / Pull -->
     <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -245,7 +246,7 @@
 
     <!-- START CHUNK: Settings Modal -->
     <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -354,7 +355,7 @@
 
     <!-- START CHUNK: Export / Push -->
     <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -384,11 +385,11 @@
     <!-- END CHUNK: Export / Push -->
 
     <!-- START CHUNK: Confirm Force Pull -->
-    <div class="modal fade" id="confirmForcePullModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="confirmForcePullModal" tabindex="-1" role="dialog" aria-labelledby="confirmForcePullModalLabel" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title">Confirm Force Pull</h5>
+                    <h5 class="modal-title" id="confirmForcePullModalLabel">Confirm Force Pull</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -406,11 +407,11 @@
     <!-- END CHUNK: Confirm Force Pull -->
 
     <!-- START CHUNK: Confirm Force Push -->
-    <div class="modal fade" id="confirmForcePushModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="confirmForcePushModal" tabindex="-1" role="dialog" aria-labelledby="confirmForcePushModalLabel" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Confirm Force Push</h5>
+                    <h5 class="modal-title" id="confirmForcePushModalLabel">Confirm Force Push</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -430,7 +431,7 @@
 
     <!-- START CHUNK: Backfill Modal -->
     <div class="modal fade" id="backfillModal" tabindex="-1" role="dialog" aria-labelledby="backfillModalLabel"
-        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        aria-hidden="true" aria-modal="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -667,7 +668,7 @@
 
     <!-- START CHUNK: Modal - Filter (Previously Filter & Sort) -->
     <div class="modal fade" id="filterSortModal" tabindex="-1" role="dialog" aria-labelledby="filterSortModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -734,7 +735,7 @@
 
     <!-- START CHUNK: Modal - Smart Import -->
     <div class="modal fade" id="smartImportModal" tabindex="-1" role="dialog" aria-labelledby="smartImportModalLabel"
-        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        aria-hidden="true" aria-modal="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -802,7 +803,7 @@
 
     <!-- START CHUNK: Modal - Entry Form (Add/Edit) -->
     <div class="modal fade" id="entryModal" tabindex="-1" role="dialog" aria-labelledby="entryModalLabel"
-        aria-hidden="true" data-backdrop="static">
+        aria-hidden="true" aria-modal="true" data-backdrop="static">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -1100,7 +1101,7 @@
 
     <!-- START CHUNK: Modal - Quick Update -->
     <div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel"
-        aria-hidden="true" data-backdrop="static">
+        aria-hidden="true" aria-modal="true" data-backdrop="static">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
