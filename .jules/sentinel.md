@@ -22,3 +22,8 @@
 **Vulnerability:** Unescaped string interpolation in `renderFieldInput` (`<option value="${opt}">${opt}</option>` and `placeholder="${placeholder}"`) enabled attribute breakout and DOM-based XSS when backfill field configurations or dynamic option lists contained special characters or double quotes.
 **Learning:** Dynamic input generation for forms and wizard dialogs must escape all placeholder, value, min/max attributes, and option text elements.
 **Prevention:** Always wrap dynamic option labels, select values, and input element attributes with `escapeHTML()` from `js/utils.js` when building form HTML strings.
+
+## 2026-09-12 - Variable-Level Sanitization for Formatted Recommendation Strings
+**Vulnerability:** Dynamic variables (`match`, `favoriteGenreObj.value`, `topDirector`) interpolated into formatted HTML pick reasons in `getDailyRecommendationPickReason` were unescaped, while `renderDailyRecommendationCard` escaped the composite `pickReason` string resulting in double-escaped literal HTML tags in UI.
+**Learning:** When helper functions construct HTML markup (e.g. `<strong>${var}</strong>`), sanitization must be applied directly to the dynamic variables inside the helper rather than escaping the entire HTML string at the top-level card template.
+**Prevention:** Always sanitize individual dynamic inputs with `escapeHTML()` when constructing formatted HTML strings inside helper methods.
