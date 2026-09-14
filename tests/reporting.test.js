@@ -40,6 +40,7 @@ const sandbox = {
         querySelector: () => mockElement,
         querySelectorAll: () => [],
         head: { appendChild: () => {} },
+        body: { classList: { contains: () => false } },
         createElement: () => mockElement
     }
 };
@@ -147,7 +148,7 @@ test('celebrateAchievementUnlock escapes HTML in achievement title and descripti
         querySelector: () => mockElement,
         addEventListener: () => {}
     });
-    sandbox.document.body = { appendChild: () => {} };
+    sandbox.document.body = { appendChild: () => {}, classList: { contains: () => false } };
 
     const ach = {
         name: '<img src=x onerror=alert(1)>',
@@ -162,4 +163,54 @@ test('celebrateAchievementUnlock escapes HTML in achievement title and descripti
     assert.ok(!createdHtml.includes('<img src=x'));
     assert.ok(createdHtml.includes('&lt;svg onload=alert(2)&gt;'));
     assert.ok(!createdHtml.includes('<svg onload'));
+});
+
+test('findNextBestSeedMovie sorts candidates by rating then lastModifiedDate efficiently', () => {
+    sandbox.movieData = [
+        { id: '1', Name: 'Movie A', Status: 'Watched', tmdbId: 10, overallRating: '4', lastModifiedDate: '2025-01-01T10:00:00Z' },
+        { id: '2', Name: 'Movie B', Status: 'Watched', tmdbId: 20, overallRating: '5', lastModifiedDate: '2025-01-02T10:00:00Z' },
+        { id: '3', Name: 'Movie C', Status: 'Watched', tmdbId: 30, overallRating: '5', lastModifiedDate: '2025-01-03T10:00:00Z' }
+    ];
+    sandbox.suggestionEngineState = { lastUsedSeedIndex: -1 };
+
+    const result = sandbox.findNextBestSeedMovie();
+    assert.equal(result.seed.id, '3'); // Highest rating (5) and latest lastModifiedDate (Jan 3)
+    assert.equal(result.nextIndex, 0);
+});
+
+test('renderRatingReleaseYearScatter formats scatter data using getLatestWatchInstance', () => {
+    let chartConfig = null;
+    sandbox.Chart = function(ctx, config) {
+        chartConfig = config;
+    };
+    sandbox.getComputedStyle = () => ({ getPropertyValue: () => '#333' });
+    sandbox.getLatestWatchInstance = (history) => {
+        if (!history || history.length === 0) return null;
+        return history[history.length - 1]; // Mock latest
+    };
+
+    sandbox.movieData = [
+        {
+            id: 'm1',
+            Name: 'Inception',
+            Year: '2010',
+            overallRating: '5',
+            watchHistory: [
+                { date: '2024-01-01T00:00:00' },
+                { date: '2024-06-15T00:00:00' }
+            ]
+        }
+    ];
+    sandbox.window.movieData = sandbox.movieData;
+
+    const chartInstanceObj = {};
+    sandbox.renderRatingReleaseYearScatter('testCanvas', chartInstanceObj);
+
+    assert.ok(chartConfig);
+    assert.equal(chartConfig.data.datasets[0].data.length, 1);
+    const point = chartConfig.data.datasets[0].data[0];
+    assert.equal(point.x, 2010);
+    assert.equal(point.y, 5);
+    assert.equal(point._title, 'Inception');
+    assert.ok(point._date !== 'N/A');
 });

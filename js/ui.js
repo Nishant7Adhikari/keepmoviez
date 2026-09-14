@@ -52,7 +52,7 @@ function renderWatchHistoryUI(entryWatchHistory = []) {
   }
   [...entryWatchHistory]
     .filter((wh) => wh && wh.date)
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
     .forEach((wh) => {
       const item = document.createElement("div");
       item.className =
@@ -1339,7 +1339,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
     const whList = modal.find("#detailsWatchHistoryList").empty();
     if (watchHistory.length > 0)
       [...watchHistory]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
         .forEach((wh) =>
           whList.append(
             `<li><strong>${formatWatchDateDisplay(wh.date)}</strong> - ${renderStars(wh.rating)} ${wh.notes ? `<small class="text-muted d-block">${escapeHTML(wh.notes)}</small>` : ""}</li>`,
