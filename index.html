@@ -289,7 +289,11 @@
                             style="display: none;">
                             <div class="form-group mb-1">
                                 <label for="customSyncThresholdRange" class="small font-weight-bold">Sync Threshold:
-                                    <span id="customSyncThresholdValue" class="text-primary">5</span> items</label>
+                                    <span id="customSyncThresholdValue" class="text-primary">5</span> items
+                                    <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Batches cloud synchronization until the threshold of modified items is reached, minimizing network data usage." aria-label="Learn more about Sync Threshold">
+                                        <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                                    </button>
+                                </label>
                                 <input type="range" class="custom-range" id="customSyncThresholdRange" min="2" max="20"
                                     step="1" value="5">
                                 <small class="form-text text-muted">Cloud sync will trigger after you modify <span
@@ -306,8 +310,10 @@
                                 value="strict_privacy">
                             <label class="custom-control-label" for="syncModeStrict">
                                 <strong>Strict Privacy Mode</strong>
-                                <small class="d-block text-muted">Disables all cloud synchronization. Only local data is
-                                    used. TMDB lookup still works.</small>
+                                <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Disables background cloud database synchronization. Explicit metadata lookups still send direct requests to third-party TMDB servers." aria-label="Learn more about Strict Privacy Mode">
+                                    <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                                </button>
+                                <small class="d-block text-muted">Disables cloud database synchronization. Local storage is prioritized; metadata lookups query third-party APIs on request.</small>
                             </label>
                         </div>
                     </form>
@@ -2610,6 +2616,10 @@
                                 <small>Streaming availability links.</small>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="alert alert-secondary border small mt-3" id="legalComplianceDisclaimer">
+                        <strong>Legal & Compliance Notice:</strong> KeepmoviEZ is a personal media logging and indexing utility. It does not host, index, stream, or distribute media content. Users are solely responsible for ensuring compliance with applicable copyright laws and third-party terms of service.
                     </div>
 
                     <hr>

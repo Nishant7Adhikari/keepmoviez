@@ -282,6 +282,9 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="timeFormatToggle"') && html.includes('aria-label="Toggle time format unit"'));
     assert.ok(html.includes('id="confirmForcePullModal"') && html.includes('aria-modal="true"'));
     assert.ok(html.includes('id="confirmForcePushModal"') && html.includes('aria-modal="true"'));
+    assert.ok(html.includes('aria-label="Learn more about Strict Privacy Mode"'));
+    assert.ok(html.includes('aria-label="Learn more about Sync Threshold"'));
+    assert.ok(html.includes('id="legalComplianceDisclaimer"'));
 });
 
 test('renderMovieCards empty state renders Clear Filters & Search CTA button', () => {
