@@ -273,6 +273,12 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
     assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
+    assert.ok(html.includes('id="pgSeasonInput"') && html.includes('aria-label="Parents guide season number"'));
+    assert.ok(html.includes('id="pgEpisodeInput"') && html.includes('aria-label="Parents guide episode number"'));
+    assert.ok(html.includes('id="batchEditAddGenreSearchInput"') && html.includes('aria-label="Add genres"'));
+    assert.ok(html.includes('id="batchEditRemoveGenreSearchInput"') && html.includes('aria-label="Remove genres"'));
+    assert.ok(html.includes('id="batchEditWatchDate"') && html.includes('aria-label="Batch edit watch date"'));
+    assert.ok(html.includes('id="batchEditWatchRating"') && html.includes('aria-label="Batch edit watch rating"'));
     assert.ok(html.includes('id="timeFormatToggle"') && html.includes('aria-label="Toggle time format unit"'));
     assert.ok(html.includes('id="confirmForcePullModal"') && html.includes('aria-modal="true"'));
     assert.ok(html.includes('id="confirmForcePushModal"') && html.includes('aria-modal="true"'));
