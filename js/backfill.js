@@ -705,6 +705,9 @@ function renderFieldInput(fieldConfig, entry) {
       : str == null
         ? ""
         : String(str);
+  const fieldLabel = safeEscape(
+    fieldConfig.label || fieldConfig.name || fieldConfig.fieldKey || "Backfill value"
+  );
 
   switch (inputType) {
     case "number":
@@ -715,6 +718,7 @@ function renderFieldInput(fieldConfig, entry) {
                         class="form-control form-control-lg" 
                         id="backfillInput" 
                         placeholder="${safeEscape(placeholder || "")}"
+                        aria-label="${fieldLabel}"
                         ${min ? `min="${safeEscape(min)}"` : ""}
                         ${max ? `max="${safeEscape(max)}"` : ""}
                     >
@@ -729,6 +733,7 @@ function renderFieldInput(fieldConfig, entry) {
                     class="form-control form-control-lg" 
                     id="backfillInput" 
                     placeholder="${safeEscape(placeholder || "")}"
+                    aria-label="${fieldLabel}"
                     autocomplete="off"
                 >
             `;
@@ -739,12 +744,13 @@ function renderFieldInput(fieldConfig, entry) {
                     type="date" 
                     class="form-control form-control-lg" 
                     id="backfillInput"
+                    aria-label="${fieldLabel}"
                 >
             `;
 
     case "select":
       return `
-                <select class="form-control form-control-lg" id="backfillInput">
+                <select class="form-control form-control-lg" id="backfillInput" aria-label="${fieldLabel}">
                     <option value="">Select</option>
                     ${(options || []).map((opt) => `<option value="${safeEscape(opt)}">${safeEscape(opt)}</option>`).join("")}
                 </select>
@@ -757,6 +763,7 @@ function renderFieldInput(fieldConfig, entry) {
                         id="backfillGenreInput" 
                         type="text" 
                         placeholder="Click to add genres..." 
+                        aria-label="${fieldLabel}"
                         autocomplete="off"
                     >
                 </div>
@@ -785,7 +792,7 @@ function renderFieldInput(fieldConfig, entry) {
       return `
         <div class="mb-2">
           <div id="backfillDirectorChips" class="director-chips-container" tabindex="0">
-            <input type="text" id="backfillDirectorInput" class="director-chip-input" placeholder="Type director name and press Enter...">
+            <input type="text" id="backfillDirectorInput" class="director-chip-input" placeholder="Type director name and press Enter..." aria-label="${fieldLabel}">
           </div>
           <small class="form-text text-muted mt-1">Type name &amp; press Enter to add. Use "Auto-Fetch" for 1-click TMDB lookup.</small>
           <input type="hidden" id="backfillInput">
@@ -799,6 +806,7 @@ function renderFieldInput(fieldConfig, entry) {
           id="backfillInput" 
           rows="4" 
           placeholder="${safeEscape(placeholder || "")}"
+          aria-label="${fieldLabel}"
         ></textarea>
       `;
 

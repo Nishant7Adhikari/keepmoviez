@@ -1293,7 +1293,7 @@
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgSeasonInput" data-step="-1" aria-label="Decrease season">&minus;</button>
                                                 <input type="number" class="form-control form-control-sm pg-input"
-                                                    id="pgSeasonInput" value="1" min="1" placeholder="S">
+                                                    id="pgSeasonInput" value="1" min="1" placeholder="S" aria-label="Parents guide season number">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgSeasonInput" data-step="1" aria-label="Increase season">&plus;</button>
                                             </div>
@@ -1301,7 +1301,7 @@
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgEpisodeInput" data-step="-1" aria-label="Decrease episode">&minus;</button>
                                                 <input type="number" class="form-control form-control-sm pg-input"
-                                                    id="pgEpisodeInput" value="0" min="0" placeholder="E">
+                                                    id="pgEpisodeInput" value="0" min="0" placeholder="E" aria-label="Parents guide episode number">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgEpisodeInput" data-step="1" aria-label="Increase episode">&plus;</button>
                                             </div>
@@ -2123,7 +2123,7 @@
                                 <div class="batch-field-input-wrap">
                                     <div id="batchEditAddGenreContainer" tabindex="0">
                                         <input id="batchEditAddGenreSearchInput" type="text"
-                                            placeholder="Click to add genres...">
+                                            placeholder="Click to add genres..." aria-label="Add genres">
                                     </div>
                                     <div id="batchEditAddGenreDropdown">
                                         <div id="batchEditAddGenreItemsContainer" class="list-group mt-1"></div>
@@ -2146,7 +2146,7 @@
                                 <div class="batch-field-input-wrap">
                                     <div id="batchEditRemoveGenreContainer" tabindex="0">
                                         <input id="batchEditRemoveGenreSearchInput" type="text"
-                                            placeholder="Click to select genres to remove...">
+                                            placeholder="Click to select genres to remove..." aria-label="Remove genres">
                                     </div>
                                     <div id="batchEditRemoveGenreDropdown">
                                         <div id="batchEditRemoveGenreItemsContainer" class="list-group mt-1"></div>
@@ -2287,8 +2287,8 @@
                                 </label>
                                 <div class="batch-field-input-wrap">
                                     <input type="date" class="form-control form-control-sm mb-1"
-                                        id="batchEditWatchDate">
-                                    <select class="form-control form-control-sm" id="batchEditWatchRating">
+                                        id="batchEditWatchDate" aria-label="Batch edit watch date">
+                                    <select class="form-control form-control-sm" id="batchEditWatchRating" aria-label="Batch edit watch rating">
                                         <option value="">Select</option>
                                         <option value="1">1 Star</option>
                                         <option value="2">2 Stars</option>
