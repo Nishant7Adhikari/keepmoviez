@@ -54,11 +54,11 @@ function getDailyRecommendationPickReason(movie) {
         const favoriteGenreObj = window.globalStatsData.topRatedGenresOverall[0];
         const match = genres.find(g => g.toLowerCase() === favoriteGenreObj.label.toLowerCase());
         if (match) {
-            pickReason = `Matches one of your top-rated genres: <strong>${match}</strong> (average rating: ${favoriteGenreObj.value} <i class="fas fa-star text-warning"></i>)!`;
+            pickReason = `Matches one of your top-rated genres: <strong>${escapeHTML(match)}</strong> (average rating: ${escapeHTML(favoriteGenreObj.value)} <i class="fas fa-star text-warning"></i>)!`;
         } else if (window.globalStatsData.mostWatchedDirectors && window.globalStatsData.mostWatchedDirectors.length > 0 && movie.director_info && movie.director_info.name) {
             const topDirector = window.globalStatsData.mostWatchedDirectors[0].label;
             if (movie.director_info.name === topDirector) {
-                pickReason = `Directed by <strong>${topDirector}</strong>, who is currently your most-watched director!`;
+                pickReason = `Directed by <strong>${escapeHTML(topDirector)}</strong>, who is currently your most-watched director!`;
             }
         }
     }
@@ -143,7 +143,7 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                 </div>
                 
                 <div class="daily-pick-reason-box">
-                    <i class="fas fa-magic text-primary mr-1"></i> ${escapeHTML(card.pickReason)}
+                    <i class="fas fa-magic text-primary mr-1"></i> ${card.pickReason}
                 </div>
                 
                 <div class="daily-pick-description">

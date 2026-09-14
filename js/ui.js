@@ -1342,7 +1342,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
         .sort((a, b) => (Date.parse(b.date) || 0) - (Date.parse(a.date) || 0))
         .forEach((wh) =>
           whList.append(
-            `<li><strong>${formatWatchDateDisplay(wh.date)}</strong> - ${renderStars(wh.rating)} ${wh.notes ? `<small class="text-muted d-block">${escapeHTML(wh.notes)}</small>` : ""}</li>`,
+            `<li><strong>${escapeHTML(formatWatchDateDisplay(wh.date))}</strong> - ${renderStars(wh.rating)} ${wh.notes ? `<small class="text-muted d-block">${escapeHTML(wh.notes)}</small>` : ""}</li>`,
           ),
         );
 

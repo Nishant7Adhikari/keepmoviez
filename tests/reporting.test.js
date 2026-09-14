@@ -213,4 +213,21 @@ test('renderRatingReleaseYearScatter formats scatter data using getLatestWatchIn
     assert.equal(point.y, 5);
     assert.equal(point._title, 'Inception');
     assert.ok(point._date !== 'N/A');
+test('getDailyRecommendationPickReason escapes dynamic genre and director inputs', () => {
+    sandbox.window.globalStatsData = {
+        topRatedGenresOverall: [{ label: '<script>alert(1)</script>', value: '4.8' }],
+        mostWatchedDirectors: [{ label: '<b onmouseover=alert(2)>Director</b>' }]
+    };
+
+    const movieGenreXss = { Genre: '<script>alert(1)</script>' };
+    const pickReasonGenre = sandbox.getDailyRecommendationPickReason(movieGenreXss);
+    assert.ok(pickReasonGenre.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+    assert.ok(!pickReasonGenre.includes('<script>'));
+    assert.ok(pickReasonGenre.includes('<strong>&lt;script&gt;alert(1)&lt;/script&gt;</strong>'));
+
+    const movieDirectorXss = { Genre: 'Sci-Fi', director_info: { name: '<b onmouseover=alert(2)>Director</b>' } };
+    const pickReasonDirector = sandbox.getDailyRecommendationPickReason(movieDirectorXss);
+    assert.ok(pickReasonDirector.includes('&lt;b onmouseover=alert(2)&gt;Director&lt;/b&gt;'));
+    assert.ok(!pickReasonDirector.includes('<b onmouseover'));
+    assert.ok(pickReasonDirector.includes('<strong>&lt;b onmouseover=alert(2)&gt;Director&lt;/b&gt;</strong>'));
 });
