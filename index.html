@@ -72,6 +72,7 @@
 <!-- END CHUNK: Document Head and Core Dependencies -->
 
 <body>
+    <a href="#movieCardContainer" class="skip-link">Skip to main content</a>
 
     <!-- START CHUNK: Overlays -->
     <div id="loadingOverlay" class="loading-overlay">
@@ -217,7 +218,7 @@
 
     <!-- START CHUNK: Import / Pull -->
     <div class="modal fade" id="importModal" tabindex="-1" role="dialog" aria-labelledby="importModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -245,7 +246,7 @@
 
     <!-- START CHUNK: Settings Modal -->
     <div class="modal fade" id="settingsModal" tabindex="-1" role="dialog" aria-labelledby="settingsModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -288,7 +289,11 @@
                             style="display: none;">
                             <div class="form-group mb-1">
                                 <label for="customSyncThresholdRange" class="small font-weight-bold">Sync Threshold:
-                                    <span id="customSyncThresholdValue" class="text-primary">5</span> items</label>
+                                    <span id="customSyncThresholdValue" class="text-primary">5</span> items
+                                    <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Batches cloud synchronization until the threshold of modified items is reached, minimizing network data usage." aria-label="Learn more about Sync Threshold">
+                                        <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                                    </button>
+                                </label>
                                 <input type="range" class="custom-range" id="customSyncThresholdRange" min="2" max="20"
                                     step="1" value="5">
                                 <small class="form-text text-muted">Cloud sync will trigger after you modify <span
@@ -305,8 +310,10 @@
                                 value="strict_privacy">
                             <label class="custom-control-label" for="syncModeStrict">
                                 <strong>Strict Privacy Mode</strong>
-                                <small class="d-block text-muted">Disables all cloud synchronization. Only local data is
-                                    used. TMDB lookup still works.</small>
+                                <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Disables background cloud database synchronization. Explicit metadata lookups still send direct requests to third-party TMDB servers." aria-label="Learn more about Strict Privacy Mode">
+                                    <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                                </button>
+                                <small class="d-block text-muted">Disables cloud database synchronization. Local storage is prioritized; metadata lookups query third-party APIs on request.</small>
                             </label>
                         </div>
                     </form>
@@ -354,7 +361,7 @@
 
     <!-- START CHUNK: Export / Push -->
     <div class="modal fade" id="exportModal" tabindex="-1" role="dialog" aria-labelledby="exportModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -384,11 +391,11 @@
     <!-- END CHUNK: Export / Push -->
 
     <!-- START CHUNK: Confirm Force Pull -->
-    <div class="modal fade" id="confirmForcePullModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="confirmForcePullModal" tabindex="-1" role="dialog" aria-labelledby="confirmForcePullModalLabel" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-dark">
-                    <h5 class="modal-title">Confirm Force Pull</h5>
+                    <h5 class="modal-title" id="confirmForcePullModalLabel">Confirm Force Pull</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -406,11 +413,11 @@
     <!-- END CHUNK: Confirm Force Pull -->
 
     <!-- START CHUNK: Confirm Force Push -->
-    <div class="modal fade" id="confirmForcePushModal" tabindex="-1" role="dialog">
+    <div class="modal fade" id="confirmForcePushModal" tabindex="-1" role="dialog" aria-labelledby="confirmForcePushModalLabel" aria-modal="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Confirm Force Push</h5>
+                    <h5 class="modal-title" id="confirmForcePushModalLabel">Confirm Force Push</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -430,7 +437,7 @@
 
     <!-- START CHUNK: Backfill Modal -->
     <div class="modal fade" id="backfillModal" tabindex="-1" role="dialog" aria-labelledby="backfillModalLabel"
-        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        aria-hidden="true" aria-modal="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -667,7 +674,7 @@
 
     <!-- START CHUNK: Modal - Filter (Previously Filter & Sort) -->
     <div class="modal fade" id="filterSortModal" tabindex="-1" role="dialog" aria-labelledby="filterSortModalLabel"
-        aria-hidden="true">
+        aria-hidden="true" aria-modal="true">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -734,7 +741,7 @@
 
     <!-- START CHUNK: Modal - Smart Import -->
     <div class="modal fade" id="smartImportModal" tabindex="-1" role="dialog" aria-labelledby="smartImportModalLabel"
-        aria-hidden="true" data-backdrop="static" data-keyboard="false">
+        aria-hidden="true" aria-modal="true" data-backdrop="static" data-keyboard="false">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -802,7 +809,7 @@
 
     <!-- START CHUNK: Modal - Entry Form (Add/Edit) -->
     <div class="modal fade" id="entryModal" tabindex="-1" role="dialog" aria-labelledby="entryModalLabel"
-        aria-hidden="true" data-backdrop="static">
+        aria-hidden="true" aria-modal="true" data-backdrop="static">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
@@ -1100,7 +1107,7 @@
 
     <!-- START CHUNK: Modal - Quick Update -->
     <div class="modal fade" id="quickUpdateModal" tabindex="-1" role="dialog" aria-labelledby="quickUpdateModalLabel"
-        aria-hidden="true" data-backdrop="static">
+        aria-hidden="true" aria-modal="true" data-backdrop="static">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -1292,7 +1299,7 @@
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgSeasonInput" data-step="-1" aria-label="Decrease season">&minus;</button>
                                                 <input type="number" class="form-control form-control-sm pg-input"
-                                                    id="pgSeasonInput" value="1" min="1" placeholder="S">
+                                                    id="pgSeasonInput" value="1" min="1" placeholder="S" aria-label="Parents guide season number">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgSeasonInput" data-step="1" aria-label="Increase season">&plus;</button>
                                             </div>
@@ -1300,7 +1307,7 @@
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgEpisodeInput" data-step="-1" aria-label="Decrease episode">&minus;</button>
                                                 <input type="number" class="form-control form-control-sm pg-input"
-                                                    id="pgEpisodeInput" value="0" min="0" placeholder="E">
+                                                    id="pgEpisodeInput" value="0" min="0" placeholder="E" aria-label="Parents guide episode number">
                                                 <button class="btn btn-sm btn-pg-stepper" type="button"
                                                     data-target="pgEpisodeInput" data-step="1" aria-label="Increase episode">&plus;</button>
                                             </div>
@@ -2122,7 +2129,7 @@
                                 <div class="batch-field-input-wrap">
                                     <div id="batchEditAddGenreContainer" tabindex="0">
                                         <input id="batchEditAddGenreSearchInput" type="text"
-                                            placeholder="Click to add genres...">
+                                            placeholder="Click to add genres..." aria-label="Add genres">
                                     </div>
                                     <div id="batchEditAddGenreDropdown">
                                         <div id="batchEditAddGenreItemsContainer" class="list-group mt-1"></div>
@@ -2145,7 +2152,7 @@
                                 <div class="batch-field-input-wrap">
                                     <div id="batchEditRemoveGenreContainer" tabindex="0">
                                         <input id="batchEditRemoveGenreSearchInput" type="text"
-                                            placeholder="Click to select genres to remove...">
+                                            placeholder="Click to select genres to remove..." aria-label="Remove genres">
                                     </div>
                                     <div id="batchEditRemoveGenreDropdown">
                                         <div id="batchEditRemoveGenreItemsContainer" class="list-group mt-1"></div>
@@ -2286,8 +2293,8 @@
                                 </label>
                                 <div class="batch-field-input-wrap">
                                     <input type="date" class="form-control form-control-sm mb-1"
-                                        id="batchEditWatchDate">
-                                    <select class="form-control form-control-sm" id="batchEditWatchRating">
+                                        id="batchEditWatchDate" aria-label="Batch edit watch date">
+                                    <select class="form-control form-control-sm" id="batchEditWatchRating" aria-label="Batch edit watch rating">
                                         <option value="">Select</option>
                                         <option value="1">1 Star</option>
                                         <option value="2">2 Stars</option>
@@ -2609,6 +2616,10 @@
                                 <small>Streaming availability links.</small>
                             </div>
                         </div>
+                    </div>
+
+                    <div class="alert alert-secondary border small mt-3" id="legalComplianceDisclaimer">
+                        <strong>Legal & Compliance Notice:</strong> KeepmoviEZ is a personal media logging and indexing utility. It does not host, index, stream, or distribute media content. Users are solely responsible for ensuring compliance with applicable copyright laws and third-party terms of service.
                     </div>
 
                     <hr>

@@ -17,3 +17,15 @@
 ## 2026-09-11 - Pre-parsing lastModifiedDate into Map before Array.prototype.sort
 **Learning:** Sorting by `lastModifiedDate` previously executed `new Date(a.lastModifiedDate).getTime()` directly inside `movieData.sort()`, causing $O(N \log N)$ redundant date parses (~140ms for 5,000 entries). Pre-parsing `lastModifiedDate` into a `Map` in an $O(N)$ pass prior to calling `movieData.sort()` reduced sort runtime to ~64ms (~2.2x speedup).
 **Action:** Pre-parse date strings into numeric timestamps in a Map before sorting array entries by date fields.
+
+## 2026-09-12 - Single-pass filtering & short-circuiting in applyFilters
+**Learning:** `applyFilters` previously chained up to 5 consecutive `Array.prototype.filter` passes over `movieData`, re-allocating intermediate arrays on each filter tier and executing expensive text lowercasing (`filterQuery`) and genre string splits (`m.Genre.split(",")`) across all entries. Consolidating filters into a single-pass `data.filter()` callback and short-circuiting fast property equality checks (`Category`, `Country`, `Language`) before executing text search or genre splits reduced filter processing time by ~2.25x (~1.04s to ~0.46s for 1,000 calls over 5,000 items).
+**Action:** Consolidate multi-stage array filtering into single-pass pipelines and order predicate conditions so that cheap property equality checks short-circuit before expensive string parsing/searching functions.
+
+## 2026-09-13 - Pre-parsing dates & using localeCompare for ISO string sorting in calculateAllStatistics
+**Learning:** In `calculateAllStatistics`, streak calculations repeatedly allocated `new Date()` instances inside iteration loops, and `watchesByMonth`/`avgRatingByMonth` sorting invoked `new Date(a.iso)` parsing inside `Array.prototype.sort()` comparators. Pre-parsing date strings into numeric UTC timestamps once prior to streak loops and replacing `new Date()` sort comparisons with `String.prototype.localeCompare()` on ISO (`YYYY-MM`) strings reduced aggregation execution time by ~7-8%.
+**Action:** Pre-parse date strings to numeric timestamps before streak/range loops, and use `localeCompare` for sorting ISO formatted date strings (`YYYY-MM`) instead of parsing `Date` objects inside sort comparators.
+
+## 2026-09-14 - Single-pass getLatestWatchInstance & Date.parse in scatter charts and UI sorting
+**Learning:** `renderRatingReleaseYearScatter` previously copied `[...movie.watchHistory]` and sorted it with $O(M \log M)$ `new Date()` comparators to find the latest watch date for each movie. Replacing array cloning and sorting with $O(M)$ linear scan helper `getLatestWatchInstance` and wall-clock safe `formatWatchDateDisplay` eliminated $O(N \cdot M)$ temporary array allocations and date parses. Replacing `new Date()` in `findNextBestSeedMovie` and watch history UI sort comparators with numeric `Date.parse()` timestamps further reduced GC pressure during modal rendering.
+**Action:** Use single-pass helper `getLatestWatchInstance` rather than `[...history].sort()` to find latest watch instances, and use `Date.parse()` rather than `new Date()` inside sort comparators.

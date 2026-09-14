@@ -144,9 +144,11 @@ test('renderFieldInput escapes select option values and input placeholders', () 
     assert.ok(selectHtml.includes('Normal &amp; Safe'));
 
     const textConfig = {
+        fieldKey: 'Director',
         inputType: 'text',
         placeholder: 'e.g. "<img src=x onerror=alert(1)>"'
     };
     const textHtml = sandbox.renderFieldInput(textConfig, {});
     assert.ok(textHtml.includes('placeholder="e.g. &quot;&lt;img src=x onerror=alert(1)&gt;&quot;"'));
+    assert.ok(textHtml.includes('aria-label="Director"'));
 });

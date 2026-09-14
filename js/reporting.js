@@ -54,11 +54,11 @@ function getDailyRecommendationPickReason(movie) {
         const favoriteGenreObj = window.globalStatsData.topRatedGenresOverall[0];
         const match = genres.find(g => g.toLowerCase() === favoriteGenreObj.label.toLowerCase());
         if (match) {
-            pickReason = `Matches one of your top-rated genres: <strong>${match}</strong> (average rating: ${favoriteGenreObj.value} <i class="fas fa-star text-warning"></i>)!`;
+            pickReason = `Matches one of your top-rated genres: <strong>${escapeHTML(match)}</strong> (average rating: ${escapeHTML(favoriteGenreObj.value)} <i class="fas fa-star text-warning"></i>)!`;
         } else if (window.globalStatsData.mostWatchedDirectors && window.globalStatsData.mostWatchedDirectors.length > 0 && movie.director_info && movie.director_info.name) {
             const topDirector = window.globalStatsData.mostWatchedDirectors[0].label;
             if (movie.director_info.name === topDirector) {
-                pickReason = `Directed by <strong>${topDirector}</strong>, who is currently your most-watched director!`;
+                pickReason = `Directed by <strong>${escapeHTML(topDirector)}</strong>, who is currently your most-watched director!`;
             }
         }
     }
@@ -143,7 +143,7 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                 </div>
                 
                 <div class="daily-pick-reason-box">
-                    <i class="fas fa-magic text-primary mr-1"></i> ${escapeHTML(card.pickReason)}
+                    <i class="fas fa-magic text-primary mr-1"></i> ${card.pickReason}
                 </div>
                 
                 <div class="daily-pick-description">
@@ -411,7 +411,8 @@ function findNextBestSeedMovie() {
         const ratingA = parseFloat(a.overallRating) || 0;
         const ratingB = parseFloat(b.overallRating) || 0;
         if (ratingB !== ratingA) return ratingB - ratingA;
-        return new Date(b.lastModifiedDate) - new Date(a.lastModifiedDate);
+        // Performance optimization: Use Date.parse to compare timestamps without Date allocations
+        return (Date.parse(b.lastModifiedDate) || 0) - (Date.parse(a.lastModifiedDate) || 0);
     });
 
     if (candidates.length === 0) return { seed: null, nextIndex: -1 };
@@ -1273,6 +1274,7 @@ function renderActivityHeatmap(canvasId) {
     const startDay = targetStart.getDay();
     const startDate = new Date(targetStart);
     startDate.setDate(startDate.getDate() - startDay); // Shift to Sunday
+    const startDateMs = startDate.getTime();
     
     const cellDataMap = [];
     const isDark = document.body.classList.contains('dark-theme');
@@ -1342,7 +1344,10 @@ function renderActivityHeatmap(canvasId) {
         }
     }
     
-    // Add tooltip logic
+    // Store latest cellDataMap on canvas element so event listener reads fresh data
+    canvas._cellDataMap = cellDataMap;
+
+    // Add tooltip logic (bind event listeners only once)
     let tooltip = document.getElementById('heatmapTooltip');
     if (!tooltip) {
         tooltip = document.createElement('div');
@@ -1352,40 +1357,44 @@ function renderActivityHeatmap(canvasId) {
         document.body.appendChild(tooltip);
     }
     
-    canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        // Scale mouse coordinates to canvas internal resolution
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
-        
-        let hovered = null;
-        for (let i = 0; i < cellDataMap.length; i++) {
-            const cell = cellDataMap[i];
-            if (x >= cell.x && x <= cell.x + cell.size && y >= cell.y && y <= cell.y + cell.size) {
-                hovered = cell;
-                break;
+    if (!canvas.dataset.listenersBound) {
+        canvas.dataset.listenersBound = "true";
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            // Scale mouse coordinates to canvas internal resolution
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const x = (e.clientX - rect.left) * scaleX;
+            const y = (e.clientY - rect.top) * scaleY;
+
+            const activeCellMap = canvas._cellDataMap || [];
+            let hovered = null;
+            for (let i = 0; i < activeCellMap.length; i++) {
+                const cell = activeCellMap[i];
+                if (x >= cell.x && x <= cell.x + cell.size && y >= cell.y && y <= cell.y + cell.size) {
+                    hovered = cell;
+                    break;
+                }
             }
-        }
-        
-        if (hovered) {
-            let tooltipHtml = `<strong>${escapeHTML(hovered.date)}</strong><br/>Watches: ${hovered.count}`;
-            if (hovered.count > 0) {
-                tooltipHtml += `<br/><br/>${hovered.titles.map(t => escapeHTML(t)).join('<br/>')}`;
+
+            if (hovered) {
+                let tooltipHtml = `<strong>${escapeHTML(hovered.date)}</strong><br/>Watches: ${hovered.count}`;
+                if (hovered.count > 0) {
+                    tooltipHtml += `<br/><br/>${hovered.titles.map(t => escapeHTML(t)).join('<br/>')}`;
+                }
+                tooltip.innerHTML = tooltipHtml;
+                tooltip.style.left = (e.pageX + 15) + 'px';
+                tooltip.style.top = (e.pageY - 20) + 'px';
+                tooltip.style.opacity = '1';
+            } else {
+                tooltip.style.opacity = '0';
             }
-            tooltip.innerHTML = tooltipHtml;
-            tooltip.style.left = (e.pageX + 15) + 'px';
-            tooltip.style.top = (e.pageY - 20) + 'px';
-            tooltip.style.opacity = '1';
-        } else {
+        });
+
+        canvas.addEventListener('mouseleave', () => {
             tooltip.style.opacity = '0';
-        }
-    });
-    
-    canvas.addEventListener('mouseleave', () => {
-        tooltip.style.opacity = '0';
-    });
+        });
+    }
 }
 
 function renderRatingReleaseYearScatter(canvasId, chartInstanceObj) {
@@ -1407,8 +1416,10 @@ function renderRatingReleaseYearScatter(canvasId, chartInstanceObj) {
                 
                 let latestDate = 'N/A';
                 if (movie.watchHistory && movie.watchHistory.length > 0) {
-                    const sorted = [...movie.watchHistory].sort((a,b) => new Date(b.date) - new Date(a.date));
-                    latestDate = sorted[0].date ? new Date(sorted[0].date).toLocaleDateString() : 'N/A';
+                    // Performance optimization: Use single-pass O(M) linear scan (getLatestWatchInstance)
+                    // and wall-clock safe formatWatchDateDisplay instead of array copying, sorting, and Date parsing
+                    const latestWatch = typeof getLatestWatchInstance === 'function' ? getLatestWatchInstance(movie.watchHistory) : null;
+                    latestDate = latestWatch && latestWatch.date ? (typeof formatWatchDateDisplay === 'function' ? formatWatchDateDisplay(latestWatch.date) : latestWatch.date.slice(0, 10)) : 'N/A';
                 }
                 scatterData.push({ x: year, y: rating, _title: movie.Name, _date: latestDate });
             }
