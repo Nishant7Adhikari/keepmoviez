@@ -385,3 +385,20 @@ test('applyFilters filters items correctly in single pass with short-circuiting'
     assert.equal(result.length, 1);
     assert.equal(result[0].id, '1');
 });
+
+test('showToast preserves and presents standard error title and message without prank error replacements', () => {
+    let alertCalledMessage = null;
+    const testSandbox = {
+        console,
+        Math,
+        PRANK_ERROR_CHANCE: 1,
+        localStorage: { getItem: () => null },
+        alert: (msg) => { alertCalledMessage = msg; }
+    };
+    testSandbox.window = testSandbox;
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+
+    testSandbox.showToast("Database Connection Error", "Unable to establish network handshake.", "error");
+    assert.equal(alertCalledMessage, "Database Connection Error: Unable to establish network handshake.");
+});
