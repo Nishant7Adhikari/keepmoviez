@@ -213,6 +213,7 @@ test('renderRatingReleaseYearScatter formats scatter data using getLatestWatchIn
     assert.equal(point.y, 5);
     assert.equal(point._title, 'Inception');
     assert.ok(point._date !== 'N/A');
+});
 test('getDailyRecommendationPickReason escapes dynamic genre and director inputs', () => {
     sandbox.window.globalStatsData = {
         topRatedGenresOverall: [{ label: '<script>alert(1)</script>', value: '4.8' }],
