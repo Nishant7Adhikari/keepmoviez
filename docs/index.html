@@ -293,6 +293,9 @@
             <li class="nav-item">
               <a class="nav-link" href="#technical">Technical Deep Dive</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#legal-compliance">Legal & Compliance</a>
+            </li>
             <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
           </ul>
         </nav>
@@ -543,7 +546,7 @@
               <p>
                 This means searching, filtering, and sorting happens instantly
                 because the app isn't talking to a server—it's just scanning
-                memory. It also means the app works 100% offline.
+                memory. It also enables offline support for core local library operations.
               </p>
             </div>
           </section>
@@ -827,8 +830,7 @@
             </div>
 
             <p>
-              In this mode, the application software actively blocks any attempt
-              to communicate with the synchronization server.
+              In this mode, cloud database synchronization is disabled. Note that if you explicitly perform a TMDB metadata search or poster lookup, direct network requests to third-party TMDB endpoints will occur on demand.
             </p>
 
             <div class="card bg-light mb-3">
@@ -845,6 +847,19 @@
                 </p>
               </div>
             </div>
+          </section>
+
+          <!-- Legal Compliance Section -->
+          <section id="legal-compliance">
+            <h2>Legal Compliance & Usage Boundaries</h2>
+            <p>
+              KeepmoviEZ is designed as a personal cataloging and tracking tool.
+            </p>
+            <ul>
+              <li><strong>No Media Hosting or Distribution:</strong> KeepmoviEZ does not host, index, stream, or distribute copyright-protected media files.</li>
+              <li><strong>User Responsibility:</strong> Users are solely responsible for ensuring their collection logs, notes, and imported media information comply with applicable copyright laws and third-party terms of service.</li>
+              <li><strong>API Attribution:</strong> Metadata and images sourced via search features are provided by third-party services like The Movie Database (TMDB). KeepmoviEZ uses the TMDB API but is not endorsed or certified by TMDB.</li>
+            </ul>
           </section>
 
           <!-- 12. FAQ -->
@@ -890,10 +905,9 @@
                 </div>
                 <div id="c2" class="collapse" data-parent="#faqAccordion">
                   <div class="card-body">
-                    <strong>Yes, 100%.</strong> Once you have logged in for the
-                    first time, the entire database lives on your device. You
-                    can add, edit, and view your collection without any internet
-                    connection. You only need internet to Search TMDB or Sync.
+                    <strong>Yes, for local collection management.</strong> Once you have loaded the application and logged in, your primary database resides on your local device. You
+                    can add, edit, and view your collection without an active internet
+                    connection. An internet connection is only required for third-party TMDB searches or cloud sync.
                   </div>
                 </div>
               </div>
