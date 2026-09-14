@@ -121,19 +121,6 @@ function escapeHTML(str) {
 function showToast(title, message, type = 'info', delayMs, doNotShowAgainKey = null, actions = []) {
     if (doNotShowAgainKey && localStorage.getItem(doNotShowAgainKey) === 'true') return;
 
-    if (type === 'error' && (Math.random() * PRANK_ERROR_CHANCE < 1)) {
-        const prankMessages = [
-            "Oops! Looks like the hamsters powering the server took a coffee break.",
-            "Error 404: Motivation not found. Just kidding, something broke.",
-            "My apologies! A pixel decided to rebel. Try again!",
-            "Uh oh! My circuits are feeling a bit shy right now. Give it another go.",
-            "The digital gremlins are at it again. We're on it!",
-            "Whoops! I spilled some virtual coffee. Fixing it now!"
-        ];
-        message = prankMessages[Math.floor(Math.random() * prankMessages.length)];
-        title = "Unexpected Hiccup!";
-    }
-
     if (typeof $ === 'undefined' || typeof $.fn.toast === 'undefined') {
         console.warn("jQuery or Bootstrap Toast component not found. Toast cannot be shown. Message:", title, message);
         alert(`${title}: ${message}`); // Fallback
