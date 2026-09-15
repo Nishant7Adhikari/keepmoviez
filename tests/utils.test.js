@@ -285,6 +285,11 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('aria-label="Learn more about Strict Privacy Mode"'));
     assert.ok(html.includes('aria-label="Learn more about Sync Threshold"'));
     assert.ok(html.includes('id="legalComplianceDisclaimer"'));
+    assert.ok(html.includes('id="menuThemeToggleBtn"') && html.includes('aria-label="Toggle Theme"'));
+    assert.ok(html.includes('id="menuImportBtn"') && html.includes('aria-label="Load Data"'));
+    assert.ok(html.includes('id="menuExportBtn"') && html.includes('aria-label="Export Data"'));
+    assert.ok(html.includes('id="menuSyncDataBtn"') && html.includes('aria-label="Sync with Cloud"'));
+    assert.ok(html.includes('id="menuSupabaseLogoutBtn"') && html.includes('aria-label="Logout"'));
 });
 
 test('renderMovieCards empty state renders Clear Filters & Search CTA button', () => {
