@@ -21,7 +21,7 @@ const imageObserver = new IntersectionObserver(
 // END CHUNK: Image Lazy Loader
 
 // START CHUNK: Watch History Management (UI)
-// Performance optimization: Single-pass linear scan instead of filter + copy + sort
+// Performance optimization: Single-pass linear scan instead of filter + copy + sort, using Date.parse to avoid allocations
 function getLatestWatchInstance(watchHistoryArray) {
   if (!Array.isArray(watchHistoryArray) || watchHistoryArray.length === 0)
     return null;
@@ -30,7 +30,7 @@ function getLatestWatchInstance(watchHistoryArray) {
   for (let i = 0; i < watchHistoryArray.length; i++) {
     const wh = watchHistoryArray[i];
     if (!wh || !wh.date) continue;
-    const time = new Date(wh.date).getTime();
+    const time = Date.parse(wh.date);
     if (!isNaN(time) && time > maxTime) {
       maxTime = time;
       latest = wh;
