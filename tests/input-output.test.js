@@ -91,3 +91,10 @@ test('populateImportSummary escapes HTML characters in smartImportState.fileName
     assert.ok(!htmlContent.includes('<img src="x" onerror="alert(1)">'));
     assert.ok(htmlContent.includes('&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;'));
 });
+
+test('index.html includes accessible info icon trigger for Smart Import Assistant', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('id="smartImportModalLabel"'));
+    assert.ok(html.includes('aria-label="Learn more about Smart Import Assistant"'));
+    assert.ok(html.includes('title="Parses CSV/JSON backup files locally in browser memory and guides duplicate resolution. No file data is uploaded to remote servers."'));
+});
