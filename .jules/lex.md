@@ -11,3 +11,9 @@
 **Legal/Copy Risk:** Randomly replacing legitimate system error notifications with informal or joke error messages ("hamsters took a coffee break", "digital gremlins") creates user confusion and obscures actual failure causes.
 **Learning:** Informal and misleading error microcopy damages user trust, hinders troubleshooting, and creates an impression of app instability or lost data. Professional, objective advisories are essential for user confidence and regulatory transparency.
 **Remedy:** Remove random prank error generators and enforce direct, professional, and descriptive error advisories across all UI toast notifications.
+
+## 2026-09-15 - Unexplained Import Assistants and Data Storage Ambiguity
+
+**Legal/Copy Risk:** Presenting proprietary import mechanisms (e.g. "Smart Import Assistant") without contextual microcopy or documentation can induce privacy anxiety regarding whether user media backup files are being transmitted to remote servers.
+**Learning:** Users uploading sensitive local CSV/JSON backup files require explicit, accessible inline assurances that parsing is strictly local.
+**Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label` and `title` attributes clarifying local browser-side memory parsing, and complement inline microcopy with dedicated strategy breakdowns in `./docs/index.html`.

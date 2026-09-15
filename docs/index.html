@@ -674,21 +674,30 @@
             <h2>Smart Import & Export</h2>
             <p>
               Your data is yours. You can export a JSON or a CSV file backup at
-              any time <strong>Menu > Export</strong>.
+              any time via <strong>Menu > Export Data</strong>.
             </p>
 
-            <h4>Restoring & Enriching Data</h4>
+            <h4>Smart Import Assistant & Strategies</h4>
             <p>
-              When importing a file, you will see options. The most powerful one
-              is <strong>"Smart Backfill"</strong>.
+              When uploading a CSV or JSON backup file, the <strong>Smart Import Assistant</strong> parses your file locally in browser memory. No data from your backup files is ever uploaded to remote servers.
             </p>
             <p>
-              Use this if you have an old list of movies (just names) and want
-              to upgrade them. If the import file contains extra data (like
-              runtime or director) for a movie you already have, "Backfill" will
-              update the empty fields <em>without</em> overwriting your existing
-              ratings or notes.
+              The assistant allows you to select a collision resolution strategy before modifying your collection:
             </p>
+            <ul>
+              <li>
+                <strong>Append New Entries Only (Safest):</strong> Adds titles that are not currently in your library and ignores all potential matches/duplicates.
+              </li>
+              <li>
+                <strong>Smart Backfill Missing Data (Recommended for Recovery):</strong> Adds new entries and, for existing matches, only fills in fields that are currently empty (e.g. runtime, related entries) without overwriting existing data or ratings.
+              </li>
+              <li>
+                <strong>Append New & Update Matches:</strong> Adds new titles and updates existing matching entries if the imported version is newer based on <code>lastModifiedDate</code>.
+              </li>
+              <li>
+                <strong>Overwrite All Matches (Advanced):</strong> For every match found, the version from the file completely replaces your existing entry data.
+              </li>
+            </ul>
           </section>
 
           <!-- 9. Discovery -->
