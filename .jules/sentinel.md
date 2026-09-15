@@ -27,3 +27,8 @@
 **Vulnerability:** Dynamic variables (`match`, `favoriteGenreObj.value`, `topDirector`) interpolated into formatted HTML pick reasons in `getDailyRecommendationPickReason` were unescaped, while `renderDailyRecommendationCard` escaped the composite `pickReason` string resulting in double-escaped literal HTML tags in UI.
 **Learning:** When helper functions construct HTML markup (e.g. `<strong>${var}</strong>`), sanitization must be applied directly to the dynamic variables inside the helper rather than escaping the entire HTML string at the top-level card template.
 **Prevention:** Always sanitize individual dynamic inputs with `escapeHTML()` when constructing formatted HTML strings inside helper methods.
+
+## 2026-09-15 - HTML Sanitization for Action Button Data Attributes and Card Status Badges
+**Vulnerability:** Unescaped string interpolation of `movie.id`, `statusClass`, and `statusBadgeText` in `renderNextBatch` card action buttons, `renderDailyRecommendationCard` modal buttons (`data-movie-id="${movie.id}"`), and `renderSeasonBreakdownCards` (`data-container="${containerId}"`, `data-badge="${badgeId}"`) enabled attribute breakout and DOM-based XSS when entry IDs or status values contained double quotes or HTML syntax.
+**Learning:** Data attributes (`data-movie-id="${id}"`) and status badge text/classes generated from entry properties or function parameters can contain quotes or special characters when data originates from user imports or third-party sync.
+**Prevention:** Wrap all dynamic identifiers (`movie.id`), status badges (`statusClass`, `statusBadgeText`), and container IDs in HTML attribute and element string templates with `escapeHTML()` from `js/utils.js`.

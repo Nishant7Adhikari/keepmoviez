@@ -141,7 +141,7 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
-test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS', () => {
+test('renderMovieCards escapes Poster URL, movie.id, statusClass, and statusBadgeText in attributes to prevent XSS', () => {
     const cardContainer = {
         innerHTML: '',
         appendChild: function(fragment) {
@@ -194,9 +194,9 @@ test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS',
         applyFilters: (data) => data,
         movieData: [
             {
-                id: 'test_1',
+                id: 'test_1" onclick="alert(1)',
                 Name: 'Malicious Poster Movie',
-                Status: 'To Watch',
+                Status: 'To Watch <script>alert(2)</script>',
                 Year: '2024',
                 Category: 'Movie',
                 is_deleted: false,
@@ -216,6 +216,10 @@ test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS',
 
     assert.ok(cardContainer.innerHTML.includes('data-src="https://example.com/poster.png&quot; onerror=&quot;alert(1)"'));
     assert.ok(!cardContainer.innerHTML.includes('data-src="https://example.com/poster.png" onerror="alert(1)"'));
+    assert.ok(cardContainer.innerHTML.includes('data-movie-id="test_1&quot; onclick=&quot;alert(1)"'));
+    assert.ok(!cardContainer.innerHTML.includes('data-movie-id="test_1" onclick="alert(1)"'));
+    assert.ok(cardContainer.innerHTML.includes('&lt;script&gt;alert(2)&lt;/script&gt;'));
+    assert.ok(!cardContainer.innerHTML.includes('<script>alert(2)</script>'));
 });
 
 test('openUnwatchableModal escapes special characters in entry.id to prevent XSS', () => {
