@@ -654,8 +654,7 @@
 
             <h4 class="mt-4">Advanced Data Controls</h4>
             <p>
-              Inside the Settings menu, you will also find powerful data
-              management tools:
+              Inside the Settings menu, KeepmoviEZ provides dedicated data maintenance and recovery utilities:
             </p>
             <ul>
               <li>
@@ -665,6 +664,21 @@
               <li>
                 <strong>Force Push (Device → Cloud):</strong> Wipes the cloud
                 backup and uploads your current local data.
+              </li>
+              <li>
+                <strong>Backfill Missing Data:</strong> Step-by-step assistant that identifies entries missing optional details (e.g., posters, release years, or genres) and allows manual entry or automatic TMDB lookup.
+              </li>
+              <li>
+                <strong>Manage Unwatchable Entries:</strong> Dedicated management view for titles flagged with "Unwatchable" status. Unwatchable entries are excluded from library statistics, watch time calculations, and recommendation engines, but preserved locally to prevent accidental re-adding or duplicate entry attempts.
+              </li>
+              <li>
+                <strong>Check & Repair Data:</strong> Executes client-side data integrity verification, repairing malformed entry IDs and pruning orphaned cross-references without requiring server transmission.
+              </li>
+              <li>
+                <strong>Orphaned Data Recovery (Download Abandoned Data):</strong> Scans local device storage (IndexedDB/localStorage) for unlinked collection data blocks left behind by prior sessions or failed authentication handshakes, compiling them into a downloadable JSON file for manual re-import.
+              </li>
+              <li>
+                <strong>Erase All Data:</strong> Allows permanent deletion of local device cache, remote cloud data, or both, giving users complete control over their stored data footprint.
               </li>
             </ul>
           </section>
