@@ -98,3 +98,21 @@ test('index.html includes accessible info icon trigger for Smart Import Assistan
     assert.ok(html.includes('aria-label="Learn more about Smart Import Assistant"'));
     assert.ok(html.includes('title="Parses CSV/JSON backup files locally in browser memory and guides duplicate resolution. No file data is uploaded to remote servers."'));
 });
+
+test('index.html includes accessible info icon triggers and standard microcopy for Unwatchable entries and Orphaned Data Recovery', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('aria-label="Learn more about Unwatchable status"'));
+    assert.ok(html.includes('title="Unwatchable titles are excluded from statistics and recommendations while preventing duplicate additions."'));
+    assert.ok(html.includes('View and manage titles marked with Unwatchable status.'));
+    assert.ok(html.includes('aria-label="Learn more about Orphaned Data Recovery"'));
+    assert.ok(html.includes('title="Scans local browser storage for unlinked data blocks from prior sessions or failed authentication states and exports them as a JSON file."'));
+});
+
+test('docs/index.html details Advanced Data Controls and recovery utilities', () => {
+    const docsHtml = fs.readFileSync(path.join(__dirname, '../docs/index.html'), 'utf8');
+    assert.ok(docsHtml.includes('Backfill Missing Data:'));
+    assert.ok(docsHtml.includes('Manage Unwatchable Entries:'));
+    assert.ok(docsHtml.includes('Check &amp; Repair Data:') || docsHtml.includes('Check & Repair Data:'));
+    assert.ok(docsHtml.includes('Orphaned Data Recovery (Download Abandoned Data):'));
+    assert.ok(docsHtml.includes('Erase All Data:'));
+});
