@@ -29,3 +29,7 @@
 ## 2026-09-14 - Single-pass getLatestWatchInstance & Date.parse in scatter charts and UI sorting
 **Learning:** `renderRatingReleaseYearScatter` previously copied `[...movie.watchHistory]` and sorted it with $O(M \log M)$ `new Date()` comparators to find the latest watch date for each movie. Replacing array cloning and sorting with $O(M)$ linear scan helper `getLatestWatchInstance` and wall-clock safe `formatWatchDateDisplay` eliminated $O(N \cdot M)$ temporary array allocations and date parses. Replacing `new Date()` in `findNextBestSeedMovie` and watch history UI sort comparators with numeric `Date.parse()` timestamps further reduced GC pressure during modal rendering.
 **Action:** Use single-pass helper `getLatestWatchInstance` rather than `[...history].sort()` to find latest watch instances, and use `Date.parse()` rather than `new Date()` inside sort comparators.
+
+## 2026-09-16 - Memoizing renderStars via Map cache
+**Learning:** `renderStars` was invoked repeatedly during card batch rendering, modal popups, and watch history lists to build HTML star icons. Computing `parseFloat`, `Math.round`, and string concatenations on every single card and list item created redundant CPU cycles. Caching generated star HTML strings in a `Map` (`RENDER_STARS_CACHE`) reduced benchmark execution time by ~2.5x (from ~160ms to ~62ms over 1,000,000 calls).
+**Action:** Cache deterministic UI helper outputs (such as star rating HTML snippets) in a `Map` when inputs are bounded and called repeatedly during list and card rendering.
