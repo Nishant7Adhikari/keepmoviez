@@ -159,10 +159,10 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                     <small class="text-muted">Skips left: <strong>${MAX_DAILY_SKIPS - dailyRecSkipCount}</strong></small>
                     <div>
                         ${hasStandbyCards
-            ? `<button class="btn btn-warning skip-daily-rec-modal mr-2" data-movie-id="${movie.id}" title="Skip this pick for today" aria-label="Skip recommendation for ${escapeHTML(movie.Name)}"><i class="fas fa-forward"></i> Skip</button>`
-            : `<button class="btn btn-warning mr-2" disabled title="No more skips left"><i class="fas fa-ban"></i> No more skips</button>`}
-                        <button class="btn btn-info view-btn-modal mr-2" data-movie-id="${movie.id}" title="View Details" aria-label="View details for ${escapeHTML(movie.Name)}"><i class="fas fa-eye"></i> View</button>
-                        <button class="btn btn-success mark-completed-daily-rec-modal" data-movie-id="${movie.id}" title="Mark as Watched" aria-label="Mark ${escapeHTML(movie.Name)} as watched"><i class="fas fa-check-circle"></i> Watched It!</button>
+            ? `<button class="btn btn-warning skip-daily-rec-modal mr-2" data-movie-id="${escapeHTML(movie.id)}" title="Skip this pick for today" aria-label="Skip recommendation for ${escapeHTML(movie.Name)}"><i class="fas fa-forward"></i> Skip</button>`
+            : `<button class="btn btn-warning mr-2" disabled title="No more skips left" aria-label="No more skips left"><i class="fas fa-ban"></i> No more skips</button>`}
+                        <button class="btn btn-info view-btn-modal mr-2" data-movie-id="${escapeHTML(movie.id)}" title="View Details" aria-label="View details for ${escapeHTML(movie.Name)}"><i class="fas fa-eye"></i> View</button>
+                        <button class="btn btn-success mark-completed-daily-rec-modal" data-movie-id="${escapeHTML(movie.id)}" title="Mark as Watched" aria-label="Mark ${escapeHTML(movie.Name)} as watched"><i class="fas fa-check-circle"></i> Watched It!</button>
                     </div>
                 </div>
                 ${hasStandbyCards ? '' : '<div class="daily-pick-no-more-skips">No more skipping. The recommendation bureau has closed for business.</div>'}
@@ -1791,7 +1791,7 @@ window.celebrateAchievementUnlock = function (achievement) {
             <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #ffc107; font-weight: 700; margin-bottom: 0.5rem;">🏆 Achievement Unlocked!</div>
             <div class="achievement-showcase-title">${escapeHTML(achievement.name)}</div>
             <div class="achievement-showcase-desc">${escapeHTML(achievement.description)}</div>
-            <button class="achievement-showcase-btn" id="achievementShowcaseDismissBtn">Awesome!</button>
+            <button class="achievement-showcase-btn" id="achievementShowcaseDismissBtn" aria-label="Awesome! Dismiss achievement celebration">Awesome!</button>
         </div>
     `;
 

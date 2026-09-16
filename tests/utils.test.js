@@ -76,6 +76,26 @@ test('getCountryFullName resolves country code correctly', () => {
     assert.equal(sandbox.getCountryFullName(null), 'N/A');
 });
 
+test('renderStars caches star rating HTML output correctly', () => {
+    // Check initial cached values or computation
+    const starHtml1 = sandbox.renderStars(5);
+    const starHtml2 = sandbox.renderStars('5');
+    const starHtmlHalf = sandbox.renderStars(3.5);
+    const starHtmlNull = sandbox.renderStars(null);
+    const starHtmlInvalid = sandbox.renderStars('invalid');
+
+    assert.ok(starHtml1.includes('fa-star'));
+    assert.ok(starHtmlHalf.includes('fa-star-half-alt'));
+    assert.equal(starHtmlNull, '<span class="text-muted small">N/A</span>');
+    assert.equal(starHtmlInvalid, '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>');
+
+    // Repeated calls should return cached identical references
+    assert.equal(sandbox.renderStars(5), starHtml1);
+    assert.equal(sandbox.renderStars('5'), starHtml2);
+    assert.equal(sandbox.renderStars(3.5), starHtmlHalf);
+    assert.equal(sandbox.renderStars('invalid'), starHtmlInvalid);
+});
+
 test('getRatingTextLabel formats ratings correctly', () => {
     assert.equal(sandbox.getRatingTextLabel(5), '5 Stars');
     assert.equal(sandbox.getRatingTextLabel(1), '1 Star');
@@ -101,10 +121,48 @@ test('parseInputForAutocomplete parses search queries accurately', () => {
     assert.equal(result2.current, 'Mat');
 });
 
-test('generateUUID returns a valid string', () => {
+test('generateUUID returns a valid string using crypto.randomUUID', () => {
     const uuid = sandbox.generateUUID();
     assert.equal(typeof uuid, 'string');
-    assert.ok(uuid.length > 0);
+    assert.equal(uuid, '12345678-1234-4abc-9def-123456789abc');
+});
+
+test('generateUUID falls back to crypto.getRandomValues when crypto.randomUUID is absent', () => {
+    const customSandbox = {
+        console,
+        Math,
+        String,
+        crypto: {
+            getRandomValues: (arr) => {
+                arr[0] = 15;
+                return arr;
+            }
+        }
+    };
+    customSandbox.window = customSandbox;
+    vm.createContext(customSandbox);
+    vm.runInContext(utilsCode, customSandbox);
+
+    const uuid = customSandbox.generateUUID();
+    assert.equal(typeof uuid, 'string');
+    assert.equal(uuid.length, 36);
+    assert.match(uuid, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+});
+
+test('generateUUID falls back to Math.random when crypto API is unavailable', () => {
+    const customSandbox = {
+        console,
+        Math,
+        String
+    };
+    customSandbox.window = customSandbox;
+    vm.createContext(customSandbox);
+    vm.runInContext(utilsCode, customSandbox);
+
+    const uuid = customSandbox.generateUUID();
+    assert.equal(typeof uuid, 'string');
+    assert.equal(uuid.length, 36);
+    assert.match(uuid, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });
 
 test('getLatestWatchInstance finds the latest watch history instance cleanly and efficiently', () => {
@@ -141,7 +199,7 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
-test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS', () => {
+test('renderMovieCards escapes Poster URL, movie.id, statusClass, and statusBadgeText in attributes to prevent XSS', () => {
     const cardContainer = {
         innerHTML: '',
         appendChild: function(fragment) {
@@ -194,9 +252,9 @@ test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS',
         applyFilters: (data) => data,
         movieData: [
             {
-                id: 'test_1',
+                id: 'test_1" onclick="alert(1)',
                 Name: 'Malicious Poster Movie',
-                Status: 'To Watch',
+                Status: 'To Watch <script>alert(2)</script>',
                 Year: '2024',
                 Category: 'Movie',
                 is_deleted: false,
@@ -216,6 +274,10 @@ test('renderMovieCards escapes Poster URL in data-src attribute to prevent XSS',
 
     assert.ok(cardContainer.innerHTML.includes('data-src="https://example.com/poster.png&quot; onerror=&quot;alert(1)"'));
     assert.ok(!cardContainer.innerHTML.includes('data-src="https://example.com/poster.png" onerror="alert(1)"'));
+    assert.ok(cardContainer.innerHTML.includes('data-movie-id="test_1&quot; onclick=&quot;alert(1)"'));
+    assert.ok(!cardContainer.innerHTML.includes('data-movie-id="test_1" onclick="alert(1)"'));
+    assert.ok(cardContainer.innerHTML.includes('&lt;script&gt;alert(2)&lt;/script&gt;'));
+    assert.ok(!cardContainer.innerHTML.includes('<script>alert(2)</script>'));
 });
 
 test('openUnwatchableModal escapes special characters in entry.id to prevent XSS', () => {
@@ -270,6 +332,11 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
     assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
     assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
+    assert.ok(html.includes('id="detailsModalAddBtn"') && html.includes('aria-label="Add entry to library"'));
+    assert.ok(html.includes('id="findSimilarBtn"') && html.includes('aria-label="Similar entries - Find similar entries"'));
+    assert.ok(html.includes('id="downloadDetailsImageBtn"') && html.includes('aria-label="Share entry image"'));
+    assert.ok(html.includes('id="checkRepairDataBtn"') && html.includes('aria-label="Check and repair local data"'));
+    assert.ok(html.includes('aria-label="Apply changes to selected entries"'));
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
     assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
@@ -285,6 +352,11 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('aria-label="Learn more about Strict Privacy Mode"'));
     assert.ok(html.includes('aria-label="Learn more about Sync Threshold"'));
     assert.ok(html.includes('id="legalComplianceDisclaimer"'));
+    assert.ok(html.includes('id="menuThemeToggleBtn"') && html.includes('aria-label="Toggle Theme"'));
+    assert.ok(html.includes('id="menuImportBtn"') && html.includes('aria-label="Load Data"'));
+    assert.ok(html.includes('id="menuExportBtn"') && html.includes('aria-label="Export Data"'));
+    assert.ok(html.includes('id="menuSyncDataBtn"') && html.includes('aria-label="Sync with Cloud"'));
+    assert.ok(html.includes('id="menuSupabaseLogoutBtn"') && html.includes('aria-label="Logout"'));
 });
 
 test('renderMovieCards empty state renders Clear Filters & Search CTA button', () => {

@@ -21,7 +21,7 @@ const imageObserver = new IntersectionObserver(
 // END CHUNK: Image Lazy Loader
 
 // START CHUNK: Watch History Management (UI)
-// Performance optimization: Single-pass linear scan instead of filter + copy + sort
+// Performance optimization: Single-pass linear scan instead of filter + copy + sort, using Date.parse to avoid allocations
 function getLatestWatchInstance(watchHistoryArray) {
   if (!Array.isArray(watchHistoryArray) || watchHistoryArray.length === 0)
     return null;
@@ -30,7 +30,7 @@ function getLatestWatchInstance(watchHistoryArray) {
   for (let i = 0; i < watchHistoryArray.length; i++) {
     const wh = watchHistoryArray[i];
     if (!wh || !wh.date) continue;
-    const time = new Date(wh.date).getTime();
+    const time = Date.parse(wh.date);
     if (!isNaN(time) && time > maxTime) {
       maxTime = time;
       latest = wh;
@@ -344,7 +344,7 @@ function renderMovieCards() {
 
   if (currentFilteredData.length === 0) {
     if (movieData.filter((m) => !m.is_deleted).length > 0) {
-      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()"><i class="fas fa-undo mr-1"></i> Clear Filters & Search</button></div>`;
+      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()" aria-label="Clear filters and search"><i class="fas fa-undo mr-1"></i> Clear Filters & Search</button></div>`;
     }
     return;
   }
@@ -422,16 +422,16 @@ function renderNextBatch() {
                         <span class="card-title" title="${escapeHTML(movie.Name)}">${escapeHTML(movie.Name) || "N/A"}</span>
                     </div>
                     <div class="card-info">
-                        <span class="status-badge ${statusClass}">${statusBadgeText}</span>
+                        <span class="status-badge ${escapeHTML(statusClass)}">${escapeHTML(statusBadgeText)}</span>
                         ${renderStars(movie.overallRating)}
                     </div>
                 </div>
                 <div class="card-footer">
                     ${lastWatchedInfo}
                     <div class="card-actions">
-                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress for ${escapeHTML(movie.Name)}" data-movie-id="${movie.id}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
-                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit ${escapeHTML(movie.Name)}" data-movie-id="${movie.id}"><i class="fas fa-edit" aria-hidden="true"></i></button>
-                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete ${escapeHTML(movie.Name)}" data-movie-id="${movie.id}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress for ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
+                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
                     </div>
                 </div>
             </div>
@@ -779,19 +779,19 @@ window.renderSeasonBreakdownCards = function (
     <div class="season-quick-bar">
       <div class="sqb-presets">
         <span class="small font-weight-bold text-muted mr-1"><i class="fas fa-bolt text-warning" aria-hidden="true"></i> Fast-Fill:</span>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="10" aria-label="Set all seasons to 10 episodes">All 10</button>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="8" aria-label="Set all seasons to 8 episodes">All 8</button>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="12" aria-label="Set all seasons to 12 episodes">All 12</button>
-        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${containerId}" data-badge="${badgeId}" data-val="6" aria-label="Set all seasons to 6 episodes">All 6</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" data-val="10" aria-label="Set all seasons to 10 episodes">All 10</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" data-val="8" aria-label="Set all seasons to 8 episodes">All 8</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" data-val="12" aria-label="Set all seasons to 12 episodes">All 12</button>
+        <button type="button" class="season-quick-pill btn-quick-preset" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" data-val="6" aria-label="Set all seasons to 6 episodes">All 6</button>
       </div>
       <div class="sqb-actions">
         <div class="season-paste-group">
-          <input type="text" class="form-control form-control-sm season-quick-paste-input" placeholder="e.g. 10, 10, 8" title="Type comma-separated episode counts and press Enter or click Apply" data-container="${containerId}" data-badge="${badgeId}" aria-label="Paste comma-separated episode counts">
-          <button type="button" class="btn btn-sm btn-primary season-apply-paste-btn" data-container="${containerId}" data-badge="${badgeId}" title="Apply pasted values" aria-label="Apply pasted episode counts"><i class="fas fa-check" aria-hidden="true"></i></button>
+          <input type="text" class="form-control form-control-sm season-quick-paste-input" placeholder="e.g. 10, 10, 8" title="Type comma-separated episode counts and press Enter or click Apply" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" aria-label="Paste comma-separated episode counts">
+          <button type="button" class="btn btn-sm btn-primary season-apply-paste-btn" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" title="Apply pasted values" aria-label="Apply pasted episode counts"><i class="fas fa-check" aria-hidden="true"></i></button>
         </div>
         <div class="season-add-remove-group">
-          <button type="button" class="btn btn-sm btn-outline-primary season-add-btn" data-container="${containerId}" data-badge="${badgeId}" title="Add Season" aria-label="Add season"><i class="fas fa-plus" aria-hidden="true"></i> Season</button>
-          <button type="button" class="btn btn-sm btn-outline-danger season-remove-btn" data-container="${containerId}" data-badge="${badgeId}" title="Remove Last Season" aria-label="Remove last season"><i class="fas fa-minus" aria-hidden="true"></i></button>
+          <button type="button" class="btn btn-sm btn-outline-primary season-add-btn" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" title="Add Season" aria-label="Add season"><i class="fas fa-plus" aria-hidden="true"></i> Season</button>
+          <button type="button" class="btn btn-sm btn-outline-danger season-remove-btn" data-container="${escapeHTML(containerId)}" data-badge="${escapeHTML(badgeId)}" title="Remove Last Season" aria-label="Remove last season"><i class="fas fa-minus" aria-hidden="true"></i></button>
         </div>
       </div>
     </div>

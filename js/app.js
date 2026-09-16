@@ -180,7 +180,7 @@ function sortMovies(column, direction) {
       const m = movieData[i];
       if (!m) continue;
       const latest = getLatestWatchInstance(m.watchHistory);
-      const timestamp = latest ? new Date(latest.date).getTime() : NaN;
+      const timestamp = latest ? Date.parse(latest.date) : NaN;
       valueMap.set(m, !isNaN(timestamp) ? timestamp : defaultVal);
     }
   } else if (column === "lastModifiedDate") {

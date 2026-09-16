@@ -35,14 +35,26 @@ function getCountryFullName(code) {
     return code.trim();
 }
 
+// Performance optimization: Cache generated star rating HTML strings in a Map
+// to avoid repeated string concatenations and floating point math during batch card and list rendering.
+const RENDER_STARS_CACHE = new Map();
+
 function renderStars(rating) {
     if (rating === null || rating === undefined || String(rating).trim() === "" || String(rating).toLowerCase() === "n/a") {
         return '<span class="text-muted small">N/A</span>';
     }
-    let starsHtml = '<span class="star-rating">';
-    const numRating = parseFloat(rating);
-    if (isNaN(numRating) || numRating < 0 || numRating > 5) return '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>';
 
+    const cached = RENDER_STARS_CACHE.get(rating);
+    if (cached !== undefined) return cached;
+
+    const numRating = parseFloat(rating);
+    if (isNaN(numRating) || numRating < 0 || numRating > 5) {
+        const invalidHtml = '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>';
+        RENDER_STARS_CACHE.set(rating, invalidHtml);
+        return invalidHtml;
+    }
+
+    let starsHtml = '<span class="star-rating">';
     const roundedRating = Math.round(numRating * 2) / 2; // Round to nearest 0.5
     for (let i = 1; i <= 5; i++) {
         if (roundedRating >= i) starsHtml += `<i class="fas fa-star"></i>`;
@@ -50,6 +62,8 @@ function renderStars(rating) {
         else starsHtml += `<i class="far fa-star"></i>`;
     }
     starsHtml += '</span>';
+
+    RENDER_STARS_CACHE.set(rating, starsHtml);
     return starsHtml;
 }
 
@@ -208,10 +222,16 @@ function debounce(func, delay) {
 }
 
 function generateUUID() {
-    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
         return crypto.randomUUID();
     }
-    // Fallback for environments where crypto.randomUUID is not available
+    // CSPRNG fallback for environments where crypto.randomUUID is absent
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, function(c) {
+            return (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16);
+        });
+    }
+    // Legacy fallback for environments where crypto API is completely unavailable
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);

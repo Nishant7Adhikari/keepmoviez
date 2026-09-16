@@ -81,7 +81,7 @@ test('shuffleDailyRecommendationMovies returns randomized array', () => {
 test('renderDailyRecommendationCard escapes HTML characters in movie details and includes context-specific aria-labels', () => {
     const card = {
         movie: {
-            id: 'rec_1',
+            id: 'rec_1" onclick="alert(1)',
             Name: '<script>alert("xss")</script>',
             Category: '<b onmouseover="alert(1)">Movie</b>',
             Genre: 'Action, <img src=x onerror=alert(1)>',
@@ -95,6 +95,8 @@ test('renderDailyRecommendationCard escapes HTML characters in movie details and
     };
 
     const html = sandbox.renderDailyRecommendationCard(card, 0);
+    assert.ok(html.includes('data-movie-id="rec_1&quot; onclick=&quot;alert(1)"'));
+    assert.ok(!html.includes('data-movie-id="rec_1" onclick="alert(1)"'));
     assert.ok(html.includes('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'));
     assert.ok(!html.includes('<script>'));
     assert.ok(html.includes('&lt;b onmouseover=&quot;alert(1)&quot;&gt;Movie&lt;/b&gt;'));
