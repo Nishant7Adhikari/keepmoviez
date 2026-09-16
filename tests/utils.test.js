@@ -294,6 +294,11 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
     assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
     assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
+    assert.ok(html.includes('id="detailsModalAddBtn"') && html.includes('aria-label="Add entry to library"'));
+    assert.ok(html.includes('id="findSimilarBtn"') && html.includes('aria-label="Similar entries - Find similar entries"'));
+    assert.ok(html.includes('id="downloadDetailsImageBtn"') && html.includes('aria-label="Share entry image"'));
+    assert.ok(html.includes('id="checkRepairDataBtn"') && html.includes('aria-label="Check and repair local data"'));
+    assert.ok(html.includes('aria-label="Apply changes to selected entries"'));
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
     assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
