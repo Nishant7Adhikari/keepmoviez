@@ -76,6 +76,26 @@ test('getCountryFullName resolves country code correctly', () => {
     assert.equal(sandbox.getCountryFullName(null), 'N/A');
 });
 
+test('renderStars caches star rating HTML output correctly', () => {
+    // Check initial cached values or computation
+    const starHtml1 = sandbox.renderStars(5);
+    const starHtml2 = sandbox.renderStars('5');
+    const starHtmlHalf = sandbox.renderStars(3.5);
+    const starHtmlNull = sandbox.renderStars(null);
+    const starHtmlInvalid = sandbox.renderStars('invalid');
+
+    assert.ok(starHtml1.includes('fa-star'));
+    assert.ok(starHtmlHalf.includes('fa-star-half-alt'));
+    assert.equal(starHtmlNull, '<span class="text-muted small">N/A</span>');
+    assert.equal(starHtmlInvalid, '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>');
+
+    // Repeated calls should return cached identical references
+    assert.equal(sandbox.renderStars(5), starHtml1);
+    assert.equal(sandbox.renderStars('5'), starHtml2);
+    assert.equal(sandbox.renderStars(3.5), starHtmlHalf);
+    assert.equal(sandbox.renderStars('invalid'), starHtmlInvalid);
+});
+
 test('getRatingTextLabel formats ratings correctly', () => {
     assert.equal(sandbox.getRatingTextLabel(5), '5 Stars');
     assert.equal(sandbox.getRatingTextLabel(1), '1 Star');

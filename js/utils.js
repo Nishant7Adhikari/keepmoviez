@@ -35,14 +35,26 @@ function getCountryFullName(code) {
     return code.trim();
 }
 
+// Performance optimization: Cache generated star rating HTML strings in a Map
+// to avoid repeated string concatenations and floating point math during batch card and list rendering.
+const RENDER_STARS_CACHE = new Map();
+
 function renderStars(rating) {
     if (rating === null || rating === undefined || String(rating).trim() === "" || String(rating).toLowerCase() === "n/a") {
         return '<span class="text-muted small">N/A</span>';
     }
-    let starsHtml = '<span class="star-rating">';
-    const numRating = parseFloat(rating);
-    if (isNaN(numRating) || numRating < 0 || numRating > 5) return '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>';
 
+    const cached = RENDER_STARS_CACHE.get(rating);
+    if (cached !== undefined) return cached;
+
+    const numRating = parseFloat(rating);
+    if (isNaN(numRating) || numRating < 0 || numRating > 5) {
+        const invalidHtml = '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>';
+        RENDER_STARS_CACHE.set(rating, invalidHtml);
+        return invalidHtml;
+    }
+
+    let starsHtml = '<span class="star-rating">';
     const roundedRating = Math.round(numRating * 2) / 2; // Round to nearest 0.5
     for (let i = 1; i <= 5; i++) {
         if (roundedRating >= i) starsHtml += `<i class="fas fa-star"></i>`;
@@ -50,6 +62,8 @@ function renderStars(rating) {
         else starsHtml += `<i class="far fa-star"></i>`;
     }
     starsHtml += '</span>';
+
+    RENDER_STARS_CACHE.set(rating, starsHtml);
     return starsHtml;
 }
 
