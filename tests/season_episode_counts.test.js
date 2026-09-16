@@ -46,11 +46,17 @@ function createTestEnvironment() {
             show: function() { return $(selector); },
             hide: function() { return $(selector); },
             modal: function() { return $(selector); },
+            removeClass: function() { return $(selector); },
+            addClass: function() { return $(selector); },
+            toast: function() { return $(selector); },
             find: function() {
                 return {
                     text: function() {},
                     attr: function() {},
-                    each: function() {}
+                    each: function() {},
+                    removeClass: function() { return $(selector); },
+                    addClass: function() { return $(selector); },
+                    toast: function() { return $(selector); }
                 };
             },
             each: function(cb) { return $(selector); },
@@ -62,6 +68,7 @@ function createTestEnvironment() {
     $.on = function(event, selector, handler) {
         listeners.push({ event, selector, handler });
     };
+    $.fn = { toast: function() {} };
 
     class MockIntersectionObserver {
         constructor() {}
@@ -78,6 +85,7 @@ function createTestEnvironment() {
 
     const sandbox = {
         console,
+        alert: function() {},
         Math,
         String,
         parseInt,
@@ -102,6 +110,12 @@ function createTestEnvironment() {
         },
         movieData: [],
         ACHIEVEMENTS: [],
+        loadingOverlay: {
+            classList: { remove: function() {}, add: function() {} },
+            querySelector: function() { return { textContent: '' }; },
+            style: {}
+        },
+        watchInstanceFormFields: { date: {}, time: {}, rating: {}, notes: {} },
         showToast: function() {},
         getLatestWatchInstance: function(history) {
             if (!Array.isArray(history) || history.length === 0) return null;
@@ -225,4 +239,177 @@ test('renderSeasonBreakdownCards includes accessible aria-labels on controls', (
     assert.ok(innerHTMLResult.includes('aria-label="Decrease Season 1 episode count"'));
     assert.ok(innerHTMLResult.includes('aria-label="Season 1 episode count"'));
     assert.ok(innerHTMLResult.includes('aria-label="Increase Season 1 episode count"'));
+});
+
+test('prepareEditModal preserves series_status, episodesPerSeason, and collection parts in _tempTmdbData', () => {
+    const { sandbox } = createTestEnvironment();
+
+    sandbox.UNIQUE_ALL_GENRES = [];
+    sandbox.selectedGenres = [];
+    sandbox.renderGenreTags = function() {};
+    sandbox.populateGenreDropdown = function() {};
+    sandbox.renderWatchHistoryUI = function() {};
+    sandbox.closeWatchInstanceForm = function() {};
+    sandbox.handlePosterUrlInput = function() {};
+    sandbox.toggleConditionalFields = function() {};
+    sandbox.renderSeasonBreakdownCards = function() {};
+
+    sandbox.formFieldsGlob = {
+        name: { value: '' },
+        category: { value: '' },
+        status: { value: '' },
+        recommendation: { value: '' },
+        overallRating: { value: '' },
+        personalRecommendation: { value: '' },
+        language: { value: '' },
+        currentSeason: { value: '' },
+        currentEpisode: { value: '' },
+        year: { value: '' },
+        country: { value: '' },
+        description: { value: '' },
+        posterUrl: { value: '', dataset: {} },
+        tmdbSearchYear: { value: '' },
+        runtimeMovie: { value: '' },
+        runtimeSeriesSeasons: { value: '' },
+        runtimeSeriesEpisodes: { value: '' },
+        runtimeSeriesAvgEp: { value: '' },
+        relatedEntriesNames: { value: '' },
+        relatedEntriesSuggestions: { innerHTML: '', style: {} }
+    };
+
+    const entryFormObj = {
+        reset: function() {},
+        _tempTmdbData: {}
+    };
+
+    sandbox.document.getElementById = function(id) {
+        if (id === 'entryForm') return entryFormObj;
+        if (id === 'editEntryId') return { value: '' };
+        if (id === 'tmdbId') return { value: '' };
+        if (id === 'tmdbMediaType') return { value: '' };
+        if (id === 'genreSearchInput') return { value: '' };
+        if (id === 'currentWatchHistory') return { value: '' };
+        if (id === 'genreItemsContainer') return { classList: { remove: function() {} } };
+        if (id === 'tmdbSearchResults') return { innerHTML: '', style: {} };
+        return { value: '', style: {}, innerHTML: '' };
+    };
+
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, sandbox);
+
+    const testSeries = {
+        id: "series_from_123",
+        Name: "FROM",
+        Category: "Series",
+        Status: "Continue",
+        currentSeason: 2,
+        currentEpisode: 3,
+        tmdb_collection_total_parts: 3,
+        tmdb_release_date: "2022-02-20",
+        runtime: {
+            seasons: 3,
+            episodes: 30,
+            episode_run_time: 52,
+            episodes_per_season: [10, 10, 10],
+            series_status: "Returning Series"
+        }
+    };
+
+    sandbox.movieData = [testSeries];
+
+    sandbox.prepareEditModal("series_from_123", false);
+
+    const temp = entryFormObj._tempTmdbData;
+    assert.ok(temp, "_tempTmdbData should exist on entryForm");
+    assert.equal(temp.tmdb_collection_total_parts, 3);
+    assert.equal(temp.tmdb_release_date, "2022-02-20");
+    assert.deepEqual(temp.episodesPerSeason, [10, 10, 10]);
+    assert.deepEqual(temp.episodes_per_season, [10, 10, 10]);
+    assert.equal(temp.seriesStatus, "Returning Series");
+    assert.equal(temp.series_status, "Returning Series");
+    assert.equal(temp.runtime.series_status, "Returning Series");
+});
+
+test('handleFormSubmit saves series_status and episodes_per_season inside entry.runtime', async () => {
+    const { sandbox } = createTestEnvironment();
+
+    sandbox.DO_NOT_SHOW_AGAIN_KEYS = { ENTRY_ADDED: 'entry_added', ENTRY_UPDATED: 'entry_updated' };
+    sandbox.logWatchlistActivity = function() {};
+    sandbox.trackModification = function() {};
+    sandbox.UNIQUE_ALL_GENRES = [];
+    sandbox.selectedGenres = [];
+    sandbox.countryCodeToNameMap = {};
+    sandbox.currentSortColumn = "lastModifiedDate";
+    sandbox.currentSortDirection = "desc";
+    sandbox.renderMovieCards = function() {};
+    sandbox.sortMovies = function() {};
+    sandbox.recalculateAndApplyAllRelationships = function() {};
+    sandbox.saveToIndexedDB = async function() {};
+    sandbox.parseInputForAutocomplete = function() { return { finalized: [] }; };
+
+    const entryFormObj = {
+        _tempTmdbData: {
+            episodesPerSeason: [10, 10, 10],
+            seriesStatus: "Returning Series",
+            runtime: {
+                seasons: 3,
+                episodes: 30,
+                episode_run_time: 52,
+                episodes_per_season: [10, 10, 10],
+                series_status: "Returning Series"
+            }
+        }
+    };
+
+    sandbox.formFieldsGlob = {
+        name: { value: 'FROM', focus: function() {} },
+        category: { value: 'Series' },
+        status: { value: 'Continue' },
+        year: { value: '2022', focus: function() {} },
+        country: { value: 'US' },
+        language: { value: 'English' },
+        description: { value: 'Sci-fi mystery series' },
+        recommendation: { value: 'Recommended' },
+        overallRating: { value: '9' },
+        personalRecommendation: { value: '' },
+        currentSeason: { value: '2' },
+        currentEpisode: { value: '3' },
+        posterUrl: { value: 'https://image.tmdb.org/poster.jpg', dataset: { source: 'tmdb' } },
+        runtimeSeriesSeasons: { value: '3' },
+        runtimeSeriesEpisodes: { value: '30' },
+        runtimeSeriesAvgEp: { value: '52' },
+        runtimeMovie: { value: '' },
+        relatedEntriesNames: { value: '' }
+    };
+
+    sandbox.getSeasonEpisodesCountsFromUI = function() {
+        return [10, 10, 10];
+    };
+
+    sandbox.document.getElementById = function(id) {
+        if (id === 'entryForm') return entryFormObj;
+        if (id === 'editEntryId') return { value: '' };
+        if (id === 'tmdbId') return { value: '124364' };
+        if (id === 'tmdbMediaType') return { value: 'tv' };
+        if (id === 'currentWatchHistory') return { value: '[]' };
+        return { value: '', style: {}, innerHTML: '' };
+    };
+
+    const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+    vm.runInContext(appCode, sandbox);
+
+    const mockEvent = { preventDefault: function() {} };
+    await sandbox.handleFormSubmit(mockEvent, "quickSave");
+
+    assert.equal(sandbox.movieData.length, 1);
+    const saved = sandbox.movieData[0];
+    assert.equal(saved.Name, "FROM");
+    assert.equal(saved.Category, "Series");
+    assert.equal(typeof saved.runtime, "object");
+    assert.equal(saved.runtime.series_status, "Returning Series");
+    assert.deepEqual(saved.runtime.episodes_per_season, [10, 10, 10]);
+    assert.equal(saved.runtime.seasons, 3);
+    assert.equal(saved.runtime.episodes, 30);
+    assert.equal(saved.seriesStatus, "Returning Series");
+    assert.equal(saved.series_status, "Returning Series");
 });

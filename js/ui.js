@@ -982,7 +982,13 @@ window.prepareEditModal = function (id, showModal = true) {
       runtime: movie.runtime,
       tmdb_collection_id: movie.tmdb_collection_id,
       tmdb_collection_name: movie.tmdb_collection_name,
+      tmdb_collection_total_parts: movie.tmdb_collection_total_parts ?? null,
       imdb_id: movie.imdb_id || null,
+      tmdb_release_date: movie.tmdb_release_date || null,
+      episodesPerSeason: existingCounts,
+      episodes_per_season: existingCounts,
+      seriesStatus: movie.seriesStatus || (movie.runtime && movie.runtime.series_status) || movie.series_status || null,
+      series_status: movie.series_status || (movie.runtime && movie.runtime.series_status) || movie.seriesStatus || null,
     };
   }
 

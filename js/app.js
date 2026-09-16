@@ -483,19 +483,36 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         typeof entry.runtime === "object" && entry.runtime !== null
           ? entry.runtime
           : {};
+      const fallbackEpCounts =
+        epCounts.length > 0
+          ? epCounts
+          : Array.isArray(existingRuntime.episodes_per_season) && existingRuntime.episodes_per_season.length > 0
+            ? existingRuntime.episodes_per_season
+            : Array.isArray(cachedTmdbData.episodesPerSeason) && cachedTmdbData.episodesPerSeason.length > 0
+              ? cachedTmdbData.episodesPerSeason
+              : [];
+
       const finalSeasons = !isNaN(seasons)
         ? seasons
-        : epCounts.length > 0
-          ? epCounts.length
+        : fallbackEpCounts.length > 0
+          ? fallbackEpCounts.length
           : existingRuntime.seasons || null;
       const finalEpisodes = !isNaN(episodes)
         ? episodes
-        : epCounts.length > 0
-          ? epCounts.reduce((a, b) => a + b, 0)
+        : fallbackEpCounts.length > 0
+          ? fallbackEpCounts.reduce((a, b) => a + b, 0)
           : existingRuntime.episodes || null;
       const finalAvgEp = !isNaN(avgEp)
         ? avgEp
         : existingRuntime.episode_run_time || null;
+
+      const seriesStatusVal =
+        entry.seriesStatus ||
+        entry.series_status ||
+        cachedTmdbData.seriesStatus ||
+        cachedTmdbData.series_status ||
+        existingRuntime.series_status ||
+        null;
 
       entry.runtime = {
         ...existingRuntime,
@@ -504,10 +521,16 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         episode_run_time: finalAvgEp,
       };
 
-      if (epCounts && epCounts.length > 0) {
-        entry.runtime.episodes_per_season = epCounts;
-        entry.episodesPerSeason = epCounts;
-        entry.episodes_per_season = epCounts;
+      if (seriesStatusVal) {
+        entry.runtime.series_status = seriesStatusVal;
+        entry.seriesStatus = seriesStatusVal;
+        entry.series_status = seriesStatusVal;
+      }
+
+      if (fallbackEpCounts.length > 0) {
+        entry.runtime.episodes_per_season = fallbackEpCounts;
+        entry.episodesPerSeason = fallbackEpCounts;
+        entry.episodes_per_season = fallbackEpCounts;
       } else if (existingRuntime.episodes_per_season) {
         entry.episodesPerSeason = existingRuntime.episodes_per_season;
         entry.episodes_per_season = existingRuntime.episodes_per_season;

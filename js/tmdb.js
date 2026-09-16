@@ -229,6 +229,13 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
             }
         }
 
+        if (mediaType === 'tv' && (!tmdbDirector || !tmdbDirector.name)) {
+            if (Array.isArray(detailData.created_by) && detailData.created_by.length > 0) {
+                const creator = detailData.created_by[0];
+                tmdbDirector = { id: creator.id, name: creator.name, profile_path: creator.profile_path || null, job: 'Creator' };
+            }
+        }
+
         if (detailData.production_companies) tmdbProductionCompanies = detailData.production_companies.map(pc => ({ id: pc.id, name: pc.name, logo_path: pc.logo_path, origin_country: pc.origin_country }));
 
         tmdbVoteAverage = detailData.vote_average || null;
@@ -248,7 +255,8 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
                 seasons: detailData.number_of_seasons || null,
                 episodes: detailData.number_of_episodes || null,
                 episodes_per_season: epPerSeason,
-                episode_run_time: detailData.episode_run_time && detailData.episode_run_time.length > 0 ? detailData.episode_run_time[0] : null
+                episode_run_time: detailData.episode_run_time && detailData.episode_run_time.length > 0 ? detailData.episode_run_time[0] : null,
+                series_status: detailData.status || null
             };
         }
 
@@ -391,6 +399,26 @@ async function applyTmdbSelection(item, force = false) {
         formFieldsGlob.country.value = processed.Country;
         formFieldsGlob.language.value = processed.Language;
 
+        if (typeof toggleConditionalFields === 'function') {
+            toggleConditionalFields();
+        }
+
+        if (processed.Category === 'Series') {
+            if (formFieldsGlob.runtimeSeriesSeasons) {
+                formFieldsGlob.runtimeSeriesSeasons.value = (processed.runtime && processed.runtime.seasons) || (processed.episodesPerSeason ? processed.episodesPerSeason.length : '') || '';
+            }
+            if (formFieldsGlob.runtimeSeriesEpisodes) {
+                formFieldsGlob.runtimeSeriesEpisodes.value = (processed.runtime && processed.runtime.episodes) || '';
+            }
+            if (formFieldsGlob.runtimeSeriesAvgEp) {
+                formFieldsGlob.runtimeSeriesAvgEp.value = (processed.runtime && processed.runtime.episode_run_time) || '';
+            }
+        } else if (processed.Category === 'Movie' || processed.Category === 'Documentary') {
+            if (formFieldsGlob.runtimeMovie) {
+                formFieldsGlob.runtimeMovie.value = (typeof processed.runtime === 'number' ? processed.runtime : (processed.runtime && processed.runtime.episode_run_time)) || '';
+            }
+        }
+
         // NEW: Overwrite Protection for Poster URL
         const existingPosterVal = formFieldsGlob.posterUrl.value.trim();
         if (existingPosterVal.startsWith('"') && existingPosterVal.endsWith('"')) {
@@ -441,7 +469,9 @@ async function applyTmdbSelection(item, force = false) {
                 imdb_id: processed.imdb_id,
                 tmdb_release_date: processed.tmdb_release_date,
                 episodesPerSeason: processed.episodesPerSeason || [],
-                seriesStatus: processed.seriesStatus || null
+                episodes_per_season: processed.episodes_per_season || processed.episodesPerSeason || [],
+                seriesStatus: processed.seriesStatus || null,
+                series_status: processed.series_status || processed.seriesStatus || null
             };
         }
 
