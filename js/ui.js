@@ -344,7 +344,7 @@ function renderMovieCards() {
 
   if (currentFilteredData.length === 0) {
     if (movieData.filter((m) => !m.is_deleted).length > 0) {
-      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()"><i class="fas fa-undo mr-1"></i> Clear Filters & Search</button></div>`;
+      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()" aria-label="Clear filters and search"><i class="fas fa-undo mr-1"></i> Clear Filters & Search</button></div>`;
     }
     return;
   }

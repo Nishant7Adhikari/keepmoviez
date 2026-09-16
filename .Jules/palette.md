@@ -9,3 +9,7 @@
 ## 2026-09-09 - Context-Specific Accessible Action Labels Pattern
 **Learning:** Dynamic list and card action buttons using generic labels like "Edit entry" or "Delete entry" lack item context when screen reader users navigate controls out of document flow.
 **Action:** Include the escaped item title in dynamic action button `aria-label`s (e.g. `aria-label="Edit ${escapeHTML(item.Name)}"`) to provide distinct, meaningful context for screen readers.
+
+## 2026-09-16 - WCAG 2.5.3 Label in Name Compliance
+**Learning:** Adding an `aria-label` that overrides visible button text without including the exact visible text string violates WCAG 2.5.3 (Label in Name), breaking speech recognition navigation for voice users.
+**Action:** Ensure `aria-label` on buttons with visible text includes the visual string (e.g. `aria-label="Awesome! Dismiss achievement celebration"`).
