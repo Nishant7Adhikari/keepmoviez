@@ -121,10 +121,48 @@ test('parseInputForAutocomplete parses search queries accurately', () => {
     assert.equal(result2.current, 'Mat');
 });
 
-test('generateUUID returns a valid string', () => {
+test('generateUUID returns a valid string using crypto.randomUUID', () => {
     const uuid = sandbox.generateUUID();
     assert.equal(typeof uuid, 'string');
-    assert.ok(uuid.length > 0);
+    assert.equal(uuid, '12345678-1234-4abc-9def-123456789abc');
+});
+
+test('generateUUID falls back to crypto.getRandomValues when crypto.randomUUID is absent', () => {
+    const customSandbox = {
+        console,
+        Math,
+        String,
+        crypto: {
+            getRandomValues: (arr) => {
+                arr[0] = 15;
+                return arr;
+            }
+        }
+    };
+    customSandbox.window = customSandbox;
+    vm.createContext(customSandbox);
+    vm.runInContext(utilsCode, customSandbox);
+
+    const uuid = customSandbox.generateUUID();
+    assert.equal(typeof uuid, 'string');
+    assert.equal(uuid.length, 36);
+    assert.match(uuid, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+});
+
+test('generateUUID falls back to Math.random when crypto API is unavailable', () => {
+    const customSandbox = {
+        console,
+        Math,
+        String
+    };
+    customSandbox.window = customSandbox;
+    vm.createContext(customSandbox);
+    vm.runInContext(utilsCode, customSandbox);
+
+    const uuid = customSandbox.generateUUID();
+    assert.equal(typeof uuid, 'string');
+    assert.equal(uuid.length, 36);
+    assert.match(uuid, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
 });
 
 test('getLatestWatchInstance finds the latest watch history instance cleanly and efficiently', () => {
