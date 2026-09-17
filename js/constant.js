@@ -32,6 +32,18 @@ const DO_NOT_SHOW_AGAIN_KEYS = {
 const LONG_PRESS_DURATION = 500;
 
 const PRANK_ERROR_CHANCE = 200;
+
+// Lazy Loading Scroll Dwell Time Configurations (in milliseconds)
+const IMAGE_LAZY_LOAD_DWELL_TIMES = {
+  NORMAL_SCROLL_MS: 0,       // Normal/Slow scroll (< 1.0 px/ms): Immediate
+  QUICK_FLICK_MS: 75,        // Quick flick/Snap scroll (1.0 - 2.5 px/ms): 50-100ms
+  RAPID_FLING_MS: 150,       // Rapid fling/Middle-click scroll (> 2.5 px/ms): 100-200ms (max 200ms)
+};
+
+const SCROLL_VELOCITY_THRESHOLDS = {
+  QUICK_FLICK_PX_PER_MS: 1.0,
+  RAPID_FLING_PX_PER_MS: 2.5,
+};
 // END CHUNK: Application Feature Constants
 
 // START CHUNK: Data Schema and Static Data
