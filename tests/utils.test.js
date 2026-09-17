@@ -329,7 +329,7 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));
     assert.ok(html.includes('id="sortColumnDropdown"') && html.includes('aria-label="Sort by column"'));
     assert.ok(html.includes('id="refreshRecommendationsBtnModal"') && html.includes('aria-label="Refresh suggestions"'));
-    assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
+    assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="First time? About KeepMoviEZ"'));
     assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
     assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
     assert.ok(html.includes('id="detailsModalAddBtn"') && html.includes('aria-label="Add entry to library"'));
@@ -338,8 +338,8 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="checkRepairDataBtn"') && html.includes('aria-label="Check and repair local data"'));
     assert.ok(html.includes('aria-label="Apply changes to selected entries"'));
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
-    assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
-    assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
+    assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Next Season - Advance to Next Season and reset Episode to 1"'));
+    assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="+1 Ep - Increment Episode by 1"'));
     assert.ok(html.includes('id="pgSeasonInput"') && html.includes('aria-label="Parents guide season number"'));
     assert.ok(html.includes('id="pgEpisodeInput"') && html.includes('aria-label="Parents guide episode number"'));
     assert.ok(html.includes('id="batchEditAddGenreSearchInput"') && html.includes('aria-label="Add genres"'));
@@ -505,4 +505,126 @@ test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes t
 
     assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&quot; onclick=&quot;alert(1)"'));
     assert.ok(!listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31" onclick="alert(1)"'));
+});
+test('safeTransitionModal executes callback immediately when modal is not visible or jQuery is unavailable', () => {
+    let called = false;
+    sandbox.safeTransitionModal(null, () => { called = true; });
+    assert.equal(called, true);
+
+    called = false;
+    sandbox.safeTransitionModal('#nonExistentModal', () => { called = true; });
+    assert.equal(called, true);
+});
+
+test('safeTransitionModal transitions via hidden.bs.modal event and executes once', () => {
+    let callCount = 0;
+    let eventHandler = null;
+    let modalHidden = false;
+
+    const mockModal = {
+        length: 1,
+        hasClass: (cls) => cls === 'show',
+        one: (event, handler) => {
+            if (event.startsWith('hidden.bs.modal')) {
+                eventHandler = handler;
+            }
+        },
+        off: () => {},
+        modal: (action) => {
+            if (action === 'hide') {
+                modalHidden = true;
+            }
+        }
+    };
+
+    const mockBody = {
+        addClass: () => {}
+    };
+
+    const mockJQuery = (selector) => {
+        if (selector === 'body') return mockBody;
+        return mockModal;
+    };
+
+    const testSandbox = {
+        console,
+        setTimeout,
+        clearTimeout,
+        $: mockJQuery
+    };
+    testSandbox.window = testSandbox;
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+
+    testSandbox.safeTransitionModal('#myModal', () => {
+        callCount++;
+    });
+
+    assert.equal(modalHidden, true);
+    assert.ok(eventHandler, 'Event handler was registered');
+    assert.equal(callCount, 0, 'Callback has not run yet before hidden event');
+
+    // Trigger hidden event
+    eventHandler();
+    assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
+
+    // Attempt double call (e.g. if fallback timer also fired)
+    eventHandler();
+    assert.equal(callCount, 1, 'Callback guarded against multiple executions');
+});
+
+test('safeTransitionModal falls back to timer if hidden event does not fire', (t, done) => {
+    let callCount = 0;
+
+    const mockModal = {
+        length: 1,
+        hasClass: (cls) => cls === 'show',
+        one: () => {}, // deliberately does not fire
+        off: () => {},
+        modal: () => {}
+    };
+
+    const mockBody = {
+        addClass: () => {}
+    };
+
+    const mockJQuery = (selector) => {
+        if (selector === 'body') return mockBody;
+        return mockModal;
+    };
+
+    const testSandbox = {
+        console,
+        setTimeout,
+        clearTimeout,
+        $: mockJQuery
+    };
+    testSandbox.window = testSandbox;
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+
+    testSandbox.safeTransitionModal('#modalWithoutEvent', () => {
+        callCount++;
+        assert.equal(callCount, 1);
+        done();
+    });
+});
+
+test('chunkArray splits large collections into safe batches', () => {
+    assert.equal(sandbox.chunkArray([]).length, 0);
+    assert.equal(sandbox.chunkArray(null).length, 0);
+    assert.equal(sandbox.chunkArray([1, 2, 3], 0).length, 0);
+
+    const items = Array.from({ length: 250 }, (_, i) => `id-${i}`);
+    const chunks = sandbox.chunkArray(items, 30);
+
+    // 250 items with chunk size 30 should yield 9 chunks (8 of 30, 1 of 10)
+    assert.equal(chunks.length, 9);
+    assert.equal(chunks[0].length, 30);
+    assert.equal(chunks[7].length, 30);
+    assert.equal(chunks[8].length, 10);
+    assert.equal(Array.from(chunks).flat().length, 250);
+
+    // Every chunk must be <= 30 items to guarantee safe URL parameter length
+    assert.equal(chunks.every(c => c.length <= 30), true);
 });
