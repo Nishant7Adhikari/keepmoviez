@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.21";
+const CACHE_NAME = "keepmoviez-local-v5.6.22";
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css?v=5.6.17",
+  "./style.css?v=5.6.22",
   "./manifest.json",
 
   // Local CSS
@@ -36,7 +36,7 @@ const CORE_ASSETS = [
   // App Logic Scripts
   "./js/constant.js?v=5.6.20",
   "./js/backfill.js?v=5.6.20",
-  "./js/utils.js?v=5.6.21",
+  "./js/utils.js?v=5.6.22",
   "./js/indexeddb.js?v=5.6.20",
   "./js/data.js?v=5.6.20",
   "./js/input-output.js?v=5.6.20",
@@ -46,7 +46,7 @@ const CORE_ASSETS = [
   "./js/ui.js?v=5.6.21",
   "./js/reporting.js?v=5.6.21",
   "./js/app.js?v=5.6.21",
-  "./js/supabase.js?v=5.6.21",
+  "./js/supabase.js?v=5.6.22",
   "./js/main.js?v=5.6.21",
 
   // Icons
