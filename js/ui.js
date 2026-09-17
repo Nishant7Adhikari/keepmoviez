@@ -1,28 +1,84 @@
 /* ui.js */
 // START CHUNK: Image Lazy Loader
 const loadedPosterUrls = new Set();
+const pendingImageDwellTimers = new WeakMap();
+
+let lastLazyScrollTop = 0;
+let lastLazyScrollTime = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+let currentScrollVelocity = 0; // px/ms
+
+function updateScrollVelocity(scrollTop) {
+  const now = typeof performance !== "undefined" && performance.now ? performance.now() : Date.now();
+  const dt = now - lastLazyScrollTime;
+  if (dt > 0) {
+    const dy = Math.abs(scrollTop - lastLazyScrollTop);
+    currentScrollVelocity = dy / dt;
+    lastLazyScrollTop = scrollTop;
+    lastLazyScrollTime = now;
+  }
+}
+
+function getLazyImageDwellTime(velocity) {
+  const thresholds = typeof SCROLL_VELOCITY_THRESHOLDS !== "undefined"
+    ? SCROLL_VELOCITY_THRESHOLDS
+    : { QUICK_FLICK_PX_PER_MS: 1.0, RAPID_FLING_PX_PER_MS: 2.5 };
+  const dwellTimes = typeof IMAGE_LAZY_LOAD_DWELL_TIMES !== "undefined"
+    ? IMAGE_LAZY_LOAD_DWELL_TIMES
+    : { NORMAL_SCROLL_MS: 0, QUICK_FLICK_MS: 75, RAPID_FLING_MS: 150 };
+
+  if (velocity < thresholds.QUICK_FLICK_PX_PER_MS) {
+    return dwellTimes.NORMAL_SCROLL_MS;
+  }
+  if (velocity < thresholds.RAPID_FLING_PX_PER_MS) {
+    return dwellTimes.QUICK_FLICK_MS;
+  }
+  return dwellTimes.RAPID_FLING_MS;
+}
+
+function assignPosterImageSource(img, observer) {
+  const src = img.dataset.src;
+  if (src) {
+    if (img.src !== src) {
+      img.src = src;
+    }
+    if (img.complete && img.naturalWidth > 0) {
+      img.classList.add("loaded");
+      loadedPosterUrls.add(src);
+    } else {
+      img.onload = () => {
+        img.classList.add("loaded");
+        loadedPosterUrls.add(src);
+      };
+    }
+  }
+  if (observer) {
+    observer.unobserve(img);
+  }
+}
 
 const imageObserver = new IntersectionObserver(
   (entries, observer) => {
     entries.forEach((entry) => {
+      const img = entry.target;
       if (entry.isIntersecting) {
-        const img = entry.target;
-        const src = img.dataset.src;
-        if (src) {
-          if (img.src !== src) {
-            img.src = src;
+        const dwellTime = getLazyImageDwellTime(currentScrollVelocity);
+        if (dwellTime === 0) {
+          assignPosterImageSource(img, observer);
+        } else {
+          if (pendingImageDwellTimers.has(img)) {
+            clearTimeout(pendingImageDwellTimers.get(img));
           }
-          if (img.complete && img.naturalWidth > 0) {
-            img.classList.add("loaded");
-            loadedPosterUrls.add(src);
-          } else {
-            img.onload = () => {
-              img.classList.add("loaded");
-              loadedPosterUrls.add(src);
-            };
-          }
+          const timerId = setTimeout(() => {
+            assignPosterImageSource(img, observer);
+            pendingImageDwellTimers.delete(img);
+          }, dwellTime);
+          pendingImageDwellTimers.set(img, timerId);
         }
-        observer.unobserve(img);
+      } else {
+        if (pendingImageDwellTimers.has(img)) {
+          clearTimeout(pendingImageDwellTimers.get(img));
+          pendingImageDwellTimers.delete(img);
+        }
       }
     });
   },
@@ -375,6 +431,9 @@ function setupVirtualScrollListener() {
   }
 
   const onScrollOrResize = () => {
+    if (scrollEl && typeof scrollEl.scrollTop === "number") {
+      updateScrollVelocity(scrollEl.scrollTop);
+    }
     if (!virtualScrollTicking) {
       virtualScrollTicking = true;
       if (typeof requestAnimationFrame === "function") {
