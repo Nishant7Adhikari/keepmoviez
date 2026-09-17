@@ -329,7 +329,7 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="moreMultiActionsDropdown"') && html.includes('aria-label="More actions"'));
     assert.ok(html.includes('id="sortColumnDropdown"') && html.includes('aria-label="Sort by column"'));
     assert.ok(html.includes('id="refreshRecommendationsBtnModal"') && html.includes('aria-label="Refresh suggestions"'));
-    assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="About KeepMoviEZ"'));
+    assert.ok(html.includes('id="quickAboutBtn"') && html.includes('aria-label="First time? About KeepMoviEZ"'));
     assert.ok(html.includes('id="quickSaveBtn"') && html.includes('aria-label="Quick save entry"'));
     assert.ok(html.includes('id="updateEntryBtn"') && html.includes('aria-label="Update entry"'));
     assert.ok(html.includes('id="detailsModalAddBtn"') && html.includes('aria-label="Add entry to library"'));
@@ -338,8 +338,8 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="checkRepairDataBtn"') && html.includes('aria-label="Check and repair local data"'));
     assert.ok(html.includes('aria-label="Apply changes to selected entries"'));
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
-    assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Advance to Next Season and reset Episode to 1"'));
-    assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="Increment Episode by 1"'));
+    assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Next Season - Advance to Next Season and reset Episode to 1"'));
+    assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="+1 Ep - Increment Episode by 1"'));
     assert.ok(html.includes('id="pgSeasonInput"') && html.includes('aria-label="Parents guide season number"'));
     assert.ok(html.includes('id="pgEpisodeInput"') && html.includes('aria-label="Parents guide episode number"'));
     assert.ok(html.includes('id="batchEditAddGenreSearchInput"') && html.includes('aria-label="Add genres"'));
