@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.6.23";
+const CACHE_NAME = "keepmoviez-local-v5.7.0";
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -43,7 +43,7 @@ const CORE_ASSETS = [
   "./js/tmdb.js?v=5.6.20",
   "./js/genre.js?v=5.6.20",
   "./js/analysis.js?v=5.6.20",
-  "./js/ui.js?v=5.6.23",
+  "./js/ui.js?v=5.7.0",
   "./js/reporting.js?v=5.6.23",
   "./js/app.js?v=5.6.21",
   "./js/supabase.js?v=5.6.22",
