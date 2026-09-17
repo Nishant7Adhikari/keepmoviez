@@ -23,3 +23,9 @@
 **Legal/Copy Risk:** Using informal microcopy ("dumped as unwatchable") and leaving complex local data recovery/maintenance controls ("Orphaned Data Recovery", "Unwatchable status") unexplained creates user confusion regarding data retention and browser storage state.
 **Learning:** Informal microcopy undermines application professionalism, while proprietary or unique local storage recovery tools require explicit, accessible contextual guidance (`(i)`) to explain how data filtering and local browser recovery mechanisms operate.
 **Remedy:** Standardize microcopy to objective, professional phrasing ("View and manage titles marked with Unwatchable status"), attach accessible `(i)` info icons with explicit `aria-label` and `title` attributes, and document all advanced data utilities under Advanced Data Controls in `./docs/index.html`.
+
+## 2026-09-17 - Ambiguous Viewing Preference Microcopy and Data Transmission Ambiguity
+
+**Legal/Copy Risk:** Using social-sounding labels ("Watch Preference", "Safe to share") without contextual explanations can create user anxiety or misapprehension regarding whether personal viewing habits or ratings are being broadcast to social networks or third parties.
+**Learning:** Personal library metadata options that resemble social sharing terminology require clear, accessible inline assurances that data is strictly stored locally for personal organization and is never transmitted to external services.
+**Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label` and `title` attributes clarifying non-transmission boundaries ("Personal tag for private or group viewing. No preference data is shared publicly or transmitted to external services") and document viewing preferences and privacy limits in `./docs/index.html`.
