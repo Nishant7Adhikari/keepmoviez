@@ -391,10 +391,21 @@ function safeTransitionModal(fromModalSelector, callback) {
     $fromModal.modal("hide");
 }
 
+function chunkArray(array, chunkSize = 30) {
+    if (!Array.isArray(array) || chunkSize <= 0) return [];
+    const chunks = [];
+    for (let i = 0; i < array.length; i += chunkSize) {
+        chunks.push(array.slice(i, i + chunkSize));
+    }
+    return chunks;
+}
+
 if (typeof window !== "undefined") {
     window.safeTransitionModal = safeTransitionModal;
+    window.chunkArray = chunkArray;
 }
 if (typeof globalThis !== "undefined") {
     globalThis.safeTransitionModal = safeTransitionModal;
+    globalThis.chunkArray = chunkArray;
 }
-// END CHUNK: Safe Modal Transition Helper
+// END CHUNK: Safe Modal Transition Helper

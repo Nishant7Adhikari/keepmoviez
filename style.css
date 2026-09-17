@@ -2508,12 +2508,15 @@ a:hover {
 /* START CHUNK: 16: Redesigned Details Modal*/
 /* --- Main Modal Layout --- */
 .details-modal-content {
-  background-color: transparent;
+  background-color: var(--card-bg);
   border: none;
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
   height: 90vh;
   max-height: 800px;
   display: flex;
   flex-direction: column;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
 }
 
 .details-modal-content .modal-body {
@@ -2568,20 +2571,19 @@ a:hover {
   width: 100%;
   background-color: var(--card-bg);
   border-radius: var(--border-radius-lg);
-  overflow-y: auto;
-  /* <<< FIX #1: The ENTIRE container scrolls on mobile */
+  overflow: hidden;
   -webkit-overflow-scrolling: touch;
-  /* For smooth momentum scrolling */
 }
 
 /* --- Poster Panel (Left/Top) --- */
 .details-poster-panel {
   position: relative;
   width: 100%;
-
   flex-shrink: 0;
   overflow: hidden;
+  isolation: isolate;
   background-color: var(--table-header-bg);
+  border-radius: 0;
 }
 
 .details-poster-img {
@@ -2589,6 +2591,7 @@ a:hover {
   height: 100%;
   object-fit: cover;
   display: block;
+  border-radius: 0;
 }
 
 .no-poster-message {
@@ -2846,6 +2849,9 @@ a:hover {
 
 .details-modal-footer {
   background-color: var(--card-bg);
+  border-top: 0;
+  border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
+  overflow: hidden;
 }
 
 /* --- Responsive Split Layout --- */
@@ -2886,6 +2892,7 @@ a:hover {
     max-width: 420px;
     /* But don't get larger than 420px */
     height: 100%;
+    border-radius: var(--border-radius-lg) 0 0 var(--border-radius-lg);
     /* Poster takes full height of the column */
   }
 
@@ -4022,4 +4029,4 @@ body,
   .season-paste-group .season-quick-paste-input {
     max-width: 120px;
   }
-}
+}

@@ -288,6 +288,50 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
 }
 // END CHUNK: 1: Supabase Data Transformation Helpers
 
+// Helper to download remote entries in safe URL batches to prevent HTTP 400 (Bad Request / URI Too Long)
+async function downloadRemoteEntriesByIds(ids, userId, onProgress) {
+  if (!ids || ids.length === 0) return [];
+  const safeChunk = typeof chunkArray === "function" 
+    ? chunkArray 
+    : (arr, size) => {
+        const res = [];
+        for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+        return res;
+      };
+
+  // Safe chunk size for URL filter ?id=in.(...); 30 UUIDs keeps the URL comfortably under 1.5KB
+  const CHUNK_SIZE = 30;
+  const CONCURRENCY = 6;
+  const chunks = safeChunk(ids, CHUNK_SIZE);
+  const results = [];
+
+  for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+    const currentBatch = chunks.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(
+      currentBatch.map(async (chunk) => {
+        const { data, error } = await window.supabaseClient
+          .from("movie_entries")
+          .select("*")
+          .in("id", chunk)
+          .eq("user_id", userId)
+          .eq("is_deleted", false);
+        if (error) {
+          throw new Error(`Downloading remote entries failed: ${error.message}`);
+        }
+        return data || [];
+      })
+    );
+    for (const chunkData of batchResults) {
+      results.push(...chunkData);
+    }
+    if (typeof onProgress === "function") {
+      onProgress(results.length, ids.length);
+    }
+  }
+
+  return results;
+}
+
 //START CHUNK: 2: Comprehensive Two-Way Sync (REWRITTEN)
 async function comprehensiveSync(silent = false) {
   if (!window.supabaseClient || !currentSupabaseUser) {
@@ -340,20 +384,28 @@ async function comprehensiveSync(silent = false) {
       (e) => e._sync_state === "deleted",
     );
 
+    const safeChunk = typeof chunkArray === "function" ? chunkArray : (arr, size) => {
+      const res = [];
+      for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+      return res;
+    };
+
     if (entriesToDelete.length > 0) {
       if (!silent)
         showLoading(`Syncing ${entriesToDelete.length} deletions...`);
-      const { error } = await window.supabaseClient
-        .from("movie_entries")
-        .update({
-          is_deleted: true,
-          last_modified_date: new Date().toISOString(),
-        })
-        .in(
-          "id",
-          entriesToDelete.map((e) => e.id),
-        );
-      if (error) throw new Error(`Syncing deletions failed: ${error.message}`);
+      const deleteIds = entriesToDelete.map((e) => e.id);
+      const deleteChunks = safeChunk(deleteIds, 30);
+      for (const chunk of deleteChunks) {
+        const { error } = await window.supabaseClient
+          .from("movie_entries")
+          .update({
+            is_deleted: true,
+            last_modified_date: new Date().toISOString(),
+          })
+          .in("id", chunk)
+          .eq("user_id", currentSupabaseUser.id);
+        if (error) throw new Error(`Syncing deletions failed: ${error.message}`);
+      }
       deletedCount = entriesToDelete.length;
       changesMade = true;
     }
@@ -366,11 +418,14 @@ async function comprehensiveSync(silent = false) {
         .map((e) => localEntryToSupabaseFormat(e, currentSupabaseUser.id))
         .filter(Boolean);
       if (supabaseFormatted.length > 0) {
-        const { error } = await window.supabaseClient
-          .from("movie_entries")
-          .upsert(supabaseFormatted);
-        if (error)
-          throw new Error(`Uploading changes failed: ${error.message}`);
+        const upsertChunks = safeChunk(supabaseFormatted, 100);
+        for (const chunk of upsertChunks) {
+          const { error } = await window.supabaseClient
+            .from("movie_entries")
+            .upsert(chunk);
+          if (error)
+            throw new Error(`Uploading changes failed: ${error.message}`);
+        }
         pushedCount = supabaseFormatted.length;
         changesMade = true;
       } else {
@@ -381,13 +436,24 @@ async function comprehensiveSync(silent = false) {
     }
 
     if (!silent) showLoading("Checking for remote updates...");
-    const { data: remoteState, error: fetchError } = await window.supabaseClient
-      .from("movie_entries")
-      .select("id, last_modified_date")
-      .eq("user_id", currentSupabaseUser.id)
-      .eq("is_deleted", false);
-    if (fetchError)
-      throw new Error(`Fetching remote state failed: ${fetchError.message}`);
+    const remoteState = [];
+    let remotePage = 0;
+    const pageSize = 1000;
+    while (true) {
+      const { data, error: fetchError } = await window.supabaseClient
+        .from("movie_entries")
+        .select("id, last_modified_date")
+        .eq("user_id", currentSupabaseUser.id)
+        .eq("is_deleted", false)
+        .range(remotePage * pageSize, (remotePage + 1) * pageSize - 1);
+      if (fetchError)
+        throw new Error(`Fetching remote state failed: ${fetchError.message}`);
+      if (!data || data.length === 0) break;
+      remoteState.push(...data);
+      if (data.length < pageSize) break;
+      remotePage++;
+    }
+
     const remoteStateMap = new Map(
       remoteState.map((e) => [e.id, e.last_modified_date]),
     );
@@ -397,18 +463,18 @@ async function comprehensiveSync(silent = false) {
     );
     const idsToPull = [];
 
+    const parseDateSafe = (dStr) => {
+      if (!dStr) return 0;
+      let s = String(dStr);
+      // Ensure trailing Z for ISO parsing if no other timezone indicator exists
+      if (!s.endsWith('Z') && !s.includes('+') && (!s.includes('-') || s.lastIndexOf('-') < 10)) {
+         s += 'Z';
+      }
+      return new Date(s).getTime() || 0;
+    };
+
     for (const [id, remoteLMD] of remoteStateMap.entries()) {
       const localLMD = localStateMap.get(id);
-      const parseDateSafe = (dStr) => {
-        if (!dStr) return 0;
-        let s = String(dStr);
-        // Ensure trailing Z for ISO parsing if no other timezone indicator exists
-        if (!s.endsWith('Z') && !s.includes('+') && (!s.includes('-') || s.lastIndexOf('-') < 10)) {
-           s += 'Z';
-        }
-        return new Date(s).getTime() || 0;
-      };
-
       if (!localLMD || parseDateSafe(remoteLMD) > parseDateSafe(localLMD)) {
         idsToPull.push(id);
       }
@@ -417,17 +483,14 @@ async function comprehensiveSync(silent = false) {
     if (idsToPull.length > 0) {
       if (!silent)
         showLoading(`Downloading ${idsToPull.length} remote updates...`);
-      const { data: entriesToPullData, error: pullError } =
-        await window.supabaseClient
-          .from("movie_entries")
-          .select("*")
-          .in("id", idsToPull)
-          .eq("user_id", currentSupabaseUser.id)
-          .eq("is_deleted", false);
-      if (pullError)
-        throw new Error(
-          `Downloading remote entries failed: ${pullError.message}`,
-        );
+      const entriesToPullData = await downloadRemoteEntriesByIds(
+        idsToPull,
+        currentSupabaseUser.id,
+        (downloaded, total) => {
+          if (!silent)
+            showLoading(`Downloading remote updates (${downloaded}/${total})...`);
+        },
+      );
 
       pulledCount = entriesToPullData.length;
       changesMade = true;
@@ -543,15 +606,25 @@ async function forcePullFromSupabase() {
   showLoading("Force Pulling... Erasing local data...");
 
   try {
-    // Step 1: Fetch ALL data from the cloud for the current user
-    const { data: cloudData, error: fetchError } = await window.supabaseClient
-      .from("movie_entries")
-      .select("*")
-      .eq("user_id", currentSupabaseUser.id)
-      .eq("is_deleted", false);
+    // Step 1: Fetch ALL data from the cloud for the current user (paginated to handle > 1000 items)
+    const cloudData = [];
+    let forcePullPage = 0;
+    const forcePullPageSize = 1000;
+    while (true) {
+      const { data, error: fetchError } = await window.supabaseClient
+        .from("movie_entries")
+        .select("*")
+        .eq("user_id", currentSupabaseUser.id)
+        .eq("is_deleted", false)
+        .range(forcePullPage * forcePullPageSize, (forcePullPage + 1) * forcePullPageSize - 1);
 
-    if (fetchError)
-      throw new Error(`Could not fetch cloud data: ${fetchError.message}`);
+      if (fetchError)
+        throw new Error(`Could not fetch cloud data: ${fetchError.message}`);
+      if (!data || data.length === 0) break;
+      cloudData.push(...data);
+      if (data.length < forcePullPageSize) break;
+      forcePullPage++;
+    }
 
     showLoading(
       `Found ${cloudData.length} entries in cloud. Replacing local data...`,
@@ -634,13 +707,21 @@ async function forcePushToSupabase() {
       .filter(Boolean);
 
     if (localDataToPush.length > 0) {
-      // Step 3: Insert all local records into the now-empty cloud table.
-      const { error: insertError } = await window.supabaseClient
-        .from("movie_entries")
-        .insert(localDataToPush);
+      // Step 3: Insert all local records into the now-empty cloud table in safe chunks.
+      const safeChunk = typeof chunkArray === "function" ? chunkArray : (arr, size) => {
+        const res = [];
+        for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+        return res;
+      };
+      const insertChunks = safeChunk(localDataToPush, 100);
+      for (const chunk of insertChunks) {
+        const { error: insertError } = await window.supabaseClient
+          .from("movie_entries")
+          .insert(chunk);
 
-      if (insertError)
-        throw new Error(`Could not upload local data: ${insertError.message}`);
+        if (insertError)
+          throw new Error(`Could not upload local data: ${insertError.message}`);
+      }
     }
 
     // Step 4: Mark all local data as 'synced'
@@ -695,6 +776,11 @@ async function syncSelectedEntries(selectedIds, direction = "push") {
 
   try {
     let pushedCount = 0, pulledCount = 0;
+    const safeChunk = typeof chunkArray === "function" ? chunkArray : (arr, size) => {
+      const res = [];
+      for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+      return res;
+    };
 
     // ─── PUSH ──────────────────────────────────────────────
     if (direction === "push" || direction === "both") {
@@ -704,10 +790,13 @@ async function syncSelectedEntries(selectedIds, direction = "push") {
         .filter(Boolean);
 
       if (entriesToPush.length > 0) {
-        const { error } = await window.supabaseClient
-          .from("movie_entries")
-          .upsert(entriesToPush);
-        if (error) throw new Error(`Push failed: ${error.message}`);
+        const pushChunks = safeChunk(entriesToPush, 100);
+        for (const chunk of pushChunks) {
+          const { error } = await window.supabaseClient
+            .from("movie_entries")
+            .upsert(chunk);
+          if (error) throw new Error(`Push failed: ${error.message}`);
+        }
 
         // Mark pushed entries as synced
         entriesToPush.forEach(({ id }) => {
@@ -726,11 +815,18 @@ async function syncSelectedEntries(selectedIds, direction = "push") {
 
     // ─── PULL ──────────────────────────────────────────────
     if (direction === "pull" || direction === "both") {
-      const { data: remoteEntries, error: pullError } = await window.supabaseClient
-        .from("movie_entries")
-        .select("*")
-        .in("id", selectedIds)
-        .eq("user_id", userId);
+      const pullChunks = safeChunk(selectedIds, 30);
+      const remoteEntries = [];
+      for (const chunk of pullChunks) {
+        const { data, error: pullError } = await window.supabaseClient
+          .from("movie_entries")
+          .select("*")
+          .in("id", chunk)
+          .eq("user_id", userId);
+
+        if (pullError) throw new Error(`Pull failed: ${pullError.message}`);
+        if (data) remoteEntries.push(...data);
+      }
 
       if (pullError) throw new Error(`Pull failed: ${pullError.message}`);
 
@@ -1497,3 +1593,10 @@ window.syncAchievementStatsCloud = async function() {
     }
 };
 // END CHUNK: Super Storage Achievement Sync Pipeline
+
+if (typeof window !== "undefined") {
+  window.downloadRemoteEntriesByIds = downloadRemoteEntriesByIds;
+}
+if (typeof globalThis !== "undefined") {
+  globalThis.downloadRemoteEntriesByIds = downloadRemoteEntriesByIds;
+}

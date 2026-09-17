@@ -579,4 +579,21 @@ test('safeTransitionModal falls back to timer if hidden event does not fire', (t
     });
 });
 
+test('chunkArray splits large collections into safe batches', () => {
+    assert.equal(sandbox.chunkArray([]).length, 0);
+    assert.equal(sandbox.chunkArray(null).length, 0);
+    assert.equal(sandbox.chunkArray([1, 2, 3], 0).length, 0);
 
+    const items = Array.from({ length: 250 }, (_, i) => `id-${i}`);
+    const chunks = sandbox.chunkArray(items, 30);
+
+    // 250 items with chunk size 30 should yield 9 chunks (8 of 30, 1 of 10)
+    assert.equal(chunks.length, 9);
+    assert.equal(chunks[0].length, 30);
+    assert.equal(chunks[7].length, 30);
+    assert.equal(chunks[8].length, 10);
+    assert.equal(Array.from(chunks).flat().length, 250);
+
+    // Every chunk must be <= 30 items to guarantee safe URL parameter length
+    assert.equal(chunks.every(c => c.length <= 30), true);
+});
