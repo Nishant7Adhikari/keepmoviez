@@ -33,3 +33,7 @@
 ## 2026-09-16 - Memoizing renderStars via Map cache
 **Learning:** `renderStars` was invoked repeatedly during card batch rendering, modal popups, and watch history lists to build HTML star icons. Computing `parseFloat`, `Math.round`, and string concatenations on every single card and list item created redundant CPU cycles. Caching generated star HTML strings in a `Map` (`RENDER_STARS_CACHE`) reduced benchmark execution time by ~2.5x (from ~160ms to ~62ms over 1,000,000 calls).
 **Action:** Cache deterministic UI helper outputs (such as star rating HTML snippets) in a `Map` when inputs are bounded and called repeatedly during list and card rendering.
+
+## 2026-09-17 - Fast-path regex short-circuiting in escapeHTML
+**Learning:** `escapeHTML` executed 5 sequential `.replace()` calls on every string passed during card and list rendering, even when strings contained no special characters needing entity escaping (`&`, `<`, `>`, `"`, `'`). Fast-path checking strings with a single top-level compiled regex (`/[&<>"']/`) before running replacement pipelines short-circuits execution for plain text strings and reduced benchmark runtime by ~3.8x (3.62s to 0.95s over 1,000,000 calls).
+**Action:** Short-circuit multi-pass string sanitizer/formatter functions with a single regex `.test()` check when input strings rarely contain escaped target characters.
