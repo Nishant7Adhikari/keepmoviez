@@ -32,3 +32,8 @@
 **Vulnerability:** Unescaped string interpolation of `movie.id`, `statusClass`, and `statusBadgeText` in `renderNextBatch` card action buttons, `renderDailyRecommendationCard` modal buttons (`data-movie-id="${movie.id}"`), and `renderSeasonBreakdownCards` (`data-container="${containerId}"`, `data-badge="${badgeId}"`) enabled attribute breakout and DOM-based XSS when entry IDs or status values contained double quotes or HTML syntax.
 **Learning:** Data attributes (`data-movie-id="${id}"`) and status badge text/classes generated from entry properties or function parameters can contain quotes or special characters when data originates from user imports or third-party sync.
 **Prevention:** Wrap all dynamic identifiers (`movie.id`), status badges (`statusClass`, `statusBadgeText`), and container IDs in HTML attribute and element string templates with `escapeHTML()` from `js/utils.js`.
+
+## 2026-09-17 - HTML Sanitization for Achievement Icons and Watch History Action Button Aria-Labels
+**Vulnerability:** Unescaped string interpolation of `ach.icon` / `achievement.icon` in achievement badge elements (`<i class="${ach.icon}">`) and celebration overlays, and `watchDateFormatted` in watch history action button `aria-label` attributes enabled attribute breakout and DOM-based XSS.
+**Learning:** Icon class names and formatted date values interpolated directly into HTML class or `aria-label` attributes without `escapeHTML()` can contain double quotes or attribute breakout syntax.
+**Prevention:** Wrap all dynamic icon identifiers, formatted dates, and accessibility label strings interpolated into HTML attributes with `escapeHTML()` from `js/utils.js`.
