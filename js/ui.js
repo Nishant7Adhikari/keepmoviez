@@ -1,5 +1,7 @@
 /* ui.js */
 // START CHUNK: Image Lazy Loader
+const loadedPosterUrls = new Set();
+
 const imageObserver = new IntersectionObserver(
   (entries, observer) => {
     entries.forEach((entry) => {
@@ -7,16 +9,24 @@ const imageObserver = new IntersectionObserver(
         const img = entry.target;
         const src = img.dataset.src;
         if (src) {
-          img.src = src;
-          img.onload = () => {
+          if (img.src !== src) {
+            img.src = src;
+          }
+          if (img.complete && img.naturalWidth > 0) {
             img.classList.add("loaded");
-          };
+            loadedPosterUrls.add(src);
+          } else {
+            img.onload = () => {
+              img.classList.add("loaded");
+              loadedPosterUrls.add(src);
+            };
+          }
         }
         observer.unobserve(img);
       }
     });
   },
-  { rootMargin: "0px 0px 200px 0px" },
+  { rootMargin: "0px 0px 300px 0px" },
 );
 // END CHUNK: Image Lazy Loader
 
@@ -396,10 +406,20 @@ function updateVirtualScroll(force = false) {
   const viewportHeight = (scrollEl && scrollEl.clientHeight) ? scrollEl.clientHeight : ((typeof window !== "undefined" && window.innerHeight) ? window.innerHeight : 800);
   const containerWidth = (cardContainer && cardContainer.clientWidth) ? cardContainer.clientWidth : 1000;
 
-  // Grid column calculation: minmax(max(250px, 24%), 1fr) with gap 16px
-  const minCardWidth = 250;
+  // Grid column calculation: match CSS grid repeat(auto-fill, minmax(max(250px, 24%), 1fr)) with gap 16px
   const gap = 16;
-  const cols = Math.max(1, Math.floor((containerWidth + gap) / (minCardWidth + gap)));
+  let cols = 0;
+  if (typeof window !== "undefined" && typeof window.getComputedStyle === "function" && cardContainer) {
+    const gridStyle = window.getComputedStyle(cardContainer);
+    const gridTemplate = gridStyle ? gridStyle.gridTemplateColumns : null;
+    if (gridTemplate && gridTemplate !== "none" && gridTemplate !== "") {
+      cols = gridTemplate.split(/\s+/).filter(Boolean).length;
+    }
+  }
+  if (!cols || cols < 1) {
+    const minCardWidth = Math.max(250, containerWidth * 0.24);
+    cols = Math.max(1, Math.floor((containerWidth + gap) / (minCardWidth + gap)));
+  }
 
   // Estimate or measure row height
   let rowHeight = 270;
@@ -511,9 +531,13 @@ function createMovieCardElement(movie) {
     statusBadgeText = `Continue · S${seasonNum} E${episodeNum}`;
   }
 
+  const isPosterLoaded = loadedPosterUrls.has(posterUrl);
+  const imgSrcAttr = isPosterLoaded ? `src="${escapeHTML(posterUrl)}"` : "";
+  const imgClassAttr = isPosterLoaded ? "lazy loaded" : "lazy";
+
   card.innerHTML = `
           <div class="card-thumbnail">
-              <img data-src="${escapeHTML(posterUrl)}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
+              <img ${imgSrcAttr} data-src="${escapeHTML(posterUrl)}" alt="Poster for ${escapeHTML(movie.Name)}" class="${imgClassAttr}">
               <span class="card-year-badge">${escapeHTML(movie.Year) || "N/A"}</span>
           </div>
           <div class="card-content">
