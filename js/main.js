@@ -741,10 +741,14 @@ document.addEventListener("DOMContentLoaded", () => {
       openBackfillModal();
     });
     $("#settingsUnwatchableBtn").on("click", () => {
-      $("#settingsModal").modal("hide");
-      $("#settingsModal").one("hidden.bs.modal", () => {
-        openUnwatchableModal();
-      });
+      if (typeof window.safeTransitionModal === "function") {
+        window.safeTransitionModal("#settingsModal", () => openUnwatchableModal());
+      } else {
+        $("#settingsModal").one("hidden.bs.modal", () => {
+          openUnwatchableModal();
+        });
+        $("#settingsModal").modal("hide");
+      }
     });
 
     $("#filterSortModal").on("show.bs.modal", populateFilterModalOptions);
@@ -792,10 +796,14 @@ document.addEventListener("DOMContentLoaded", () => {
           if (parentModalId && typeof window.preserveModalForBackNavigation === "function") {
             window.preserveModalForBackNavigation(`#${parentModalId}`);
           }
-          $(parentModal).modal("hide");
-          $(parentModal).one("hidden.bs.modal", () =>
-            openDetailsModal(movieId),
-          );
+          if (typeof window.safeTransitionModal === "function") {
+            window.safeTransitionModal(parentModal, () => openDetailsModal(movieId));
+          } else {
+            $(parentModal).one("hidden.bs.modal", () =>
+              openDetailsModal(movieId),
+            );
+            $(parentModal).modal("hide");
+          }
         } else if (personId) {
           openPersonDetailsModal(personId, personName);
         }
@@ -812,11 +820,18 @@ document.addEventListener("DOMContentLoaded", () => {
       if (typeof window.preserveModalForBackNavigation === "function") {
         window.preserveModalForBackNavigation("#detailsModal");
       }
-      $("#detailsModal").modal("hide");
-      $("#detailsModal").one("hidden.bs.modal", () => {
-        displayPersonalizedSuggestionsModal(currentMovieId);
-        $("#personalizedSuggestionsModal").modal("show");
-      });
+      if (typeof window.safeTransitionModal === "function") {
+        window.safeTransitionModal("#detailsModal", () => {
+          displayPersonalizedSuggestionsModal(currentMovieId);
+          $("#personalizedSuggestionsModal").modal("show");
+        });
+      } else {
+        $("#detailsModal").one("hidden.bs.modal", () => {
+          displayPersonalizedSuggestionsModal(currentMovieId);
+          $("#personalizedSuggestionsModal").modal("show");
+        });
+        $("#detailsModal").modal("hide");
+      }
     });
 
     $(document).on("click", ".achievement-badge", function () {
@@ -837,8 +852,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showToast("Error", "No TMDB data found to add.", "error");
         return;
       }
-      $("#detailsModal").modal("hide");
-      $("#detailsModal").one("hidden.bs.modal", async () => {
+      const openAddForm = async () => {
         prepareAddModal();
         await applyTmdbSelection(tmdbObject);
         const statusSelect = document.getElementById("status");
@@ -847,7 +861,13 @@ document.addEventListener("DOMContentLoaded", () => {
           toggleConditionalFields();
         }
         $("#entryModal").modal("show");
-      });
+      };
+      if (typeof window.safeTransitionModal === "function") {
+        window.safeTransitionModal("#detailsModal", openAddForm);
+      } else {
+        $("#detailsModal").one("hidden.bs.modal", openAddForm);
+        $("#detailsModal").modal("hide");
+      }
     });
 
     $(document).on("click", ".person-link", function (e) {
@@ -1181,6 +1201,7 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         await openDatabase(); // Ensure DB connection
         movieData = await loadFromIndexedDB(); // Force reload
+        window.movieData = movieData;
         if (movieData.length > 0) {
           recalculateAndApplyAllRelationships();
           sortMovies(currentSortColumn, currentSortDirection);

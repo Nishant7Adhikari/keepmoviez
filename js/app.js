@@ -774,7 +774,7 @@ window.handleQuickUpdateSave = async function (event) {
 
   try {
     const entryId = document.getElementById("quickUpdateEntryId").value;
-    const entryIndex = movieData.findIndex((m) => m && m.id === entryId);
+    const entryIndex = movieData.findIndex((m) => m && String(m.id) === String(entryId));
     if (entryIndex === -1) {
       throw new Error("Entry not found to update.");
     }
@@ -1543,12 +1543,20 @@ window.handleBatchEditFormSubmit = async function (event) {
 
 // START CHUNK: Recommendation Modal Actions
 window.markDailyRecCompleted = async function (event) {
-  const movieId = event.target.closest("button").dataset.movieId;
+  const button = event.target.closest("button");
+  const movieId = button?.dataset?.movieId;
+  if (!movieId) return;
   window.lastOpenedFromDailyRec = movieId;
-  $('#dailyRecommendationModal').modal('hide');
-  $('#dailyRecommendationModal').one('hidden.bs.modal', () => {
-    prepareQuickUpdateModal(movieId);
-  });
+  if (typeof window.safeTransitionModal === "function") {
+    window.safeTransitionModal("#dailyRecommendationModal", () => {
+      prepareQuickUpdateModal(movieId);
+    });
+  } else {
+    $("#dailyRecommendationModal").one("hidden.bs.modal", () => {
+      prepareQuickUpdateModal(movieId);
+    });
+    $("#dailyRecommendationModal").modal("hide");
+  }
 };
 
 // END CHUNK: Recommendation Modal Actions

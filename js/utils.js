@@ -353,3 +353,48 @@ function logWatchlistActivity(type) {
     }
 }
 // END CHUNK: Watchlist Activity Logger
+
+// START CHUNK: Safe Modal Transition Helper
+function safeTransitionModal(fromModalSelector, callback) {
+    if (typeof callback !== "function") return;
+    if (typeof $ === "undefined") {
+        callback();
+        return;
+    }
+
+    const $fromModal = $(fromModalSelector);
+    if (!$fromModal.length || !$fromModal.hasClass("show")) {
+        callback();
+        return;
+    }
+
+    let executed = false;
+    let fallbackTimer = null;
+
+    const executeCallback = () => {
+        if (executed) return;
+        executed = true;
+        if (fallbackTimer) {
+            clearTimeout(fallbackTimer);
+            fallbackTimer = null;
+        }
+        $fromModal.off("hidden.bs.modal.safeTransition");
+        if (typeof $ !== "undefined") {
+            $("body").addClass("modal-open");
+        }
+        callback();
+    };
+
+    // Attach listener before calling modal hide
+    $fromModal.one("hidden.bs.modal.safeTransition", executeCallback);
+    fallbackTimer = setTimeout(executeCallback, 350);
+    $fromModal.modal("hide");
+}
+
+if (typeof window !== "undefined") {
+    window.safeTransitionModal = safeTransitionModal;
+}
+if (typeof globalThis !== "undefined") {
+    globalThis.safeTransitionModal = safeTransitionModal;
+}
+// END CHUNK: Safe Modal Transition Helper

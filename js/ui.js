@@ -880,7 +880,7 @@ window._applySeasonPaste = function (raw, containerId, badgeId) {
 };
 
 window.prepareEditModal = function (id, showModal = true) {
-  const movie = movieData.find((m) => m && m.id === id);
+  const movie = movieData.find((m) => m && String(m.id) === String(id));
   if (!movie) {
     showToast("Error", "Entry not found for editing.", "error");
     return;
@@ -1049,7 +1049,7 @@ window.showDeleteConfirmationModal = function (id = null) {
     }
   } else if (id) {
     movieIdToDelete = id;
-    const movie = movieData.find((m) => m && m.id === id);
+    const movie = movieData.find((m) => m && String(m.id) === String(id));
     const movieName = movie && movie.Name ? `"${movie.Name}"` : "this entry";
     if (deleteModalMessage)
       deleteModalMessage.textContent = `Delete ${movieName}? This cannot be undone.`;
@@ -1068,7 +1068,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
 
     // 1. DETERMINE DATA SOURCE
     if (id) {
-      sourceData = movieData.find((m) => m && m.id === id);
+      sourceData = movieData.find((m) => m && String(m.id) === String(id));
       isLocalEntry = true;
       if (!sourceData) {
         throw new Error("Entry details not found in your library.");
@@ -1580,10 +1580,10 @@ window.openUnwatchableModal = function () {
           <div class="d-flex w-100 justify-content-between align-items-center">
             <h6 class="mb-1 text-warning">${safeEscape(entry.Name)} <small class="text-muted">(${safeEscape(entry.Year || "N/A")})</small></h6>
             <div>
-              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${safeEscape(entry.id)}'); });" title="Edit Entry" aria-label="Edit ${safeEscape(entry.Name)}">
+              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); if(typeof window.safeTransitionModal === 'function') { window.safeTransitionModal('#unwatchableModal', function() { prepareEditModal('${safeEscape(entry.id)}'); }); } else { $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${safeEscape(entry.id)}'); }); $('#unwatchableModal').modal('hide'); }" title="Edit Entry" aria-label="Edit ${safeEscape(entry.Name)}">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${safeEscape(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); $('#unwatchableModal').modal('hide'); $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); });" title="Delete Permanently" aria-label="Delete ${safeEscape(entry.Name)} permanently">
+              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${safeEscape(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); if(typeof window.safeTransitionModal === 'function') { window.safeTransitionModal('#unwatchableModal', function() { $('#confirmDeleteModal').modal('show'); }); } else { $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); }); $('#unwatchableModal').modal('hide'); }" title="Delete Permanently" aria-label="Delete ${safeEscape(entry.Name)} permanently">
                   <i class="fas fa-trash"></i>
               </button>
             </div>
@@ -2096,7 +2096,7 @@ window.updateEditSeriesPreview = function () {
 };
 
 window.prepareQuickUpdateModal = function (id) {
-  const movie = movieData.find((m) => m && m.id === id);
+  const movie = movieData.find((m) => m && String(m.id) === String(id));
   if (!movie) {
     showToast("Error", "Entry not found for quick update.", "error");
     return;
@@ -2319,7 +2319,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const currentVal = parseInt(epInput.val(), 10) || 0;
 
     const entryId = $("#quickUpdateEntryId").val();
-    const movie = Array.isArray(movieData) ? movieData.find((m) => m && m.id === entryId) : null;
+    const movie = Array.isArray(movieData) ? movieData.find((m) => m && String(m.id) === String(entryId)) : null;
     const epCounts = movie ? (movie.episodesPerSeason || movie.episodes_per_season || []) : [];
     const maxEpForSeason = epCounts[currentSeason - 1] ? parseInt(epCounts[currentSeason - 1], 10) : null;
 

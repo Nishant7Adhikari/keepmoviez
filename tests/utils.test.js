@@ -474,3 +474,109 @@ test('showToast preserves and presents standard error title and message without 
     testSandbox.showToast("Database Connection Error", "Unable to establish network handshake.", "error");
     assert.equal(alertCalledMessage, "Database Connection Error: Unable to establish network handshake.");
 });
+
+test('safeTransitionModal executes callback immediately when modal is not visible or jQuery is unavailable', () => {
+    let called = false;
+    sandbox.safeTransitionModal(null, () => { called = true; });
+    assert.equal(called, true);
+
+    called = false;
+    sandbox.safeTransitionModal('#nonExistentModal', () => { called = true; });
+    assert.equal(called, true);
+});
+
+test('safeTransitionModal transitions via hidden.bs.modal event and executes once', () => {
+    let callCount = 0;
+    let eventHandler = null;
+    let modalHidden = false;
+
+    const mockModal = {
+        length: 1,
+        hasClass: (cls) => cls === 'show',
+        one: (event, handler) => {
+            if (event.startsWith('hidden.bs.modal')) {
+                eventHandler = handler;
+            }
+        },
+        off: () => {},
+        modal: (action) => {
+            if (action === 'hide') {
+                modalHidden = true;
+            }
+        }
+    };
+
+    const mockBody = {
+        addClass: () => {}
+    };
+
+    const mockJQuery = (selector) => {
+        if (selector === 'body') return mockBody;
+        return mockModal;
+    };
+
+    const testSandbox = {
+        console,
+        setTimeout,
+        clearTimeout,
+        $: mockJQuery
+    };
+    testSandbox.window = testSandbox;
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+
+    testSandbox.safeTransitionModal('#myModal', () => {
+        callCount++;
+    });
+
+    assert.equal(modalHidden, true);
+    assert.ok(eventHandler, 'Event handler was registered');
+    assert.equal(callCount, 0, 'Callback has not run yet before hidden event');
+
+    // Trigger hidden event
+    eventHandler();
+    assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
+
+    // Attempt double call (e.g. if fallback timer also fired)
+    eventHandler();
+    assert.equal(callCount, 1, 'Callback guarded against multiple executions');
+});
+
+test('safeTransitionModal falls back to timer if hidden event does not fire', (t, done) => {
+    let callCount = 0;
+
+    const mockModal = {
+        length: 1,
+        hasClass: (cls) => cls === 'show',
+        one: () => {}, // deliberately does not fire
+        off: () => {},
+        modal: () => {}
+    };
+
+    const mockBody = {
+        addClass: () => {}
+    };
+
+    const mockJQuery = (selector) => {
+        if (selector === 'body') return mockBody;
+        return mockModal;
+    };
+
+    const testSandbox = {
+        console,
+        setTimeout,
+        clearTimeout,
+        $: mockJQuery
+    };
+    testSandbox.window = testSandbox;
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+
+    testSandbox.safeTransitionModal('#modalWithoutEvent', () => {
+        callCount++;
+        assert.equal(callCount, 1);
+        done();
+    });
+});
+
+

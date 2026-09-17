@@ -176,11 +176,16 @@ function bindDailyRecommendationCardActions(modalBody) {
 
     if (viewButton) {
         viewButton.addEventListener('click', function () {
+            const movieId = this.dataset.movieId;
             if (typeof window.preserveModalForBackNavigation === 'function') {
                 window.preserveModalForBackNavigation('#dailyRecommendationModal');
             }
-            $('#dailyRecommendationModal').modal('hide');
-            $('#dailyRecommendationModal').one('hidden.bs.modal', () => openDetailsModal(this.dataset.movieId));
+            if (typeof window.safeTransitionModal === 'function') {
+                window.safeTransitionModal('#dailyRecommendationModal', () => openDetailsModal(movieId));
+            } else {
+                $('#dailyRecommendationModal').one('hidden.bs.modal', () => openDetailsModal(movieId));
+                $('#dailyRecommendationModal').modal('hide');
+            }
         });
     }
 
@@ -582,10 +587,16 @@ function renderSuggestionCard(item) {
         
         const savedEntryId = await fastSaveSuggestion(item, 'Watched');
         if (savedEntryId) {
-            $('#personalizedSuggestionsModal').modal('hide');
-            $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
-                prepareQuickUpdateModal(savedEntryId);
-            });
+            if (typeof window.safeTransitionModal === 'function') {
+                window.safeTransitionModal('#personalizedSuggestionsModal', () => {
+                    prepareQuickUpdateModal(savedEntryId);
+                });
+            } else {
+                $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
+                    prepareQuickUpdateModal(savedEntryId);
+                });
+                $('#personalizedSuggestionsModal').modal('hide');
+            }
         }
     });
 
@@ -594,10 +605,16 @@ function renderSuggestionCard(item) {
         if (typeof window.preserveModalForBackNavigation === 'function') {
             window.preserveModalForBackNavigation('#personalizedSuggestionsModal');
         }
-        $('#personalizedSuggestionsModal').modal('hide');
-        $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
-            openDetailsModal(null, item);
-        });
+        if (typeof window.safeTransitionModal === 'function') {
+            window.safeTransitionModal('#personalizedSuggestionsModal', () => {
+                openDetailsModal(null, item);
+            });
+        } else {
+            $('#personalizedSuggestionsModal').one('hidden.bs.modal', () => {
+                openDetailsModal(null, item);
+            });
+            $('#personalizedSuggestionsModal').modal('hide');
+        }
     });
 
     return card;

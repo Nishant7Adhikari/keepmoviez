@@ -444,6 +444,7 @@ async function comprehensiveSync(silent = false) {
 
     if (changesMade) {
       movieData = movieData.filter((e) => !e.is_deleted);
+      window.movieData = movieData;
       movieData.forEach((e) => (e._sync_state = "synced"));
 
       recalculateAndApplyAllRelationships();
@@ -561,6 +562,7 @@ async function forcePullFromSupabase() {
     );
 
     movieData = newLocalData;
+    window.movieData = movieData;
     recalculateAndApplyAllRelationships();
     sortMovies(currentSortColumn, currentSortDirection);
     movieData.forEach((e) => (e._sync_state = "synced"));
@@ -870,6 +872,7 @@ async function initAuth() {
         );
       } else if (user && user.id !== previousUserId) {
         movieData = []; // Clear current session memory
+        window.movieData = [];
         if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
         await handleUserSession(user);
       }
@@ -903,6 +906,7 @@ async function initAuth() {
       if (localData && localData.length > 0) {
         // Case: Not logged in, but we have data -> Load App in Guest Mode
         movieData = localData;
+        window.movieData = movieData;
         await initializeApp();
       } else {
         // Case: Not logged in, No data (First time user) -> Show Login
@@ -942,6 +946,7 @@ async function initializeApp() {
     }
     if (!movieData || movieData.length === 0) {
       movieData = await loadFromIndexedDB();
+      window.movieData = movieData;
     }
     console.log(`Loaded ${movieData.length} entries.`);
 
@@ -1404,6 +1409,7 @@ async function eraseAllData() {
       if (currentSupabaseUser)
         localStorage.removeItem(`hasSynced_${currentSupabaseUser.id}`);
       movieData = [];
+      window.movieData = [];
       const keysToClear = [
         DAILY_RECOMMENDATION_ID_KEY,
         DAILY_RECOMMENDATION_DATE_KEY,
