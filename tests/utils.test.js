@@ -359,6 +359,100 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="menuSupabaseLogoutBtn"') && html.includes('aria-label="Logout"'));
 });
 
+test('renderMovieCards creates virtualized window slice and spacers', () => {
+    const cardContainer = {
+        innerHTML: '',
+        clientWidth: 1000,
+        appendChild: function(fragment) {
+            const children = fragment.children || [];
+            children.forEach(c => {
+                if (c.className && c.className.includes('movie-card')) {
+                    this.cardsCount = (this.cardsCount || 0) + 1;
+                }
+                this.innerHTML += c.outerHTML || c.innerHTML || '';
+            });
+        },
+        querySelectorAll: () => [],
+        querySelector: () => ({ offsetHeight: 250 })
+    };
+
+    const scrollEl = {
+        scrollTop: 0,
+        clientHeight: 800,
+        dataset: {}
+    };
+
+    const items = [];
+    for (let i = 0; i < 500; i++) {
+        items.push({
+            id: `movie_${i}`,
+            Name: `Movie ${i}`,
+            Status: 'Watched',
+            Year: '2024',
+            Category: 'Movie',
+            is_deleted: false,
+            watchHistory: []
+        });
+    }
+
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: (id) => {
+                if (id === 'movieCardContainer') return cardContainer;
+                if (id === 'initialMessage') return { style: {} };
+                return null;
+            },
+            querySelector: (sel) => {
+                if (sel === '.table-responsive') return scrollEl;
+                return null;
+            },
+            createElement: (tag) => {
+                const el = {
+                    tagName: tag.toUpperCase(),
+                    className: '',
+                    style: {},
+                    dataset: {},
+                    classList: { add: () => {} },
+                    innerHTML: '',
+                    get outerHTML() { return `<${tag.toLowerCase()} class="${this.className}">${this.innerHTML}</${tag.toLowerCase()}>`; }
+                };
+                return el;
+            },
+            createDocumentFragment: () => {
+                const children = [];
+                return {
+                    children,
+                    appendChild: (c) => children.push(c)
+                };
+            },
+            addEventListener: () => {}
+        },
+        isMultiSelectMode: false,
+        selectedEntryIds: [],
+        applyFilters: () => items,
+        movieData: items
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.renderMovieCards();
+
+    // Out of 500 cards, only a virtual window (buffer + visible rows, e.g. ~30-50 cards) should be rendered in the DOM
+    assert.ok(cardContainer.cardsCount > 0 && cardContainer.cardsCount < 100, `Expected virtual window card count (<100), got ${cardContainer.cardsCount}`);
+    assert.ok(cardContainer.innerHTML.includes('virtual-spacer-bottom'));
+});
+
 test('renderMovieCards empty state renders Clear Filters & Search CTA button', () => {
     const cardContainer = { innerHTML: '' };
     const testSandbox = {
