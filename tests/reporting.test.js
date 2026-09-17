@@ -124,11 +124,11 @@ test('renderSuggestionCard sets item-specific aria-labels on quick action button
     assert.ok(card.innerHTML.includes('aria-label="Mark Inception as Watched"'));
 });
 
-test('_createAchievementBadgeElement escapes HTML in achievement name', () => {
+test('_createAchievementBadgeElement escapes HTML in achievement name and icon', () => {
     const ach = {
         name: '<script>alert("badge_xss")</script>',
         description: 'Test description',
-        icon: 'fas fa-trophy',
+        icon: 'fas fa-trophy" onload="alert(1)',
         isAchieved: true,
         progress: 1,
         threshold: 1
@@ -136,9 +136,11 @@ test('_createAchievementBadgeElement escapes HTML in achievement name', () => {
     const badge = sandbox._createAchievementBadgeElement(ach);
     assert.ok(badge.innerHTML.includes('&lt;script&gt;alert(&quot;badge_xss&quot;)&lt;/script&gt;'));
     assert.ok(!badge.innerHTML.includes('<script>'));
+    assert.ok(badge.innerHTML.includes('fas fa-trophy&quot; onload=&quot;alert(1)'));
+    assert.ok(!badge.innerHTML.includes('fas fa-trophy" onload="alert(1)'));
 });
 
-test('celebrateAchievementUnlock escapes HTML in achievement title and description', () => {
+test('celebrateAchievementUnlock escapes HTML in achievement title, description, and icon', () => {
     let createdHtml = '';
     const originalCreateElement = sandbox.document.createElement;
     sandbox.document.createElement = () => ({
@@ -155,7 +157,7 @@ test('celebrateAchievementUnlock escapes HTML in achievement title and descripti
     const ach = {
         name: '<img src=x onerror=alert(1)>',
         description: '<svg onload=alert(2)>',
-        icon: 'fas fa-trophy'
+        icon: 'fas fa-trophy" onerror="alert(3)'
     };
 
     sandbox.window.celebrateAchievementUnlock(ach);
@@ -165,6 +167,8 @@ test('celebrateAchievementUnlock escapes HTML in achievement title and descripti
     assert.ok(!createdHtml.includes('<img src=x'));
     assert.ok(createdHtml.includes('&lt;svg onload=alert(2)&gt;'));
     assert.ok(!createdHtml.includes('<svg onload'));
+    assert.ok(createdHtml.includes('fas fa-trophy&quot; onerror=&quot;alert(3)'));
+    assert.ok(!createdHtml.includes('fas fa-trophy" onerror="alert(3)'));
 });
 
 test('findNextBestSeedMovie sorts candidates by rating then lastModifiedDate efficiently', () => {

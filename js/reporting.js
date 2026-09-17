@@ -1077,7 +1077,7 @@ function _createAchievementBadgeElement(ach) {
 
     badge.innerHTML = `
         <span class="fa-stack fa-2x">
-            <i class="${ach.icon} fa-stack-2x"></i>
+            <i class="${escapeHTML(ach.icon)} fa-stack-2x"></i>
         </span>
         <span>${escapeHTML(ach.name)}</span>
         ${progressBarHTML}`;
@@ -1803,7 +1803,7 @@ window.celebrateAchievementUnlock = function (achievement) {
     overlay.innerHTML = `
         <div class="achievement-showcase-card">
             <div class="achievement-showcase-icon">
-                <i class="${achievement.icon || 'fas fa-trophy'}"></i>
+                <i class="${escapeHTML(achievement.icon || 'fas fa-trophy')}"></i>
             </div>
             <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #ffc107; font-weight: 700; margin-bottom: 0.5rem;">🏆 Achievement Unlocked!</div>
             <div class="achievement-showcase-title">${escapeHTML(achievement.name)}</div>

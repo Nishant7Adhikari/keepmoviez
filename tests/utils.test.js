@@ -475,6 +475,37 @@ test('showToast preserves and presents standard error title and message without 
     assert.equal(alertCalledMessage, "Database Connection Error: Unable to establish network handshake.");
 });
 
+test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes to prevent XSS', () => {
+    const listEl = { innerHTML: '', appendChild: function(child) { this.innerHTML += child.innerHTML; } };
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: (id) => (id === 'watchHistoryList' ? listEl : null),
+            createElement: () => ({ className: '', innerHTML: '' }),
+            addEventListener: () => {}
+        },
+        generateUUID: () => 'watch-123',
+        formatWatchDateDisplay: () => '2026-03-31" onclick="alert(1)',
+        renderStars: () => '★★★★★',
+        escapeHTML: (str) => (str ? String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '')
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.renderWatchHistoryUI([{ watchId: 'w1', date: '2026-03-31', notes: 'Great' }]);
+
+    assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&quot; onclick=&quot;alert(1)"'));
+    assert.ok(!listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31" onclick="alert(1)"'));
+});
 test('safeTransitionModal executes callback immediately when modal is not visible or jQuery is unavailable', () => {
     let called = false;
     sandbox.safeTransitionModal(null, () => { called = true; });
