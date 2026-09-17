@@ -310,12 +310,13 @@ window.isWatchRecordFormOpen = function () {
 
 // START CHUNK: Main View Rendering
 
-// State for pagination
+// State for virtualized infinite scroll
 let currentFilteredData = [];
-let renderedCount = 0;
-const BATCH_SIZE = 50;
+let virtualScrollTicking = false;
+let lastRenderedStart = -1;
+let lastRenderedEnd = -1;
 
-function renderMovieCards() {
+function renderMovieCards(resetScroll = true) {
   const cardContainer = document.getElementById("movieCardContainer");
   const initialMessage = document.getElementById("initialMessage");
   if (!cardContainer) {
@@ -324,8 +325,6 @@ function renderMovieCards() {
   }
 
   // 1. Process Data (Filter & Sort)
-  // Note: Sorting happens in-place on movieData before this function is usually called,
-  // or applyFilters returns a new sorted array if your logic requires it.
   currentFilteredData = applyFilters(movieData).filter(m => m.Status !== 'Unwatchable');
 
   // 2. Handle Empty States
@@ -334,146 +333,210 @@ function renderMovieCards() {
     initialMessage.style.display = hasAnyData ? "none" : "block";
   }
 
-  // 3. Reset Container
-  cardContainer.innerHTML = "";
-  renderedCount = 0;
-
-  // Remove existing Load More button if any (it will be re-added if needed)
+  // 3. Remove legacy loadMoreBtn if present
   const existingBtn = document.getElementById("loadMoreBtn");
   if (existingBtn) existingBtn.remove();
 
+  const scrollEl = document.querySelector(".table-responsive");
+  if (resetScroll && scrollEl) {
+    scrollEl.scrollTop = 0;
+  }
+
   if (currentFilteredData.length === 0) {
+    cardContainer.innerHTML = "";
     if (movieData.filter((m) => !m.is_deleted).length > 0) {
       cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()" aria-label="Clear filters and search"><i class="fas fa-undo mr-1"></i> Clear Filters & Search</button></div>`;
     }
+    lastRenderedStart = -1;
+    lastRenderedEnd = -1;
     return;
   }
 
-  // 4. Render First Batch
-  renderNextBatch();
+  setupVirtualScrollListener();
+  updateVirtualScroll(true);
 }
 
-function renderNextBatch() {
+function setupVirtualScrollListener() {
+  const scrollEl = document.querySelector(".table-responsive");
+  if (!scrollEl) return;
+  if (scrollEl.dataset) {
+    if (scrollEl.dataset.virtualListenerAttached) return;
+    scrollEl.dataset.virtualListenerAttached = "true";
+  }
+
+  const onScrollOrResize = () => {
+    if (!virtualScrollTicking) {
+      virtualScrollTicking = true;
+      if (typeof requestAnimationFrame === "function") {
+        requestAnimationFrame(() => {
+          updateVirtualScroll();
+          virtualScrollTicking = false;
+        });
+      } else {
+        updateVirtualScroll();
+        virtualScrollTicking = false;
+      }
+    }
+  };
+
+  if (typeof scrollEl.addEventListener === "function") {
+    scrollEl.addEventListener("scroll", onScrollOrResize, { passive: true });
+  }
+  if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    window.addEventListener("resize", onScrollOrResize, { passive: true });
+  }
+}
+
+function updateVirtualScroll(force = false) {
   const cardContainer = document.getElementById("movieCardContainer");
-  const fragment = document.createDocumentFragment();
+  if (!cardContainer || currentFilteredData.length === 0) return;
 
-  // Determine range
-  const nextBatch = currentFilteredData.slice(
-    renderedCount,
-    renderedCount + BATCH_SIZE,
-  );
+  const scrollEl = document.querySelector(".table-responsive");
+  const scrollTop = (scrollEl && typeof scrollEl.scrollTop === "number") ? scrollEl.scrollTop : 0;
+  const viewportHeight = (scrollEl && scrollEl.clientHeight) ? scrollEl.clientHeight : ((typeof window !== "undefined" && window.innerHeight) ? window.innerHeight : 800);
+  const containerWidth = (cardContainer && cardContainer.clientWidth) ? cardContainer.clientWidth : 1000;
 
-  if (nextBatch.length === 0) {
-    updateLoadMoreVisibility();
+  // Grid column calculation: minmax(max(250px, 24%), 1fr) with gap 16px
+  const minCardWidth = 250;
+  const gap = 16;
+  const cols = Math.max(1, Math.floor((containerWidth + gap) / (minCardWidth + gap)));
+
+  // Estimate or measure row height
+  let rowHeight = 270;
+  if (typeof cardContainer.querySelector === "function") {
+    const sampleCard = cardContainer.querySelector(".movie-card");
+    if (sampleCard && sampleCard.offsetHeight) {
+      rowHeight = sampleCard.offsetHeight + gap;
+    }
+  }
+
+  const totalItems = currentFilteredData.length;
+  const totalRows = Math.ceil(totalItems / cols);
+
+  // Buffer: 4 rows above (~12-16 cards), 6 rows below (~18-24 cards)
+  const bufferRowsAbove = 4;
+  const bufferRowsBelow = 6;
+
+  const visibleStartRow = Math.max(0, Math.floor(scrollTop / rowHeight) - bufferRowsAbove);
+  const visibleEndRow = Math.min(totalRows, Math.ceil((scrollTop + viewportHeight) / rowHeight) + bufferRowsBelow);
+
+  const startIndex = Math.max(0, visibleStartRow * cols);
+  const endIndex = Math.min(totalItems, visibleEndRow * cols);
+
+  if (!force && startIndex === lastRenderedStart && endIndex === lastRenderedEnd) {
     return;
   }
 
-  nextBatch.forEach((movie) => {
+  lastRenderedStart = startIndex;
+  lastRenderedEnd = endIndex;
+
+  const topSpacerHeight = visibleStartRow * rowHeight;
+  const bottomSpacerHeight = Math.max(0, (totalRows - visibleEndRow) * rowHeight);
+
+  const fragment = document.createDocumentFragment();
+
+  if (topSpacerHeight > 0) {
+    const topSpacer = document.createElement("div");
+    topSpacer.className = "virtual-spacer-top";
+    topSpacer.style.gridColumn = "1 / -1";
+    topSpacer.style.height = `${topSpacerHeight}px`;
+    topSpacer.style.pointerEvents = "none";
+    fragment.appendChild(topSpacer);
+  }
+
+  const visibleBatch = currentFilteredData.slice(startIndex, endIndex);
+  visibleBatch.forEach((movie) => {
     if (!movie || !movie.id) return;
-
-    const latestWatch = getLatestWatchInstance(movie.watchHistory || []);
-
-    // FIX: Strip quotes if present
-    let rawPoster = movie["Poster URL"];
-    if (rawPoster && rawPoster.startsWith('"') && rawPoster.endsWith('"')) {
-      rawPoster = rawPoster.slice(1, -1);
-    }
-    const posterUrl = rawPoster || "icons/placeholder-poster.png";
-
-    const statusClass = `status-${String(movie.Status || "unwatched")
-      .toLowerCase()
-      .replace(/\s+/g, "-")}`;
-
-    const card = document.createElement("div");
-    card.className = "movie-card";
-    card.dataset.movieId = movie.id;
-    if (isMultiSelectMode && selectedEntryIds.includes(movie.id)) {
-      card.classList.add("selected");
-    }
-
-    const showQuickUpdateButton =
-      movie.Status === "To Watch" || movie.Status === "Continue";
-
-    let lastWatchedInfo;
-    if (movie.Status === "To Watch") {
-      lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
-    } else {
-      lastWatchedInfo = `<span class="card-last-watched">
-                                <i class="fas fa-history" title="Last Watched"></i>
-                                ${latestWatch && latestWatch.date ? formatWatchDateDisplay(latestWatch.date) : "N/A"}
-                               </span>`;
-    }
-
-    let statusBadgeText = movie.Status || "N/A";
-    if (movie.Status === "Continue" && (movie.Category === "Series" || movie.currentSeason != null || movie.seasonsCompleted != null)) {
-      const seasonNum = movie.currentSeason ?? (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : 1);
-      const episodeNum = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? 0;
-      statusBadgeText = `Continue · S${seasonNum} E${episodeNum}`;
-    }
-
-    card.innerHTML = `
-            <div class="card-thumbnail">
-                <img data-src="${escapeHTML(posterUrl)}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
-                <span class="card-year-badge">${escapeHTML(movie.Year) || "N/A"}</span>
-            </div>
-            <div class="card-content">
-                <div>
-                    <div class="card-header">
-                        <span class="card-title" title="${escapeHTML(movie.Name)}">${escapeHTML(movie.Name) || "N/A"}</span>
-                    </div>
-                    <div class="card-info">
-                        <span class="status-badge ${escapeHTML(statusClass)}">${escapeHTML(statusBadgeText)}</span>
-                        ${renderStars(movie.overallRating)}
-                    </div>
-                </div>
-                <div class="card-footer">
-                    ${lastWatchedInfo}
-                    <div class="card-actions">
-                         ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress for ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
-                         <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-edit" aria-hidden="true"></i></button>
-                         <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
-                    </div>
-                </div>
-            </div>
-        `;
+    const card = createMovieCardElement(movie);
     fragment.appendChild(card);
   });
 
+  if (bottomSpacerHeight > 0) {
+    const bottomSpacer = document.createElement("div");
+    bottomSpacer.className = "virtual-spacer-bottom";
+    bottomSpacer.style.gridColumn = "1 / -1";
+    bottomSpacer.style.height = `${bottomSpacerHeight}px`;
+    bottomSpacer.style.pointerEvents = "none";
+    fragment.appendChild(bottomSpacer);
+  }
+
+  cardContainer.innerHTML = "";
   cardContainer.appendChild(fragment);
-  renderedCount += nextBatch.length;
 
-  // Re-observe lazy images
+  // Observe lazy images
   cardContainer.querySelectorAll("img.lazy:not(.loaded)").forEach((img) => {
-    imageObserver.observe(img);
+    if (typeof imageObserver !== "undefined" && imageObserver.observe) {
+      imageObserver.observe(img);
+    }
   });
-
-  updateLoadMoreVisibility();
 }
 
-function updateLoadMoreVisibility() {
-  let loadMoreBtn = document.getElementById("loadMoreBtn");
+function createMovieCardElement(movie) {
+  const latestWatch = getLatestWatchInstance(movie.watchHistory || []);
 
-  // If all data is shown, hide/remove button
-  if (renderedCount >= currentFilteredData.length) {
-    if (loadMoreBtn) loadMoreBtn.style.display = "none";
-    return;
+  let rawPoster = movie["Poster URL"];
+  if (rawPoster && rawPoster.startsWith('"') && rawPoster.endsWith('"')) {
+    rawPoster = rawPoster.slice(1, -1);
+  }
+  const posterUrl = rawPoster || "icons/placeholder-poster.png";
+
+  const statusClass = `status-${String(movie.Status || "unwatched")
+    .toLowerCase()
+    .replace(/\s+/g, "-")}`;
+
+  const card = document.createElement("div");
+  card.className = "movie-card";
+  card.dataset.movieId = movie.id;
+  if (typeof isMultiSelectMode !== "undefined" && isMultiSelectMode && typeof selectedEntryIds !== "undefined" && selectedEntryIds.includes(movie.id)) {
+    card.classList.add("selected");
   }
 
-  // If button doesn't exist, create it
-  if (!loadMoreBtn) {
-    loadMoreBtn = document.createElement("button");
-    loadMoreBtn.id = "loadMoreBtn";
-    loadMoreBtn.className =
-      "btn btn-block btn-light text-muted mt-3 mb-4 shadow-sm";
-    loadMoreBtn.innerHTML =
-      'Load More <i class="fas fa-chevron-down ml-1"></i>';
-    loadMoreBtn.onclick = renderNextBatch;
-    // Append OUTSIDE the grid container but inside the wrapper
-    document.querySelector(".table-responsive").appendChild(loadMoreBtn);
+  const showQuickUpdateButton =
+    movie.Status === "To Watch" || movie.Status === "Continue";
+
+  let lastWatchedInfo;
+  if (movie.Status === "To Watch") {
+    lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
+  } else {
+    lastWatchedInfo = `<span class="card-last-watched">
+                              <i class="fas fa-history" title="Last Watched"></i>
+                              ${latestWatch && latestWatch.date ? formatWatchDateDisplay(latestWatch.date) : "N/A"}
+                             </span>`;
   }
 
-  loadMoreBtn.style.display = "block";
-  loadMoreBtn.textContent = `Load More (${currentFilteredData.length - renderedCount} remaining)`;
+  let statusBadgeText = movie.Status || "N/A";
+  if (movie.Status === "Continue" && (movie.Category === "Series" || movie.currentSeason != null || movie.seasonsCompleted != null)) {
+    const seasonNum = movie.currentSeason ?? (movie.seasonsCompleted != null ? movie.seasonsCompleted + 1 : 1);
+    const episodeNum = movie.currentEpisode ?? movie.currentSeasonEpisodesWatched ?? 0;
+    statusBadgeText = `Continue · S${seasonNum} E${episodeNum}`;
+  }
+
+  card.innerHTML = `
+          <div class="card-thumbnail">
+              <img data-src="${escapeHTML(posterUrl)}" alt="Poster for ${escapeHTML(movie.Name)}" class="lazy">
+              <span class="card-year-badge">${escapeHTML(movie.Year) || "N/A"}</span>
+          </div>
+          <div class="card-content">
+              <div>
+                  <div class="card-header">
+                      <span class="card-title" title="${escapeHTML(movie.Name)}">${escapeHTML(movie.Name) || "N/A"}</span>
+                  </div>
+                  <div class="card-info">
+                      <span class="status-badge ${escapeHTML(statusClass)}">${escapeHTML(statusBadgeText)}</span>
+                      ${renderStars(movie.overallRating)}
+                  </div>
+              </div>
+              <div class="card-footer">
+                  ${lastWatchedInfo}
+                  <div class="card-actions">
+                       ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress for ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
+                       <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-edit" aria-hidden="true"></i></button>
+                       <button class="btn btn-sm btn-outline-danger btn-action delete-btn" title="Delete Entry" aria-label="Delete ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-trash-alt" aria-hidden="true"></i></button>
+                  </div>
+              </div>
+          </div>
+      `;
+  return card;
 }
 // END CHUNK: Main View Rendering
 
