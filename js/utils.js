@@ -404,10 +404,12 @@ function safeTransitionModal(fromModalSelector, callback) {
             fallbackTimer = null;
         }
         $fromModal.off("hidden.bs.modal.safeTransition");
-        if (typeof $ !== "undefined") {
-            $("body").addClass("modal-open");
-        }
-        callback();
+        setTimeout(() => {
+            if (typeof $ !== "undefined") {
+                $("body").addClass("modal-open");
+            }
+            callback();
+        }, 350); // Highly sensitive DO NOT CHANGE THIS VALUE any lower.
     };
 
     // Attach listener before calling modal hide
