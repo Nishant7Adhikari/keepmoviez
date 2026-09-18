@@ -37,3 +37,7 @@
 ## 2026-09-17 - Fast-path regex short-circuiting in escapeHTML
 **Learning:** `escapeHTML` executed 5 sequential `.replace()` calls on every string passed during card and list rendering, even when strings contained no special characters needing entity escaping (`&`, `<`, `>`, `"`, `'`). Fast-path checking strings with a single top-level compiled regex (`/[&<>"']/`) before running replacement pipelines short-circuits execution for plain text strings and reduced benchmark runtime by ~3.8x (3.62s to 0.95s over 1,000,000 calls).
 **Action:** Short-circuit multi-pass string sanitizer/formatter functions with a single regex `.test()` check when input strings rarely contain escaped target characters.
+
+## 2026-09-18 - Case-insensitive Map pre-indexing in getCountryFullName
+**Learning:** `getCountryFullName` previously executed `Object.entries(countryCodeToNameMap)` and `mapName.toUpperCase()` linear scans on every call for full country names or non-direct code matches. Pre-indexing country codes and full names lazily into a case-insensitive `Map` (`COUNTRY_LOOKUP_MAP`) eliminated $O(K)$ linear array scans and string allocations, reducing execution time by ~43.8x (from ~2642ms to ~60ms for 500,000 calls).
+**Action:** Pre-index static dictionary/lookup objects into case-insensitive Maps rather than iterating over `Object.entries()` inside repeatedly called helper functions.
