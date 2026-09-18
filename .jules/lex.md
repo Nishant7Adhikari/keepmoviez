@@ -29,3 +29,9 @@
 **Legal/Copy Risk:** Using social-sounding labels ("Watch Preference", "Safe to share") without contextual explanations can create user anxiety or misapprehension regarding whether personal viewing habits or ratings are being broadcast to social networks or third parties.
 **Learning:** Personal library metadata options that resemble social sharing terminology require clear, accessible inline assurances that data is strictly stored locally for personal organization and is never transmitted to external services.
 **Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label` and `title` attributes clarifying non-transmission boundaries ("Personal tag for private or group viewing. No preference data is shared publicly or transmitted to external services") and document viewing preferences and privacy limits in `./docs/index.html`.
+
+## 2026-09-18 - Informal Destructive Overwrite Microcopy and Unexplained Cloud Sync Overrides
+
+**Legal/Copy Risk:** Using informal or emotional warning phrasing ("will be lost forever") and leaving high-stakes cloud sync mechanisms ("Force Pull", "Force Push") without contextual explanations creates liability exposure and user confusion regarding data loss scope across devices.
+**Learning:** High-stakes data management actions require objective, factual language that accurately describes device vs. cloud state changes without emotional hyperbole, along with contextual helper icons (`(i)`) and clear documentation advising local backup precautions.
+**Remedy:** Standardize modal warning microcopy to objective phrasing ("will be permanently overwritten"), add accessible `(i)` info icons for Force Pull and Force Push in `index.html`, and document cloud synchronization override mechanics in `./docs/index.html`.
