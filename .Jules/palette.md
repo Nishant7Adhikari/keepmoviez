@@ -13,3 +13,7 @@
 ## 2026-09-16 - WCAG 2.5.3 Label in Name Compliance
 **Learning:** Adding an `aria-label` that overrides visible button text without including the exact visible text string violates WCAG 2.5.3 (Label in Name), breaking speech recognition navigation for voice users.
 **Action:** Ensure `aria-label` on buttons with visible text includes the visual string (e.g. `aria-label="Awesome! Dismiss achievement celebration"`).
+
+## 2026-09-18 - OAuth Button Visible Contrast & Decorative Icon Hiding
+**Learning:** OAuth buttons in themed forms can inherit parent text colors causing low contrast on light button backgrounds, and decorative FontAwesome icons in buttons with `aria-label`s generate duplicate screen reader announcements unless marked with `aria-hidden="true"`.
+**Action:** Explicitly style text inside light OAuth buttons (`text-dark`) and ensure decorative icons inside labeled action buttons include `aria-hidden="true"`.

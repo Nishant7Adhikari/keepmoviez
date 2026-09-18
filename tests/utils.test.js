@@ -357,6 +357,7 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="menuExportBtn"') && html.includes('aria-label="Export Data"'));
     assert.ok(html.includes('id="menuSyncDataBtn"') && html.includes('aria-label="Sync with Cloud"'));
     assert.ok(html.includes('id="menuSupabaseLogoutBtn"') && html.includes('aria-label="Logout"'));
+    assert.ok(html.includes('id="supabaseGoogleSignInBtn"') && html.includes('<span>Sign in with Google</span>'));
 });
 
 test('renderMovieCards creates virtualized window slice and spacers', () => {
@@ -599,6 +600,8 @@ test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes t
 
     assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&quot; onclick=&quot;alert(1)"'));
     assert.ok(!listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31" onclick="alert(1)"'));
+    assert.ok(listEl.innerHTML.includes('<i class="fas fa-edit" aria-hidden="true"></i>'));
+    assert.ok(listEl.innerHTML.includes('<i class="fas fa-trash" aria-hidden="true"></i>'));
 });
 test('safeTransitionModal executes callback immediately when modal is not visible or jQuery is unavailable', () => {
     let called = false;
