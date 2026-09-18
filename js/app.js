@@ -1542,11 +1542,20 @@ window.handleBatchEditFormSubmit = async function (event) {
 
 
 // START CHUNK: Recommendation Modal Actions
-window.markDailyRecCompleted = async function (event) {
-  const button = event.target.closest("button");
-  const movieId = button?.dataset?.movieId;
+window.markDailyRecCompleted = async function (param) {
+  let movieId = null;
+  if (typeof param === "string") {
+    movieId = param;
+  } else if (param && param.target) {
+    const button = param.target.closest("button");
+    movieId = button?.dataset?.movieId || button?.getAttribute("data-movie-id");
+  }
   if (!movieId) return;
   window.lastOpenedFromDailyRec = movieId;
+  if (typeof window.preserveModalForBackNavigation === "function") {
+    window.preserveModalForBackNavigation("#dailyRecommendationModal");
+  }
+  window.isModalTransitioning = true;
   if (typeof window.safeTransitionModal === "function") {
     window.safeTransitionModal("#dailyRecommendationModal", () => {
       prepareQuickUpdateModal(movieId);
