@@ -238,3 +238,29 @@ test('getDailyRecommendationPickReason escapes dynamic genre and director inputs
     assert.ok(!pickReasonDirector.includes('<b onmouseover'));
     assert.ok(pickReasonDirector.includes('<strong>&lt;b onmouseover=alert(2)&gt;Director&lt;/b&gt;</strong>'));
 });
+
+test('bindDailyRecommendationCardActions binds markCompletedButton to call markDailyRecCompleted with movieId', async () => {
+    let markDailyRecCompletedCalledWith = null;
+    sandbox.window.markDailyRecCompleted = async (param) => {
+        markDailyRecCompletedCalledWith = param;
+    };
+
+    const listeners = {};
+    const mockMarkBtn = {
+        dataset: { movieId: 'test_movie_123' },
+        addEventListener: (event, handler) => { listeners[event] = handler; }
+    };
+
+    const mockModalBody = {
+        querySelector: (selector) => {
+            if (selector === '.mark-completed-daily-rec-modal') return mockMarkBtn;
+            return null;
+        }
+    };
+
+    sandbox.bindDailyRecommendationCardActions(mockModalBody);
+    assert.ok(typeof listeners['click'] === 'function');
+
+    await listeners['click'].call(mockMarkBtn, { target: mockMarkBtn });
+    assert.equal(markDailyRecCompletedCalledWith, 'test_movie_123');
+});

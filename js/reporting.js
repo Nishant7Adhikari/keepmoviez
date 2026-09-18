@@ -191,7 +191,8 @@ function bindDailyRecommendationCardActions(modalBody) {
 
     if (markCompletedButton) {
         markCompletedButton.addEventListener('click', async function (event) {
-            await window.markDailyRecCompleted(event);
+            const movieId = this.dataset.movieId;
+            await window.markDailyRecCompleted(movieId || event);
         });
     }
 
