@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.7.1";
+const CACHE_NAME = "keepmoviez-local-v5.7.2";
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -36,7 +36,7 @@ const CORE_ASSETS = [
   // App Logic Scripts
   "./js/constant.js?v=5.7.1",
   "./js/backfill.js?v=5.6.20",
-  "./js/utils.js?v=5.7.1",
+  "./js/utils.js?v=5.7.2",
   "./js/indexeddb.js?v=5.6.20",
   "./js/data.js?v=5.6.20",
   "./js/input-output.js?v=5.6.20",
