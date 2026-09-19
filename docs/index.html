@@ -695,7 +695,12 @@
                 <strong>Orphaned Data Recovery (Download Abandoned Data):</strong> Scans local device storage (IndexedDB/localStorage) for unlinked collection data blocks left behind by prior sessions or failed authentication handshakes, compiling them into a downloadable JSON file for manual re-import.
               </li>
               <li>
-                <strong>Erase All Data:</strong> Allows permanent deletion of local device cache, remote cloud data, or both, giving users complete control over their stored data footprint.
+                <strong>Erase All Data:</strong> Provides explicit data subject deletion controls with three granular scopes:
+                <ul>
+                  <li><code>Erase Local Device Cache Only</code>: Purges all media entries, watch logs, and preference settings stored in local browser memory (IndexedDB and localStorage) on the current device. Remote cloud backups remain untouched.</li>
+                  <li><code>Erase Cloud Account Data Only</code>: Flags all remote database entries associated with your authenticated Supabase user account for permanent deletion. Local device cache is retained until the next cloud synchronization.</li>
+                  <li><code>Erase From Both Local Cache and Cloud Account</code>: Executes simultaneous local cache purge and remote cloud deletion, completely erasing your data footprint across both local storage and cloud database endpoints.</li>
+                </ul>
               </li>
             </ul>
           </section>

@@ -351,6 +351,7 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="confirmForcePushModal"') && html.includes('aria-modal="true"'));
     assert.ok(html.includes('aria-label="Learn more about Strict Privacy Mode"'));
     assert.ok(html.includes('aria-label="Learn more about Sync Threshold"'));
+    assert.ok(html.includes('aria-label="Learn more about Erase Data Scopes"'));
     assert.ok(html.includes('id="legalComplianceDisclaimer"'));
     assert.ok(html.includes('id="menuThemeToggleBtn"') && html.includes('aria-label="Toggle Theme"'));
     assert.ok(html.includes('id="menuImportBtn"') && html.includes('aria-label="Load Data"'));
@@ -614,66 +615,72 @@ test('safeTransitionModal executes callback immediately when modal is not visibl
 });
 
 test('safeTransitionModal transitions via hidden.bs.modal event and executes once', () => {
-    let callCount = 0;
-    let eventHandler = null;
-    let modalHidden = false;
+    return new Promise((resolve) => {
+        let callCount = 0;
+        let eventHandler = null;
+        let modalHidden = false;
 
-    const mockModal = {
-        length: 1,
-        hasClass: (cls) => cls === 'show',
-        one: (event, handler) => {
-            if (event.startsWith('hidden.bs.modal')) {
-                eventHandler = handler;
+        const mockModal = {
+            length: 1,
+            hasClass: (cls) => cls === 'show',
+            one: (event, handler) => {
+                if (event.includes('hidden.bs.modal')) {
+                    eventHandler = handler;
+                }
+            },
+            off: () => {},
+            modal: (action) => {
+                if (action === 'hide') {
+                    modalHidden = true;
+                }
             }
-        },
-        off: () => {},
-        modal: (action) => {
-            if (action === 'hide') {
-                modalHidden = true;
-            }
-        }
-    };
+        };
 
-    const mockBody = {
-        addClass: () => {}
-    };
+        const mockBody = {
+            addClass: () => {}
+        };
 
-    const mockJQuery = (selector) => {
-        if (selector === 'body') return mockBody;
-        return mockModal;
-    };
+        const mockJQuery = (selector) => {
+            if (selector === 'body') return mockBody;
+            return mockModal;
+        };
 
-    const testSandbox = {
-        console,
-        setTimeout,
-        clearTimeout,
-        $: mockJQuery
-    };
-    testSandbox.window = testSandbox;
-    vm.createContext(testSandbox);
-    vm.runInContext(utilsCode, testSandbox);
+        const testSandbox = {
+            console,
+            setTimeout,
+            clearTimeout,
+            $: mockJQuery
+        };
+        testSandbox.window = testSandbox;
+        vm.createContext(testSandbox);
+        vm.runInContext(utilsCode, testSandbox);
 
-    testSandbox.safeTransitionModal('#myModal', () => {
-        callCount++;
+        testSandbox.safeTransitionModal('#myModal', () => {
+            callCount++;
+        });
+
+        assert.equal(modalHidden, true);
+        assert.ok(eventHandler, 'Event handler was registered');
+        assert.equal(callCount, 0, 'Callback has not run yet before hidden event');
+
+        // Trigger hidden event
+        eventHandler();
+
+        // Attempt double call (e.g. if fallback timer also fired)
+        eventHandler();
+
+        setTimeout(() => {
+            assert.equal(callCount, 1, 'Callback executed once after transition delay');
+            resolve();
+        }, 400);
     });
-
-    assert.equal(modalHidden, true);
-    assert.ok(eventHandler, 'Event handler was registered');
-    assert.equal(callCount, 0, 'Callback has not run yet before hidden event');
-
-    // Trigger hidden event
-    eventHandler();
-    assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
-
-    // Attempt double call (e.g. if fallback timer also fired)
-    eventHandler();
-    assert.equal(callCount, 1, 'Callback guarded against multiple executions');
 });
 
-test('safeTransitionModal falls back to timer if hidden event does not fire', (t, done) => {
-    let callCount = 0;
+test('safeTransitionModal falls back to timer if hidden event does not fire', () => {
+    return new Promise((resolve) => {
+        let callCount = 0;
 
-    const mockModal = {
+        const mockModal = {
         length: 1,
         hasClass: (cls) => cls === 'show',
         one: () => {}, // deliberately does not fire
@@ -700,10 +707,11 @@ test('safeTransitionModal falls back to timer if hidden event does not fire', (t
     vm.createContext(testSandbox);
     vm.runInContext(utilsCode, testSandbox);
 
-    testSandbox.safeTransitionModal('#modalWithoutEvent', () => {
-        callCount++;
-        assert.equal(callCount, 1);
-        done();
+        testSandbox.safeTransitionModal('#modalWithoutEvent', () => {
+            callCount++;
+            assert.equal(callCount, 1);
+            resolve();
+        });
     });
 });
 

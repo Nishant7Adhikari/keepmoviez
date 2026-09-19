@@ -29,3 +29,9 @@
 **Legal/Copy Risk:** Using social-sounding labels ("Watch Preference", "Safe to share") without contextual explanations can create user anxiety or misapprehension regarding whether personal viewing habits or ratings are being broadcast to social networks or third parties.
 **Learning:** Personal library metadata options that resemble social sharing terminology require clear, accessible inline assurances that data is strictly stored locally for personal organization and is never transmitted to external services.
 **Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label` and `title` attributes clarifying non-transmission boundaries ("Personal tag for private or group viewing. No preference data is shared publicly or transmitted to external services") and document viewing preferences and privacy limits in `./docs/index.html`.
+
+## 2026-09-19 - Ambiguous Irreversible Data Deletion Scopes and User Rights Transparency
+
+**Legal/Copy Risk:** Presenting irreversible data deletion options ("Erase Data") without explicit scope descriptions or accessible contextual guidance risks accidental data loss and creates regulatory compliance ambiguity regarding data subject deletion rights.
+**Learning:** High-stakes destructive operations like data erasure must clearly distinguish between local browser cache purging and remote cloud database deletion so users understand exactly what data will be destroyed.
+**Remedy:** Provide protective microcopy explaining immediate irreversible data subject deletion rights, attach accessible info icons (`(i)`) with explicit `aria-label="Learn more about Erase Data Scopes"`, and document all deletion scopes in `./docs/index.html`.
