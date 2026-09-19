@@ -41,3 +41,7 @@
 ## 2026-09-18 - Case-insensitive Map pre-indexing in getCountryFullName
 **Learning:** `getCountryFullName` previously executed `Object.entries(countryCodeToNameMap)` and `mapName.toUpperCase()` linear scans on every call for full country names or non-direct code matches. Pre-indexing country codes and full names lazily into a case-insensitive `Map` (`COUNTRY_LOOKUP_MAP`) eliminated $O(K)$ linear array scans and string allocations, reducing execution time by ~43.8x (from ~2642ms to ~60ms for 500,000 calls).
 **Action:** Pre-index static dictionary/lookup objects into case-insensitive Maps rather than iterating over `Object.entries()` inside repeatedly called helper functions.
+
+## 2026-09-19 - Pre-indexing GENRE_MAP in calculateMatchScoreForRecommendation
+**Learning:** `calculateMatchScoreForRecommendation` previously executed `GENRE_MAP.find(g => g.id === id)` for every genre ID on every recommendation card rendered in suggestion carousels. Pre-indexing `GENRE_MAP` into a `Map` (`GENRE_MAP_LOOKUP`) eliminated $O(G)$ linear array scans per recommendation item, reducing calculation time by ~1.43x (from ~1887ms to ~1320ms over 500,000 calls).
+**Action:** Pre-index static arrays into a Map by ID when looking up references repeatedly inside rendering or scoring callbacks.

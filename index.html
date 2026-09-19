@@ -324,11 +324,21 @@
                     <button class="btn btn-warning btn-block mb-2" id="forcePullTriggerBtn">
                         <i class="fas fa-cloud-download-alt"></i> Force Pull from Cloud
                     </button>
-                    <p class="small text-muted mb-3">Replace local data with cloud backup.</p>
+                    <p class="small text-muted mb-3">
+                        Replace local data with cloud backup.
+                        <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Overwrites all local browser cache with your current remote cloud backup. Unsynced local changes will be replaced." aria-label="Learn more about Force Pull from Cloud">
+                            <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                        </button>
+                    </p>
                     <button class="btn btn-danger btn-block mb-2" id="forcePushTriggerBtn">
                         <i class="fas fa-cloud-upload-alt"></i> Force Push to Cloud
                     </button>
-                    <p class="small text-muted mb-3">Overwrite cloud backup with local data.</p>
+                    <p class="small text-muted mb-3">
+                        Overwrite cloud backup with local data.
+                        <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Overwrites your remote cloud backup with local browser data. Cloud entries not stored locally will be permanently overwritten." aria-label="Learn more about Force Push to Cloud">
+                            <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                        </button>
+                    </p>
 
                     <hr>
                     <h6 class="mb-3">Data Utilities</h6>
@@ -434,8 +444,8 @@
                 </div>
                 <div class="modal-body">
                     <p><strong>DANGER:</strong> Are you absolutely sure? This will **permanently overwrite** your entire
-                        cloud backup with the data currently on this device. Any entries or changes on other devices
-                        will be lost forever.</p>
+                        cloud backup with the data currently on this device. Any entries or changes stored exclusively on other devices
+                        will be permanently overwritten.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
@@ -2051,9 +2061,15 @@
                             aria-hidden="true">×</span></button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Warning:</strong> This action cannot be undone for the selected scope.</p>
+                    <p class="text-muted small mb-3">
+                        Permanently purge media records and account data. Exercising data deletion rights is immediate and irreversible.
+                    </p>
                     <div class="form-group">
-                        <label for="eraseDataScope">Choose what to erase:</label>
+                        <label for="eraseDataScope">Choose what to erase:
+                            <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Erase scope determines whether data is removed from local browser cache, remote cloud database, or both locations." aria-label="Learn more about Erase Data Scopes">
+                                <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                            </button>
+                        </label>
                         <select class="form-control" id="eraseDataScope">
                             <option value="local">Erase Local Device Cache Only</option>
                             <option value="cloud">Erase Cloud Account Data Only</option>
@@ -2061,7 +2077,7 @@
                         </select>
                     </div>
                     <p id="eraseScopeWarning" class="text-danger small"></p>
-                    <p>Are you absolutely sure you want to proceed?</p>
+                    <p class="font-weight-bold text-dark mb-1">Are you sure you want to proceed?</p>
                 </div>
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-secondary" id="checkRepairDataBtn" aria-label="Check and repair local data"><i class="fas fa-tools" aria-hidden="true"></i>
