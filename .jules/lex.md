@@ -35,3 +35,8 @@
 **Legal/Copy Risk:** Presenting irreversible data deletion options ("Erase Data") without explicit scope descriptions or accessible contextual guidance risks accidental data loss and creates regulatory compliance ambiguity regarding data subject deletion rights.
 **Learning:** High-stakes destructive operations like data erasure must clearly distinguish between local browser cache purging and remote cloud database deletion so users understand exactly what data will be destroyed.
 **Remedy:** Provide protective microcopy explaining immediate irreversible data subject deletion rights, attach accessible info icons (`(i)`) with explicit `aria-label="Learn more about Erase Data Scopes"`, and document all deletion scopes in `./docs/index.html`.
+## 2026-09-18 - Informal Destructive Overwrite Microcopy and Unexplained Cloud Sync Overrides
+
+**Legal/Copy Risk:** Using informal or emotional warning phrasing ("will be lost forever") and leaving high-stakes cloud sync mechanisms ("Force Pull", "Force Push") without contextual explanations creates liability exposure and user confusion regarding data loss scope across devices.
+**Learning:** High-stakes data management actions require objective, factual language that accurately describes device vs. cloud state changes without emotional hyperbole, along with contextual helper icons (`(i)`) and clear documentation advising local backup precautions.
+**Remedy:** Standardize modal warning microcopy to objective phrasing ("will be permanently overwritten"), add accessible `(i)` info icons for Force Pull and Force Push in `index.html`, and document cloud synchronization override mechanics in `./docs/index.html`.
