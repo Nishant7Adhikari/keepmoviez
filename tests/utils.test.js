@@ -613,7 +613,7 @@ test('safeTransitionModal executes callback immediately when modal is not visibl
     assert.equal(called, true);
 });
 
-test('safeTransitionModal transitions via hidden.bs.modal event and executes once', () => {
+test('safeTransitionModal transitions via hidden.bs.modal event and executes once', async () => {
     let callCount = 0;
     let eventHandler = null;
     let modalHidden = false;
@@ -663,10 +663,12 @@ test('safeTransitionModal transitions via hidden.bs.modal event and executes onc
 
     // Trigger hidden event
     eventHandler();
+    await new Promise((resolve) => setTimeout(resolve, 400));
     assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
 
     // Attempt double call (e.g. if fallback timer also fired)
     eventHandler();
+    await new Promise((resolve) => setTimeout(resolve, 400));
     assert.equal(callCount, 1, 'Callback guarded against multiple executions');
 });
 

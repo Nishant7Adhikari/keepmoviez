@@ -411,7 +411,7 @@ function renderMovieCards(resetScroll = true) {
   if (currentFilteredData.length === 0) {
     cardContainer.innerHTML = "";
     if (movieData.filter((m) => !m.is_deleted).length > 0) {
-      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()" aria-label="Clear filters and search"><i class="fas fa-undo mr-1"></i> Clear Filters & Search</button></div>`;
+      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()" aria-label="Clear filters and search"><i class="fas fa-undo mr-1" aria-hidden="true"></i> Clear Filters & Search</button></div>`;
     }
     lastRenderedStart = -1;
     lastRenderedEnd = -1;
@@ -1727,10 +1727,10 @@ window.openUnwatchableModal = function () {
             <h6 class="mb-1 text-warning">${safeEscape(entry.Name)} <small class="text-muted">(${safeEscape(entry.Year || "N/A")})</small></h6>
             <div>
               <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); if(typeof window.safeTransitionModal === 'function') { window.safeTransitionModal('#unwatchableModal', function() { prepareEditModal('${safeEscape(entry.id)}'); }); } else { $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${safeEscape(entry.id)}'); }); $('#unwatchableModal').modal('hide'); }" title="Edit Entry" aria-label="Edit ${safeEscape(entry.Name)}">
-                <i class="fas fa-edit"></i>
+                <i class="fas fa-edit" aria-hidden="true"></i>
               </button>
               <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${safeEscape(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); if(typeof window.safeTransitionModal === 'function') { window.safeTransitionModal('#unwatchableModal', function() { $('#confirmDeleteModal').modal('show'); }); } else { $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); }); $('#unwatchableModal').modal('hide'); }" title="Delete Permanently" aria-label="Delete ${safeEscape(entry.Name)} permanently">
-                  <i class="fas fa-trash"></i>
+                  <i class="fas fa-trash" aria-hidden="true"></i>
               </button>
             </div>
           </div>
