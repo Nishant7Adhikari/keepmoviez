@@ -207,7 +207,7 @@ function showToast(title, message, type = 'info', delayMs, doNotShowAgainKey = n
     if (doNotShowAgainKey) {
         const dnsaContainer = $('<div class="dynamic-toast-buttons ml-2"></div>');
         const dnsaBtn = $(`<button type="button" class="btn btn-sm btn-link p-0" title="Don't show this notification again" aria-label="Don't show this notification again">
-                              <i class="fas fa-eye-slash"></i>
+                              <i class="fas fa-eye-slash" aria-hidden="true"></i>
                            </button>`);
         dnsaBtn.data('do-not-show-again-key', doNotShowAgainKey);
         dnsaBtn.css('color', 'inherit');

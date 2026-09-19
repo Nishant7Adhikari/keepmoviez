@@ -683,16 +683,13 @@ test('safeTransitionModal transitions via hidden.bs.modal event and executes onc
 
     // Trigger hidden event
     eventHandler();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
 
-    // safeTransitionModal defers callback execution by 350ms internally
-    setTimeout(() => {
-        assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
-
-        // Attempt double call (e.g. if fallback timer also fired)
-        eventHandler();
-        assert.equal(callCount, 1, 'Callback guarded against multiple executions');
-        done();
-    }, 400);
+    // Attempt double call (e.g. if fallback timer also fired)
+    eventHandler();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    assert.equal(callCount, 1, 'Callback guarded against multiple executions');
 });
 
 test('safeTransitionModal falls back to timer if hidden event does not fire', () => {
