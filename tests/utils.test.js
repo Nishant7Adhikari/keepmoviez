@@ -613,7 +613,7 @@ test('safeTransitionModal executes callback immediately when modal is not visibl
     assert.equal(called, true);
 });
 
-test('safeTransitionModal transitions via hidden.bs.modal event and executes once', () => {
+test('safeTransitionModal transitions via hidden.bs.modal event and executes once', (t, done) => {
     let callCount = 0;
     let eventHandler = null;
     let modalHidden = false;
@@ -663,11 +663,16 @@ test('safeTransitionModal transitions via hidden.bs.modal event and executes onc
 
     // Trigger hidden event
     eventHandler();
-    assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
 
-    // Attempt double call (e.g. if fallback timer also fired)
-    eventHandler();
-    assert.equal(callCount, 1, 'Callback guarded against multiple executions');
+    // safeTransitionModal defers callback execution by 350ms internally
+    setTimeout(() => {
+        assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
+
+        // Attempt double call (e.g. if fallback timer also fired)
+        eventHandler();
+        assert.equal(callCount, 1, 'Callback guarded against multiple executions');
+        done();
+    }, 400);
 });
 
 test('safeTransitionModal falls back to timer if hidden event does not fire', (t, done) => {
