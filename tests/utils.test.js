@@ -684,6 +684,7 @@ test('safeTransitionModal transitions via hidden.bs.modal event and executes onc
     // Trigger hidden event
     eventHandler();
 
+    // safeTransitionModal defers callback execution by 350ms internally
     setTimeout(() => {
         assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
 
