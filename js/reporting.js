@@ -1203,7 +1203,7 @@ async function displayDetailedStatsModal() {
     document.getElementById('statsTotalEntries').textContent = stats.totalEntries;
     document.getElementById('statsTotalTitlesWatched').textContent = stats.totalTitlesWatched;
     document.getElementById('statsTotalWatchInstances').textContent = stats.totalWatchInstances;
-    document.getElementById('statsAvgOverallRating').innerHTML = `${renderStars(stats.avgOverallRating)} (${stats.avgOverallRating})`;
+    document.getElementById('statsAvgOverallRating').innerHTML = `${renderStars(stats.avgOverallRating)} (${escapeHTML(stats.avgOverallRating)})`;
     populateList('statsByCategory', stats.categories);
     populateList('statsByStatus', stats.statuses);
     populateList('statsTopRatedGenresOverall', stats.topRatedGenresOverall.map(g => ({ label: g.label, value: `${g.value} avg (${g.count})` })), 5);
