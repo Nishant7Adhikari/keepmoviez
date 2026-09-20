@@ -40,3 +40,9 @@
 **Legal/Copy Risk:** Using informal or emotional warning phrasing ("will be lost forever") and leaving high-stakes cloud sync mechanisms ("Force Pull", "Force Push") without contextual explanations creates liability exposure and user confusion regarding data loss scope across devices.
 **Learning:** High-stakes data management actions require objective, factual language that accurately describes device vs. cloud state changes without emotional hyperbole, along with contextual helper icons (`(i)`) and clear documentation advising local backup precautions.
 **Remedy:** Standardize modal warning microcopy to objective phrasing ("will be permanently overwritten"), add accessible `(i)` info icons for Force Pull and Force Push in `index.html`, and document cloud synchronization override mechanics in `./docs/index.html`.
+
+## 2026-09-20 - Unexplained Metadata Backfill during Library Backup Import
+
+**Legal/Copy Risk:** Offering automated metadata backfill ("Smart Backfill Missing Data") during backup file import without contextual microcopy creates user privacy concerns regarding whether local backup file data is being transmitted to remote servers.
+**Learning:** Users importing media backup files need clear, accessible inline assurances that backup file parsing is strictly browser-local, while on-demand metadata queries fetch details directly from public TMDB endpoints without uploading user files.
+**Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label="Learn more about Data Enrichment and Smart Backfill"`, and document the client-side parsing and API query architecture in `./docs/index.html`.
