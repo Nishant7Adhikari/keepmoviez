@@ -37,3 +37,8 @@
 **Vulnerability:** Unescaped string interpolation of `ach.icon` / `achievement.icon` in achievement badge elements (`<i class="${ach.icon}">`) and celebration overlays, and `watchDateFormatted` in watch history action button `aria-label` attributes enabled attribute breakout and DOM-based XSS.
 **Learning:** Icon class names and formatted date values interpolated directly into HTML class or `aria-label` attributes without `escapeHTML()` can contain double quotes or attribute breakout syntax.
 **Prevention:** Wrap all dynamic icon identifiers, formatted dates, and accessibility label strings interpolated into HTML attributes with `escapeHTML()` from `js/utils.js`.
+
+## 2026-09-20 - Window Target Manipulation and Reverse Tabnabbing in Search Links
+**Vulnerability:** `window.open(url, current.entryName)` passed dynamic user-controlled entry titles as the target window parameter.
+**Learning:** Unsanitized dynamic strings passed as window target names can allow frame/target manipulation (e.g. if title is `_self`) and throw DOMExceptions in strict browser environments when titles contain spaces or special characters.
+**Prevention:** Always use explicit target `_blank` and pass window features `"noopener,noreferrer"` when calling `window.open()` for external links.

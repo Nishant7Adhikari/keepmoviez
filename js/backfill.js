@@ -839,7 +839,11 @@ function updateGoogleButton(current) {
   const googleBtn = document.getElementById("backfillGoogleBtn");
   const query = `${current.entryName} ${current.fieldLabel}`;
   googleBtn.onclick = () => {
-    window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`,`${current.entryName}`,); // to prevent over tabs when 
+    window.open(
+      `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
   };
 }
 

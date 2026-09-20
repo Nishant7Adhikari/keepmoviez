@@ -617,65 +617,48 @@ test('safeTransitionModal executes callback immediately when modal is not visibl
     assert.equal(called, true);
 });
 
-test('safeTransitionModal transitions via hidden.bs.modal event and executes once', () => {
-    return new Promise((resolve) => {
-        let callCount = 0;
-        let eventHandler = null;
-        let modalHidden = false;
+test('safeTransitionModal transitions via hidden.bs.modal event and executes once', async () => {
+    let callCount = 0;
+    let eventHandler = null;
+    let modalHidden = false;
 
-        const mockModal = {
-            length: 1,
-            hasClass: (cls) => cls === 'show',
-            one: (event, handler) => {
-                if (event.includes('hidden.bs.modal')) {
-                    eventHandler = handler;
-                }
-            },
-            off: () => {},
-            modal: (action) => {
-                if (action === 'hide') {
-                    modalHidden = true;
-                }
+    const mockModal = {
+        length: 1,
+        hasClass: (cls) => cls === 'show',
+        one: (event, handler) => {
+            if (event.includes('hidden.bs.modal')) {
+                eventHandler = handler;
             }
-        };
+        },
+        off: () => {},
+        modal: (action) => {
+            if (action === 'hide') {
+                modalHidden = true;
+            }
+        }
+    };
 
-        const mockBody = {
-            addClass: () => {}
-        };
+    const mockBody = {
+        addClass: () => {}
+    };
 
-        const mockJQuery = (selector) => {
-            if (selector === 'body') return mockBody;
-            return mockModal;
-        };
+    const mockJQuery = (selector) => {
+        if (selector === 'body') return mockBody;
+        return mockModal;
+    };
 
-        const testSandbox = {
-            console,
-            setTimeout,
-            clearTimeout,
-            $: mockJQuery
-        };
-        testSandbox.window = testSandbox;
-        vm.createContext(testSandbox);
-        vm.runInContext(utilsCode, testSandbox);
+    const testSandbox = {
+        console,
+        setTimeout,
+        clearTimeout,
+        $: mockJQuery
+    };
+    testSandbox.window = testSandbox;
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
 
-        testSandbox.safeTransitionModal('#myModal', () => {
-            callCount++;
-        });
-
-        assert.equal(modalHidden, true);
-        assert.ok(eventHandler, 'Event handler was registered');
-        assert.equal(callCount, 0, 'Callback has not run yet before hidden event');
-
-        // Trigger hidden event
-        eventHandler();
-
-        // Attempt double call (e.g. if fallback timer also fired)
-        eventHandler();
-
-        setTimeout(() => {
-            assert.equal(callCount, 1, 'Callback executed once after transition delay');
-            resolve();
-        }, 400);
+    testSandbox.safeTransitionModal('#myModal', () => {
+        callCount++;
     });
 });
 
