@@ -1215,6 +1215,30 @@ body.multi-select-active #addNewEntryBtn {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
 }
 
+.btn:focus-visible,
+.form-control:focus-visible,
+.custom-select:focus-visible,
+.dropdown-item:focus-visible,
+.nav-link:focus-visible,
+.card-action-btn:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--primary-color) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(93, 138, 168, 0.3) !important;
+}
+
+.dark-theme .btn:focus-visible,
+.dark-theme .form-control:focus-visible,
+.dark-theme .custom-select:focus-visible,
+.dark-theme .dropdown-item:focus-visible,
+.dark-theme .nav-link:focus-visible,
+.dark-theme .card-action-btn:focus-visible,
+.dark-theme a:focus-visible {
+  outline: 2px solid var(--info-color) !important;
+  outline-offset: 2px !important;
+  box-shadow: 0 0 0 3px rgba(109, 218, 218, 0.4) !important;
+}
+
 .btn-primary {
   background-color: var(--primary-color);
 }
