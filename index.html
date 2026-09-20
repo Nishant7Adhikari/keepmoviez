@@ -322,7 +322,7 @@
                     <hr>
                     <h6 class="mb-3 text-danger">Advanced Data Management</h6>
                     <button class="btn btn-warning btn-block mb-2" id="forcePullTriggerBtn">
-                        <i class="fas fa-cloud-download-alt"></i> Force Pull from Cloud
+                        <i class="fas fa-cloud-download-alt" aria-hidden="true"></i> Force Pull from Cloud
                     </button>
                     <p class="small text-muted mb-3">
                         Replace local data with cloud backup.
@@ -331,7 +331,7 @@
                         </button>
                     </p>
                     <button class="btn btn-danger btn-block mb-2" id="forcePushTriggerBtn">
-                        <i class="fas fa-cloud-upload-alt"></i> Force Push to Cloud
+                        <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i> Force Push to Cloud
                     </button>
                     <p class="small text-muted mb-3">
                         Overwrite cloud backup with local data.
@@ -343,11 +343,11 @@
                     <hr>
                     <h6 class="mb-3">Data Utilities</h6>
                     <button class="btn btn-success btn-block mb-2" id="settingsBackfillBtn">
-                        <i class="fas fa-fill-drip"></i> Backfill Missing Data
+                        <i class="fas fa-fill-drip" aria-hidden="true"></i> Backfill Missing Data
                     </button>
                     <p class="small text-muted mb-3">Fill in missing fields for your entries.</p>
                     <button class="btn btn-outline-secondary btn-block mb-2" id="settingsUnwatchableBtn">
-                        <i class="fas fa-trash-alt"></i> Manage Unwatchable Entries
+                        <i class="fas fa-trash-alt" aria-hidden="true"></i> Manage Unwatchable Entries
                     </button>
                     <p class="small text-muted mb-3">
                         View and manage titles marked with Unwatchable status.
@@ -356,7 +356,7 @@
                         </button>
                     </p>
                     <button class="btn btn-danger btn-block mb-2" id="settingsEraseDataBtn">
-                        <i class="fas fa-eraser"></i> Erase All Data
+                        <i class="fas fa-eraser" aria-hidden="true"></i> Erase All Data
                     </button>
                     <p class="small text-muted mb-3">Permanently delete all local data.</p>
 
@@ -368,7 +368,7 @@
                         </button>
                     </h6>
                     <button class="btn btn-outline-info btn-block mb-2" id="downloadAbandonedDataBtn">
-                        <i class="fas fa-file-download"></i> Download Abandoned Data
+                        <i class="fas fa-file-download" aria-hidden="true"></i> Download Abandoned Data
                     </button>
                     <p class="small text-muted">Recover data from previous sessions or failed logins.</p>
                 </div>
@@ -397,9 +397,9 @@
                     <p class="small text-muted">Download a local backup of your collection in either CSV or JSON format.
                     </p>
                     <div class="d-flex justify-content-around">
-                        <button class="btn btn-primary" id="exportCsvBtn"><i class="fas fa-file-csv"></i> Download
+                        <button class="btn btn-primary" id="exportCsvBtn"><i class="fas fa-file-csv" aria-hidden="true"></i> Download
                             CSV</button>
-                        <button class="btn btn-info" id="exportJsonBtn"><i class="fas fa-file-code"></i> Download
+                        <button class="btn btn-info" id="exportJsonBtn"><i class="fas fa-file-code" aria-hidden="true"></i> Download
                             JSON</button>
                     </div>
                 </div>
@@ -582,7 +582,7 @@
                     <!-- Cloud Sync Button -->
                     <button id="quickSyncBtn"
                         class="btn btn-outline-primary btn-block mb-3 p-3 text-left d-flex align-items-center">
-                        <i class="fas fa-cloud-download-alt fa-2x mr-3 ml-2"></i>
+                        <i class="fas fa-cloud-download-alt fa-2x mr-3 ml-2" aria-hidden="true"></i>
                         <div>
                             <strong>Sync from Cloud</strong>
                             <div class="small">Restore data from your account</div>
@@ -592,7 +592,7 @@
                     <!-- NEW: Reload Local Data Button -->
                     <button id="quickReloadLocalBtn"
                         class="btn btn-outline-success btn-block mb-3 p-3 text-left d-flex align-items-center">
-                        <i class="fas fa-hdd fa-2x mr-3 ml-2"></i>
+                        <i class="fas fa-hdd fa-2x mr-3 ml-2" aria-hidden="true"></i>
                         <div>
                             <strong>Reload Local Data</strong>
                             <div class="small">Scan device storage for lost entries</div>
@@ -602,7 +602,7 @@
                     <!-- Local Import Button -->
                     <button id="quickImportBtn"
                         class="btn btn-outline-info btn-block mb-3 p-3 text-left d-flex align-items-center">
-                        <i class="fas fa-file-import fa-2x mr-3 ml-2"></i>
+                        <i class="fas fa-file-import fa-2x mr-3 ml-2" aria-hidden="true"></i>
                         <div>
                             <strong>Import Backup</strong>
                             <div class="small">Upload a CSV or JSON file</div>
@@ -971,7 +971,7 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <h6>Watch Records</h6>
                                 <button type="button" class="btn btn-sm btn-outline-primary"
-                                    id="toggleAddWatchInstanceFormBtn"><i class="fas fa-plus"></i> Add Record</button>
+                                    id="toggleAddWatchInstanceFormBtn"><i class="fas fa-plus" aria-hidden="true"></i> Add Record</button>
                             </div>
                             <div id="watchHistoryHint" class="watch-history-hint mb-2" style="display:none;"></div>
                             <div id="addWatchInstanceForm" class="p-3 border rounded mb-3" style="display:none;">
@@ -1494,7 +1494,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-info" id="viewTmdbPersonBtn" target="_blank"
-                        rel="noopener noreferrer" style="display:none;"><i class="fas fa-external-link-alt"></i> View on
+                        rel="noopener noreferrer" style="display:none;"><i class="fas fa-external-link-alt" aria-hidden="true"></i> View on
                         TMDB</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
@@ -2011,7 +2011,7 @@
                     <p id="unwatchableDuplicateBody">This title exists in your Unwatchable section.</p>
                     <button type="button" class="btn btn-outline-info btn-sm btn-block mb-2" id="unwatchableViewWhyBtn"
                         onclick="document.getElementById('unwatchableDuplicateWhy').style.display='block'; this.style.display='none';">
-                        <i class="fas fa-eye"></i> Click to view why
+                        <i class="fas fa-eye" aria-hidden="true"></i> Click to view why
                     </button>
                     <div id="unwatchableDuplicateWhy" class="alert alert-light border small p-2" style="display: none;">
                         <strong>Your reason:</strong>

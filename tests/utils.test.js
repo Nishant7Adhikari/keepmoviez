@@ -362,6 +362,10 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="menuSyncDataBtn"') && html.includes('aria-label="Sync with Cloud"'));
     assert.ok(html.includes('id="menuSupabaseLogoutBtn"') && html.includes('aria-label="Logout"'));
     assert.ok(html.includes('id="supabaseGoogleSignInBtn"') && html.includes('<span>Sign in with Google</span>'));
+    assert.ok(html.includes('id="exportCsvBtn"') && html.includes('fa-file-csv" aria-hidden="true"'));
+    assert.ok(html.includes('id="exportJsonBtn"') && html.includes('fa-file-code" aria-hidden="true"'));
+    assert.ok(html.includes('id="forcePullTriggerBtn"') && html.includes('fa-cloud-download-alt" aria-hidden="true"'));
+    assert.ok(html.includes('id="forcePushTriggerBtn"') && html.includes('fa-cloud-upload-alt" aria-hidden="true"'));
 });
 
 test('renderMovieCards creates virtualized window slice and spacers', () => {

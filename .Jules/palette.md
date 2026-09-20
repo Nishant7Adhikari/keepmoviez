@@ -17,3 +17,7 @@
 ## 2026-09-18 - OAuth Button Visible Contrast & Decorative Icon Hiding
 **Learning:** OAuth buttons in themed forms can inherit parent text colors causing low contrast on light button backgrounds, and decorative FontAwesome icons in buttons with `aria-label`s generate duplicate screen reader announcements unless marked with `aria-hidden="true"`.
 **Action:** Explicitly style text inside light OAuth buttons (`text-dark`) and ensure decorative icons inside labeled action buttons include `aria-hidden="true"`.
+
+## 2026-09-20 - Global Focus Ring & Decorative Icon Hiding
+**Learning:** FontAwesome icons embedded within text-labeled action buttons generate duplicate announcements unless hidden with `aria-hidden="true"`, and missing `:focus-visible` outline styles impair keyboard navigation across light/dark themes.
+**Action:** Always add `aria-hidden="true"` to decorative icons inside labeled action buttons and maintain explicit `:focus-visible` focus rings for interactive components in `style.css`.
