@@ -152,3 +152,37 @@ test('renderFieldInput escapes select option values and input placeholders', () 
     assert.ok(textHtml.includes('placeholder="e.g. &quot;&lt;img src=x onerror=alert(1)&gt;&quot;"'));
     assert.ok(textHtml.includes('aria-label="Director"'));
 });
+
+test('updateGoogleButton opens search link safely in _blank with noopener,noreferrer', () => {
+    let openedUrl = null;
+    let openedTarget = null;
+    let openedFeatures = null;
+
+    const mockBtn = {};
+    const testSandbox = {
+        console,
+        document: {
+            getElementById: (id) => (id === 'backfillGoogleBtn' ? mockBtn : null)
+        },
+        window: {
+            open: (url, target, features) => {
+                openedUrl = url;
+                openedTarget = target;
+                openedFeatures = features;
+            }
+        }
+    };
+    testSandbox.window.window = testSandbox.window;
+    vm.createContext(testSandbox);
+    vm.runInContext(code, testSandbox);
+
+    const current = { entryName: 'Inception (2010)', fieldLabel: 'Director' };
+    testSandbox.updateGoogleButton(current);
+
+    assert.equal(typeof mockBtn.onclick, 'function');
+    mockBtn.onclick();
+
+    assert.equal(openedUrl, 'https://www.google.com/search?q=Inception%20(2010)%20Director');
+    assert.equal(openedTarget, '_blank');
+    assert.equal(openedFeatures, 'noopener,noreferrer');
+});
