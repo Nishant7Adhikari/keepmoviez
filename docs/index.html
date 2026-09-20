@@ -732,6 +732,26 @@
                 <strong>Overwrite All Matches (Advanced):</strong> For every match found, the version from the file completely replaces your existing entry data.
               </li>
             </ul>
+
+            <div class="edu-box mt-3" id="import-backfill-architecture">
+              <h5>
+                <i class="fas fa-file-import text-primary"></i> Data Enrichment & Smart Backfill Architecture
+              </h5>
+              <p>
+                KeepMoviEZ's import engine is designed with strict local privacy boundaries:
+              </p>
+              <ul>
+                <li>
+                  <strong>Local In-Memory Parsing:</strong> All CSV and JSON backup files are parsed directly in client-side browser memory using PapaParse and native JavaScript utilities. Raw file contents never pass through external file upload servers.
+                </li>
+                <li>
+                  <strong>On-Demand Third-Party API Queries:</strong> When executing <em>Smart Backfill Missing Data</em> or backfilling posters and metadata, KeepMoviEZ queries public TMDB REST endpoints directly from your browser to fill incomplete metadata fields (such as missing runtimes, cast, or plot descriptions).
+                </li>
+                <li>
+                  <strong>Data Integrity & Privacy Protection:</strong> Third-party metadata requests contain only standard title search terms or public TMDB identifiers. Personal rating logs, watch history dates, and user notes are never included in outbound API queries.
+                </li>
+              </ul>
+            </div>
           </section>
 
           <!-- 9. Discovery -->
