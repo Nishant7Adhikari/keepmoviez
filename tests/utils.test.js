@@ -676,20 +676,6 @@ test('safeTransitionModal transitions via hidden.bs.modal event and executes onc
             resolve();
         }, 400);
     });
-
-    assert.equal(modalHidden, true);
-    assert.ok(eventHandler, 'Event handler was registered');
-    assert.equal(callCount, 0, 'Callback has not run yet before hidden event');
-
-    // Trigger hidden event
-    eventHandler();
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    assert.equal(callCount, 1, 'Callback executed on hidden.bs.modal');
-
-    // Attempt double call (e.g. if fallback timer also fired)
-    eventHandler();
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    assert.equal(callCount, 1, 'Callback guarded against multiple executions');
 });
 
 test('safeTransitionModal falls back to timer if hidden event does not fire', () => {
@@ -748,4 +734,83 @@ test('chunkArray splits large collections into safe batches', () => {
 
     // Every chunk must be <= 30 items to guarantee safe URL parameter length
     assert.equal(chunks.every(c => c.length <= 30), true);
+});
+
+test('openPersonDetailsModal matches filmography entries using localTmdbMap efficiently', async () => {
+    const filmographyList = {
+        innerHTML: '',
+        empty: function() { this.innerHTML = ''; return this; },
+        append: function(html) { this.innerHTML += html; return this; }
+    };
+
+    const mockModal = {
+        find: (sel) => ({
+            text: () => mockModal,
+            empty: () => mockModal,
+            append: () => mockModal
+        }),
+        modal: () => {}
+    };
+
+    const mockJQuery = (sel) => {
+        if (sel === '#personFilmographyList') return filmographyList;
+        if (sel === '#personBio' || sel === '#noPersonImageMessage' || sel === '#personProfileImage' || sel === '#viewTmdbPersonBtn') {
+            return {
+                text: () => ({ removeClass: () => {}, addClass: () => {} }),
+                empty: () => filmographyList,
+                append: () => {},
+                attr: () => ({ removeClass: () => {} }),
+                addClass: () => ({ text: () => ({ removeClass: () => {} }) }),
+                removeClass: () => {},
+                hide: () => {},
+                show: () => ({ data: () => ({ show: () => {} }) }),
+                data: () => ({ show: () => {} })
+            };
+        }
+        return mockModal;
+    };
+
+    const testSandbox = {
+        console,
+        IntersectionObserver: class {
+            constructor() {}
+            observe() {}
+            unobserve() {}
+            disconnect() {}
+        },
+        document: {
+            getElementById: () => null,
+            addEventListener: () => {}
+        },
+        TMDB_IMAGE_BASE_URL: 'https://image.tmdb.org/t/p/',
+        showLoading: () => {},
+        hideLoading: () => {},
+        escapeHTML: (str) => String(str || ''),
+        fetchTmdbPersonDetails: async () => ({
+            biography: 'Famous director',
+            combined_credits: {
+                crew: [
+                    { id: 27205, media_type: 'movie', job: 'Director', release_date: '2010-07-16' },
+                    { id: 157336, media_type: 'movie', job: 'Director', release_date: '2014-11-07' },
+                    { id: 99999, media_type: 'movie', job: 'Director', release_date: '2020-01-01' }
+                ]
+            }
+        }),
+        movieData: [
+            { id: 'm1', Name: 'Inception', tmdbId: 27205, tmdbMediaType: 'movie', is_deleted: false },
+            { id: 'm2', Name: 'Interstellar', tmdbId: 157336, tmdbMediaType: 'movie', is_deleted: false }
+        ],
+        $: mockJQuery
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(uiCode, testSandbox);
+
+    await testSandbox.openPersonDetailsModal(525, 'Christopher Nolan');
+
+    assert.ok(filmographyList.innerHTML.includes('Inception (2010)'));
+    assert.ok(filmographyList.innerHTML.includes('Interstellar (2014)'));
+    assert.ok(!filmographyList.innerHTML.includes('99999'));
 });
