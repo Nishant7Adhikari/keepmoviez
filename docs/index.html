@@ -707,8 +707,13 @@
           <section id="import-export">
             <h2>Smart Import & Export</h2>
             <p>
-              Your data is yours. You can export a JSON or a CSV file backup at
-              any time via <strong>Menu > Export Data</strong>.
+              Your data is yours. You can export a JSON or CSV file backup at
+              any time via <strong>Menu > Export Data</strong>. File generation is executed entirely on-device directly within client-side browser memory via Blob URLs. No backup file data or collection entries are transmitted to external servers during export.
+            </p>
+
+            <h4>Data Utilities & On-Demand Backfill</h4>
+            <p>
+              Under <strong>Menu > Settings > Data Utilities</strong>, the <strong>Backfill Missing Data</strong> feature allows users to scan existing library entries for empty metadata fields (such as missing runtimes, cast, crew, or descriptions). When initiated, KeepMoviEZ queries public TMDB REST endpoints on demand to populate missing information. This process operates without transmitting user backup files, ratings, or personal viewing logs to remote servers.
             </p>
 
             <h4>Smart Import Assistant & Strategies</h4>
