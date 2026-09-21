@@ -345,7 +345,12 @@
                     <button class="btn btn-success btn-block mb-2" id="settingsBackfillBtn">
                         <i class="fas fa-fill-drip" aria-hidden="true"></i> Backfill Missing Data
                     </button>
-                    <p class="small text-muted mb-3">Fill in missing fields for your entries.</p>
+                    <p class="small text-muted mb-3">
+                        Fill in missing fields for your entries.
+                        <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Queries public TMDB REST endpoints on demand to complete missing metadata fields. No local collection or backup files are transmitted or stored remotely." aria-label="Learn more about Backfill Missing Data">
+                            <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                        </button>
+                    </p>
                     <button class="btn btn-outline-secondary btn-block mb-2" id="settingsUnwatchableBtn">
                         <i class="fas fa-trash-alt" aria-hidden="true"></i> Manage Unwatchable Entries
                     </button>
@@ -358,7 +363,12 @@
                     <button class="btn btn-danger btn-block mb-2" id="settingsEraseDataBtn">
                         <i class="fas fa-eraser" aria-hidden="true"></i> Erase All Data
                     </button>
-                    <p class="small text-muted mb-3">Permanently delete all local data.</p>
+                    <p class="small text-muted mb-3">
+                        Permanently delete all local data.
+                        <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Purges local browser storage cache. Scope selection allows choosing whether to delete local cache, remote cloud database, or both." aria-label="Learn more about Erase All Data">
+                            <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                        </button>
+                    </p>
 
                     <hr>
                     <h6 class="mb-3">
@@ -393,7 +403,12 @@
                 <div class="modal-body">
                     <!-- REMOVED Force Push logic -->
                     <hr>
-                    <h6>Export as File</h6>
+                    <h6>
+                        Export as File
+                        <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Generates CSV or JSON backup files locally in browser memory. No library data is sent to external servers." aria-label="Learn more about Export Data">
+                            <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                        </button>
+                    </h6>
                     <p class="small text-muted">Download a local backup of your collection in either CSV or JSON format.
                     </p>
                     <div class="d-flex justify-content-around">

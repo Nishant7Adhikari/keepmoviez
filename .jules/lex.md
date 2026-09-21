@@ -46,3 +46,9 @@
 **Legal/Copy Risk:** Offering automated metadata backfill ("Smart Backfill Missing Data") during backup file import without contextual microcopy creates user privacy concerns regarding whether local backup file data is being transmitted to remote servers.
 **Learning:** Users importing media backup files need clear, accessible inline assurances that backup file parsing is strictly browser-local, while on-demand metadata queries fetch details directly from public TMDB endpoints without uploading user files.
 **Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label="Learn more about Data Enrichment and Smart Backfill"`, and document the client-side parsing and API query architecture in `./docs/index.html`.
+
+## 2026-09-21 - Unexplained Data Utilities and File Export Privacy Boundaries
+
+**Legal/Copy Risk:** Presenting manual data backfill utilities and file export actions without contextual microcopy creates user privacy concerns regarding whether local collection contents or backup files are being transmitted to remote servers.
+**Learning:** Users invoking data maintenance or exporting library files require explicit, accessible inline assurances that file generation is entirely client-side and that on-demand backfill queries query public TMDB REST endpoints without uploading user files or personal watch records.
+**Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label` attributes to "Backfill Missing Data", "Erase All Data", and "Export as File", and document local file export and backfill privacy boundaries in `./docs/index.html`.

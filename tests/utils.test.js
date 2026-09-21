@@ -355,6 +355,9 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('aria-label="Learn more about Force Pull from Cloud"'));
     assert.ok(html.includes('aria-label="Learn more about Force Push to Cloud"'));
     assert.ok(html.includes('aria-label="Learn more about Data Enrichment and Smart Backfill"'));
+    assert.ok(html.includes('aria-label="Learn more about Backfill Missing Data"'));
+    assert.ok(html.includes('aria-label="Learn more about Erase All Data"'));
+    assert.ok(html.includes('aria-label="Learn more about Export Data"'));
     assert.ok(html.includes('id="legalComplianceDisclaimer"'));
     assert.ok(html.includes('id="menuThemeToggleBtn"') && html.includes('aria-label="Toggle Theme"'));
     assert.ok(html.includes('id="menuImportBtn"') && html.includes('aria-label="Load Data"'));
