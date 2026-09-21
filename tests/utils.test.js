@@ -802,3 +802,11 @@ test('openPersonDetailsModal matches filmography entries using localTmdbMap effi
     assert.ok(filmographyList.innerHTML.includes('Interstellar (2014)'));
     assert.ok(!filmographyList.innerHTML.includes('99999'));
 });
+
+test('js/main.js specifies noopener,noreferrer for viewTmdbPersonBtn window.open', () => {
+    const mainCode = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+    assert.ok(
+        mainCode.includes('window.open(url, "_blank", "noopener,noreferrer")'),
+        'Expected viewTmdbPersonBtn click handler to use window.open with "noopener,noreferrer"'
+    );
+});

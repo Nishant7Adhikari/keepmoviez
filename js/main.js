@@ -812,7 +812,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     $(document).on("click", "#viewTmdbPersonBtn", function () {
       const url = $(this).data("tmdb-url");
-      if (url) window.open(url, "_blank");
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
     });
 
     $("#findSimilarBtn").on("click", function () {
