@@ -335,8 +335,13 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="detailsModalAddBtn"') && html.includes('aria-label="Add entry to library"'));
     assert.ok(html.includes('id="findSimilarBtn"') && html.includes('aria-label="Similar entries - Find similar entries"'));
     assert.ok(html.includes('id="downloadDetailsImageBtn"') && html.includes('aria-label="Share entry image"'));
-    assert.ok(html.includes('id="checkRepairDataBtn"') && html.includes('aria-label="Check and repair local data"'));
+    assert.ok(html.includes('id="checkRepairDataBtn"') && html.includes('aria-label="Check & Repair Data - Check and repair local data"'));
     assert.ok(html.includes('aria-label="Apply changes to selected entries"'));
+    assert.ok(html.includes('id="cancelMultiSelectBtn"') && html.includes('fa-times" aria-hidden="true"'));
+    assert.ok(html.includes('id="addNewEntryBtn"') && html.includes('fa-plus-circle" aria-hidden="true"'));
+    assert.ok(html.includes('id="detailsTrailerBtn"') && html.includes('fa-youtube" aria-hidden="true"'));
+    assert.ok(html.includes('id="detailsStreamingBtn"') && html.includes('fa-play-circle" aria-hidden="true"'));
+    assert.ok(html.includes('id="exportStatsPdfBtn"') && html.includes('fa-file-pdf" aria-hidden="true"'));
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Next Season - Advance to Next Season and reset Episode to 1"'));
     assert.ok(html.includes('id="btnEditPlusEpisode"') && html.includes('aria-label="+1 Ep - Increment Episode by 1"'));
