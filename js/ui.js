@@ -953,7 +953,8 @@ window.renderSeasonBreakdownCards = function (
   `;
 
   for (let s = 1; s <= count; s++) {
-    const val = existingCounts[s - 1] != null ? parseInt(existingCounts[s - 1], 10) : 10;
+    const rawVal = existingCounts[s - 1] != null ? parseInt(existingCounts[s - 1], 10) : null;
+    const val = (rawVal != null && !isNaN(rawVal) && rawVal > 0) ? rawVal : 10;
     html += `
       <div class="d-flex align-items-center justify-content-between season-breakdown-card" data-season="${s}">
         <span class="font-weight-600 season-label small"><i class="fas fa-tv text-primary mr-2" aria-hidden="true"></i>S${s}</span>
@@ -961,7 +962,7 @@ window.renderSeasonBreakdownCards = function (
           <div class="input-group-prepend">
             <button type="button" class="btn btn-outline-secondary season-step-down season-stepper-btn" data-season="${s}" title="Decrease Season ${s} episode count" aria-label="Decrease Season ${s} episode count">−</button>
           </div>
-          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${isNaN(val) ? 10 : val}" min="1" max="200" aria-label="Season ${s} episode count">
+          <input type="number" class="form-control text-center font-weight-bold season-ep-count" data-season="${s}" value="${val}" min="1" max="200" aria-label="Season ${s} episode count">
           <div class="input-group-append">
             <button type="button" class="btn btn-outline-secondary season-step-up season-stepper-btn" data-season="${s}" title="Increase Season ${s} episode count" aria-label="Increase Season ${s} episode count">+</button>
             <span class="input-group-text text-muted small py-0 px-2 eps-label">ep</span>
@@ -1661,7 +1662,7 @@ window.prepareEraseDataModal = function (defaultScope = "local") {
         warningText = `PERMANENTLY ERASE ALL entries from YOUR CLOUD ACCOUNT (${currentSupabaseUser.email}). Local data remains until next sync.`;
     } else if (selectedScope === "both")
       warningText =
-        "PERMANENTLY ERASE data from THIS DEVICE'S CACHE AND YOUR CLOUD ACCOUNT (if logged in).";
+        `PERMANENTLY ERASE data from THIS DEVICE'S CACHE AND YOUR CLOUD ACCOUNT (${currentSupabaseUser.email}).`;
     eraseScopeWarning.textContent = warningText;
     eraseScopeWarning.className = `text-danger small p-2 mt-2 rounded ${selectedScope === "cloud" || selectedScope === "both" ? "border border-danger" : "border border-warning"}`;
   }

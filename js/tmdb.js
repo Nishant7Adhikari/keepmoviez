@@ -244,16 +244,53 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
         if (mediaType === 'movie') {
             tmdbRuntime = detailData.runtime || null;
         } else if (mediaType === 'tv') {
-            let epPerSeason = [];
+            const numSeasons = detailData.number_of_seasons || 0;
+
+            // Build a summary map from the top-level seasons array as a baseline
+            const summaryCountMap = {};
             if (Array.isArray(detailData.seasons)) {
-                epPerSeason = detailData.seasons
+                detailData.seasons
                     .filter(s => s.season_number > 0)
-                    .sort((a, b) => a.season_number - b.season_number)
-                    .map(s => s.episode_count || 0);
+                    .forEach(s => { summaryCountMap[s.season_number] = s.episode_count || 0; });
             }
+
+            let epPerSeason = [];
+
+            // For shows with a manageable number of seasons, fetch each season individually
+            // via append_to_response to get the real episode list (accurate count).
+            // TMDB supports up to ~20 appended resources per request.
+            if (numSeasons > 0 && numSeasons <= 20) {
+                try {
+                    const appendStr = Array.from({ length: numSeasons }, (_, i) => `season/${i + 1}`).join(',');
+                    const seasonDetailData = await callTmdbApiDirect(`/tv/${id}`, { append_to_response: appendStr });
+                    for (let i = 1; i <= numSeasons; i++) {
+                        const seasonKey = `season/${i}`;
+                        const seasonObj = seasonDetailData && seasonDetailData[seasonKey];
+                        if (seasonObj && Array.isArray(seasonObj.episodes) && seasonObj.episodes.length > 0) {
+                            epPerSeason.push(seasonObj.episodes.length);
+                        } else {
+                            // Fall back to summary count for this season
+                            epPerSeason.push(summaryCountMap[i] || 0);
+                        }
+                    }
+                } catch (seasonFetchError) {
+                    console.warn('Could not fetch detailed season data, falling back to summary counts:', seasonFetchError.message);
+                    // Fall back to summary counts
+                    epPerSeason = Array.from({ length: numSeasons }, (_, i) => summaryCountMap[i + 1] || 0);
+                }
+            } else if (numSeasons > 20) {
+                // Too many seasons to use append_to_response; use summary counts
+                epPerSeason = Array.from({ length: numSeasons }, (_, i) => summaryCountMap[i + 1] || 0);
+            } else if (Object.keys(summaryCountMap).length > 0) {
+                // number_of_seasons was 0/null but seasons array had data — use that
+                epPerSeason = Object.keys(summaryCountMap)
+                    .map(Number).sort((a, b) => a - b)
+                    .map(n => summaryCountMap[n]);
+            }
+
             tmdbRuntime = {
-                seasons: detailData.number_of_seasons || null,
-                episodes: detailData.number_of_episodes || null,
+                seasons: numSeasons || epPerSeason.length || null,
+                episodes: detailData.number_of_episodes || epPerSeason.reduce((a, b) => a + b, 0) || null,
                 episodes_per_season: epPerSeason,
                 episode_run_time: detailData.episode_run_time && detailData.episode_run_time.length > 0 ? detailData.episode_run_time[0] : null,
                 series_status: detailData.status || null
