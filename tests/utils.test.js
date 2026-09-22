@@ -84,8 +84,8 @@ test('renderStars caches star rating HTML output correctly', () => {
     const starHtmlNull = sandbox.renderStars(null);
     const starHtmlInvalid = sandbox.renderStars('invalid');
 
-    assert.ok(starHtml1.includes('fa-star'));
-    assert.ok(starHtmlHalf.includes('fa-star-half-alt'));
+    assert.ok(starHtml1.includes('fa-star') && starHtml1.includes('aria-hidden="true"'));
+    assert.ok(starHtmlHalf.includes('fa-star-half-alt') && starHtmlHalf.includes('aria-hidden="true"'));
     assert.equal(starHtmlNull, '<span class="text-muted small">N/A</span>');
     assert.equal(starHtmlInvalid, '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>');
 
@@ -374,6 +374,9 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="exportJsonBtn"') && html.includes('fa-file-code" aria-hidden="true"'));
     assert.ok(html.includes('id="forcePullTriggerBtn"') && html.includes('fa-cloud-download-alt" aria-hidden="true"'));
     assert.ok(html.includes('id="forcePushTriggerBtn"') && html.includes('fa-cloud-upload-alt" aria-hidden="true"'));
+
+    const iconsWithoutAriaHidden = (html.match(/<i\s+class="[^"]*fa[^"]*"(?![^>]*aria-hidden="true")[^>]*>/g) || []);
+    assert.strictEqual(iconsWithoutAriaHidden.length, 0, `All Font Awesome icons in index.html should have aria-hidden="true". Found missing: ${iconsWithoutAriaHidden.join(', ')}`);
 });
 
 test('renderMovieCards creates virtualized window slice and spacers', () => {
