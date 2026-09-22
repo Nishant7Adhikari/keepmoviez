@@ -57,19 +57,21 @@ test('generateColors produces requested quantity of color strings', () => {
     assert.ok(typeof colors[0] === 'string');
 });
 
-test('calculateMatchScoreForRecommendation calculates score without crashing', () => {
-    sandbox.favoriteGenresList = ['Sci-Fi', 'Action'];
-    sandbox.favoriteDirectorsList = ['Christopher Nolan'];
-
-    const itemFav = {
-        Genres: 'Sci-Fi, Action',
-        Director: 'Christopher Nolan',
-        overallRating: '5',
-        tmdb_vote_average: '8.8'
+test('calculateMatchScoreForRecommendation calculates score accurately using top-rated genre Map caching', () => {
+    sandbox.window.globalStatsData = {
+        topRatedGenresOverall: [
+            { label: 'Action', value: '4.5', count: 10 },
+            { label: 'Science Fiction', value: '3.5', count: 5 }
+        ]
     };
 
-    const scoreFav = sandbox.calculateMatchScoreForRecommendation(itemFav);
-    assert.ok(typeof scoreFav === 'number');
+    const itemAction = { genre_ids: [28], vote_average: 8.0 }; // Action ID 28 -> rating 4.5 -> +6 match score, vote_average >= 7.5 -> +4 match score
+    const scoreAction = sandbox.calculateMatchScoreForRecommendation(itemAction);
+    assert.equal(scoreAction, 75 + 6 + 4);
+
+    const itemSciFi = { genre_ids: [878], vote_average: 6.0 }; // Science Fiction ID 878 -> rating 3.5 -> +3 match score
+    const scoreSciFi = sandbox.calculateMatchScoreForRecommendation(itemSciFi);
+    assert.equal(scoreSciFi, 75 + 3);
 });
 
 test('shuffleDailyRecommendationMovies returns randomized array', () => {
