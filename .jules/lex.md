@@ -52,3 +52,9 @@
 **Legal/Copy Risk:** Presenting manual data backfill utilities and file export actions without contextual microcopy creates user privacy concerns regarding whether local collection contents or backup files are being transmitted to remote servers.
 **Learning:** Users invoking data maintenance or exporting library files require explicit, accessible inline assurances that file generation is entirely client-side and that on-demand backfill queries query public TMDB REST endpoints without uploading user files or personal watch records.
 **Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label` attributes to "Backfill Missing Data", "Erase All Data", and "Export as File", and document local file export and backfill privacy boundaries in `./docs/index.html`.
+
+## 2026-09-22 - Ambiguous Batch Deletion Scopes in Multi-Select Mode
+
+**Legal/Copy Risk:** Presenting multi-entry deletion scope choices ("Local Cache Only", "Cloud Only", "Both Local and Cloud") without contextual microcopy creates legal exposure regarding accidental data destruction and user confusion about where items are removed from.
+**Learning:** Users performing multi-select batch deletions require explicit, accessible inline guidance explaining whether target removal scopes purge local device cache, remote cloud account data, or both locations.
+**Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label="Learn more about Batch Delete Scopes"` and tooltip title explaining target removal scopes, and document batch deletion scopes under Advanced Data Controls in `./docs/index.html`.

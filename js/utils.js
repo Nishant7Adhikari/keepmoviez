@@ -75,9 +75,9 @@ function renderStars(rating) {
     let starsHtml = '<span class="star-rating">';
     const roundedRating = Math.round(numRating * 2) / 2; // Round to nearest 0.5
     for (let i = 1; i <= 5; i++) {
-        if (roundedRating >= i) starsHtml += `<i class="fas fa-star"></i>`;
-        else if (roundedRating >= i - 0.5) starsHtml += `<i class="fas fa-star-half-alt"></i>`;
-        else starsHtml += `<i class="far fa-star"></i>`;
+        if (roundedRating >= i) starsHtml += `<i class="fas fa-star" aria-hidden="true"></i>`;
+        else if (roundedRating >= i - 0.5) starsHtml += `<i class="fas fa-star-half-alt" aria-hidden="true"></i>`;
+        else starsHtml += `<i class="far fa-star" aria-hidden="true"></i>`;
     }
     starsHtml += '</span>';
 

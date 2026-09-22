@@ -76,7 +76,7 @@
 
     <!-- START CHUNK: Overlays -->
     <div id="loadingOverlay" class="loading-overlay">
-        <i class="fas fa-spinner fa-spin fa-3x text-primary"></i>
+        <i class="fas fa-spinner fa-spin fa-3x text-primary" aria-hidden="true"></i>
         <p class="mt-3 text-white ">Loading...</p>
     </div>
     <div id="themeTransitionOverlay" class="theme-transition-overlay"></div>
@@ -211,7 +211,7 @@
             </div>
             <div class="offcanvas-footer p-3 mt-auto border-top">
                 <button id="menuSupabaseLogoutBtn" class="btn btn-outline-warning btn-block" data-dismiss-menu="true" aria-label="Logout"><i
-                        class="fas fa-sign-out-alt mr-2"></i> Logout</button>
+                        class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i> Logout</button>
             </div>
         </div>
     </div>
@@ -251,7 +251,7 @@
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="settingsModalLabel"><i class="fas fa-cog"></i> Settings</h5>
+                    <h5 class="modal-title" id="settingsModalLabel"><i class="fas fa-cog" aria-hidden="true"></i> Settings</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>
@@ -478,7 +478,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="backfillModalLabel">
-                        <i class="fas fa-fill-drip"></i> Backfill Missing Data
+                        <i class="fas fa-fill-drip" aria-hidden="true"></i> Backfill Missing Data
                     </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
@@ -677,26 +677,26 @@
                     </button>
                     <div class="dropdown-menu dropdown-menu-right shadow" aria-labelledby="moreMultiActionsDropdown">
                         <a class="dropdown-item" href="#" id="selectAllBtn"><i
-                                class="fas fa-check-double text-primary mr-2"></i> Select All</a>
+                                class="fas fa-check-double text-primary mr-2" aria-hidden="true"></i> Select All</a>
                         <a class="dropdown-item" href="#" id="clearSelectionBtn"><i
-                                class="fas fa-minus-square text-muted mr-2"></i> Clear Selection</a>
+                                class="fas fa-minus-square text-muted mr-2" aria-hidden="true"></i> Clear Selection</a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#" id="batchExportJsonBtn"><i
-                                class="fas fa-file-code text-info mr-2"></i> Export JSON</a>
+                                class="fas fa-file-code text-info mr-2" aria-hidden="true"></i> Export JSON</a>
                         <a class="dropdown-item" href="#" id="batchExportCsvBtn"><i
-                                class="fas fa-file-csv text-success mr-2"></i> Export CSV</a>
+                                class="fas fa-file-csv text-success mr-2" aria-hidden="true"></i> Export CSV</a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#" id="batchRefreshTmdbBtn"><i
-                                class="fas fa-sync-alt text-warning mr-2"></i> Refresh TMDB Data</a>
+                                class="fas fa-sync-alt text-warning mr-2" aria-hidden="true"></i> Refresh TMDB Data</a>
                         <a class="dropdown-item d-flex align-items-center justify-content-between" href="#" id="batchFranchiseLinkBtn" title="Establishes mutual relational links between selected items to group them as a franchise or collection." aria-label="Link selected entries as a franchise">
                             <span><i class="fas fa-link text-purple mr-2" aria-hidden="true"></i> Link as Franchise</span>
                             <i class="fas fa-info-circle text-muted ml-2" aria-hidden="true" title="Mutually connects entries as a collection"></i>
                         </a>
                         <div class="dropdown-divider"></div>
                         <a class="dropdown-item" href="#" id="batchMarkWatchedBtn"><i
-                                class="fas fa-eye text-success mr-2"></i> Mark Watched</a>
+                                class="fas fa-eye text-success mr-2" aria-hidden="true"></i> Mark Watched</a>
                         <a class="dropdown-item" href="#" id="batchMarkToWatchBtn"><i
-                                class="fas fa-eye-slash text-warning mr-2"></i> Mark To Watch</a>
+                                class="fas fa-eye-slash text-warning mr-2" aria-hidden="true"></i> Mark To Watch</a>
                     </div>
                 </div>
 
@@ -792,7 +792,7 @@
                 </div>
                 <div class="modal-body">
                     <div id="importSummary">
-                        <p>Analyzing your file... <i class="fas fa-spinner fa-spin"></i></p>
+                        <p>Analyzing your file... <i class="fas fa-spinner fa-spin" aria-hidden="true"></i></p>
                     </div>
                     <hr>
                     <h6>Choose Your Import Strategy:</h6>
@@ -876,7 +876,7 @@
                             <div class="form-group col-md-8 position-relative">
                                 <label for="movieName">Name
                                     <small class="text-muted ml-2" id="liveSearchStatus" style="display:none;">
-                                        <i class="fas fa-spinner fa-spin"></i> Searching TMDB...
+                                        <i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Searching TMDB...
                                     </small>
                                 </label>
                                 <input type="text" class="form-control" id="movieName" required
@@ -1053,7 +1053,7 @@
                                                     <span class="input-group-text" id="lockedIndicator"
                                                         title="Locked (Custom URL)"
                                                         style="display:none; cursor: pointer;">
-                                                        <i class="fas fa-lock text-warning"></i>
+                                                        <i class="fas fa-lock text-warning" aria-hidden="true"></i>
                                                     </span>
                                                 </div>
                                             </div>
@@ -1071,7 +1071,7 @@
                                         <!-- Season Breakdown Card List Component -->
                         <div id="seasonBreakdownGroup" class="form-group mb-3" style="display: none;">
                             <label class="d-flex justify-content-between align-items-center font-weight-bold mb-2">
-                                <span><i class="fas fa-list-ol text-primary mr-1"></i> Episodes per Season</span>
+                                <span><i class="fas fa-list-ol text-primary mr-1" aria-hidden="true"></i> Episodes per Season</span>
                                 <small class="text-muted">Total: <span id="calcTotalEpsBadge" class="badge badge-primary font-weight-bold px-2 py-1">0 eps</span></small>
                             </label>
                             <div id="seasonBreakdownContainer" class="p-2 rounded border bg-light" style="max-height: 220px; overflow-y: auto;">
@@ -1286,7 +1286,7 @@
                             <label for="quickUpdateNotes">Notes</label>
                             <textarea class="form-control" id="quickUpdateNotes" rows="2"></textarea>
                             <div id="quickUpdateInjectNotice" class="alert alert-info py-1 px-2 mt-2 mb-0 small d-flex align-items-center justify-content-between" style="display:none !important;">
-                                <span><i class="fas fa-info-circle mr-1"></i> <span id="quickUpdateInjectNoticeText">", Season completed" will be appended to your previous watch log upon saving.</span></span>
+                                <span><i class="fas fa-info-circle mr-1" aria-hidden="true"></i> <span id="quickUpdateInjectNoticeText">", Season completed" will be appended to your previous watch log upon saving.</span></span>
                                 <a href="docs/index.html#quick-update-auto-notes" target="_blank" rel="noopener noreferrer" class="ml-2 text-info font-weight-bold" title="Learn how smart season completion works">
                                     <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                                 </a>
@@ -1814,7 +1814,7 @@
                             <div>
                                 <div class="modal-eyebrow">Achievement Vault</div>
                                 <span class="font-weight-bold text-dark dark-theme-text-white"><i
-                                        class="fas fa-award text-success mr-1"></i> Trophy Room Completion</span>
+                                        class="fas fa-award text-success mr-1" aria-hidden="true"></i> Trophy Room Completion</span>
                                 <p class="text-muted small mb-0">Track your progress across milestones, genre mastery,
                                     and feature-driven badges.</p>
                             </div>
@@ -1840,21 +1840,21 @@
                         <li class="nav-item">
                             <a class="nav-link active" id="ach-all-tab" data-toggle="tab" href="#ach-all-pane"
                                 role="tab" aria-controls="ach-all-pane" aria-selected="true"><i
-                                    class="fas fa-trophy mr-1"></i> All</a>
+                                    class="fas fa-trophy mr-1" aria-hidden="true"></i> All</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="ach-milestones-tab" data-toggle="tab" href="#ach-milestones-pane"
                                 role="tab" aria-controls="ach-milestones-pane" aria-selected="false"><i
-                                    class="fas fa-flag mr-1"></i> Milestones</a>
+                                    class="fas fa-flag mr-1" aria-hidden="true"></i> Milestones</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="ach-genres-tab" data-toggle="tab" href="#ach-genres-pane" role="tab"
-                                aria-controls="ach-genres-pane" aria-selected="false"><i class="fas fa-mask mr-1"></i>
+                                aria-controls="ach-genres-pane" aria-selected="false"><i class="fas fa-mask mr-1" aria-hidden="true"></i>
                                 Genre Mastery</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" id="ach-fun-tab" data-toggle="tab" href="#ach-fun-pane" role="tab"
-                                aria-controls="ach-fun-pane" aria-selected="false"><i class="fas fa-smile mr-1"></i>
+                                aria-controls="ach-fun-pane" aria-selected="false"><i class="fas fa-smile mr-1" aria-hidden="true"></i>
                                 Features & Fun</a>
                         </li>
                     </ul>
@@ -1966,7 +1966,11 @@
                     <p id="deleteModalMessage">Are you sure you want to permanently delete this entry? This action
                         cannot be undone.</p>
                     <div id="batchDeleteOptions" style="display:none;">
-                        <p>Delete selected entries from:</p>
+                        <p>Delete selected entries from:
+                            <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Deletion scope determines whether selected entries are purged from local browser cache, remote cloud database, or both locations." aria-label="Learn more about Batch Delete Scopes">
+                                <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                            </button>
+                        </p>
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="deleteScope" id="deleteLocalOnly"
                                 value="local" checked>
@@ -2124,7 +2128,7 @@
                 <div class="modal-body">
                     <form id="batchEditForm">
                         <div class="batch-edit-info-box">
-                            <i class="fas fa-info-circle mr-1 text-primary"></i> Apply changes to <strong
+                            <i class="fas fa-info-circle mr-1 text-primary" aria-hidden="true"></i> Apply changes to <strong
                                 id="batchEditCount">0</strong> selected entries. <span class="text-muted">Only checked
                                 fields will be updated.</span>
                         </div>
@@ -2605,7 +2609,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon supabase-color"><i class="fas fa-bolt"></i></div>
+                            <div class="credit-icon supabase-color"><i class="fas fa-bolt" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>Supabase</strong>
                                 <small>Provides the open-source backend for cloud sync.</small>
@@ -2613,7 +2617,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon bootstrap-color"><i class="fab fa-bootstrap"></i></div>
+                            <div class="credit-icon bootstrap-color"><i class="fab fa-bootstrap" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>Bootstrap</strong>
                                 <small>Responsive UI framework.</small>
@@ -2621,7 +2625,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon chartjs-color"><i class="fas fa-chart-bar"></i></div>
+                            <div class="credit-icon chartjs-color"><i class="fas fa-chart-bar" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>Chart.js</strong>
                                 <small>Data visualization library.</small>
@@ -2629,7 +2633,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon"><i class="fab fa-font-awesome-flag"></i></div>
+                            <div class="credit-icon"><i class="fab fa-font-awesome-flag" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>Font Awesome</strong>
                                 <small>Icon library.</small>
@@ -2637,7 +2641,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon jquery-color"><i class="fas fa-code"></i></div>
+                            <div class="credit-icon jquery-color"><i class="fas fa-code" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>jQuery</strong>
                                 <small>DOM manipulation utilities.</small>
@@ -2645,7 +2649,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon"><i class="fas fa-file-csv"></i></div>
+                            <div class="credit-icon"><i class="fas fa-file-csv" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>PapaParse</strong>
                                 <small>In-browser CSV parsing.</small>
@@ -2657,7 +2661,7 @@
                     <h5 class="mt-4">External Service Links</h5>
                     <div class="credits-grid">
                         <div class="credit-item">
-                            <div class="credit-icon youtube-color"><i class="fab fa-youtube"></i></div>
+                            <div class="credit-icon youtube-color"><i class="fab fa-youtube" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>YouTube</strong>
                                 <small>Trailer search functionality.</small>
@@ -2665,7 +2669,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon imdb-color"><i class="fab fa-imdb"></i></div>
+                            <div class="credit-icon imdb-color"><i class="fab fa-imdb" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>IMDb</strong>
                                 <small>Parental guide lookups.</small>
@@ -2673,7 +2677,7 @@
                         </div>
 
                         <div class="credit-item">
-                            <div class="credit-icon"><i class="fas fa-play-circle"></i></div>
+                            <div class="credit-icon"><i class="fas fa-play-circle" aria-hidden="true"></i></div>
                             <div class="credit-text">
                                 <strong>JustWatch</strong>
                                 <small>Streaming availability links.</small>
