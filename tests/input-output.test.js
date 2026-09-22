@@ -115,4 +115,11 @@ test('docs/index.html details Advanced Data Controls and recovery utilities', ()
     assert.ok(docsHtml.includes('Check &amp; Repair Data:') || docsHtml.includes('Check & Repair Data:'));
     assert.ok(docsHtml.includes('Orphaned Data Recovery (Download Abandoned Data):'));
     assert.ok(docsHtml.includes('Erase All Data:'));
+    assert.ok(docsHtml.includes('Batch Deletion Scopes:'));
+});
+
+test('index.html includes accessible info icon trigger for Batch Delete Scopes', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('aria-label="Learn more about Batch Delete Scopes"'));
+    assert.ok(html.includes('title="Deletion scope determines whether selected entries are purged from local browser cache, remote cloud database, or both locations."'));
 });
