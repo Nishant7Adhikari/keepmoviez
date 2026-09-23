@@ -319,8 +319,8 @@ test('openUnwatchableModal escapes special characters in entry.id to prevent XSS
 
     testSandbox.openUnwatchableModal();
 
-    assert.ok(unwatchableContainer.innerHTML.includes("prepareEditModal('bad_id&#039; onclick=&#039;alert(1)&#039;')"));
-    assert.ok(!unwatchableContainer.innerHTML.includes("prepareEditModal('bad_id' onclick='alert(1)')"));
+    assert.ok(unwatchableContainer.innerHTML.includes('data-movie-id="bad_id&#039; onclick=&#039;alert(1)&#039;"'));
+    assert.ok(!unwatchableContainer.innerHTML.includes('onclick="'));
 });
 
 test('index.html buttons, modals, and skip-link have accessible aria attributes for screen readers', () => {
