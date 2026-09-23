@@ -830,3 +830,19 @@ test('js/main.js specifies noopener,noreferrer for viewTmdbPersonBtn window.open
         'Expected viewTmdbPersonBtn click handler to use window.open with "noopener,noreferrer"'
     );
 });
+
+test('index.html contains accessible #clearSearchBtn element inside navbar search form', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(
+        html.includes('id="clearSearchBtn"'),
+        'Expected index.html to contain element with id="clearSearchBtn"'
+    );
+    assert.ok(
+        html.includes('aria-label="Clear search text"'),
+        'Expected #clearSearchBtn to have aria-label="Clear search text"'
+    );
+    assert.ok(
+        html.includes('title="Clear search"'),
+        'Expected #clearSearchBtn to have title="Clear search"'
+    );
+});

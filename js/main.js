@@ -550,7 +550,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (clearSearchBtn) {
     clearSearchBtn.addEventListener("click", () => {
-      filterInputNavbar.value = "";
+      if (filterInputNavbar) {
+        filterInputNavbar.value = "";
+        filterInputNavbar.focus();
+      }
       filterQuery = "";
       renderMovieCards();
       clearSearchBtn.style.display = "none";

@@ -205,8 +205,8 @@ p {
   border-radius: 0;
   color: #ffffff !important;
   /* MODIFIED: Make input text always white */
-  padding-right: 45px;
-  /* Make space for the sort button */
+  padding-right: 55px;
+  /* Make space for clear search and sort direction buttons */
   transition: border-color 0.2s ease-in-out;
 }
 
@@ -233,6 +233,7 @@ p {
   /* MODIFIED: Make toggle more visible */
   background-color: transparent;
   height: 100%;
+  padding: 0 8px;
 }
 
 #sortColumnDropdown {
@@ -241,7 +242,23 @@ p {
 }
 
 #clearSearchBtn {
-  display: none;
+  position: absolute;
+  right: 30px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  border: none !important;
+  box-shadow: none !important;
+  color: rgba(255, 255, 255, 0.7);
+  background-color: transparent;
+  padding: 0 4px;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+#clearSearchBtn:hover,
+#clearSearchBtn:focus-visible {
+  color: #ffffff;
 }
 
 .fixed-bottom-nav {
