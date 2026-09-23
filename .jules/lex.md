@@ -58,3 +58,9 @@
 **Legal/Copy Risk:** Presenting multi-entry deletion scope choices ("Local Cache Only", "Cloud Only", "Both Local and Cloud") without contextual microcopy creates legal exposure regarding accidental data destruction and user confusion about where items are removed from.
 **Learning:** Users performing multi-select batch deletions require explicit, accessible inline guidance explaining whether target removal scopes purge local device cache, remote cloud account data, or both locations.
 **Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label="Learn more about Batch Delete Scopes"` and tooltip title explaining target removal scopes, and document batch deletion scopes under Advanced Data Controls in `./docs/index.html`.
+
+## 2026-09-23 - Unexplained Batch Metadata Refresh and Third-Party API Exposure
+
+**Legal/Copy Risk:** Offering multi-entry batch metadata refreshing ("Refresh TMDB Data") without contextual microcopy or documentation creates user privacy concerns regarding whether personal watch records, ratings, or user notes are transmitted to third-party endpoints.
+**Learning:** Batch operations that issue outbound HTTPS requests across multiple collection items require explicit, accessible inline assurances (`(i)`) clarifying that API queries only request public metadata for existing TMDB IDs and never transmit personal viewing history or notes.
+**Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label="Refresh TMDB Data for selected entries"` and protective title microcopy, and document batch refresh throttling and privacy boundaries in `./docs/index.html`.

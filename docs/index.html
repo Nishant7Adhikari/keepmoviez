@@ -684,6 +684,9 @@
                 <strong>Batch Deletion Scopes:</strong> During multi-select batch deletion, users can specify target removal scopes (Local Cache Only, Cloud Only, or Both Local and Cloud) to precisely control whether deleted collection entries are purged from browser memory, remote database, or both locations.
               </li>
               <li>
+                <strong>Batch TMDB Refresh:</strong> In multi-select mode, users can trigger a batch refresh for selected entries with existing TMDB IDs. The system queries public TMDB REST endpoints sequentially with throttling delays to update posters, cast, crew, keywords, and rating metadata. Personal watch history, user notes, and private ratings are strictly preserved and never transmitted to external endpoints.
+              </li>
+              <li>
                 <strong>Backfill Missing Data:</strong> Step-by-step assistant that identifies entries missing optional details (e.g., posters, release years, or genres) and allows manual entry or automatic TMDB lookup.
               </li>
               <li>
