@@ -26,7 +26,7 @@ function calculateAllStatistics(currentMovieData) {
     const watchesByYear = {}, watchesByMonth = {}, rewatchCountsPerTitle = {}, weekendCounts = {};
     const genreCombinationsCounts = {}, categoryRatingsSum = {}, categoryRatedEntriesCount = {}, studioRatingsSum = {}, studioRatedEntriesCount = {};
     
-    const uniqueGenresWatched = new Set(), uniqueCountriesWatched = new Set(), uniqueLanguagesWatched = new Set(), uniqueDecadesWatched = new Set();
+    const uniqueGenresWatched = new Set(), uniqueCountriesWatched = new Set(), uniqueLanguagesWatched = new Set(), uniqueDecadesWatched = new Set(), uniqueWatchDates = new Set();
     const allWatchInstances = [];
     
     let ratedTitlesCount = 0, highlyRecCount = 0, fiveStarCount = 0, longSeriesCount = 0;
@@ -259,6 +259,7 @@ function calculateAllStatistics(currentMovieData) {
 
                     // Performance optimization: store pre-calculated timestamp to avoid repeated new Date() instantiations
                     allWatchInstances.push({ date: dateStr, timestamp, genre: movie.Genre, time: hoursNum, movie: movie });
+                    uniqueWatchDates.add(dateStr);
 
                     // Inline tracking of watch time periods avoids running .filter() twice across allWatchInstances later
                     if (hoursNum >= 0 && hoursNum < 4) nightWatchCount++;
@@ -319,7 +320,8 @@ function calculateAllStatistics(currentMovieData) {
     achievementData.status_count_active = { 'Continue': statusCounts['Continue'] || 0 };
     achievementData.weekend_watch_streak = Math.max(0, ...Object.values(weekendCounts));
     
-    const sortedDates = [...new Set(allWatchInstances.map(wi => wi.date))].sort();
+    // Performance optimization: Use pre-collected Set during item iteration instead of map/Set/spread pipeline over allWatchInstances
+    const sortedDates = Array.from(uniqueWatchDates).sort();
     let maxStreak = 0, currentStreak = 0;
     if(sortedDates.length > 0) {
         maxStreak = 1; currentStreak = 1;
@@ -425,26 +427,56 @@ function calculateAllStatistics(currentMovieData) {
     const now = new Date();
     const nowTime = now.getTime();
 
-    // Performance optimization: Use numeric timestamps instead of instantiating new Date objects in loops
-    const calculatePace = (days) => {
-        const cutoffTime = nowTime - (days * 24 * 60 * 60 * 1000);
-        let minutesInPeriod = 0;
-        allWatchInstances.forEach(wi => {
-            if (wi.timestamp >= cutoffTime) {
-                const movie = wi.movie;
-                if (!movie) return;
-                if (movie.Category === 'Series') { /* Series are not re-counted in pace for rewatches */ }
-                else if (typeof movie.runtime === 'number' && movie.runtime > 0) {
-                    minutesInPeriod += movie.runtime;
+    // Performance optimization: Consolidate pace and normalized pace calculations into a single O(W) pass over allWatchInstances,
+    // eliminating 6 separate array iterations and reducing statistics aggregation time.
+    const cutoff30 = nowTime - (30 * 86400000);
+    const cutoff90 = nowTime - (90 * 86400000);
+    const cutoff365 = nowTime - (365 * 86400000);
+
+    const ms30Bin = 3 * 86400000;
+    const ms90Bin = 9 * 86400000;
+    const ms365Bin = 36.5 * 86400000;
+
+    let minutes30 = 0, minutes90 = 0, minutes365 = 0;
+    const bins30 = new Array(10).fill(0);
+    const bins90 = new Array(10).fill(0);
+    const bins365 = new Array(10).fill(0);
+
+    for (let i = 0; i < allWatchInstances.length; i++) {
+        const wi = allWatchInstances[i];
+        const ts = wi.timestamp;
+        if (ts >= cutoff365) {
+            const movie = wi.movie;
+            if (movie && movie.Category !== 'Series' && typeof movie.runtime === 'number' && movie.runtime > 0) {
+                minutes365 += movie.runtime;
+            }
+            bins365[Math.min(9, Math.floor((ts - cutoff365) / ms365Bin))]++;
+
+            if (ts >= cutoff90) {
+                if (movie && movie.Category !== 'Series' && typeof movie.runtime === 'number' && movie.runtime > 0) {
+                    minutes90 += movie.runtime;
+                }
+                bins90[Math.min(9, Math.floor((ts - cutoff90) / ms90Bin))]++;
+
+                if (ts >= cutoff30) {
+                    if (movie && movie.Category !== 'Series' && typeof movie.runtime === 'number' && movie.runtime > 0) {
+                        minutes30 += movie.runtime;
+                    }
+                    bins30[Math.min(9, Math.floor((ts - cutoff30) / ms30Bin))]++;
                 }
             }
-        });
-        return minutesInPeriod / days;
-    };
-    
-    const pace30 = calculatePace(30);
-    const pace90 = calculatePace(90);
-    const pace365 = calculatePace(365);
+        }
+    }
+
+    for (let i = 1; i < 10; i++) {
+        bins30[i] += bins30[i - 1];
+        bins90[i] += bins90[i - 1];
+        bins365[i] += bins365[i - 1];
+    }
+
+    const pace30 = minutes30 / 30;
+    const pace90 = minutes90 / 90;
+    const pace365 = minutes365 / 365;
 
     const getPredictionDays = (pace) => {
         if (pace <= 0 || toWatchTotalMinutes <= 0) return null;
@@ -502,32 +534,12 @@ function calculateAllStatistics(currentMovieData) {
         stats.watchlistGrowthChartData = { labels: chartLabels, data: chartData };
     }
 
-    // --- Normalized Pace Calculation ---
-    // Performance optimization: Use numeric timestamps instead of instantiating new Date objects in loops
-    const getNormalizedPaceData = (days) => {
-        const cutoffTime = nowTime - (days * 24 * 60 * 60 * 1000);
-        const daysMs = days * 24 * 60 * 60 * 1000;
-        const bins = Array(10).fill(0);
-        
-        allWatchInstances.forEach(wi => {
-            if (wi.timestamp >= cutoffTime) {
-                const binIndex = Math.min(9, Math.floor((wi.timestamp - cutoffTime) / (daysMs / 10)));
-                bins[binIndex]++;
-            }
-        });
-
-        for (let i = 1; i < bins.length; i++) {
-            bins[i] += bins[i-1];
-        }
-        return [0, ...bins]; // Start at 0
-    };
-
     stats.normalizedPaceData = {
         labels: ['Start', '10%', '20%', '30%', '40%', '50%', '60%', '70%', '80%', '90%', 'End'],
         datasets: [
-            { label: 'Last 30 Days', data: getNormalizedPaceData(30) },
-            { label: 'Last 90 Days', data: getNormalizedPaceData(90) },
-            { label: 'Last 365 Days', data: getNormalizedPaceData(365) }
+            { label: 'Last 30 Days', data: [0, ...bins30] },
+            { label: 'Last 90 Days', data: [0, ...bins90] },
+            { label: 'Last 365 Days', data: [0, ...bins365] }
         ]
     };
     
