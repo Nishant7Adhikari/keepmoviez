@@ -1746,10 +1746,10 @@ window.openUnwatchableModal = function () {
           <div class="d-flex w-100 justify-content-between align-items-center">
             <h6 class="mb-1 text-warning">${safeEscape(entry.Name)} <small class="text-muted">(${safeEscape(entry.Year || "N/A")})</small></h6>
             <div>
-              <button class="btn btn-sm btn-outline-info" onclick="if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); if(typeof window.safeTransitionModal === 'function') { window.safeTransitionModal('#unwatchableModal', function() { prepareEditModal('${safeEscape(entry.id)}'); }); } else { $('#unwatchableModal').one('hidden.bs.modal', function() { prepareEditModal('${safeEscape(entry.id)}'); }); $('#unwatchableModal').modal('hide'); }" title="Edit Entry" aria-label="Edit ${safeEscape(entry.Name)}">
+              <button class="btn btn-sm btn-outline-info edit-unwatchable-btn" data-movie-id="${safeEscape(entry.id)}" title="Edit Entry" aria-label="Edit ${safeEscape(entry.Name)}">
                 <i class="fas fa-edit" aria-hidden="true"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger" onclick="window.movieIdToDelete='${safeEscape(entry.id)}'; if(typeof window.preserveModalForBackNavigation === 'function') window.preserveModalForBackNavigation('#unwatchableModal'); if(typeof window.safeTransitionModal === 'function') { window.safeTransitionModal('#unwatchableModal', function() { $('#confirmDeleteModal').modal('show'); }); } else { $('#unwatchableModal').one('hidden.bs.modal', function() { $('#confirmDeleteModal').modal('show'); }); $('#unwatchableModal').modal('hide'); }" title="Delete Permanently" aria-label="Delete ${safeEscape(entry.Name)} permanently">
+              <button class="btn btn-sm btn-outline-danger delete-unwatchable-btn" data-movie-id="${safeEscape(entry.id)}" title="Delete Permanently" aria-label="Delete ${safeEscape(entry.Name)} permanently">
                   <i class="fas fa-trash" aria-hidden="true"></i>
               </button>
             </div>
@@ -1763,6 +1763,47 @@ window.openUnwatchableModal = function () {
     });
     html += '</div>';
     container.innerHTML = html;
+
+    if (container.querySelectorAll) {
+      container.querySelectorAll(".edit-unwatchable-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const movieId = this.getAttribute("data-movie-id");
+          if (typeof window.preserveModalForBackNavigation === "function") {
+            window.preserveModalForBackNavigation("#unwatchableModal");
+          }
+          if (typeof window.safeTransitionModal === "function") {
+            window.safeTransitionModal("#unwatchableModal", function () {
+              prepareEditModal(movieId);
+            });
+          } else if (typeof $ !== "undefined") {
+            $("#unwatchableModal").one("hidden.bs.modal", function () {
+              prepareEditModal(movieId);
+            });
+            $("#unwatchableModal").modal("hide");
+          }
+        });
+      });
+
+      container.querySelectorAll(".delete-unwatchable-btn").forEach((btn) => {
+        btn.addEventListener("click", function () {
+          const movieId = this.getAttribute("data-movie-id");
+          window.movieIdToDelete = movieId;
+          if (typeof window.preserveModalForBackNavigation === "function") {
+            window.preserveModalForBackNavigation("#unwatchableModal");
+          }
+          if (typeof window.safeTransitionModal === "function") {
+            window.safeTransitionModal("#unwatchableModal", function () {
+              if (typeof $ !== "undefined") $("#confirmDeleteModal").modal("show");
+            });
+          } else if (typeof $ !== "undefined") {
+            $("#unwatchableModal").one("hidden.bs.modal", function () {
+              $("#confirmDeleteModal").modal("show");
+            });
+            $("#unwatchableModal").modal("hide");
+          }
+        });
+      });
+    }
   }
 
   $("#unwatchableModal").modal("show");

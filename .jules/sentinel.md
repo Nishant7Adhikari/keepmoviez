@@ -42,3 +42,8 @@
 **Vulnerability:** `window.open(url, current.entryName)` passed dynamic user-controlled entry titles as the target window parameter.
 **Learning:** Unsanitized dynamic strings passed as window target names can allow frame/target manipulation (e.g. if title is `_self`) and throw DOMExceptions in strict browser environments when titles contain spaces or special characters.
 **Prevention:** Always use explicit target `_blank` and pass window features `"noopener,noreferrer"` when calling `window.open()` for external links.
+
+## 2026-09-23 - Inline JavaScript Attribute Context Breakout in Modal Action Handlers
+**Vulnerability:** Interpolating dynamic entry IDs (`${safeEscape(entry.id)}`) into single-quoted string literals inside inline `onclick="..."` event attributes in `openUnwatchableModal` allowed JavaScript context breakout.
+**Learning:** Browsers decode HTML entities (`&#039;` -> `'`) in HTML attribute values before the JavaScript engine executes inline event handlers. Escaping single quotes as HTML entities does not prevent breaking out of single-quoted string literals in inline `onclick` scripts.
+**Prevention:** Avoid inline JavaScript string interpolation in `onclick` attributes. Instead, store dynamic values in `data-*` attributes (`data-movie-id="${escapeHTML(id)}"`) and attach event listeners via `addEventListener` or class-based event delegation.
