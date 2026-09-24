@@ -191,7 +191,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (hasPreviousModal) {
         $header.addClass("has-modal-back");
         const $btn = $(
-          '<button type="button" class="modal-back-button btn btn-link p-0" title="Back" aria-label="Back"><span class="modal-back-icon">←</span></button>',
+          '<button type="button" class="modal-back-button btn btn-link p-0" title="Back" aria-label="Back"><span class="modal-back-icon" aria-hidden="true">←</span></button>',
         );
         const $title = $header.find(".modal-title").first();
         if ($title.length > 0) {
