@@ -1396,13 +1396,23 @@ function renderBackfillDirectorChips() {
       <span class="director-chip" data-index="${idx}">
         ${avatar ? `<img src="${typeof escapeHTML === "function" ? escapeHTML(avatar) : avatar}" alt="${typeof escapeHTML === "function" ? escapeHTML(name) : name}" onerror="this.style.display='none'">` : `<i class="fas fa-user text-muted mr-1" style="font-size: 0.75rem;"></i>`}
         <span>${typeof escapeHTML === "function" ? escapeHTML(name) : name}</span>
-        <span class="chip-remove" onclick="removeBackfillDirector(${idx})" title="Remove">&times;</span>
+        <span class="chip-remove" data-index="${idx}" title="Remove">&times;</span>
       </span>
     `;
   });
 
-  chipsHtml += `<input type="text" id="backfillDirectorInput" class="director-chip-input" placeholder="${directors.length === 0 ? "Type director name and press Enter..." : "+ Add another..."}">`;
+  const placeholderText = directors.length === 0 ? "Type director name and press Enter..." : "+ Add another...";
+  chipsHtml += `<input type="text" id="backfillDirectorInput" class="director-chip-input" placeholder="${typeof escapeHTML === "function" ? escapeHTML(placeholderText) : placeholderText}">`;
   container.innerHTML = chipsHtml;
+
+  container.querySelectorAll(".chip-remove").forEach((btn) => {
+    btn.addEventListener("click", function () {
+      const idx = parseInt(this.getAttribute("data-index"), 10);
+      if (!isNaN(idx)) {
+        removeBackfillDirector(idx);
+      }
+    });
+  });
 
   const hiddenInput = document.getElementById("backfillInput");
   if (hiddenInput) {

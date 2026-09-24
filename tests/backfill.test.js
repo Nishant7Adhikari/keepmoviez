@@ -186,3 +186,67 @@ test('updateGoogleButton opens search link safely in _blank with noopener,norefe
     assert.equal(openedTarget, '_blank');
     assert.equal(openedFeatures, 'noopener,noreferrer');
 });
+
+test('renderBackfillDirectorChips renders secure HTML without inline onclick handlers and handles removals', () => {
+    let mockInnerHTML = '';
+    const clickListeners = [];
+    const mockInput = {};
+    const mockContainer = {
+        set innerHTML(val) {
+            mockInnerHTML = val;
+        },
+        get innerHTML() {
+            return mockInnerHTML;
+        },
+        querySelectorAll: (selector) => {
+            if (selector === '.chip-remove') {
+                return [
+                    {
+                        getAttribute: (attr) => attr === 'data-index' ? '0' : null,
+                        addEventListener: (event, handler) => {
+                            if (event === 'click') clickListeners.push(handler);
+                        }
+                    }
+                ];
+            }
+            return [];
+        }
+    };
+
+    const testSandbox = {
+        console,
+        parseInt,
+        isNaN,
+        escapeHTML: (str) => String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'),
+        document: {
+            getElementById: (id) => {
+                if (id === 'backfillDirectorChips') return mockContainer;
+                if (id === 'backfillInput') return mockInput;
+                return null;
+            }
+        },
+        window: {}
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(code, testSandbox);
+
+    testSandbox.window.backfillSelectedDirectors = [
+        { name: 'Director "<script>alert(1)</script>"', profile_path: null }
+    ];
+
+    testSandbox.renderBackfillDirectorChips();
+
+    // Verify no inline onclick attributes are generated
+    assert.equal(mockInnerHTML.includes('onclick='), false);
+
+    // Verify data-index and escapeHTML are present
+    assert.ok(mockInnerHTML.includes('data-index="0"'));
+    assert.ok(mockInnerHTML.includes('Director &quot;&lt;script&gt;alert(1)&lt;/script&gt;&quot;'));
+
+    // Verify click handler execution removes director
+    assert.equal(clickListeners.length, 1);
+    clickListeners[0].call({ getAttribute: () => '0' });
+    assert.equal(testSandbox.window.backfillSelectedDirectors.length, 0);
+});
