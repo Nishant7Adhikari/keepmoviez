@@ -172,7 +172,7 @@ function displayTmdbResults(results) {
         resultItem.innerHTML = `
             <img src="${escapeHTML(posterPath)}" class="tmdb-poster-thumb mr-2" alt="Poster for ${escapeHTML(title)}" style="width:50px; height:auto;">
             <div class="flex-grow-1">
-                ${item.media_type === 'tv' ? '<i class="fas fa-tv text-info mr-1" title="TV Series"></i>' : '<i class="fas fa-film text-warning mr-1" title="Movie"></i>'}
+                ${item.media_type === 'tv' ? '<i class="fas fa-tv text-info mr-1" title="TV Series" aria-hidden="true"></i>' : '<i class="fas fa-film text-warning mr-1" title="Movie" aria-hidden="true"></i>'}
                 <strong>${escapeHTML(title)}</strong> <span class="text-muted">(${escapeHTML(year)})</span>
                 <p class="mb-0 mt-1 text-muted small">${escapeHTML(overview)}</p>
             </div>`;

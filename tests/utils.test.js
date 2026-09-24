@@ -323,6 +323,26 @@ test('openUnwatchableModal escapes special characters in entry.id to prevent XSS
     assert.ok(!unwatchableContainer.innerHTML.includes('onclick="'));
 });
 
+test('displayTmdbResults in js/tmdb.js renders TV/Movie indicator icons with aria-hidden="true"', () => {
+    const tmdbCode = fs.readFileSync(path.join(__dirname, '../js/tmdb.js'), 'utf8');
+    assert.ok(
+        tmdbCode.includes('<i class="fas fa-tv text-info mr-1" title="TV Series" aria-hidden="true"></i>'),
+        'Expected TV series indicator icon in displayTmdbResults to have aria-hidden="true"'
+    );
+    assert.ok(
+        tmdbCode.includes('<i class="fas fa-film text-warning mr-1" title="Movie" aria-hidden="true"></i>'),
+        'Expected Movie indicator icon in displayTmdbResults to have aria-hidden="true"'
+    );
+});
+
+test('updateModalBackButton in js/main.js renders modal back button text span with aria-hidden="true"', () => {
+    const mainCode = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+    assert.ok(
+        mainCode.includes('<span class="modal-back-icon" aria-hidden="true">←</span>'),
+        'Expected modal-back-icon span in updateModalBackButton to have aria-hidden="true"'
+    );
+});
+
 test('index.html buttons, modals, and skip-link have accessible aria attributes for screen readers', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(html.includes('href="#movieCardContainer"') && html.includes('class="skip-link"'));
