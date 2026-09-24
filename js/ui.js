@@ -2584,14 +2584,7 @@ document.addEventListener("DOMContentLoaded", () => {
   $(document).on("input", "#quickUpdateNotes", function () {
     const state = window._quickUpdateState;
     if (!state) return;
-    const val = $(this).val().trim();
-    if (val === "") {
-      state.isAutoManaged = true;
-      updateQuickUpdateAutoNote();
-    } else {
-      // If user manually modifies note to non-empty custom string, disable auto-manage unless it matches current auto note
-      state.isAutoManaged = false;
-    }
+    state.isAutoManaged = false;
   });
 
   // Add/Edit modal steppers
