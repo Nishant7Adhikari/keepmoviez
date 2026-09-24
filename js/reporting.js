@@ -165,7 +165,7 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                         <button class="btn btn-success mark-completed-daily-rec-modal" data-movie-id="${escapeHTML(movie.id)}" title="Mark as Watched" aria-label="Mark ${escapeHTML(movie.Name)} as watched"><i class="fas fa-check-circle" aria-hidden="true"></i> Watched It!</button>
                     </div>
                 </div>
-                ${hasStandbyCards ? '' : '<div class="daily-pick-no-more-skips">No more skipping. The recommendation bureau has closed for business.</div>'}
+                ${hasStandbyCards ? '' : '<div class="daily-pick-no-more-skips">No more skips available for today. Additional daily recommendation skips will reset tomorrow.</div>'}
             </div>`;
 }
 

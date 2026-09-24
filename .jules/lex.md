@@ -64,3 +64,9 @@
 **Legal/Copy Risk:** Offering multi-entry batch metadata refreshing ("Refresh TMDB Data") without contextual microcopy or documentation creates user privacy concerns regarding whether personal watch records, ratings, or user notes are transmitted to third-party endpoints.
 **Learning:** Batch operations that issue outbound HTTPS requests across multiple collection items require explicit, accessible inline assurances (`(i)`) clarifying that API queries only request public metadata for existing TMDB IDs and never transmit personal viewing history or notes.
 **Remedy:** Attach accessible info icons (`(i)`) with explicit `aria-label="Refresh TMDB Data for selected entries"` and protective title microcopy, and document batch refresh throttling and privacy boundaries in `./docs/index.html`.
+
+## 2026-09-24 - Informal Recommendation Engine Microcopy and Local Taste Scoring Boundaries
+
+**Legal/Copy Risk:** Using informal, ambiguous microcopy ("The recommendation bureau has closed for business") and leaving recommendation engine scoring mechanisms unexplained risks user confusion regarding feature limits and creates privacy anxiety about whether personal watch logs or ratings are transmitted externally for recommendation calculations.
+**Learning:** Recommendation limits and algorithmic suggestions require objective, professional advisory phrasing, along with accessible inline helper icons `(i)` explaining client-side taste scoring and local privacy boundaries.
+**Remedy:** Replace informal recommendation limit copy with objective phrasing ("No more skips available for today. Additional daily recommendation skips will reset tomorrow"), attach an accessible `(i)` info icon with `aria-label="Learn more about Engine Suggestions and Recommendation Engine"`, and document recommendation engine mechanics and privacy limits in `./docs/index.html`.
