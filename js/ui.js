@@ -575,10 +575,10 @@ function createMovieCardElement(movie) {
 
   let lastWatchedInfo;
   if (movie.Status === "To Watch") {
-    lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
+    lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status" aria-hidden="true"></i> In Watchlist</span>`;
   } else {
     const watchDateHTML = (latestWatch && latestWatch.date)
-    ? `<i class="fas fa-history" title="Last Watched"></i> ${formatWatchDateDisplay(latestWatch.date)}`: "";
+    ? `<i class="fas fa-history" title="Last Watched" aria-hidden="true"></i> ${formatWatchDateDisplay(latestWatch.date)}`: "";
     lastWatchedInfo = `<span class="card-last-watched">${watchDateHTML}</span>`;
   }
 
@@ -1860,20 +1860,20 @@ function toggleConditionalFields() {
       if (category === "Series") {
         $hintEl
           .html(
-            '<i class="fas fa-lightbulb"></i> <span class="hint-strong">Series Tip:</span> You can add multiple watch records if you watched across different dates or rewatches.',
+            '<i class="fas fa-lightbulb" aria-hidden="true"></i> <span class="hint-strong">Series Tip:</span> You can add multiple watch records if you watched across different dates or rewatches.',
           )
           .show();
       } else {
         $hintEl
           .html(
-            '<i class="fas fa-calendar-check"></i> <span class="hint-strong">Watch Log:</span> Record the date and rating for this watch session.',
+            '<i class="fas fa-calendar-check" aria-hidden="true"></i> <span class="hint-strong">Watch Log:</span> Record the date and rating for this watch session.',
           )
           .show();
       }
     } else if (isContinueSeries) {
       $hintEl
         .html(
-          '<i class="fas fa-play-circle"></i> <span class="hint-strong">Progress Log:</span> Add a record to log your latest episode or session date.',
+          '<i class="fas fa-play-circle" aria-hidden="true"></i> <span class="hint-strong">Progress Log:</span> Add a record to log your latest episode or session date.',
         )
         .show();
     } else {
