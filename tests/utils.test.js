@@ -866,3 +866,15 @@ test('index.html contains accessible #clearSearchBtn element inside navbar searc
         'Expected #clearSearchBtn to have title="Clear search"'
     );
 });
+
+test('createMovieCardElement in js/ui.js renders status icons with aria-hidden="true"', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    assert.ok(
+        uiCode.includes('<i class="fas fa-list-ul" title="Status" aria-hidden="true"></i>'),
+        'Expected fa-list-ul icon in createMovieCardElement to have aria-hidden="true"'
+    );
+    assert.ok(
+        uiCode.includes('<i class="fas fa-history" title="Last Watched" aria-hidden="true"></i>'),
+        'Expected fa-history icon in createMovieCardElement to have aria-hidden="true"'
+    );
+});
