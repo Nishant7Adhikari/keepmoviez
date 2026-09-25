@@ -577,10 +577,9 @@ function createMovieCardElement(movie) {
   if (movie.Status === "To Watch") {
     lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status"></i> In Watchlist</span>`;
   } else {
-    lastWatchedInfo = `<span class="card-last-watched">
-                              <i class="fas fa-history" title="Last Watched"></i>
-                              ${latestWatch && latestWatch.date ? formatWatchDateDisplay(latestWatch.date) : "N/A"}
-                             </span>`;
+    const watchDateHTML = (latestWatch && latestWatch.date)
+    ? `<i class="fas fa-history" title="Last Watched"></i> ${formatWatchDateDisplay(latestWatch.date)}`: "";
+    lastWatchedInfo = `<span class="card-last-watched">${watchDateHTML}</span>`;
   }
 
   let statusBadgeText = movie.Status || "N/A";
@@ -606,11 +605,10 @@ function createMovieCardElement(movie) {
                   </div>
                   <div class="card-info">
                       <span class="status-badge ${escapeHTML(statusClass)}">${escapeHTML(statusBadgeText)}</span>
-                      ${renderStars(movie.overallRating)}
                   </div>
+                  ${renderStars(movie.overallRating)}<br>${lastWatchedInfo}
               </div>
               <div class="card-footer">
-                  ${lastWatchedInfo}
                   <div class="card-actions">
                        ${showQuickUpdateButton ? `<button class="btn btn-sm btn-outline-success btn-action quick-update-btn" title="Quick Update Progress" aria-label="Quick update progress for ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-calendar-plus" aria-hidden="true"></i></button>` : ""}
                        <button class="btn btn-sm btn-outline-primary btn-action edit-btn" title="Edit Entry" aria-label="Edit ${escapeHTML(movie.Name)}" data-movie-id="${escapeHTML(movie.id)}"><i class="fas fa-edit" aria-hidden="true"></i></button>
