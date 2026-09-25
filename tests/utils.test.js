@@ -851,6 +851,22 @@ test('js/main.js specifies noopener,noreferrer for viewTmdbPersonBtn window.open
     );
 });
 
+test('js/ui.js encodes dynamic IMDb and TMDB person IDs with encodeURIComponent for external URLs', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    assert.ok(
+        uiCode.includes('https://m.imdb.com/title/${encodeURIComponent(epIds.imdb_id)}/parentalguide/'),
+        'Expected episode IMDb ID to be encoded with encodeURIComponent'
+    );
+    assert.ok(
+        uiCode.includes('https://m.imdb.com/title/${encodeURIComponent(imdbId)}/parentalguide/'),
+        'Expected IMDb ID to be encoded with encodeURIComponent'
+    );
+    assert.ok(
+        uiCode.includes('https://www.themoviedb.org/person/${encodeURIComponent(personId)}'),
+        'Expected TMDB person ID to be encoded with encodeURIComponent'
+    );
+});
+
 test('index.html contains accessible #clearSearchBtn element inside navbar search form', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(

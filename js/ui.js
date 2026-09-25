@@ -1351,14 +1351,14 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
               `/tv/${tmdbId}/season/${s}/episode/${e}/external_ids`,
             );
             if (epIds.imdb_id)
-              return `https://m.imdb.com/title/${epIds.imdb_id}/parentalguide/`;
+              return `https://m.imdb.com/title/${encodeURIComponent(epIds.imdb_id)}/parentalguide/`;
           } catch (err) {
             console.warn("Could not fetch episode IMDb ID");
           }
           return `https://www.google.com/search?q=${encodeURIComponent(`${title} season ${s} episode ${e} parents guide`)}`;
         } else {
           if (imdbId)
-            return `https://m.imdb.com/title/${imdbId}/parentalguide/`;
+            return `https://m.imdb.com/title/${encodeURIComponent(imdbId)}/parentalguide/`;
           return `https://www.google.com/search?q=${encodeURIComponent(`${title} parents guide`)}`;
         }
       };
@@ -1568,7 +1568,7 @@ window.openPersonDetailsModal = async function (personId, personName) {
 
       $("#personBio").text(personData.biography || "No biography from TMDB.");
       $("#viewTmdbPersonBtn")
-        .data("tmdb-url", `https://www.themoviedb.org/person/${personId}`)
+        .data("tmdb-url", `https://www.themoviedb.org/person/${encodeURIComponent(personId)}`)
         .show();
 
       const filmographyList = $("#personFilmographyList").empty();
