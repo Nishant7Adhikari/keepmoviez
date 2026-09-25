@@ -59,7 +59,7 @@ const RENDER_STARS_CACHE = new Map();
 
 function renderStars(rating) {
     if (rating === null || rating === undefined || String(rating).trim() === "" || String(rating).toLowerCase() === "n/a") {
-        return '<span class="text-muted small">N/A</span>';
+        return '<span class="text-muted small"></span>';
     }
 
     const cached = RENDER_STARS_CACHE.get(rating);

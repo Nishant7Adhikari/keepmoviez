@@ -192,7 +192,7 @@ function Get-UnmergedFiles {
 # conflicted. It never uses "git add -A".
 # ------------------------------------------------------------
 
-function Finish-ExistingMerge {
+function Complete-ExistingMerge {
 
     Write-Host "`nA Git merge is already in progress." -ForegroundColor Yellow
 
@@ -499,7 +499,7 @@ function Get-NewVersion {
 # Version reference replacement helper
 # ------------------------------------------------------------
 
-function Replace-Required {
+function Update-Required {
 
     param(
         [Parameter(Mandatory = $true)]
@@ -865,7 +865,7 @@ function Update-CacheBusting {
 # A manually modified VERSION must be handled explicitly.
 # ------------------------------------------------------------
 
-function Commit-WorkingTreeChanges {
+function Save-WorkingTreeChanges {
 
     $status = Get-WorkingTreeChanges
 
@@ -1001,7 +1001,7 @@ $diffOutput
 # Push helper
 # ------------------------------------------------------------
 
-function Ask-AndPush {
+function Confirm-AndPush {
 
     param(
         [string]$Message = "Do you want to push to remote? [Y/n]"
@@ -1095,7 +1095,7 @@ Write-Host "Last committed VERSION change: $lastVersionCommit" -ForegroundColor 
 
 if (Test-MergeInProgress) {
 
-    Finish-ExistingMerge
+    Complete-ExistingMerge
 }
 
 # ------------------------------------------------------------
@@ -1104,7 +1104,7 @@ if (Test-MergeInProgress) {
 #    This makes synchronization safe and predictable.
 # ------------------------------------------------------------
 
-[void](Commit-WorkingTreeChanges)
+[void](Save-WorkingTreeChanges)
 
 # ------------------------------------------------------------
 # 5. Fetch remote information.
@@ -1274,7 +1274,7 @@ else {
 
 if (Test-MergeInProgress) {
 
-    Finish-ExistingMerge
+    Complete-ExistingMerge
 }
 
 # ------------------------------------------------------------
@@ -1397,7 +1397,7 @@ if ($changedSinceVersion.Count -eq 0) {
 
             Write-Host "Local has $aheadCount commit(s) not pushed to $upstream." -ForegroundColor Yellow
 
-            [void](Ask-AndPush `
+            [void](Confirm-AndPush `
                 -Message "Do you want to push the existing commits to remote? [Y/n]")
         }
     }
@@ -1448,7 +1448,7 @@ Write-Host "`nUpdating fixed version references..." -ForegroundColor Cyan
 # index.html
 if (Test-Path -LiteralPath "index.html") {
 
-    Replace-Required `
+    Update-Required `
         -Path "index.html" `
         -Pattern '(?i)<!--\s*KeepMoviEZ\s+v[0-9.]+\s*-->' `
         -Replacement "<!-- KeepMoviEZ  v$newVersion -->" `
@@ -1459,7 +1459,7 @@ if (Test-Path -LiteralPath "index.html") {
 # sw.js
 if (Test-Path -LiteralPath "sw.js") {
 
-    Replace-Required `
+    Update-Required `
         -Path "sw.js" `
         -Pattern '(?i)const\s+CACHE_NAME\s*=\s*["'']keepmoviez-local-v[0-9.]+["''];' `
         -Replacement "const CACHE_NAME = `"keepmoviez-local-v$newVersion`";" `
@@ -1519,7 +1519,7 @@ if (Test-Path -LiteralPath "manifest.json") {
 # docs/index.html
 if (Test-Path -LiteralPath "docs/index.html") {
 
-    Replace-Required `
+    Update-Required `
         -Path "docs/index.html" `
         -Pattern '(?i)<small>v[0-9.]+</small>' `
         -Replacement "<small>v$newVersion</small>" `
@@ -1718,5 +1718,5 @@ Write-Host "`nVersion bump committed successfully: v$newVersion" -ForegroundColo
 # 22. Final push prompt.
 # ------------------------------------------------------------
 
-[void](Ask-AndPush `
+[void](Confirm-AndPush `
     -Message "Do you want to push to remote? [Y/n]")
