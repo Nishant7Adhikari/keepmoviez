@@ -70,3 +70,9 @@
 **Legal/Copy Risk:** Using informal, ambiguous microcopy ("The recommendation bureau has closed for business") and leaving recommendation engine scoring mechanisms unexplained risks user confusion regarding feature limits and creates privacy anxiety about whether personal watch logs or ratings are transmitted externally for recommendation calculations.
 **Learning:** Recommendation limits and algorithmic suggestions require objective, professional advisory phrasing, along with accessible inline helper icons `(i)` explaining client-side taste scoring and local privacy boundaries.
 **Remedy:** Replace informal recommendation limit copy with objective phrasing ("No more skips available for today. Additional daily recommendation skips will reset tomorrow"), attach an accessible `(i)` info icon with `aria-label="Learn more about Engine Suggestions and Recommendation Engine"`, and document recommendation engine mechanics and privacy limits in `./docs/index.html`.
+
+## 2026-09-25 - Unexplained Gamification Badges, Milestone Tracking and Public Leaderboard Concerns
+
+**Legal/Copy Risk:** Presenting gamification mechanisms ("Trophy Room & Achievements") without inline contextual microcopy or documentation creates user privacy concerns regarding whether watch logs, activity metrics, and unlocked badges are published to social networks or telemetry servers.
+**Learning:** Gamification features in local-first applications require explicit, accessible inline assurances that badge progress and completion metrics are evaluated strictly in client-side memory without broadcasting activity to public leaderboards.
+**Remedy:** Attach an accessible `(i)` info icon to `#achievementsModalLabel` with `aria-label="Learn more about Trophy Room & Achievements"` and protective title microcopy, and document achievement calculation and local privacy boundaries in `./docs/index.html`.
