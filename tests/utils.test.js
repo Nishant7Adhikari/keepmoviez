@@ -882,3 +882,82 @@ test('index.html contains accessible #clearSearchBtn element inside navbar searc
         'Expected #clearSearchBtn to have title="Clear search"'
     );
 });
+
+test('populateFilterModalOptions populates category, country, and language select options using mapped full country names and DocumentFragment', () => {
+    function createMockSelect() {
+        let html = '';
+        const children = [];
+        return {
+            value: '',
+            children: children,
+            set innerHTML(val) { html = val; children.length = 0; },
+            get innerHTML() { return html; },
+            appendChild(child) {
+                if (child && Array.isArray(child.children)) {
+                    children.push(...child.children);
+                } else {
+                    children.push(child);
+                }
+            }
+        };
+    }
+
+    const categorySelect = createMockSelect();
+    const countrySelect = createMockSelect();
+    const languageSelect = createMockSelect();
+
+    const elements = {
+        filterCategory: categorySelect,
+        filterCountry: countrySelect,
+        filterLanguage: languageSelect,
+        filterGenreContainer: { children: [], removeChild: () => {} },
+        filterGenreSearchInput: { value: '', placeholder: '' },
+        filterGenreItemsContainer: { innerHTML: '', appendChild: () => {} }
+    };
+
+    const testSandbox = {
+        console,
+        movieData: [
+            { id: '1', Name: 'Movie 1', Category: 'Movie', Country: 'US', Language: 'English', is_deleted: false },
+            { id: '2', Name: 'Series 1', Category: 'Series', Country: 'FR', Language: 'French', is_deleted: false },
+            { id: '3', Name: 'Deleted 1', Category: 'Anime', Country: 'JP', Language: 'Japanese', is_deleted: true }
+        ],
+        activeFilters: { category: 'Movie', country: 'US', language: 'English', genres: [], genreLogic: 'AND' },
+        selectedFilterGenres: [],
+        UNIQUE_ALL_GENRES: ['Action', 'Comedy'],
+        countryCodeToNameMap: { US: 'United States', FR: 'France', JP: 'Japan' },
+        document: {
+            getElementById: (id) => elements[id] || null,
+            querySelector: () => null,
+            createElement: (tag) => ({ value: '', textContent: '', className: '', innerHTML: '', addEventListener: () => {} }),
+            createDocumentFragment: () => {
+                const children = [];
+                return {
+                    appendChild(c) { children.push(c); },
+                    get children() { return children; }
+                };
+            },
+            addEventListener: () => {}
+        },
+        IntersectionObserver: class { constructor() {} observe() {} unobserve() {} disconnect() {} }
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(utilsCode, testSandbox);
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.populateFilterModalOptions();
+
+    assert.equal(categorySelect.value, 'Movie');
+    assert.equal(countrySelect.value, 'US');
+    assert.equal(languageSelect.value, 'English');
+
+    // Deleted items should not be in options
+    const countryTextContents = countrySelect.children.map(c => c.textContent);
+    assert.ok(countryTextContents.includes('France'));
+    assert.ok(countryTextContents.includes('United States'));
+    assert.ok(!countryTextContents.includes('Japan'));
+});
