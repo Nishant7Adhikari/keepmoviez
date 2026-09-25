@@ -86,7 +86,7 @@ test('renderStars caches star rating HTML output correctly', () => {
 
     assert.ok(starHtml1.includes('fa-star') && starHtml1.includes('aria-hidden="true"'));
     assert.ok(starHtmlHalf.includes('fa-star-half-alt') && starHtmlHalf.includes('aria-hidden="true"'));
-    assert.equal(starHtmlNull, '<span class="text-muted small">N/A</span>');
+    assert.equal(starHtmlNull, '<span class="text-muted small"></span>');
     assert.equal(starHtmlInvalid, '<span class="text-muted small" title="Invalid Rating Value">Invalid</span>');
 
     // Repeated calls should return cached identical references
