@@ -21,3 +21,7 @@
 ## 2026-09-20 - Global Focus Ring & Decorative Icon Hiding
 **Learning:** FontAwesome icons embedded within text-labeled action buttons generate duplicate announcements unless hidden with `aria-hidden="true"`, and missing `:focus-visible` outline styles impair keyboard navigation across light/dark themes.
 **Action:** Always add `aria-hidden="true"` to decorative icons inside labeled action buttons and maintain explicit `:focus-visible` focus rings for interactive components in `style.css`.
+
+## 2026-10-15 - Dynamic Feedback in Static Utility Pages
+**Learning:** Micro-game and interactive feedback components on fallback utility pages (`404.html`, `offline.html`) fail to announce result state changes to screen reader users unless containers include `aria-live="polite"` and `role="status"`.
+**Action:** Ensure dynamic output or feedback containers on offline/error pages include `aria-live="polite"` and `role="status"`, and all controls have explicit `aria-label` attributes.
