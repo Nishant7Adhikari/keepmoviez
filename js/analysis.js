@@ -64,8 +64,11 @@ function calculateAllStatistics(currentMovieData) {
             };
         });
 
-    currentMovieData.forEach(movie => {
-        if (!movie || !movie.id) return;
+    // Performance optimization: Use indexed for loops, pre-parsed genre splits per movie,
+    // bounded cast/company loops, and short-circuit genre streak checks to avoid redundant string/array allocations.
+    for (let mIdx = 0; mIdx < currentMovieData.length; mIdx++) {
+        const movie = currentMovieData[mIdx];
+        if (!movie || !movie.id) continue;
 
         // --- REFINED: Total Watch Time Calculation ---
         const watchHistoryCount = Array.isArray(movie.watchHistory) ? movie.watchHistory.length : 0;
@@ -123,14 +126,20 @@ function calculateAllStatistics(currentMovieData) {
         if(movie.Description && movie.Description.length > 30) detailedDescriptionCount++;
         if(Array.isArray(movie.relatedEntries)) manualLinksCount += movie.relatedEntries.length;
 
-        // Special Title Checks
-        if (isWatchedOrContinue(movie)) {
+        const isWatchedCont = movie.Status === 'Watched' || movie.Status === 'Continue';
+        const isStrictlyWatched = movie.Status === 'Watched';
+
+        // Pre-parse genres once per movie to avoid repeated string split/trim operations in watch history loop
+        const genres = movie.Genre ? movie.Genre.split(',').map(g => g.trim()).filter(Boolean) : [];
+
+        if (isWatchedCont) {
             watchedCategoryCounts[catKey] = (watchedCategoryCounts[catKey] || 0) + 1;
 
             // Performance optimization: lazy-compute title lowercasing and skip already unlocked titles
             let movieTitleLower = null;
-            preparedSpecialTitleAchievements.forEach(ach => {
-                if (specialTitleStatus[ach.id]) return;
+            for (let aIdx = 0; aIdx < preparedSpecialTitleAchievements.length; aIdx++) {
+                const ach = preparedSpecialTitleAchievements[aIdx];
+                if (specialTitleStatus[ach.id]) continue;
 
                 // 1. Precise Match (ID)
                 const idMatch = (ach.tmdbId && movie.tmdbId == ach.tmdbId) || (ach.imdbId && movie.imdb_id == ach.imdbId);
@@ -147,10 +156,8 @@ function calculateAllStatistics(currentMovieData) {
                 if (idMatch || nameMatch) {
                     specialTitleStatus[ach.id] = true;
                 }
-            });
-        }
+            }
 
-        if (isWatchedOrContinue(movie)) {
             const rawOverall = (movie.overallRating && String(movie.overallRating).trim() !== '') ? String(movie.overallRating).trim() : '';
             const overallRatingKey = rawOverall !== '' ? rawOverall : 'N/A';
             const parsedOverallRating = rawOverall !== '' ? parseFloat(rawOverall) : null;
@@ -169,13 +176,13 @@ function calculateAllStatistics(currentMovieData) {
                 if(movie.runtime.seasons >= 3 || numEps >= 40) longSeriesCount++;
             }
 
-            if (movie.Genre) {
-                const genres = movie.Genre.split(',').map(g => g.trim()).filter(Boolean);
+            if (genres.length > 0) {
                 if (genres.length > 1) {
-                    const combinationKey = genres.sort().join(', ');
+                    const combinationKey = [...genres].sort().join(', ');
                     genreCombinationsCounts[combinationKey] = (genreCombinationsCounts[combinationKey] || 0) + 1;
                 }
-                genres.forEach(g => {
+                for (let gIdx = 0; gIdx < genres.length; gIdx++) {
+                    const g = genres[gIdx];
                     singleGenreCounts[g] = (singleGenreCounts[g] || 0) + 1;
                     watchedGenreCounts[g] = (watchedGenreCounts[g] || 0) + 1;
                     uniqueGenresWatched.add(g);
@@ -183,11 +190,11 @@ function calculateAllStatistics(currentMovieData) {
                         genreRatingsSum[g] = (genreRatingsSum[g] || 0) + parsedOverallRating;
                         genreRatedEntriesCount[g] = (genreRatedEntriesCount[g] || 0) + 1;
                     }
-                });
+                }
             }
 
             // Only count countries and languages if status is "Watched" for achievements
-            if (isStrictlyWatched(movie)) {
+            if (isStrictlyWatched) {
                 if (movie.Country) movie.Country.split(',').map(c => c.trim()).filter(Boolean).forEach(c => { countryCounts[c] = (countryCounts[c] || 0) + 1; uniqueCountriesWatched.add(c); });
                 if (movie.Language) movie.Language.split(',').map(l => l.trim()).filter(Boolean).forEach(l => { languageCounts[l] = (languageCounts[l] || 0) + 1; uniqueLanguagesWatched.add(l); });
             }
@@ -195,7 +202,7 @@ function calculateAllStatistics(currentMovieData) {
             if (movie.Year) {
                 const yearNum = parseInt(movie.Year, 10);
                 if(!isNaN(yearNum)) {
-                    if (isStrictlyWatched(movie)) {
+                    if (isStrictlyWatched) {
                          uniqueDecadesWatched.add(Math.floor(yearNum / 10) * 10);
                          if(yearNum < 1980) pre1980Count++;
                          // Fixed logic: Recent 5 years calculation
@@ -204,22 +211,32 @@ function calculateAllStatistics(currentMovieData) {
                 }
             }
             
-            if (Array.isArray(movie.full_cast)) movie.full_cast.slice(0, 10).forEach(p => { if (p && p.name) actorCounts[p.name] = (actorCounts[p.name] || 0) + 1; });
+            if (Array.isArray(movie.full_cast)) {
+                const castLen = Math.min(movie.full_cast.length, 10);
+                for (let cIdx = 0; cIdx < castLen; cIdx++) {
+                    const p = movie.full_cast[cIdx];
+                    if (p && p.name) actorCounts[p.name] = (actorCounts[p.name] || 0) + 1;
+                }
+            }
             if (movie.director_info && movie.director_info.name) {
                 directorCounts[movie.director_info.name] = (directorCounts[movie.director_info.name] || 0) + 1;
                 directorWatchCounts.set(movie.director_info.name, (directorWatchCounts.get(movie.director_info.name) || 0) + 1);
             }
-            if (Array.isArray(movie.production_companies)) movie.production_companies.slice(0, 5).forEach(c => {
-                if (c && c.name) {
-                    const normalizedName = productionCompanyNormalizationMap[c.name] || c.name;
-                    productionCompanyCounts[normalizedName] = (productionCompanyCounts[normalizedName] || 0) + 1;
-                    studioWatchCounts.set(normalizedName, (studioWatchCounts.get(normalizedName) || 0) + 1);
-                    if (parsedOverallRating !== null && !isNaN(parsedOverallRating)) {
-                        studioRatingsSum[normalizedName] = (studioRatingsSum[normalizedName] || 0) + parsedOverallRating;
-                        studioRatedEntriesCount[normalizedName] = (studioRatedEntriesCount[normalizedName] || 0) + 1;
+            if (Array.isArray(movie.production_companies)) {
+                const compLen = Math.min(movie.production_companies.length, 5);
+                for (let pIdx = 0; pIdx < compLen; pIdx++) {
+                    const c = movie.production_companies[pIdx];
+                    if (c && c.name) {
+                        const normalizedName = productionCompanyNormalizationMap[c.name] || c.name;
+                        productionCompanyCounts[normalizedName] = (productionCompanyCounts[normalizedName] || 0) + 1;
+                        studioWatchCounts.set(normalizedName, (studioWatchCounts.get(normalizedName) || 0) + 1);
+                        if (parsedOverallRating !== null && !isNaN(parsedOverallRating)) {
+                            studioRatingsSum[normalizedName] = (studioRatingsSum[normalizedName] || 0) + parsedOverallRating;
+                            studioRatedEntriesCount[normalizedName] = (studioRatedEntriesCount[normalizedName] || 0) + 1;
+                        }
                     }
                 }
-            });
+            }
 
             if(movie.tmdb_collection_id) {
                 if (!tmdbCollectionMovieIds.has(movie.tmdb_collection_id)) {
@@ -237,15 +254,16 @@ function calculateAllStatistics(currentMovieData) {
                 rewatchCountsPerTitle[movie.id] = watchHistoryCount;
             }
 
-            movie.watchHistory.forEach(wh => {
-                if (!wh || !wh.date) return;
+            for (let wIdx = 0; wIdx < movie.watchHistory.length; wIdx++) {
+                const wh = movie.watchHistory[wIdx];
+                if (!wh || !wh.date) continue;
                 try {
                     const cleanDate = String(wh.date).trim();
                     const dateStr = cleanDate.slice(0, 10);
                     const yearNum = parseInt(dateStr.slice(0, 4), 10);
                     const monthNum = parseInt(dateStr.slice(5, 7), 10);
                     const dayNum = parseInt(dateStr.slice(8, 10), 10);
-                    if (isNaN(yearNum) || isNaN(monthNum) || isNaN(dayNum)) return;
+                    if (isNaN(yearNum) || isNaN(monthNum) || isNaN(dayNum)) continue;
 
                     let hoursNum = 0;
                     if (cleanDate.length >= 19 && cleanDate.includes("T")) {
@@ -255,7 +273,7 @@ function calculateAllStatistics(currentMovieData) {
 
                     const d = new Date(yearNum, monthNum - 1, dayNum, hoursNum, 0, 0);
                     const timestamp = d.getTime();
-                    if (isNaN(timestamp)) return;
+                    if (isNaN(timestamp)) continue;
 
                     // Performance optimization: store pre-calculated timestamp to avoid repeated new Date() instantiations
                     allWatchInstances.push({ date: dateStr, timestamp, genre: movie.Genre, time: hoursNum, movie: movie });
@@ -290,16 +308,15 @@ function calculateAllStatistics(currentMovieData) {
                         weekendCounts[weekendIdentifier] = (weekendCounts[weekendIdentifier] || 0) + 1;
                     }
                     
-                    if(movie.Genre) {
-                        movie.Genre.split(',').map(g=>g.trim()).forEach(g => {
-                            if(!genreWatchesByDate[g]) genreWatchesByDate[g] = new Set();
-                            genreWatchesByDate[g].add(dateStr);
-                        });
+                    for (let gIdx = 0; gIdx < genres.length; gIdx++) {
+                        const g = genres[gIdx];
+                        if (!genreWatchesByDate[g]) genreWatchesByDate[g] = new Set();
+                        genreWatchesByDate[g].add(dateStr);
                     }
                 } catch(e) { console.warn(`Could not parse watch history date for entry "${movie.Name}": ${wh.date}`); }
-            });
+            }
         }
-    });
+    }
 
     achievementData.total_entries = currentMovieData.length;
     achievementData.total_titles_watched = currentMovieData.filter(isWatchedOrContinue).length;
@@ -348,20 +365,23 @@ function calculateAllStatistics(currentMovieData) {
     achievementData.manual_links_count = Math.floor(manualLinksCount / 2);
     
     let themedSpreeCount = 0;
-    for(const genre in genreWatchesByDate) {
+    for (const genre in genreWatchesByDate) {
         const dates = Array.from(genreWatchesByDate[genre]).sort();
-        if(dates.length < 3) continue;
+        if (dates.length < 3) continue;
         let hasValidStreak = false;
         // Performance optimization: Pre-parse genre streak dates to numeric timestamps to avoid repeated new Date() allocations
         const timestamps = dates.map(d => Date.parse(d + 'T00:00:00Z'));
-        for(let i=0; i <= dates.length - 3; i++) {
+        for (let i = 0; i <= dates.length - 3; i++) {
             const daysDifference = (timestamps[i+2] - timestamps[i]) / 86400000;
-            if(daysDifference <= 7) {
+            if (daysDifference <= 7) {
                 hasValidStreak = true;
                 break;
             }
         }
-        if(hasValidStreak) themedSpreeCount = 1;
+        if (hasValidStreak) {
+            themedSpreeCount = 1;
+            break; // Short-circuit: threshold is 1 spree, no need to continue checking other genres
+        }
     }
     achievementData.genre_streak_short_term = themedSpreeCount;
     achievementData.hidden_gem_count = hiddenGemCount;
