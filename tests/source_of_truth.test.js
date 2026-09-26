@@ -387,6 +387,9 @@ function setupSandbox() {
             setItem: () => {},
             removeItem: () => {}
         },
+        Papa: {
+            unparse: (data) => JSON.stringify(data)
+        },
         URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
         Blob: class Blob {},
         IntersectionObserver: class IntersectionObserver {
@@ -1258,6 +1261,54 @@ test('CONTRACT: Import normalizer (normalizeImportedRow) safely handles stringif
     assert.ok(Array.isArray(normalized.watchHistory));
     assert.deepEqual(Array.from(normalized.episodes_per_season), [10, 12, 12]);
     assert.equal(normalized.series_status, 'Ended');
+});
+
+test('CONTRACT: Export CSV formula sanitizer prepends single quote to formula trigger characters', () => {
+    const sandbox = setupSandbox();
+
+    sandbox.movieData = [
+        {
+            id: '12345678-1234-4000-8000-123456789abc',
+            Name: '=cmd|\' /C calc\'!A0',
+            Category: '+1800EXPLOIT',
+            Genre: '-2+3',
+            Status: '@SUM(A1:A10)',
+            Recommendation: '\ttab_trigger',
+            _sync_state: 'synced',
+            is_deleted: false,
+            Year: '2023'
+        }
+    ];
+
+    let downloadedContent = null;
+    let downloadedFileName = null;
+
+    sandbox.document.createElement = (tag) => {
+        if (tag === 'a') {
+            return {
+                set href(val) {},
+                set download(name) { downloadedFileName = name; },
+                click: () => {}
+            };
+        }
+        return { click: () => {}, setAttribute: () => {}, style: {} };
+    };
+
+    sandbox.Blob = class MockBlob {
+        constructor(parts) {
+            downloadedContent = parts[0];
+        }
+    };
+
+    sandbox.generateAndDownloadFile('csv');
+
+    assert.ok(downloadedContent !== null, 'CSV export content must be generated');
+    assert.equal(downloadedFileName, 'keepmoviez_log.csv');
+
+    assert.ok(downloadedContent.includes("'=cmd|' /C calc'!A0"), 'Name formula trigger must be escaped with leading quote');
+    assert.ok(downloadedContent.includes("'+1800EXPLOIT"), 'Category plus formula trigger must be escaped with leading quote');
+    assert.ok(downloadedContent.includes("'-2+3"), 'Genre minus formula trigger must be escaped with leading quote');
+    assert.ok(downloadedContent.includes("'@SUM(A1:A10)"), 'Status at formula trigger must be escaped with leading quote');
 });
 
 test('CONTRACT: Export data sanitizer strips internal flags and preserves columns', () => {
