@@ -119,9 +119,10 @@ body {
       var(--body-bg-gradient-end));
   color: var(--body-text-color);
   font-family: "Poppins", sans-serif;
-  padding-top: 70px;
-  /* Make space for the fixed top navbar */
-  padding-bottom: 70px;
+  padding-top: max(70px, calc(70px + env(safe-area-inset-top)));
+  padding-bottom: max(70px, calc(70px + env(safe-area-inset-bottom)));
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
@@ -154,8 +155,10 @@ p {
   background-color: var(--navbar-bg) !important;
   border-bottom: 1px solid var(--navbar-border);
   z-index: 1030;
-  padding-top: 0.5rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
   padding-bottom: 0.5rem;
+  padding-left: max(0.5rem, env(safe-area-inset-left));
+  padding-right: max(0.5rem, env(safe-area-inset-right));
   display: flex;
   flex-wrap: nowrap;
   justify-content: space-between;
@@ -205,8 +208,8 @@ p {
   border-radius: 0;
   color: #ffffff !important;
   /* MODIFIED: Make input text always white */
-  padding-right: 55px;
-  /* Make space for clear search and sort direction buttons */
+  padding-right: 88px;
+  /* Make space for 44px clear search and sort direction buttons */
   transition: border-color 0.2s ease-in-out;
 }
 
@@ -230,20 +233,26 @@ p {
   border: none !important;
   box-shadow: none !important;
   color: var(--warning-color);
-  /* MODIFIED: Make toggle more visible */
   background-color: transparent;
-  height: 100%;
-  padding: 0 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 #sortColumnDropdown {
-  width: 100%;
-  height: auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #clearSearchBtn {
   position: absolute;
-  right: 30px;
+  right: 44px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
@@ -251,7 +260,12 @@ p {
   box-shadow: none !important;
   color: rgba(255, 255, 255, 0.7);
   background-color: transparent;
-  padding: 0 4px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   font-size: 0.85rem;
   line-height: 1;
 }
@@ -262,7 +276,7 @@ p {
 }
 
 .fixed-bottom-nav {
-  height: 55px;
+  height: calc(55px + env(safe-area-inset-bottom, 0px));
   position: fixed;
   bottom: 0;
   left: 0;
@@ -277,7 +291,10 @@ p {
   transition:
     background-color 0.3s ease,
     box-shadow 0.3s ease;
-  padding: 0 15px;
+  padding-top: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: max(15px, env(safe-area-inset-left, 0px));
+  padding-right: max(15px, env(safe-area-inset-right, 0px));
 }
 
 .fixed-bottom-nav .btn {
@@ -700,13 +717,15 @@ body.multi-select-active #addNewEntryBtn {
   /* Increased min-height for better spacing and larger poster */
 }
 
-.movie-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
+@media (hover: hover) {
+  .movie-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
 
-.dark-theme .movie-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  .dark-theme .movie-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .movie-card.selected {
@@ -1223,13 +1242,15 @@ body.multi-select-active #addNewEntryBtn {
   white-space: nowrap;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
 
-.dark-theme .btn:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  .dark-theme .btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .btn:focus-visible,
@@ -2363,8 +2384,20 @@ a:hover {
 }
 
 #filterBtn {
-  padding: 0.375rem 0.6rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   line-height: 1.2;
+}
+
+.navbar-toggler {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .offcanvas-menu {
