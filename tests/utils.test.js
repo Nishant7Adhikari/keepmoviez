@@ -383,6 +383,7 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('aria-label="Learn more about Backfill Missing Data"'));
     assert.ok(html.includes('aria-label="Learn more about Erase All Data"'));
     assert.ok(html.includes('aria-label="Learn more about Export Data"'));
+    assert.ok(html.includes('aria-label="Learn more about Visual Data & Analytics"'));
     assert.ok(html.includes('id="legalComplianceDisclaimer"'));
     assert.ok(html.includes('id="menuThemeToggleBtn"') && html.includes('aria-label="Toggle Theme"'));
     assert.ok(html.includes('id="menuImportBtn"') && html.includes('aria-label="Load Data"'));
@@ -851,6 +852,22 @@ test('js/main.js specifies noopener,noreferrer for viewTmdbPersonBtn window.open
     );
 });
 
+test('js/ui.js encodes dynamic IMDb and TMDB person IDs with encodeURIComponent for external URLs', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    assert.ok(
+        uiCode.includes('https://m.imdb.com/title/${encodeURIComponent(epIds.imdb_id)}/parentalguide/'),
+        'Expected episode IMDb ID to be encoded with encodeURIComponent'
+    );
+    assert.ok(
+        uiCode.includes('https://m.imdb.com/title/${encodeURIComponent(imdbId)}/parentalguide/'),
+        'Expected IMDb ID to be encoded with encodeURIComponent'
+    );
+    assert.ok(
+        uiCode.includes('https://www.themoviedb.org/person/${encodeURIComponent(personId)}'),
+        'Expected TMDB person ID to be encoded with encodeURIComponent'
+    );
+});
+
 test('index.html contains accessible #clearSearchBtn element inside navbar search form', () => {
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(
@@ -865,4 +882,113 @@ test('index.html contains accessible #clearSearchBtn element inside navbar searc
         html.includes('title="Clear search"'),
         'Expected #clearSearchBtn to have title="Clear search"'
     );
+});
+
+test('createMovieCardElement in js/ui.js renders status icons with aria-hidden="true"', () => {
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    assert.ok(
+        uiCode.includes('<i class="fas fa-list-ul" title="Status" aria-hidden="true"></i>'),
+        'Expected fa-list-ul icon in createMovieCardElement to have aria-hidden="true"'
+    );
+    assert.ok(
+        uiCode.includes('<i class="fas fa-history" title="Last Watched" aria-hidden="true"></i>'),
+        'Expected fa-history icon in createMovieCardElement to have aria-hidden="true"'
+    );
+});
+
+test('populateFilterModalOptions populates category, country, and language select options using mapped full country names and DocumentFragment', () => {
+    function createMockSelect() {
+        let html = '';
+        const children = [];
+        return {
+            value: '',
+            children: children,
+            set innerHTML(val) { html = val; children.length = 0; },
+            get innerHTML() { return html; },
+            appendChild(child) {
+                if (child && Array.isArray(child.children)) {
+                    children.push(...child.children);
+                } else {
+                    children.push(child);
+                }
+            }
+        };
+    }
+
+    const categorySelect = createMockSelect();
+    const countrySelect = createMockSelect();
+    const languageSelect = createMockSelect();
+
+    const elements = {
+        filterCategory: categorySelect,
+        filterCountry: countrySelect,
+        filterLanguage: languageSelect,
+        filterGenreContainer: { children: [], removeChild: () => {} },
+        filterGenreSearchInput: { value: '', placeholder: '' },
+        filterGenreItemsContainer: { innerHTML: '', appendChild: () => {} }
+    };
+
+    const testSandbox = {
+        console,
+        movieData: [
+            { id: '1', Name: 'Movie 1', Category: 'Movie', Country: 'US', Language: 'English', is_deleted: false },
+            { id: '2', Name: 'Series 1', Category: 'Series', Country: 'FR', Language: 'French', is_deleted: false },
+            { id: '3', Name: 'Deleted 1', Category: 'Anime', Country: 'JP', Language: 'Japanese', is_deleted: true }
+        ],
+        activeFilters: { category: 'Movie', country: 'US', language: 'English', genres: [], genreLogic: 'AND' },
+        selectedFilterGenres: [],
+        UNIQUE_ALL_GENRES: ['Action', 'Comedy'],
+        countryCodeToNameMap: { US: 'United States', FR: 'France', JP: 'Japan' },
+        document: {
+            getElementById: (id) => elements[id] || null,
+            querySelector: () => null,
+            createElement: (tag) => ({ value: '', textContent: '', className: '', innerHTML: '', addEventListener: () => {} }),
+            createDocumentFragment: () => {
+                const children = [];
+                return {
+                    appendChild(c) { children.push(c); },
+                    get children() { return children; }
+                };
+            },
+            addEventListener: () => {}
+        },
+        IntersectionObserver: class { constructor() {} observe() {} unobserve() {} disconnect() {} }
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+    vm.runInContext(utilsCode, testSandbox);
+    vm.runInContext(uiCode, testSandbox);
+
+    testSandbox.populateFilterModalOptions();
+
+    assert.equal(categorySelect.value, 'Movie');
+    assert.equal(countrySelect.value, 'US');
+    assert.equal(languageSelect.value, 'English');
+
+    // Deleted items should not be in options
+    const countryTextContents = countrySelect.children.map(c => c.textContent);
+    assert.ok(countryTextContents.includes('France'));
+    assert.ok(countryTextContents.includes('United States'));
+    assert.ok(!countryTextContents.includes('Japan'));
+});
+
+test('404.html and offline.html have accessible ARIA attributes and valid text content', () => {
+    const offlineHtml = fs.readFileSync(path.join(__dirname, '../offline.html'), 'utf8');
+    assert.ok(offlineHtml.includes('id="offlineTitle" class="title">You are Currently Offline</h1>'));
+    assert.ok(offlineHtml.includes('aria-label="Try Again - Recheck internet connection"'));
+    assert.ok(offlineHtml.includes('aria-label="Continue Offline - Load local collection data"'));
+    assert.ok(offlineHtml.includes('aria-label="Force Sync - Sync data when online"'));
+    assert.ok(offlineHtml.includes('aria-label="Export JSON - Export local collection as JSON"'));
+    assert.ok(offlineHtml.includes("unless you are connected to the internet."));
+    assert.ok(!offlineHtml.includes('$6@002&#11$4)(14'));
+    assert.ok(offlineHtml.includes("toggle.setAttribute('aria-label', isLight ? 'Light - Switch to light theme' : 'Dark - Switch to dark theme');"));
+
+    const html404 = fs.readFileSync(path.join(__dirname, '../404.html'), 'utf8');
+    assert.ok(html404.includes('id="emoji-display" role="img" aria-label="Emoji clue for movie"'));
+    assert.ok(html404.includes('id="feedback" aria-live="polite" role="status"'));
+    assert.ok(html404.includes('aria-label="Reset Game - Start score over"'));
+    assert.ok(html404.includes('aria-label="Back to Homepage"'));
 });

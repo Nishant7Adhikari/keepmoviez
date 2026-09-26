@@ -169,7 +169,7 @@ body{
 <!-- Floating birds/leaves: inserted by JS for randomized motion -->
 <!-- Main content -->
 <main class="card" role="main" aria-labelledby="offlineTitle">
-  <h1 id="offlineTitle" class="title">You are Currently Offline. ⚠️Caution :given features are currently under development, so may not work as intended.</h1>
+  <h1 id="offlineTitle" class="title">You are Currently Offline</h1>
   <p class="lead">
     KeepMovizEZ could not connect to the network. The app requires an initial online load to fetch cloud data.
     If you previously signed in on this device, you can continue offline — local data will open but cloud features (search, updates) will be unavailable.
@@ -183,10 +183,10 @@ body{
   </div>
 
   <div class="controls" style="margin-top:14px;">
-    <button id="continueBtn" class="btn">Try Again</button>
-    <button id="continueOfflineBtn" class="btn ghost" style="display:none">Continue Offline</button>
-    <button id="forceSyncBtn" class="btn small" title="Sync when online">Force Sync</button>
-    <button id="exportBtn" class="btn small" title="Export local DB">Export JSON</button>
+    <button id="continueBtn" class="btn" aria-label="Try Again - Recheck internet connection">Try Again</button>
+    <button id="continueOfflineBtn" class="btn ghost" style="display:none" aria-label="Continue Offline - Load local collection data">Continue Offline</button>
+    <button id="forceSyncBtn" class="btn small" title="Sync when online" aria-label="Force Sync - Sync data when online">Force Sync</button>
+    <button id="exportBtn" class="btn small" title="Export local DB" aria-label="Export JSON - Export local collection as JSON">Export JSON</button>
   </div>
 
   <div class="status-line" id="offlineMessage" style="min-height:20px;"></div>
@@ -424,7 +424,7 @@ async function decideOfflineFlow() {
 
   // If supabase client set the user, show Continue Offline and message
   if (currentSupabaseUser) {
-    offlineMessageEl.textContent = 'Search and cloud-based features will not work unless you are "$6@002&#11$4)(14"';
+    offlineMessageEl.textContent = 'Search and cloud-based features will not work unless you are connected to the internet.';
     continueOfflineBtn.style.display = 'inline-block';
     // clicking continue offline should load local data via initializeApp if available
     continueOfflineBtn.onclick = async function() {
@@ -542,16 +542,20 @@ exportBtn.addEventListener('click', async ()=> {
   toggle.style.bottom = '14px';
   toggle.style.zIndex = 9999;
   toggle.style.padding = '8px 12px';
-  toggle.textContent = stored === '1' ? 'Light' : 'Dark';
+  const isLight = stored === '1';
+  toggle.textContent = isLight ? 'Light' : 'Dark';
+  toggle.setAttribute('aria-label', isLight ? 'Light - Switch to light theme' : 'Dark - Switch to dark theme');
   toggle.onclick = function(){
     const on = localStorage.getItem(darkKey) !== '1';
     if (on) {
       document.documentElement.style.filter = 'brightness(.86) saturate(.92)';
       toggle.textContent = 'Light';
+      toggle.setAttribute('aria-label', 'Light - Switch to light theme');
       localStorage.setItem(darkKey,'1');
     } else {
       document.documentElement.style.filter = '';
       toggle.textContent = 'Dark';
+      toggle.setAttribute('aria-label', 'Dark - Switch to dark theme');
       localStorage.removeItem(darkKey);
     }
   };
