@@ -974,3 +974,21 @@ test('populateFilterModalOptions populates category, country, and language selec
     assert.ok(countryTextContents.includes('United States'));
     assert.ok(!countryTextContents.includes('Japan'));
 });
+
+test('404.html and offline.html have accessible ARIA attributes and valid text content', () => {
+    const offlineHtml = fs.readFileSync(path.join(__dirname, '../offline.html'), 'utf8');
+    assert.ok(offlineHtml.includes('id="offlineTitle" class="title">You are Currently Offline</h1>'));
+    assert.ok(offlineHtml.includes('aria-label="Try Again - Recheck internet connection"'));
+    assert.ok(offlineHtml.includes('aria-label="Continue Offline - Load local collection data"'));
+    assert.ok(offlineHtml.includes('aria-label="Force Sync - Sync data when online"'));
+    assert.ok(offlineHtml.includes('aria-label="Export JSON - Export local collection as JSON"'));
+    assert.ok(offlineHtml.includes("unless you are connected to the internet."));
+    assert.ok(!offlineHtml.includes('$6@002&#11$4)(14'));
+    assert.ok(offlineHtml.includes("toggle.setAttribute('aria-label', isLight ? 'Light - Switch to light theme' : 'Dark - Switch to dark theme');"));
+
+    const html404 = fs.readFileSync(path.join(__dirname, '../404.html'), 'utf8');
+    assert.ok(html404.includes('id="emoji-display" role="img" aria-label="Emoji clue for movie"'));
+    assert.ok(html404.includes('id="feedback" aria-live="polite" role="status"'));
+    assert.ok(html404.includes('aria-label="Reset Game - Start score over"'));
+    assert.ok(html404.includes('aria-label="Back to Homepage"'));
+});

@@ -180,16 +180,16 @@
         </div>
 
         <p style="margin: 0; color: #b0b0b0; font-size: 0.9rem;">Guess the movie from the emojis:</p>
-        <div class="emoji-display" id="emoji-display">⏳</div>
-        <div class="feedback" id="feedback"></div>
+        <div class="emoji-display" id="emoji-display" role="img" aria-label="Emoji clue for movie">⏳</div>
+        <div class="feedback" id="feedback" aria-live="polite" role="status"></div>
 
         <div class="options-grid" id="options-container">
             <!-- Buttons injected by JS -->
         </div>
 
         <div class="controls">
-            <button class="btn btn-secondary" onclick="resetGame()">Reset Game</button>
-            <a href="/" class="btn btn-primary">Back to Homepage</a>
+            <button class="btn btn-secondary" onclick="resetGame()" aria-label="Reset Game - Start score over">Reset Game</button>
+            <a href="/" class="btn btn-primary" aria-label="Back to Homepage">Back to Homepage</a>
         </div>
     </div>
 
