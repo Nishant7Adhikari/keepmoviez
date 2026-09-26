@@ -7,7 +7,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
     <title>KeepMovieZ - Free Movie & TV Show Tracker, Watchlist and Watch History</title>
-    <link rel="icon" type="image/x-icon" href="favicon.png">
+    <script>
+        if (window.location.protocol === 'https:') {
+            const meta = document.createElement('meta');
+            meta.httpEquiv = 'Content-Security-Policy';
+            meta.content = 'upgrade-insecure-requests';
+            document.head.appendChild(meta);
+        }
+    </script>
+    <link rel="icon" type="image/x-icon" href="/favicon.png">
     <!-- Primary Meta Tags -->
     <meta name="title" content="KeepMoviEZ - Smart Movie & Series Tracker | Log, Rate & Visualize">
     <meta name="description"
@@ -15,7 +23,7 @@
     <meta name="keywords" content="KeepMoviEZ, movie tracker, media collection">
     <meta name="robots" content="index, follow">
     <meta name="author" content="Nishant Adhikari">
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests;">
+    <!-- <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests;"> -->
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <link rel="canonical" href="https://keepmoviez.nishantadhikari.info.np/">
 
@@ -52,22 +60,22 @@
     </script>
 
     <!-- Local Libraries (CSS) -->
-    <link href="libs/css/bootstrap.min.css" rel="stylesheet">
-    <link href="libs/css/all.min.css" rel="stylesheet"> <!-- Font Awesome -->
+    <link href="/libs/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/libs/css/all.min.css" rel="stylesheet"> <!-- Font Awesome -->
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="style.css?v=5.7.7">
+    <link rel="stylesheet" href="/style.css?v=5.7.7">
 
     <!-- PWA Manifest and Theme -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2C3E50">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
     <!-- Critical Local JS Libraries -->
-    <script src="libs/js/crypto-js.min.js"></script>
-    <script src="libs/js/supabase.min.js"></script>
+    <script src="/libs/js/crypto-js.min.js"></script>
+    <script src="/libs/js/supabase.min.js"></script>
 </head>
 <!-- END CHUNK: Document Head and Core Dependencies -->
 
@@ -204,7 +212,7 @@
                     data-target="#aboutModal" data-dismiss-menu="true" aria-label="View About KeepMoviEZ">
                     <i class="fas fa-info-circle mr-2" aria-hidden="true"></i> About
                 </button>
-                <a href="docs/index.html" target="_blank" rel="noopener noreferrer"
+                <a href="/docs/index.html" target="_blank" rel="noopener noreferrer"
                     class="list-group-item list-group-item-action d-flex align-items-center">
                     <i class="fas fa-book mr-2" aria-hidden="true"></i> Documentation
                 </a>
@@ -633,7 +641,7 @@
                             class="btn btn-sm btn-light mr-2 border" title="About KeepMoviEZ" aria-label="First time? About KeepMoviEZ">
                             <i class="fas fa-info-circle text-info" aria-hidden="true"></i> First time?
                         </button>
-                        <a style="color: var(--warning-color)" href="docs/index.html" target="_blank" rel="noopener noreferrer"
+                        <a style="color: var(--warning-color)" href="/docs/index.html" target="_blank" rel="noopener noreferrer"
                             class="btn btn-sm btn-light border">
                             <i class="fas fa-book text-secondary" aria-hidden="true"></i> Documentation
                         </a>
@@ -1292,7 +1300,7 @@
                             <textarea class="form-control" id="quickUpdateNotes" rows="2"></textarea>
                             <div id="quickUpdateInjectNotice" class="alert alert-info py-1 px-2 mt-2 mb-0 small d-flex align-items-center justify-content-between" style="display:none !important;">
                                 <span><i class="fas fa-info-circle mr-1" aria-hidden="true"></i> <span id="quickUpdateInjectNoticeText">", Season completed" will be appended to your previous watch log upon saving.</span></span>
-                                <a href="docs/index.html#quick-update-auto-notes" target="_blank" rel="noopener noreferrer" class="ml-2 text-info font-weight-bold" title="Learn how smart season completion works">
+                                <a href="/docs/index.html#quick-update-auto-notes" target="_blank" rel="noopener noreferrer" class="ml-2 text-info font-weight-bold" title="Learn how smart season completion works">
                                     <i class="fas fa-external-link-alt" aria-hidden="true"></i>
                                 </a>
                             </div>
@@ -2525,7 +2533,7 @@
                 <div class="modal-body about-modal-body" style="max-height: 70vh; overflow-y: auto;">
 
                     <div class="about-hero">
-                        <img class="about-hero-icon" src="icons/icon-256x256.png" alt="KeepMoviEZ" width="256"
+                        <img class="about-hero-icon" src="/icons/icon-256x256.png" alt="KeepMoviEZ" width="256"
                             height="256"></img>
                         <p>KeepMoviEZ is built to give you full control over your movie and series tracking—fast,
                             structured, and distraction-free. The name reflects exactly what it delivers: keeping your
@@ -2734,36 +2742,36 @@
 
     <!-- START CHUNK: JavaScript Libraries and Application Logic Scripts -->
     <!-- Local Base Libraries -->
-    <script src="libs/js/jquery.min.js"></script>
-    <script src="libs/js/popper.min.js"></script>
-    <script src="libs/js/bootstrap.min.js"></script>
-    <script src="libs/js/papaparse.min.js"></script>
-    <script src="libs/js/chart.js"></script>
+    <script src="/libs/js/jquery.min.js"></script>
+    <script src="/libs/js/popper.min.js"></script>
+    <script src="/libs/js/bootstrap.min.js"></script>
+    <script src="/libs/js/papaparse.min.js"></script>
+    <script src="/libs/js/chart.js"></script>
 
     <!-- Local PDF Export Libraries -->
-    <script src="libs/js/html2canvas.min.js"></script>
-    <script src="libs/js/jspdf.umd.min.js"></script>
-    <script src="libs/js/jspdf.plugin.autotable.min.js"></script>
+    <script src="/libs/js/html2canvas.min.js"></script>
+    <script src="/libs/js/jspdf.umd.min.js"></script>
+    <script src="/libs/js/jspdf.plugin.autotable.min.js"></script>
 
     <!-- Chart.js Plugins via CDN -->
     <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8/hammer.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
 
     <!-- Custom JS modules  -->
-    <script src="js/constant.js?v=5.7.1"></script>
-    <script src="js/utils.js?v=5.7.7"></script>
-    <script src="js/indexeddb.js?v=5.6.20"></script>
-    <script src="js/data.js?v=5.6.20"></script>
-    <script src="js/input-output.js?v=5.6.20"></script>
-    <script src="js/tmdb.js?v=5.7.5"></script>
-    <script src="js/genre.js?v=5.6.20"></script>
-    <script src="js/analysis.js?v=5.7.5"></script>
-    <script src="js/ui.js?v=5.7.7"></script>
-    <script src="js/reporting.js?v=5.7.5"></script>
-    <script src="js/app.js?v=5.7.3"></script>
-    <script src="js/supabase.js?v=5.6.22"></script>
-    <script src="js/backfill.js?v=5.7.5"></script>
-    <script src="js/main.js?v=5.7.5"></script>
+    <script src="/js/constant.js?v=5.7.1"></script>
+    <script src="/js/utils.js?v=5.7.7"></script>
+    <script src="/js/indexeddb.js?v=5.6.20"></script>
+    <script src="/js/data.js?v=5.6.20"></script>
+    <script src="/js/input-output.js?v=5.6.20"></script>
+    <script src="/js/tmdb.js?v=5.7.5"></script>
+    <script src="/js/genre.js?v=5.6.20"></script>
+    <script src="/js/analysis.js?v=5.7.5"></script>
+    <script src="/js/ui.js?v=5.7.7"></script>
+    <script src="/js/reporting.js?v=5.7.5"></script>
+    <script src="/js/app.js?v=5.7.3"></script>
+    <script src="/js/supabase.js?v=5.6.22"></script>
+    <script src="/js/backfill.js?v=5.7.5"></script>
+    <script src="/js/main.js?v=5.7.5"></script>
     <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
     <!-- Global Full-Screen Confetti Celebration Canvas -->

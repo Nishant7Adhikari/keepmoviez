@@ -736,8 +736,8 @@ function Update-CacheBusting {
         #
         # Matches:
         #
-        # src="js/app.js"
-        # src="./js/app.js?v=old"
+        # src="/js/app.js"
+        # src="/js/app.js?v=old"
         # href="/style.css"
         #
         # Preserves quote type and replaces an existing query.
