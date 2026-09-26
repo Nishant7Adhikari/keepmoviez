@@ -358,11 +358,13 @@ function generateAndDownloadFile(downloadType) {
             const cleanEntry = { ...entry };
             delete cleanEntry._sync_state;
             delete cleanEntry.is_deleted;
-            // Ensure complex objects are stringified for CSV
+            // Ensure complex objects are stringified and formula triggers sanitized for CSV
             if (downloadType === 'csv') {
                 for (const key in cleanEntry) {
                     if (typeof cleanEntry[key] === 'object' && cleanEntry[key] !== null) {
                         cleanEntry[key] = JSON.stringify(cleanEntry[key]);
+                    } else if (typeof cleanEntry[key] === 'string' && /^[=+\-@\t\r]/.test(cleanEntry[key])) {
+                        cleanEntry[key] = "'" + cleanEntry[key];
                     }
                 }
             }

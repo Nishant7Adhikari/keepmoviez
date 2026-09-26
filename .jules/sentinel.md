@@ -47,3 +47,8 @@
 **Vulnerability:** Interpolating dynamic entry IDs (`${safeEscape(entry.id)}`) into single-quoted string literals inside inline `onclick="..."` event attributes in `openUnwatchableModal` allowed JavaScript context breakout.
 **Learning:** Browsers decode HTML entities (`&#039;` -> `'`) in HTML attribute values before the JavaScript engine executes inline event handlers. Escaping single quotes as HTML entities does not prevent breaking out of single-quoted string literals in inline `onclick` scripts.
 **Prevention:** Avoid inline JavaScript string interpolation in `onclick` attributes. Instead, store dynamic values in `data-*` attributes (`data-movie-id="${escapeHTML(id)}"`) and attach event listeners via `addEventListener` or class-based event delegation.
+
+## 2026-09-26 - CSV Formula Injection Defense in Library Data Exports
+**Vulnerability:** Exporting user library entries to CSV (`generateAndDownloadFile`) without sanitizing string fields allowed CSV Formula Injection (Excel Macro Injection) if field values (e.g. entry titles, notes, recommendations) started with formula triggers (`=`, `+`, `-`, `@`, `\t`, `\r`).
+**Learning:** Spreadsheet programs evaluate cells starting with formula characters as formulas or commands upon opening CSV files, potentially leading to command execution or data exfiltration.
+**Prevention:** Prefix any exported string field starting with formula trigger characters (`=`, `+`, `-`, `@`, `\t`, `\r`) with a single quote (`'`) during CSV serialization.
