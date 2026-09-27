@@ -1093,6 +1093,9 @@ window.exportSelectedEntries = function (type) {
           if (typeof clean[key] === "object" && clean[key] !== null) {
             clean[key] = JSON.stringify(clean[key]);
           }
+          if (typeof clean[key] === "string" && /^[=+\-@\t\r]/.test(clean[key])) {
+            clean[key] = "'" + clean[key];
+          }
         }
       }
       return clean;
