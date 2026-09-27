@@ -82,3 +82,9 @@
 **Legal/Copy Risk:** Presenting visual analytics, heatmaps, and habit statistics ("Visual Data") without inline contextual microcopy or technical documentation creates user privacy concerns regarding whether personal viewing habits, rating distributions, or activity heatmaps are transmitted to external analytics or telemetry services.
 **Learning:** Data visualization dashboards in local-first media trackers require explicit, accessible inline assurances that all chart metrics and activity heatmaps are computed strictly in client-side browser memory without transmitting analytics externally.
 **Remedy:** Attach an accessible `(i)` info icon to `#chartsModalLabel` with `aria-label="Learn more about Visual Data & Analytics"` and protective title microcopy, and document local visualization rendering and analytics privacy boundaries in `./docs/index.html`.
+
+## 2026-09-27 - Unexplained Detailed Statistics and Analytics Privacy Concerns
+
+**Legal/Copy Risk:** Presenting comprehensive analytics dashboards ("Detailed Statistics") without inline contextual microcopy or documentation creates user privacy concerns regarding whether personal viewing habits, watch frequency, rating breakdowns, or temporal statistics are uploaded to external telemetry or analytics servers.
+**Learning:** Detailed analytics features in local-first media management apps require explicit, accessible inline assurances (`(i)`) confirming that all summary statistics, time distribution curves, and country/language breakdowns are calculated strictly in client-side memory without transmitting metrics to remote servers.
+**Remedy:** Attach an accessible `(i)` info icon to `#detailedStatsModalLabel` with `aria-label="Learn more about Detailed Statistics & Local Metrics"` and protective title microcopy, and document detailed statistics calculations and local analytics privacy boundaries in `./docs/index.html`.
