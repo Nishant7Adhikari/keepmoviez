@@ -276,7 +276,7 @@ function renderConfigurationScreen(summary) {
   footerEl.innerHTML = `
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
         <button type="button" class="btn btn-success" id="startBackfillBtn">
-            <i class="fas fa-play"></i> Start Backfill
+            <i class="fas fa-play" aria-hidden="true"></i> Start Backfill
         </button>
     `;
 
@@ -326,17 +326,17 @@ function renderStandardBackfillFooter() {
   const footerEl = document.querySelector("#backfillModal .modal-footer");
   footerEl.innerHTML = `
         <button type="button" class="btn btn-outline-secondary mr-auto" id="backfillGoogleBtn">
-            <i class="fab fa-google"></i> Google It
+            <i class="fab fa-google" aria-hidden="true"></i> Google It
         </button>
         <div>
             <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
-                <i class="fas fa-cloud-download-alt"></i> Auto-Fetch
+                <i class="fas fa-cloud-download-alt" aria-hidden="true"></i> Auto-Fetch
             </button>
             <button type="button" class="btn btn-secondary mr-2" onclick="skipCurrentField()">
-                <i class="fas fa-forward"></i> Skip
+                <i class="fas fa-forward" aria-hidden="true"></i> Skip
             </button>
             <button type="button" class="btn btn-success" onclick="saveAndNext()">
-                <i class="fas fa-check"></i> Next
+                <i class="fas fa-check" aria-hidden="true"></i> Next
             </button>
         </div>
     `;
@@ -779,7 +779,7 @@ function renderFieldInput(fieldConfig, entry) {
       return `
         <div id="backfillSeasonBreakdownWrapper">
           <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="small font-weight-bold text-muted"><i class="fas fa-list-ol text-primary mr-1"></i> Per-Season Episodes</span>
+            <span class="small font-weight-bold text-muted"><i class="fas fa-list-ol text-primary mr-1" aria-hidden="true"></i> Per-Season Episodes</span>
             <span id="backfillCalcTotalEpsBadge" class="badge badge-primary font-weight-bold px-2 py-1">0 eps</span>
           </div>
           <div id="backfillSeasonBreakdownContainer" class="p-2 rounded border bg-light" style="max-height: 240px; overflow-y: auto;">
@@ -1345,7 +1345,7 @@ function showBackfillComplete() {
   const bodyEl = modal.querySelector(".modal-body");
   bodyEl.innerHTML = `
         <div class="text-center py-5">
-            <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+            <i class="fas fa-check-circle text-success" style="font-size: 4rem;" aria-hidden="true"></i>
             <h4 class="mt-4">Backfill Complete!</h4>
             <div class="mt-4">
                 <p class="mb-2"><strong>Total Fields:</strong> ${backfillStats.total}</p>
@@ -1394,7 +1394,7 @@ function renderBackfillDirectorChips() {
     const name = typeof dir === "object" && dir ? dir.name : String(dir);
     chipsHtml += `
       <span class="director-chip" data-index="${idx}">
-        ${avatar ? `<img src="${typeof escapeHTML === "function" ? escapeHTML(avatar) : avatar}" alt="${typeof escapeHTML === "function" ? escapeHTML(name) : name}" onerror="this.style.display='none'">` : `<i class="fas fa-user text-muted mr-1" style="font-size: 0.75rem;"></i>`}
+        ${avatar ? `<img src="${typeof escapeHTML === "function" ? escapeHTML(avatar) : avatar}" alt="${typeof escapeHTML === "function" ? escapeHTML(name) : name}" onerror="this.style.display='none'">` : `<i class="fas fa-user text-muted mr-1" style="font-size: 0.75rem;" aria-hidden="true"></i>`}
         <span>${typeof escapeHTML === "function" ? escapeHTML(name) : name}</span>
         <span class="chip-remove" data-index="${idx}" title="Remove">&times;</span>
       </span>

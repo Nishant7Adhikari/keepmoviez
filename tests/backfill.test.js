@@ -250,3 +250,38 @@ test('renderBackfillDirectorChips renders secure HTML without inline onclick han
     clickListeners[0].call({ getAttribute: () => '0' });
     assert.equal(testSandbox.window.backfillSelectedDirectors.length, 0);
 });
+
+test('renderStandardBackfillFooter and renderConfigurationScreen include aria-hidden="true" on decorative icons', () => {
+    let mockFooterHTML = '';
+    let mockBodyHTML = '';
+    const testSandbox = {
+        console,
+        escapeHTML: (str) => String(str),
+        document: {
+            querySelector: (selector) => {
+                if (selector === '#backfillModal .modal-footer') {
+                    return { set innerHTML(val) { mockFooterHTML = val; } };
+                }
+                if (selector === '#backfillModal .modal-body') {
+                    return { set innerHTML(val) { mockBodyHTML = val; } };
+                }
+                return null;
+            },
+            getElementById: () => ({ onclick: null })
+        },
+        window: {}
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(code, testSandbox);
+
+    testSandbox.renderConfigurationScreen([{ key: 'runtime', label: 'Runtime', count: 1 }]);
+    assert.ok(mockFooterHTML.includes('<i class="fas fa-play" aria-hidden="true"></i>'));
+
+    testSandbox.renderStandardBackfillFooter();
+    assert.ok(mockFooterHTML.includes('<i class="fab fa-google" aria-hidden="true"></i>'));
+    assert.ok(mockFooterHTML.includes('<i class="fas fa-cloud-download-alt" aria-hidden="true"></i>'));
+    assert.ok(mockFooterHTML.includes('<i class="fas fa-forward" aria-hidden="true"></i>'));
+    assert.ok(mockFooterHTML.includes('<i class="fas fa-check" aria-hidden="true"></i>'));
+});
