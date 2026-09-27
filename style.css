@@ -205,8 +205,8 @@ p {
   border-radius: 0;
   color: #ffffff !important;
   /* MODIFIED: Make input text always white */
-  padding-right: 55px;
-  /* Make space for clear search and sort direction buttons */
+  padding-right: 88px;
+  /* Make space for 44px clear search and sort direction touch buttons */
   transition: border-color 0.2s ease-in-out;
 }
 
@@ -230,10 +230,14 @@ p {
   border: none !important;
   box-shadow: none !important;
   color: var(--warning-color);
-  /* MODIFIED: Make toggle more visible */
   background-color: transparent;
   height: 100%;
-  padding: 0 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
 }
 
 #sortColumnDropdown {
@@ -243,7 +247,7 @@ p {
 
 #clearSearchBtn {
   position: absolute;
-  right: 30px;
+  right: 44px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 4;
@@ -251,8 +255,13 @@ p {
   box-shadow: none !important;
   color: rgba(255, 255, 255, 0.7);
   background-color: transparent;
-  padding: 0 4px;
-  font-size: 0.85rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 0.95rem;
   line-height: 1;
 }
 
@@ -394,6 +403,13 @@ body.multi-select-active #addNewEntryBtn {
   color: white;
   opacity: 0.9;
   text-shadow: none;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: -0.5rem -0.5rem -0.5rem auto;
   transition:
     opacity 0.15s ease,
     color 0.15s ease;
@@ -670,6 +686,7 @@ body.multi-select-active #addNewEntryBtn {
 .table-responsive {
   position: static;
   max-height: calc(100vh - 56px - 70px - 20px);
+  max-height: calc(100dvh - 56px - 70px - 20px);
   overflow-y: auto;
   overflow-x: hidden;
   margin-top: 20px;
@@ -700,13 +717,15 @@ body.multi-select-active #addNewEntryBtn {
   /* Increased min-height for better spacing and larger poster */
 }
 
-.movie-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
+@media (hover: hover) {
+  .movie-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
 
-.dark-theme .movie-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  .dark-theme .movie-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .movie-card.selected {
@@ -835,20 +854,27 @@ body.multi-select-active #addNewEntryBtn {
 
 .card-actions {
   display: flex;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.25rem;
   flex-shrink: 0;
-  padding-left: 0.5rem;
+  padding-left: 0.25rem;
 }
 
 .card-actions .btn {
-  padding: 0.2rem 0.5rem;
-  font-size: 0.8rem;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 400px) {
   .card-actions .btn {
-    padding: 0.15rem 0.3rem;
-    font-size: 0.7rem;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 0.85rem;
   }
 }
 
@@ -1223,13 +1249,15 @@ body.multi-select-active #addNewEntryBtn {
   white-space: nowrap;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
 
-.dark-theme .btn:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  .dark-theme .btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .btn:focus-visible,
@@ -1390,12 +1418,28 @@ a:focus-visible {
   transform: scale(1.1) rotate(2deg);
 }
 
+#addNewEntryBtn {
+  min-width: 48px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
 #addNewEntryBtn i {
   transition: transform 0.2s ease;
 }
 
 #addNewEntryBtn:hover i {
   transform: scale(1.2) rotate(5deg);
+}
+
+#addModeButtons .btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-sm {
@@ -1459,6 +1503,13 @@ a:focus-visible {
   color: white;
   opacity: 0.9;
   text-shadow: none;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: -0.5rem -0.5rem -0.5rem auto;
   transition:
     opacity 0.15s ease,
     color 0.15s ease;
@@ -1972,6 +2023,7 @@ a:hover {
 
   .table-responsive {
     max-height: calc(100vh - 50px - 70px - 20px - 20px);
+    max-height: calc(100dvh - 50px - 70px - 20px - 20px);
   }
 
   .stats-chart-container,
@@ -2316,9 +2368,11 @@ a:hover {
   color: var(--body-text-color);
 }
 
-.achievement-badge:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+  .achievement-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .achievement-badge .fa-stack {
@@ -2373,6 +2427,7 @@ a:hover {
   left: 0;
   width: 280px;
   height: 100vh;
+  height: 100dvh;
   background-color: var(--card-bg);
   color: var(--body-text-color);
   z-index: 1045;
@@ -2396,6 +2451,7 @@ a:hover {
   left: 0;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1040;
   opacity: 0;
@@ -2554,6 +2610,7 @@ a:hover {
   border-radius: var(--border-radius-lg);
   overflow: hidden;
   height: 90vh;
+  height: 90dvh;
   max-height: 800px;
   display: flex;
   flex-direction: column;
@@ -3037,10 +3094,12 @@ a:hover {
   background-color: var(--input-bg);
 }
 
-.credit-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--card-shadow);
-  background-color: var(--card-bg);
+@media (hover: hover) {
+  .credit-item:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--card-shadow);
+    background-color: var(--card-bg);
+  }
 }
 
 .credit-icon {
@@ -3412,9 +3471,11 @@ a:hover {
   border: 1px solid var(--card-border-color);
 }
 
-.suggestion-card:hover {
-  transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+@media (hover: hover) {
+  .suggestion-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .suggestion-card img {
