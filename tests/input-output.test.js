@@ -24,6 +24,7 @@ const sandbox = {
     URL: { createObjectURL: () => 'blob:mock', revokeObjectURL: () => {} },
     Blob: class Blob {}
 };
+sandbox.window = sandbox;
 
 vm.createContext(sandbox);
 const utilsCode = fs.readFileSync(path.join(__dirname, '../js/utils.js'), 'utf8');
@@ -122,4 +123,49 @@ test('index.html includes accessible info icon trigger for Batch Delete Scopes',
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(html.includes('aria-label="Learn more about Batch Delete Scopes"'));
     assert.ok(html.includes('title="Deletion scope determines whether selected entries are purged from local browser cache, remote cloud database, or both locations."'));
+});
+
+test('CSV export sanitizes formula triggers in string fields for full and batch export', () => {
+    const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+
+    let unparsedData = null;
+    sandbox.Papa = {
+        unparse: (data) => {
+            unparsedData = data;
+            return 'mock,csv';
+        }
+    };
+    sandbox.showToast = () => {};
+    sandbox.movieData = [
+        {
+            id: 'm1',
+            Name: '=cmd|\' /C calc\'!A0',
+            Description: '+12345',
+            notes: '-danger',
+            Category: '@admin',
+            Status: '\tTabbed'
+        }
+    ];
+    sandbox.selectedEntryIds = ['m1'];
+    sandbox.isMultiSelectMode = true;
+
+    // Test generateAndDownloadFile
+    sandbox.generateAndDownloadFile('csv');
+    assert.ok(unparsedData);
+    assert.equal(unparsedData[0].Name, "'=cmd|' /C calc'!A0");
+    assert.equal(unparsedData[0].Description, "'+12345");
+    assert.equal(unparsedData[0].notes, "'-danger");
+    assert.equal(unparsedData[0].Category, "'@admin");
+    assert.equal(unparsedData[0].Status, "'\tTabbed");
+
+    // Reset and test exportSelectedEntries
+    unparsedData = null;
+    vm.runInContext(appCode, sandbox);
+    sandbox.exportSelectedEntries('csv');
+    assert.ok(unparsedData);
+    assert.equal(unparsedData[0].Name, "'=cmd|' /C calc'!A0");
+    assert.equal(unparsedData[0].Description, "'+12345");
+    assert.equal(unparsedData[0].notes, "'-danger");
+    assert.equal(unparsedData[0].Category, "'@admin");
+    assert.equal(unparsedData[0].Status, "'\tTabbed");
 });

@@ -363,7 +363,8 @@ function generateAndDownloadFile(downloadType) {
                 for (const key in cleanEntry) {
                     if (typeof cleanEntry[key] === 'object' && cleanEntry[key] !== null) {
                         cleanEntry[key] = JSON.stringify(cleanEntry[key]);
-                    } else if (typeof cleanEntry[key] === 'string' && /^[=+\-@\t\r]/.test(cleanEntry[key])) {
+                    }
+                    if (typeof cleanEntry[key] === 'string' && /^[=+\-@\t\r]/.test(cleanEntry[key])) {
                         cleanEntry[key] = "'" + cleanEntry[key];
                     }
                 }
