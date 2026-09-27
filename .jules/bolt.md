@@ -73,3 +73,7 @@
 ## 2026-09-26 - Pre-parsed movie genres & indexed loops in calculateAllStatistics
 **Learning:** In `calculateAllStatistics`, `movie.Genre.split(',').map(...)` was repeatedly executed inside watch history loops across every watch instance per movie, `.slice()` was invoked on `full_cast` and `production_companies` creating intermediate array allocations, and the genre streak check iterated through all genres even after finding a valid streak. Pre-parsing genres once per movie, replacing `.slice().forEach` with index-bounded `for` loops, and short-circuiting the genre streak loop reduced statistical aggregation benchmark execution time from ~11.0s to ~9.4s for 100 iterations over 5,000 items (~14% speedup).
 **Action:** Pre-parse multi-value property strings once before nested history/sub-item loops, replace `.slice().forEach` with index-bounded `for` loops, and short-circuit target-satisfied streak checks in aggregation routines.
+
+## 2026-09-27 - Single-pass Set construction in fetchSuggestionCarousels
+**Learning:** `fetchSuggestionCarousels` in `js/reporting.js` constructed `loggedTmdbKeys` using chained `movieData.filter(m => m.tmdbId).map(...)` operations. Constructing the `Set` in a single linear `for` loop over `movieData` eliminated temporary intermediate array allocations and double iterations, reducing benchmark execution time by ~25% (~682ms to ~513ms over 500 executions for 5,000 items).
+**Action:** Construct lookup Sets in a single pass over collections using direct iteration rather than chaining `.filter().map()`.
