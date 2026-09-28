@@ -1546,6 +1546,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
       .find("#detailsModalAddBtn")
       .data("tmdbObject", isLocalEntry ? null : sourceData);
 
+    modal.find(".details-modal-container, .details-info-panel").scrollTop(0);
     modal.modal("show");
   } catch (error) {
     console.error("Error in openDetailsModal:", error);

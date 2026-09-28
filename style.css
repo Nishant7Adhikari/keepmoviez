@@ -2079,31 +2079,6 @@ a:hover {
   .modal-dialog.modal-xl {
     max-width: 70vw;
   }
-
-  /* Details Modal Side-by-Side Layout */
-  .details-modal-container {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    height: 80vh;
-    overflow: hidden;
-  }
-
-  .details-poster-panel {
-    width: 35%;
-    height: 100%;
-    margin-bottom: 0;
-    overflow-y: auto;
-    border-right: 1px solid var(--table-border-color);
-  }
-
-  .details-info-panel {
-    width: 65%;
-    height: 100%;
-    overflow-y: hidden;
-    display: flex;
-    flex-direction: column;
-  }
 }
 
 @media (min-width: 1200px) {
@@ -2897,26 +2872,37 @@ a:hover {
 
 /* --- Responsive Split Layout --- */
 
-/* Mobile Details Poster Presentation Fix */
+/* Mobile Details Poster Presentation & Scroll Fix */
 @media (max-width: 767.98px) {
+  .details-modal-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .details-poster-panel {
     height: auto;
-    padding: 0.5rem;
+    padding: 0.75rem 0.5rem;
     text-align: center;
     background: linear-gradient(to bottom, var(--table-header-bg), var(--card-bg));
+    flex-shrink: 0;
   }
 
   .details-poster-img {
     width: auto;
     height: auto;
     max-width: 100%;
-    /* Allow full width */
-    max-height: 75vh;
-    /* Increase vertical space significantly */
+    max-height: 40vh;
     margin: 0 auto;
     border-radius: var(--border-radius-md);
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
     display: inline-block;
+  }
+
+  .details-info-panel {
+    overflow-y: visible;
+    flex-grow: 1;
+    height: auto;
   }
 }
 
@@ -2924,7 +2910,7 @@ a:hover {
   .details-modal-container {
     flex-direction: row;
     overflow: hidden;
-    /* <<< FIX #3: Disable container scrolling on desktop */
+    /* Disable container scrolling on desktop */
   }
 
   .details-poster-panel {
@@ -2939,7 +2925,7 @@ a:hover {
 
   .details-info-panel {
     overflow-y: auto;
-    /* <<< FIX #4: Re-enable scrolling ONLY on the info panel for desktop */
+    /* Re-enable scrolling ONLY on the info panel for desktop */
   }
 }
 
