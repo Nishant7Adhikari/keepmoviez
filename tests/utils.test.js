@@ -121,6 +121,68 @@ test('parseInputForAutocomplete parses search queries accurately', () => {
     assert.equal(result2.current, 'Mat');
 });
 
+test('populateRelatedEntriesSuggestions populates suggestions matching query, excluding current entry and finalized names', () => {
+    const suggestionsContainer = {
+        innerHTML: '',
+        style: { display: 'none' },
+        appendChild: function(fragment) {
+            const children = fragment.children || [fragment];
+            children.forEach(child => {
+                this.innerHTML += child.textContent + ';';
+            });
+        }
+    };
+
+    const namesInput = {
+        value: 'Inception, Star'
+    };
+
+    const testSandbox = {
+        console,
+        formFieldsGlob: {
+            relatedEntriesNames: namesInput,
+            relatedEntriesSuggestions: suggestionsContainer
+        },
+        document: {
+            getElementById: (id) => (id === 'editEntryId' ? { value: 'edit-123' } : null),
+            createElement: (tag) => ({
+                tagName: tag.toUpperCase(),
+                className: '',
+                textContent: '',
+                href: '',
+                addEventListener: () => {}
+            }),
+            createDocumentFragment: () => {
+                const children = [];
+                return {
+                    children,
+                    appendChild: (c) => children.push(c)
+                };
+            }
+        },
+        movieData: [
+            { id: '1', Name: 'Star Wars: Episode IV' },
+            { id: '2', Name: 'Star Trek' },
+            { id: 'Inception', Name: 'Inception' },
+            { id: 'edit-123', Name: 'Starman' },
+            { id: '3', Name: 'Stargate' }
+        ]
+    };
+    testSandbox.window = testSandbox;
+
+    vm.createContext(testSandbox);
+    vm.runInContext(utilsCode, testSandbox);
+
+    testSandbox.populateRelatedEntriesSuggestions();
+
+    assert.equal(suggestionsContainer.style.display, 'block');
+    assert.ok(suggestionsContainer.innerHTML.includes('Star Wars: Episode IV'));
+    assert.ok(suggestionsContainer.innerHTML.includes('Star Trek'));
+    assert.ok(suggestionsContainer.innerHTML.includes('Stargate'));
+    assert.ok(!suggestionsContainer.innerHTML.includes('Inception'));
+    assert.ok(!suggestionsContainer.innerHTML.includes('Starman'));
+});
+
 test('generateUUID returns a valid string using crypto.randomUUID', () => {
     const uuid = sandbox.generateUUID();
     assert.equal(typeof uuid, 'string');

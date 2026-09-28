@@ -520,6 +520,19 @@
               </div>
             </div>
 
+            <div class="edu-box mt-3" id="season-breakdown-details">
+              <h5>
+                <i class="fas fa-list-ol text-primary"></i> Per-Season Episode Breakdown
+              </h5>
+              <p>
+                KeepMoviEZ supports structured per-season episode counts (e.g. Season 1: 10 eps, Season 2: 12 eps) saved in entry metadata:
+              </p>
+              <ul>
+                <li><strong>Automatic Calculation:</strong> Total episode counts automatically sum across all defined seasons.</li>
+                <li><strong>Stepper Integration:</strong> Next Season and +1 Episode steppers seamlessly reference per-season limits to advance progress accurately.</li>
+              </ul>
+            </div>
+
             <div class="edu-box mt-4" id="quick-update-auto-notes">
               <h5>
                 <i class="fas fa-sticky-note text-primary"></i> Smart Auto Notes & Season Completion Tracking
@@ -993,6 +1006,19 @@
                 </p>
               </div>
             </div>
+
+            <div class="edu-box mt-3" id="local-db-reload">
+              <h5>
+                <i class="fas fa-hdd text-success"></i> Local Browser Storage Cache Re-indexing
+              </h5>
+              <p>
+                Clicking <strong>Reload Local Data</strong> on the welcome screen re-initializes the browser's local <code>IndexedDB</code> database connection and reloads stored collection entries directly into active memory.
+              </p>
+              <ul>
+                <li><strong>Local Scope:</strong> Operation is executed strictly inside your local browser storage sandbox without scanning or accessing physical hard drive files outside the browser.</li>
+                <li><strong>Privacy Boundary:</strong> Re-indexing occurs entirely on your device in client-side memory; no local storage data or collection content is transmitted externally.</li>
+              </ul>
+            </div>
           </section>
 
           <!-- Legal Compliance Section -->
@@ -1318,6 +1344,24 @@
                     <strong>Forgot Password?</strong>. A secure reset link will
                     be sent to your inbox. Note: This requires an active
                     internet connection.
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="card-header" id="h13">
+                  <button
+                    class="btn btn-link collapsed"
+                    data-toggle="collapse"
+                    data-target="#c13"
+                  >
+                    <span>What does 'Reload Local Data' do?</span>
+                    <i class="fas fa-chevron-down"></i>
+                  </button>
+                </div>
+                <div id="c13" class="collapse" data-parent="#faqAccordion">
+                  <div class="card-body">
+                    <strong>Reload Local Data</strong> re-indexes your browser's IndexedDB local storage cache and reloads existing collection entries into memory. It does not scan physical files on your hard drive or upload any data to external servers.
                   </div>
                 </div>
               </div>

@@ -621,7 +621,10 @@
                         <i class="fas fa-hdd fa-2x mr-3 ml-2" aria-hidden="true"></i>
                         <div>
                             <strong>Reload Local Data</strong>
-                            <div class="small">Scan device storage for lost entries</div>
+                            <span class="p-0 text-muted ml-1 align-baseline" title="Re-initializes IndexedDB browser storage connection and reloads existing collection entries into active memory." aria-label="Learn more about Reload Local Data">
+                                <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                            </span>
+                            <div class="small">Re-index local browser database cache</div>
                         </div>
                     </button>
 
@@ -1084,7 +1087,11 @@
                                         <!-- Season Breakdown Card List Component -->
                         <div id="seasonBreakdownGroup" class="form-group mb-3" style="display: none;">
                             <label class="d-flex justify-content-between align-items-center font-weight-bold mb-2">
-                                <span><i class="fas fa-list-ol text-primary mr-1" aria-hidden="true"></i> Episodes per Season</span>
+                                <span><i class="fas fa-list-ol text-primary mr-1" aria-hidden="true"></i> Episodes per Season
+                                    <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Maintains per-season episode breakdowns. Automatically calculates total episode counts and syncs with progress steppers." aria-label="Learn more about Episodes per Season">
+                                        <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                                    </button>
+                                </span>
                                 <small class="text-muted">Total: <span id="calcTotalEpsBadge" class="badge badge-primary font-weight-bold px-2 py-1">0 eps</span></small>
                             </label>
                             <div id="seasonBreakdownContainer" class="p-2 rounded border bg-light" style="max-height: 220px; overflow-y: auto;">
@@ -1131,7 +1138,11 @@
                                         <div class="form-group"><label for="description">Description</label><textarea
                                                 class="form-control" id="description" rows="3"></textarea></div>
                                         <div class="form-group">
-                                            <label for="relatedEntriesNames">Link to Other Entries in Your Log</label>
+                                            <label for="relatedEntriesNames">Link to Other Entries in Your Log
+                                                <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Links related entries (sequels, prequels, spin-offs) into local franchise groups. All relational links are computed client-side." aria-label="Learn more about Link to Other Entries in Your Log">
+                                                    <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                                                </button>
+                                            </label>
                                             <input type="text" class="form-control" id="relatedEntriesNames"
                                                 placeholder="Start typing a title...">
                                             <div id="relatedEntriesSuggestions" class="list-group mt-1"
