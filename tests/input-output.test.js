@@ -169,3 +169,18 @@ test('CSV export sanitizes formula triggers in string fields for full and batch 
     assert.equal(unparsedData[0].Category, "'@admin");
     assert.equal(unparsedData[0].Status, "'\tTabbed");
 });
+
+test('index.html includes refined microcopy and accessible info icons for Reload Local Data, Episodes per Season, and Franchise Linking', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('Re-index local browser database cache'));
+    assert.ok(html.includes('aria-label="Learn more about Reload Local Data"'));
+    assert.ok(html.includes('aria-label="Learn more about Episodes per Season"'));
+    assert.ok(html.includes('aria-label="Learn more about Link to Other Entries in Your Log"'));
+});
+
+test('docs/index.html details Local Browser Storage Cache Re-indexing and FAQ for Reload Local Data', () => {
+    const docsHtml = fs.readFileSync(path.join(__dirname, '../docs/index.html'), 'utf8');
+    assert.ok(docsHtml.includes('id="local-db-reload"'));
+    assert.ok(docsHtml.includes('Local Browser Storage Cache Re-indexing'));
+    assert.ok(docsHtml.includes('What does \'Reload Local Data\' do?'));
+});
