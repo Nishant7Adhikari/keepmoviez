@@ -552,7 +552,7 @@ function renderSuggestionCard(item) {
 
     // Tooltip configuration
     const voteAvg = item.vote_average ? item.vote_average.toFixed(1) : 'N/A';
-    card.setAttribute('title', `${name} (${year || 'N/A'}) - TMDB Rating: ${voteAvg}/10`);
+    card.setAttribute('title', `${escapeHTML(name)} (${escapeHTML(year) || 'N/A'}) - TMDB Rating: ${voteAvg}/10`);
     $(card).tooltip({ boundary: 'window', trigger: 'hover' });
 
     // Handle Quick Action Clicks
