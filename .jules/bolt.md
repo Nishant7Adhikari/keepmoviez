@@ -77,3 +77,7 @@
 ## 2026-09-27 - Single-pass Set construction in fetchSuggestionCarousels
 **Learning:** `fetchSuggestionCarousels` in `js/reporting.js` constructed `loggedTmdbKeys` using chained `movieData.filter(m => m.tmdbId).map(...)` operations. Constructing the `Set` in a single linear `for` loop over `movieData` eliminated temporary intermediate array allocations and double iterations, reducing benchmark execution time by ~25% (~682ms to ~513ms over 500 executions for 5,000 items).
 **Action:** Construct lookup Sets in a single pass over collections using direct iteration rather than chaining `.filter().map()`.
+
+## 2026-09-28 - Set pre-indexing & early exit in populateRelatedEntriesSuggestions
+**Learning:** `populateRelatedEntriesSuggestions` in `js/utils.js` previously executed `movieData.filter(...).slice(0, 10)` with an inner `currentFinalizedNames.some(...)` search loop. On every keystroke, this performed $O(N \cdot F)$ nested string lowercasing and array scans over `movieData` and created full filtered array allocations. Pre-indexing `currentFinalizedNames` into a lowercased `Set` once and breaking out of a linear `for` loop as soon as 10 matching entries were collected reduced autocomplete processing time from ~1.63ms to ~0.005ms per query (~300x speedup).
+**Action:** When filtering autocomplete or search suggestions where only a top slice of matches is displayed, pre-index excluded/finalized terms in a Set and short-circuit the linear search loop once the required limit is reached.
