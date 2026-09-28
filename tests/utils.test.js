@@ -993,3 +993,33 @@ test('404.html and offline.html have accessible ARIA attributes and valid text c
     assert.ok(html404.includes('aria-label="Reset Game - Start score over"'));
     assert.ok(html404.includes('aria-label="Back to Homepage"'));
 });
+
+test('details modal supports vertical touch scrolling in mobile view (<768px) and scroll reset on open', () => {
+    const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+    const uiCode = fs.readFileSync(path.join(__dirname, '../js/ui.js'), 'utf8');
+
+    // 1. Mobile media query (@media (max-width: 767.98px)) rules in style.css
+    assert.ok(
+        css.includes('@media (max-width: 767.98px)'),
+        'Expected @media (max-width: 767.98px) block in style.css'
+    );
+    assert.ok(
+        css.includes('overflow-y: auto') && css.includes('-webkit-overflow-scrolling: touch'),
+        'Expected .details-modal-container to support vertical touch scrolling'
+    );
+    assert.ok(
+        css.includes('max-height: 40vh'),
+        'Expected .details-poster-img to have max-height: 40vh in mobile media query to leave space for info panel'
+    );
+    assert.ok(
+        css.includes('overflow-y: visible'),
+        'Expected .details-info-panel to have overflow-y: visible in mobile view'
+    );
+
+    // 2. js/ui.js openDetailsModal must reset scrollTop when opening
+    assert.ok(
+        uiCode.includes('modal.find(".details-modal-container, .details-info-panel").scrollTop(0);'),
+        'Expected openDetailsModal in js/ui.js to reset scrollTop on opening modal'
+    );
+});
+
