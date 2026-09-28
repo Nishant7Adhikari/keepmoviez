@@ -251,7 +251,12 @@ p {
   box-shadow: none !important;
   color: rgba(255, 255, 255, 0.7);
   background-color: transparent;
-  padding: 0 4px;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.85rem;
   line-height: 1;
 }
@@ -669,7 +674,7 @@ body.multi-select-active #addNewEntryBtn {
 /* ==== Card Layout Styles ==== */
 .table-responsive {
   position: static;
-  max-height: calc(100vh - 56px - 70px - 20px);
+  max-height: calc(100dvh - 56px - 70px - 20px);
   overflow-y: auto;
   overflow-x: hidden;
   margin-top: 20px;
@@ -1971,7 +1976,7 @@ a:hover {
   }
 
   .table-responsive {
-    max-height: calc(100vh - 50px - 70px - 20px - 20px);
+    max-height: calc(100dvh - 50px - 70px - 20px - 20px);
   }
 
   .stats-chart-container,
@@ -2347,7 +2352,7 @@ a:hover {
   top: 0;
   left: 0;
   width: 280px;
-  height: 100vh;
+  height: 100dvh;
   background-color: var(--card-bg);
   color: var(--body-text-color);
   z-index: 1045;
@@ -2370,7 +2375,7 @@ a:hover {
   top: 0;
   left: 0;
   width: 100vw;
-  height: 100vh;
+  height: 100dvh;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1040;
   opacity: 0;
