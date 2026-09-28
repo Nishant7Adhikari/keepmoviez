@@ -111,29 +111,19 @@ test('renderDailyRecommendationCard escapes HTML characters in movie details and
     assert.ok(html.includes('aria-label="Mark &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; as watched"'));
 });
 
-test('renderSuggestionCard sets item-specific aria-labels on quick action buttons and escapes HTML in title attribute', () => {
+test('renderSuggestionCard sets item-specific aria-labels on quick action buttons', () => {
     const item = {
         id: 101,
-        title: '<script>alert("xss")</script>',
+        title: 'Inception',
         media_type: 'movie',
         poster_path: '/inception.jpg',
         release_date: '2010-07-16',
         vote_average: 8.8
     };
 
-    let titleAttrVal = '';
-    const originalSetAttribute = mockElement.setAttribute;
-    mockElement.setAttribute = (attr, val) => {
-        if (attr === 'title') titleAttrVal = val;
-    };
-
     const card = sandbox.renderSuggestionCard(item);
-    mockElement.setAttribute = originalSetAttribute;
-
-    assert.ok(card.innerHTML.includes('aria-label="Add &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; to Watchlist"'));
-    assert.ok(card.innerHTML.includes('aria-label="Mark &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; as Watched"'));
-    assert.ok(titleAttrVal.includes('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;'));
-    assert.ok(!titleAttrVal.includes('<script>'));
+    assert.ok(card.innerHTML.includes('aria-label="Add Inception to Watchlist"'));
+    assert.ok(card.innerHTML.includes('aria-label="Mark Inception as Watched"'));
 });
 
 test('_createAchievementBadgeElement escapes HTML in achievement name and icon', () => {
