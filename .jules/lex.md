@@ -88,3 +88,9 @@
 **Legal/Copy Risk:** Presenting comprehensive analytics dashboards ("Detailed Statistics") without inline contextual microcopy or documentation creates user privacy concerns regarding whether personal viewing habits, watch frequency, rating breakdowns, or temporal statistics are uploaded to external telemetry or analytics servers.
 **Learning:** Detailed analytics features in local-first media management apps require explicit, accessible inline assurances (`(i)`) confirming that all summary statistics, time distribution curves, and country/language breakdowns are calculated strictly in client-side memory without transmitting metrics to remote servers.
 **Remedy:** Attach an accessible `(i)` info icon to `#detailedStatsModalLabel` with `aria-label="Learn more about Detailed Statistics & Local Metrics"` and protective title microcopy, and document detailed statistics calculations and local analytics privacy boundaries in `./docs/index.html`.
+
+## 2026-09-28 - Misleading Storage Scanning Microcopy vs. Local Browser Cache Re-indexing
+
+**Legal/Copy Risk:** Presenting local database cache reload functionality as "Scan device storage for lost entries" creates legal exposure by falsely implying that the application performs disk-level scans across the user's file system, raising privacy concerns and overpromising storage recovery scope.
+**Learning:** Local-first browser applications that re-initialize IndexedDB connections operate strictly within browser sandbox memory. Microcopy must clearly reflect browser cache re-indexing rather than hard drive scanning.
+**Remedy:** Update welcome screen microcopy to objective, factual language ("Re-index local browser database cache"), attach accessible helper info icons (`(i)`) with explicit `aria-label="Learn more about Reload Local Data"` and protective tooltips, and document IndexedDB cache re-indexing boundaries in `./docs/index.html`.
