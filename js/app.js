@@ -1634,7 +1634,7 @@ window.checkAndNotifyNewAchievements = async function (isInitialLoad = false) {
         setTimeout(() => {
           showToast(
             `🏆 Achievement Unlocked!`,
-            `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`,
+            `${achievement.name} - ${achievement.description}`,
             "success",
             0,
             null,
@@ -1677,7 +1677,7 @@ window.checkAndNotifyNewAchievements = async function (isInitialLoad = false) {
             ];
             showToast(
               `🏆 Achievement Unlocked!`,
-              `<strong>${achievement.name}</strong><br><small>${achievement.description}</small>`,
+              `${achievement.name} - ${achievement.description}`,
               "success",
               0,
               null,
