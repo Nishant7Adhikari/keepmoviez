@@ -844,7 +844,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const progress = badge.data("progress");
       const threshold = badge.data("threshold");
       const isAchieved = badge.data("achieved");
-      const message = `${description}<br><small class="text-muted">Progress: ${progress} / ${threshold}</small>`;
+      const message = `${description} (Progress: ${progress}/${threshold})`;
       const type = isAchieved ? "success" : "info";
       showToast(name, message, type, 5000);
     });

@@ -1085,3 +1085,17 @@ test('details modal supports vertical touch scrolling in mobile view (<768px) an
     );
 });
 
+test('achievement toast notifications in js/main.js and js/app.js do not contain raw HTML tags', () => {
+    const mainCode = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+    const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+
+    // Verify achievement badge click handler in main.js does not interpolate HTML tags into showToast
+    const badgeClickHandler = mainCode.substring(mainCode.indexOf('.achievement-badge'), mainCode.indexOf('$("#detailsModalAddBtn")'));
+    assert.ok(!badgeClickHandler.includes('<br>'), 'Expected achievement badge click handler message not to contain <br>');
+    assert.ok(!badgeClickHandler.includes('<small'), 'Expected achievement badge click handler message not to contain <small>');
+
+    // Verify checkAndNotifyNewAchievements in app.js does not interpolate HTML tags into showToast
+    const notifyFunc = appCode.substring(appCode.indexOf('checkAndNotifyNewAchievements'), appCode.indexOf('// END CHUNK: Achievement and Usage Helpers'));
+    assert.ok(!notifyFunc.includes('<strong>${achievement.name}</strong>'), 'Expected achievement notification in app.js not to contain <strong> tags');
+    assert.ok(!notifyFunc.includes('<br><small>'), 'Expected achievement notification in app.js not to contain <br><small> tags');
+});
