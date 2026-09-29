@@ -9,3 +9,13 @@ In mobile browsers (such as iOS Safari and Android Chrome), fixed `100vh` layout
 
 **Responsive Remedy:**
 Use dynamic viewport height units (`100dvh` and `calc(100dvh - ...)` max-heights) for full-height fixed sidebars (`.offcanvas-menu`), backdrops (`.offcanvas-backdrop`), and primary scroll containers (`.table-responsive`). Ensure interactive touch controls maintain a minimum `44x44px` hit area via flex alignment or padding constraints (`min-width: 44px; min-height: 44px; display: inline-flex`).
+
+## 2026-09-29 - Modal Footers and Touch Target Parity
+**Viewport/Touch Issue:**
+On narrow mobile screens (<375px), modal action buttons in `#entryModal` and `#backfillModal` were squished together with sub-44px touch targets and hidden text labels (`d-none d-sm-inline`), leading to fat-finger errors and awkward visual asymmetry. Furthermore, `:hover` scale/translate effects on cards and buttons remained sticky on mobile touch screens after tapping.
+
+**Learning:**
+Mobile viewports require stacked or flexible full-width modal footers with explicit `min-height: 44px` touch targets rather than relying on inline icon-only button groups designed for desktop widths. Unscoped `:hover` CSS transforms on touch devices cause persistent active states.
+
+**Responsive Remedy:**
+Enforce `@media (max-width: 575.98px)` flex-column / flex-wrap rules for modal footers with full-width primary actions and `min-height: 44px`. Wrap all interactive hover transformations inside `@media (hover: hover)` media queries.
