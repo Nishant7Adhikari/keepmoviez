@@ -697,6 +697,9 @@
                 <strong>Batch Deletion Scopes:</strong> During multi-select batch deletion, users can specify target removal scopes (Local Cache Only, Cloud Only, or Both Local and Cloud) to precisely control whether deleted collection entries are purged from browser memory, remote database, or both locations.
               </li>
               <li>
+                <strong>Batch Field Editing &amp; Selective Property Updates:</strong> In multi-select mode, users can open Batch Edit to apply selective field changes (such as Status, Category, Ratings, Watch Preferences, Genres, Season/Episode progress, Country, Language, or Year) across all selected collection entries simultaneously. Only explicitly checked fields are updated; unchecked fields are strictly preserved without modification. When cloud synchronization is active, batch modifications update the local IndexedDB cache and sync updated records to the remote database.
+              </li>
+              <li>
                 <strong>Batch TMDB Refresh:</strong> In multi-select mode, users can trigger a batch refresh for selected entries with existing TMDB IDs. The system queries public TMDB REST endpoints sequentially with throttling delays to update posters, cast, crew, keywords, and rating metadata. Personal watch history, user notes, and private ratings are strictly preserved and never transmitted to external endpoints.
               </li>
               <li>

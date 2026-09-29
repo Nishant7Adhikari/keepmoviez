@@ -125,6 +125,16 @@ test('index.html includes accessible info icon trigger for Batch Delete Scopes',
     assert.ok(html.includes('title="Deletion scope determines whether selected entries are purged from local browser cache, remote cloud database, or both locations."'));
 });
 
+test('index.html and docs/index.html include accessible info icon trigger and documentation for Batch Edit Operations', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('id="batchEditModalLabel"'));
+    assert.ok(html.includes('aria-label="Learn more about Batch Edit Operations"'));
+    assert.ok(html.includes('title="Applies selective property updates across all selected collection entries. Unchecked fields are preserved without modification."'));
+
+    const docsHtml = fs.readFileSync(path.join(__dirname, '../docs/index.html'), 'utf8');
+    assert.ok(docsHtml.includes('Batch Field Editing &amp; Selective Property Updates:') || docsHtml.includes('Batch Field Editing & Selective Property Updates:'));
+});
+
 test('CSV export sanitizes formula triggers in string fields for full and batch export', () => {
     const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
 
