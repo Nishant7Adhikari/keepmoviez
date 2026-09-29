@@ -74,7 +74,7 @@ test('generateAndDownloadFile executes without crashing', () => {
     });
 });
 
-test('populateImportSummary escapes HTML characters in smartImportState.fileName', async () => {
+test('populateImportSummary escapes HTML characters in smartImportState.fileName and renders summary icons with aria-hidden="true"', async () => {
     let htmlContent = '';
     sandbox.document.getElementById = (id) => {
         if (id === 'importSummary') {
@@ -91,6 +91,9 @@ test('populateImportSummary escapes HTML characters in smartImportState.fileName
     await sandbox.initiateSmartImport([], '<img src="x" onerror="alert(1)">.csv');
     assert.ok(!htmlContent.includes('<img src="x" onerror="alert(1)">'));
     assert.ok(htmlContent.includes('&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;'));
+    assert.ok(htmlContent.includes('<i class="fas fa-plus-circle text-success mr-2" aria-hidden="true"></i>'));
+    assert.ok(htmlContent.includes('<i class="fas fa-sync-alt text-info mr-2" aria-hidden="true"></i>'));
+    assert.ok(htmlContent.includes('<i class="fas fa-exclamation-triangle text-warning mr-2" aria-hidden="true"></i>'));
 });
 
 test('index.html includes accessible info icon trigger for Smart Import Assistant', () => {

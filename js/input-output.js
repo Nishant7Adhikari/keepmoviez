@@ -168,15 +168,15 @@ function populateImportSummary() {
                 <span class="badge badge-secondary badge-pill">${totalCount}</span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                <i class="fas fa-plus-circle text-success mr-2"></i> New Entries Found
+                <i class="fas fa-plus-circle text-success mr-2" aria-hidden="true"></i> New Entries Found
                 <span class="badge badge-success badge-pill">${newCount}</span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                <i class="fas fa-sync-alt text-info mr-2"></i> Potential Matches Found
+                <i class="fas fa-sync-alt text-info mr-2" aria-hidden="true"></i> Potential Matches Found
                 <span class="badge badge-info badge-pill">${matchCount}</span>
             </li>
             <li class="list-group-item d-flex justify-content-between align-items-center">
-                <i class="fas fa-exclamation-triangle text-warning mr-2"></i> Invalid/Skipped Rows
+                <i class="fas fa-exclamation-triangle text-warning mr-2" aria-hidden="true"></i> Invalid/Skipped Rows
                 <span class="badge badge-warning badge-pill">${skippedCount}</span>
             </li>
         </ul>
