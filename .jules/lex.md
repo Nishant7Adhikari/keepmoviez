@@ -94,3 +94,9 @@
 **Legal/Copy Risk:** Presenting local database cache reload functionality as "Scan device storage for lost entries" creates legal exposure by falsely implying that the application performs disk-level scans across the user's file system, raising privacy concerns and overpromising storage recovery scope.
 **Learning:** Local-first browser applications that re-initialize IndexedDB connections operate strictly within browser sandbox memory. Microcopy must clearly reflect browser cache re-indexing rather than hard drive scanning.
 **Remedy:** Update welcome screen microcopy to objective, factual language ("Re-index local browser database cache"), attach accessible helper info icons (`(i)`) with explicit `aria-label="Learn more about Reload Local Data"` and protective tooltips, and document IndexedDB cache re-indexing boundaries in `./docs/index.html`.
+
+## 2026-09-29 - Unexplained Multi-Entry Batch Modification Operations and Selective Field Boundaries
+
+**Legal/Copy Risk:** Presenting multi-entry batch edit tools ("Batch Edit Selected Entries") without contextual microcopy or documentation creates user confusion and legal exposure regarding accidental batch property overwrites and IndexedDB/cloud update boundaries.
+**Learning:** High-stakes multi-record editing tools require explicit inline assurances (`(i)`) clarifying that only explicitly checked fields are updated while unchecked properties remain untouched, along with documentation detailing local cache and cloud synchronization behavior.
+**Remedy:** Attach an accessible `(i)` info icon to `#batchEditModalLabel` with `aria-label="Learn more about Batch Edit Operations"` and protective title microcopy, and document selective property batch updates and synchronization boundaries under Advanced Data Controls in `./docs/index.html`.
