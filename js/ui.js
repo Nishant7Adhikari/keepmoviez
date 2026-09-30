@@ -1981,8 +1981,10 @@ function wrapText(context, text, x, y, maxWidth, lineHeight) {
 
 function drawStarsOnCanvas(ctx, x, y, ratingString, size = 30) {
   const ratingValue =
-    (ratingString.match(/fas fa-star/g) || []).length +
-    (ratingString.match(/fa-star-half-alt/g) || []).length * 0.5;
+    typeof ratingString === "number"
+      ? ratingString
+      : (ratingString.match(/fas fa-star/g) || []).length +
+        (ratingString.match(/fa-star-half-alt/g) || []).length * 0.5;
   if (isNaN(ratingValue) || ratingValue === 0) return;
 
   for (let i = 0; i < 5; i++) {
@@ -1993,74 +1995,411 @@ function drawStarsOnCanvas(ctx, x, y, ratingString, size = 30) {
   }
 }
 
-function showShareOptionsModal(blob, fileName) {
+function generateShareTextSummary(details) {
+  if (!details) return "Tracked on KeepMoviEZ!";
+  const parts = [];
+  if (details.name) parts.push(`🍿 ${details.name}`);
+  if (details.year && details.year !== "N/A") parts.push(`(${details.year})`);
+
+  const subInfo = [];
+  if (details.category && details.category !== "N/A") subInfo.push(details.category);
+  if (details.genre && details.genre !== "N/A") subInfo.push(details.genre.split(",")[0].trim());
+
+  const ratingVal = details.ratingValue ||
+    ((details.ratingHTML || "").match(/fas fa-star/g) || []).length +
+    ((details.ratingHTML || "").match(/fa-star-half-alt/g) || []).length * 0.5;
+
+  if (ratingVal > 0) subInfo.push(`Rated ${ratingVal}/5 ⭐`);
+  if (details.recommendation && details.recommendation !== "N/A") subInfo.push(details.recommendation);
+
+  let summary = parts.join(" ");
+  if (subInfo.length > 0) {
+    summary += ` • ${subInfo.join(" • ")}`;
+  }
+  summary += ` • Tracked on KeepMoviEZ!`;
+  return summary;
+}
+window.generateShareTextSummary = generateShareTextSummary;
+
+async function generateShareCardCanvas(details, options = {}) {
+  const aspectRatio = options.aspectRatio || "portrait";
+  const theme = options.theme || "poster";
+
+  let width = 1080;
+  let height = 1350;
+  if (aspectRatio === "square") height = 1080;
+  else if (aspectRatio === "story") height = 1920;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+
+  let posterImg = null;
+  if (details.posterSrc) {
+    posterImg = new Image();
+    posterImg.crossOrigin = "anonymous";
+    await new Promise((resolve) => {
+      posterImg.onload = resolve;
+      posterImg.onerror = () => resolve();
+      posterImg.src = details.posterSrc.includes("?")
+        ? details.posterSrc
+        : details.posterSrc + "?not-from-cache-please";
+    });
+    if (!posterImg.complete || posterImg.naturalHeight === 0) {
+      posterImg = null;
+    }
+  }
+
+  // 1. BACKGROUND
+  if (theme === "poster" && posterImg) {
+    ctx.save();
+    try {
+      ctx.filter = "blur(40px) brightness(0.35)";
+    } catch (e) {}
+    ctx.drawImage(posterImg, -50, -50, width + 100, height + 100);
+    ctx.restore();
+
+    const overlay = ctx.createLinearGradient(0, 0, 0, height);
+    overlay.addColorStop(0, "rgba(15, 23, 42, 0.65)");
+    overlay.addColorStop(1, "rgba(15, 23, 42, 0.92)");
+    ctx.fillStyle = overlay;
+    ctx.fillRect(0, 0, width, height);
+  } else if (theme === "gradient") {
+    const [color1, color2] = getGenreGradient(details.genre);
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, color1);
+    gradient.addColorStop(1, color2);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+
+    const overlay = ctx.createLinearGradient(0, 0, 0, height);
+    overlay.addColorStop(0, "rgba(0, 0, 0, 0.2)");
+    overlay.addColorStop(1, "rgba(0, 0, 0, 0.65)");
+    ctx.fillStyle = overlay;
+    ctx.fillRect(0, 0, width, height);
+  } else {
+    const gradient = ctx.createLinearGradient(0, 0, width, height);
+    gradient.addColorStop(0, "#0f172a");
+    gradient.addColorStop(1, "#1e293b");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  // 2. GLASS CARD CONTAINER
+  const cardPadding = 50;
+  const cardX = cardPadding;
+  const cardY = cardPadding;
+  const cardW = width - cardPadding * 2;
+  const cardH = height - cardPadding * 2;
+
+  ctx.save();
+  ctx.fillStyle = "rgba(30, 41, 59, 0.72)";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+  ctx.shadowBlur = 30;
+  ctx.shadowOffsetY = 15;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 32);
+  ctx.fill();
+
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+  ctx.lineWidth = 2;
+  roundRect(ctx, cardX, cardY, cardW, cardH, 32);
+  ctx.stroke();
+  ctx.restore();
+
+  // 3. CARD CONTENT
+  let contentY = cardY + 50;
+
+  if (posterImg) {
+    const maxPosterW = cardW * 0.48;
+    const maxPosterH = aspectRatio === "square" ? cardH * 0.44 : cardH * 0.52;
+    let pw = posterImg.naturalWidth || 300;
+    let ph = posterImg.naturalHeight || 450;
+
+    if (pw > maxPosterW) {
+      ph = (ph * maxPosterW) / pw;
+      pw = maxPosterW;
+    }
+    if (ph > maxPosterH) {
+      pw = (pw * maxPosterH) / ph;
+      ph = maxPosterH;
+    }
+
+    const posterX = cardX + (cardW - pw) / 2;
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,0.6)";
+    ctx.shadowBlur = 25;
+    ctx.shadowOffsetY = 10;
+
+    roundRect(ctx, posterX, contentY, pw, ph, 20);
+    ctx.clip();
+    ctx.drawImage(posterImg, posterX, contentY, pw, ph);
+    ctx.restore();
+
+    ctx.save();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, posterX, contentY, pw, ph, 20);
+    ctx.stroke();
+    ctx.restore();
+
+    contentY += ph + 40;
+  } else {
+    contentY += 40;
+  }
+
+  // TITLE
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.fillStyle = "#ffffff";
+  ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 4;
+  ctx.font = "bold 60px 'Poppins', Arial, sans-serif";
+  contentY = wrapText(ctx, details.name || "Untitled", width / 2, contentY, cardW - 80, 68);
+  ctx.restore();
+
+  contentY += 10;
+
+  // METADATA PILLS
+  const pills = [];
+  if (details.category && details.category !== "N/A") pills.push(details.category.toUpperCase());
+  if (details.year && details.year !== "N/A") pills.push(details.year);
+  if (details.runtime && details.runtime !== "N/A") pills.push(details.runtime);
+
+  if (pills.length > 0) {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
+    ctx.fillStyle = "rgba(226, 232, 240, 0.9)";
+    ctx.fillText(pills.join("  •  "), width / 2, contentY + 25);
+    ctx.restore();
+    contentY += 55;
+  }
+
+  // GENRE PILLS
+  if (details.genre && details.genre !== "N/A") {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "28px 'Poppins', Arial, sans-serif";
+    ctx.fillStyle = "rgba(148, 163, 184, 0.95)";
+    ctx.fillText(details.genre.split(",").slice(0, 3).join(" • "), width / 2, contentY + 15);
+    ctx.restore();
+    contentY += 50;
+  }
+
+  // RATING & RECOMMENDATION
+  const ratingValue = details.ratingValue ||
+    ((details.ratingHTML || "").match(/fas fa-star/g) || []).length +
+    ((details.ratingHTML || "").match(/fa-star-half-alt/g) || []).length * 0.5;
+
+  if (ratingValue > 0 || (details.recommendation && details.recommendation !== "N/A")) {
+    const boxW = Math.min(cardW - 100, 500);
+    const boxH = 90;
+    const boxX = (width - boxW) / 2;
+
+    ctx.save();
+    ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
+    roundRect(ctx, boxX, contentY, boxW, boxH, 18);
+    ctx.fill();
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+    ctx.lineWidth = 1;
+    roundRect(ctx, boxX, contentY, boxW, boxH, 18);
+    ctx.stroke();
+
+    if (ratingValue > 0) {
+      drawStarsOnCanvas(ctx, boxX + 40, contentY + 56, details.ratingHTML || `${ratingValue} stars`, 34);
+      ctx.font = "bold 32px 'Poppins', Arial, sans-serif";
+      ctx.fillStyle = "#ffd700";
+      ctx.textAlign = "right";
+      ctx.fillText(`${ratingValue.toFixed(1)} / 5`, boxX + boxW - 40, contentY + 56);
+    } else if (details.recommendation) {
+      ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
+      ctx.fillStyle = "#38bdf8";
+      ctx.textAlign = "center";
+      ctx.fillText(details.recommendation, width / 2, contentY + 54);
+    }
+    ctx.restore();
+  }
+
+  // BRAND FOOTER
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "bold 26px 'Poppins', Arial, sans-serif";
+  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+  ctx.fillText("KeepMoviEZ  •  Smart Media Tracker", width / 2, cardY + cardH - 30);
+  ctx.restore();
+
+  return canvas;
+}
+window.generateShareCardCanvas = generateShareCardCanvas;
+
+function showShareOptionsModal(detailsOrBlob, fileName) {
   $("#shareOptionsModal").remove();
 
-  const file = new File([blob], fileName, { type: "image/png" });
-  const shareData = {
-    files: [file],
-    title: `Check out this movie!`,
-    text: `Tracked with KeepMovizEZ`,
-  };
-  const canShare =
-    navigator.share && navigator.canShare && navigator.canShare(shareData);
+  let details = {};
+  if (detailsOrBlob instanceof Blob) {
+    details = {
+      name: (fileName || "media").replace(/_details\.png$/i, "").replace(/_/g, " "),
+      blob: detailsOrBlob,
+      fileName: fileName,
+    };
+  } else {
+    details = detailsOrBlob || {};
+  }
 
-  let modalBodyHtml = `
-        <div class="text-center">
-            <img src="${URL.createObjectURL(blob)}" class="img-fluid rounded mb-3" style="max-height: 300px;" alt="Image Preview">
-        </div>
-        <div class="d-grid gap-2">
-            ${canShare ? '<button id="shareGeneratedImageBtn" class="btn btn-success btn-lg mb-2" aria-label="Share generated summary image"><i class="fas fa-share-alt" aria-hidden="true"></i> Share Image</button>' : ""}
-            <button id="downloadGeneratedImageBtn" class="btn btn-primary btn-lg" aria-label="Download generated summary image as PNG"><i class="fas fa-download" aria-hidden="true"></i> Download PNG</button>
-        </div>
-    `;
+  let currentAspectRatio = "portrait";
+  let currentTheme = details.posterSrc ? "poster" : "gradient";
 
   const modalHtml = `
-        <div class="modal fade" id="shareOptionsModal" tabindex="-1" role="dialog">
-          <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content">
-              <div class="modal-header">
-                <h5 class="modal-title">Image Generated</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    <div class="modal fade" id="shareOptionsModal" tabindex="-1" role="dialog" aria-labelledby="shareModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="shareModalTitle">
+              <i class="fas fa-share-alt text-primary mr-2" aria-hidden="true"></i> Share Media Showcase
+            </h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body p-3">
+            <div class="share-preview-wrapper text-center">
+              <div id="shareLoadingSpinner" class="my-5">
+                <i class="fas fa-spinner fa-spin fa-2x text-primary" aria-hidden="true"></i>
+                <p class="small text-muted mt-2">Generating showcase card...</p>
               </div>
-              <div class="modal-body">${modalBodyHtml}</div>
+              <img id="shareCardPreviewImg" class="share-preview-img d-none" alt="Share Card Preview">
+            </div>
+
+            <div class="share-controls-section">
+              <div class="mb-3">
+                <div class="share-option-title"><i class="fas fa-crop-alt mr-1" aria-hidden="true"></i> Card Format</div>
+                <div class="share-pill-group" id="shareAspectPills">
+                  <button type="button" class="share-pill-btn active" data-aspect="portrait">Portrait (4:5)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="square">Square (1:1)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="story">Story (9:16)</button>
+                </div>
+              </div>
+
+              <div>
+                <div class="share-option-title"><i class="fas fa-palette mr-1" aria-hidden="true"></i> Visual Theme</div>
+                <div class="share-pill-group" id="shareThemePills">
+                  <button type="button" class="share-pill-btn ${currentTheme === 'poster' ? 'active' : ''}" data-theme="poster">Cinematic Blur</button>
+                  <button type="button" class="share-pill-btn ${currentTheme === 'gradient' ? 'active' : ''}" data-theme="gradient">Genre Gradient</button>
+                  <button type="button" class="share-pill-btn" data-theme="dark">Dark Glass</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="share-action-grid">
+              <button id="shareGeneratedImageBtn" class="btn btn-success share-action-btn" aria-label="Share generated summary image">
+                <i class="fas fa-share-alt" aria-hidden="true"></i> Share
+              </button>
+              <button id="downloadGeneratedImageBtn" class="btn btn-primary share-action-btn" aria-label="Download generated summary image as PNG">
+                <i class="fas fa-download" aria-hidden="true"></i> Download PNG
+              </button>
+              <button id="shareCopyImageBtn" class="btn btn-outline-info share-action-btn" aria-label="Copy image to clipboard">
+                <i class="fas fa-copy" aria-hidden="true"></i> Copy Image
+              </button>
+              <button id="shareCopyTextBtn" class="btn btn-outline-secondary share-action-btn" aria-label="Copy text summary to clipboard">
+                <i class="fas fa-comment-alt" aria-hidden="true"></i> Copy Text
+              </button>
             </div>
           </div>
         </div>
-    `;
+      </div>
+    </div>
+  `;
 
   document.body.insertAdjacentHTML("beforeend", modalHtml);
   const shareModal = $("#shareOptionsModal");
   shareModal.modal("show");
 
-  const downloadBtn = document.getElementById("downloadGeneratedImageBtn");
-  if (downloadBtn) {
-    downloadBtn.addEventListener("click", () => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      showToast("Image Downloaded", `${fileName} has been saved.`, "success");
-      shareModal.modal("hide");
-    });
+  let currentBlob = details.blob || null;
+
+  async function updatePreview() {
+    if (details.blob && !details.name) {
+      const previewImg = document.getElementById("shareCardPreviewImg");
+      const spinner = document.getElementById("shareLoadingSpinner");
+      if (previewImg) {
+        previewImg.src = URL.createObjectURL(details.blob);
+        previewImg.classList.remove("d-none");
+      }
+      if (spinner) spinner.classList.add("d-none");
+      return;
+    }
+
+    const previewImg = document.getElementById("shareCardPreviewImg");
+    const spinner = document.getElementById("shareLoadingSpinner");
+    if (previewImg) previewImg.classList.add("d-none");
+    if (spinner) spinner.classList.remove("d-none");
+
+    try {
+      const canvas = await generateShareCardCanvas(details, {
+        aspectRatio: currentAspectRatio,
+        theme: currentTheme,
+      });
+
+      canvas.toBlob((blob) => {
+        if (!blob) return;
+        currentBlob = blob;
+        const url = URL.createObjectURL(blob);
+        if (previewImg) {
+          previewImg.src = url;
+          previewImg.classList.remove("d-none");
+        }
+        if (spinner) spinner.classList.add("d-none");
+      }, "image/png");
+    } catch (err) {
+      console.error("Failed to generate share card canvas:", err);
+      if (spinner) spinner.innerHTML = `<p class="text-danger small mb-0">Could not generate preview.</p>`;
+    }
   }
 
-  if (canShare) {
-    const shareBtn = document.getElementById("shareGeneratedImageBtn");
-    shareBtn.addEventListener("click", async () => {
+  updatePreview();
+
+  $("#shareAspectPills .share-pill-btn").on("click", function () {
+    $("#shareAspectPills .share-pill-btn").removeClass("active");
+    $(this).addClass("active");
+    currentAspectRatio = $(this).data("aspect");
+    updatePreview();
+  });
+
+  $("#shareThemePills .share-pill-btn").on("click", function () {
+    $("#shareThemePills .share-pill-btn").removeClass("active");
+    $(this).addClass("active");
+    currentTheme = $(this).data("theme");
+    updatePreview();
+  });
+
+  const safeName = (details.name || "media").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+  const fileNameOut = details.fileName || `${safeName}_showcase.png`;
+
+  const canShare = typeof navigator !== "undefined" && navigator.share;
+  if (!canShare) {
+    $("#shareGeneratedImageBtn").prop("disabled", true).addClass("disabled").attr("title", "Native sharing not supported.");
+  } else {
+    $("#shareGeneratedImageBtn").on("click", async () => {
+      if (!currentBlob) return;
+      const file = new File([currentBlob], fileNameOut, { type: "image/png" });
+      const shareData = {
+        files: [file],
+        title: details.name || "KeepMoviEZ Showcase",
+        text: generateShareTextSummary(details),
+      };
       try {
-        await navigator.share(shareData);
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          showToast(
-            "Share Failed",
-            "Could not share image. Try downloading it instead.",
-            "warning",
-          );
+        if (navigator.canShare && navigator.canShare(shareData)) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.share({
+            title: details.name || "KeepMoviEZ Showcase",
+            text: generateShareTextSummary(details),
+          });
+        }
+      } catch (e) {
+        if (e.name !== "AbortError") {
+          showToast("Share Failed", "Could not share image. Try downloading it instead.", "warning");
         }
       } finally {
         shareModal.modal("hide");
@@ -2068,19 +2407,76 @@ function showShareOptionsModal(blob, fileName) {
     });
   }
 
+  $("#downloadGeneratedImageBtn").on("click", () => {
+    if (!currentBlob) return;
+    const url = URL.createObjectURL(currentBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileNameOut;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast("Image Downloaded", `${fileNameOut} has been saved.`, "success");
+    shareModal.modal("hide");
+  });
+
+  $("#shareCopyImageBtn").on("click", async () => {
+    if (!currentBlob) return;
+    if (typeof ClipboardItem === "undefined" || !navigator.clipboard?.write) {
+      showToast("Clipboard Notice", "Copying images is not supported in this browser.", "warning");
+      return;
+    }
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({ "image/png": currentBlob }),
+      ]);
+      showToast("Copied!", "Showcase card copied to clipboard.", "success");
+    } catch (e) {
+      showToast("Copy Restricted", "Could not copy image to clipboard.", "warning");
+    }
+  });
+
+  $("#shareCopyTextBtn").on("click", async () => {
+    const summary = generateShareTextSummary(details);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(summary);
+      } else {
+        const input = document.createElement("textarea");
+        input.value = summary;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand("copy");
+        document.body.removeChild(input);
+      }
+      showToast("Summary Copied!", "Text summary copied to clipboard.", "success");
+    } catch (e) {
+      showToast("Copy Failed", "Could not copy text summary.", "warning");
+    }
+  });
+
   shareModal.on("hidden.bs.modal", function () {
     $(this).remove();
   });
 }
+window.showShareOptionsModal = showShareOptionsModal;
 
 window.downloadDetailsAsPNG = async function () {
   const detailsModal = document.getElementById("detailsModal");
   if (!detailsModal) return;
 
-  const modalTitle = detailsModal.querySelector("#detailsName").textContent; // Using ID for robustness
+  const modalTitle = detailsModal.querySelector("#detailsName")?.textContent || "";
   const posterImg = document.getElementById("detailsPoster");
   const posterSrc =
-    posterImg && !posterImg.classList.contains("d-none") ? posterImg.src : null;
+    posterImg && !posterImg.classList.contains("d-none") && posterImg.src
+      ? posterImg.src
+      : null;
+
+  const ratingHTML = document.getElementById("detailsOverallRating")?.innerHTML || "";
+  const ratingStars =
+    (ratingHTML.match(/fas fa-star/g) || []).length +
+    (ratingHTML.match(/fa-star-half-alt/g) || []).length * 0.5;
 
   const details = {
     name: modalTitle,
@@ -2092,163 +2488,13 @@ window.downloadDetailsAsPNG = async function () {
         ?.innerHTML.replace(/<[^>]*>/g, " ")
         .replace(/\s+/g, " ")
         .trim() || "N/A",
-    ratingHTML:
-      document.getElementById("detailsOverallRating")?.innerHTML || "",
+    ratingHTML: ratingHTML,
+    ratingValue: ratingStars,
+    recommendation: document.getElementById("detailsRecommendation")?.textContent || "",
+    posterSrc: posterSrc,
   };
 
-  showLoading("Generating Shareable Image...");
-
-  try {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1080;
-    canvas.height = 1080;
-    const ctx = canvas.getContext("2d");
-
-    const [color1, color2] = getGenreGradient(details.genre);
-    const gradient = ctx.createLinearGradient(
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-    );
-    gradient.addColorStop(0, color1);
-    gradient.addColorStop(1, color2);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.save();
-    ctx.fillStyle = "rgba(255, 255, 255, 0.08)";
-    ctx.font = `bold 60px 'Poppins', Arial`;
-    ctx.textAlign = "center";
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    ctx.rotate(-Math.PI / 4);
-    const watermarkText = "KeepMovizEZ";
-    for (let y = -canvas.height; y < canvas.height * 1.5; y += 150) {
-      for (let x = -canvas.width; x < canvas.width * 1.5; x += 400) {
-        ctx.fillText(watermarkText, x, y);
-      }
-    }
-    ctx.restore();
-
-    let yOffset = 70;
-    if (posterSrc) {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      await new Promise((resolve) => {
-        img.onload = resolve;
-        img.onerror = () => {
-          console.warn("Could not load poster image for canvas.");
-          resolve();
-        };
-        img.src = posterSrc.includes("?")
-          ? posterSrc
-          : posterSrc + "?not-from-cache-please";
-      });
-
-      if (img.complete && img.naturalHeight !== 0) {
-        const maxWidth = canvas.width * 0.45;
-        const maxHeight = canvas.height * 0.55;
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = (height * maxWidth) / width;
-          width = maxWidth;
-        }
-        if (height > maxHeight) {
-          width = (width * maxHeight) / height;
-          height = maxHeight;
-        }
-        const posterX = (canvas.width - width) / 2;
-
-        ctx.save();
-        ctx.translate(posterX + width / 2, yOffset + height / 2);
-        ctx.rotate((2 * Math.PI) / 180);
-        ctx.shadowColor = "rgba(0,0,0,0.5)";
-        ctx.shadowBlur = 40;
-        ctx.shadowOffsetY = 15;
-        roundRect(
-          ctx,
-          -width / 2 - 15,
-          -height / 2 - 15,
-          width + 30,
-          height + 30,
-          25,
-        );
-        ctx.fillStyle = "#fff";
-        ctx.fill();
-        ctx.drawImage(img, -width / 2, -height / 2, width, height);
-        ctx.restore();
-        yOffset += height + 70;
-      } else {
-        yOffset += 50;
-      }
-    }
-
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ffffff";
-    ctx.shadowColor = "rgba(0,0,0,0.5)";
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 5;
-    ctx.font = `bold 72px 'Poppins', Arial`;
-    yOffset = wrapText(
-      ctx,
-      details.name,
-      canvas.width / 2,
-      yOffset,
-      canvas.width - 120,
-      80,
-    );
-
-    ctx.font = `38px 'Poppins', Arial`;
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.shadowBlur = 5;
-    const infoLine = `🗓️ ${details.year}  •  🎬 ${details.genre.split(",")[0]}  •  ⏱️ ${details.runtime}`;
-    ctx.fillText(infoLine, canvas.width / 2, yOffset + 30);
-    yOffset += 130;
-
-    if (details.ratingHTML && !details.ratingHTML.includes("N/A")) {
-      const ratingBoxWidth = 450;
-      const ratingBoxHeight = 150;
-      const ratingBoxX = (canvas.width - ratingBoxWidth) / 2;
-      ctx.fillStyle = "rgba(0, 0, 0, 0.25)";
-      ctx.shadowColor = "rgba(0,0,0,0.3)";
-      ctx.shadowBlur = 15;
-      roundRect(ctx, ratingBoxX, yOffset, ratingBoxWidth, ratingBoxHeight, 20);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-      ctx.font = `32px 'Poppins', Arial`;
-      ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-      ctx.fillText("My Rating", canvas.width / 2, yOffset + 55);
-
-      drawStarsOnCanvas(
-        ctx,
-        ratingBoxX + 95,
-        yOffset + 115,
-        details.ratingHTML,
-        48,
-      );
-    }
-
-    const safeName = details.name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
-    const fileName = `${safeName}_details.png`;
-
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        showToast("Error", "Could not create image blob.", "error");
-        return;
-      }
-      showShareOptionsModal(blob, fileName);
-    }, "image/png");
-  } catch (error) {
-    console.error("Error generating PNG:", error);
-    showToast(
-      "Download Error",
-      `Failed to generate image: ${error.message}`,
-      "error",
-    );
-  } finally {
-    hideLoading();
-  }
+  showShareOptionsModal(details);
 };
 
 function roundRect(ctx, x, y, width, height, radius) {
