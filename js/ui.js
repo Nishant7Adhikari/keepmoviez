@@ -2024,11 +2024,20 @@ window.generateShareTextSummary = generateShareTextSummary;
 async function generateShareCardCanvas(details, options = {}) {
   const aspectRatio = options.aspectRatio || "portrait";
   const theme = options.theme || "poster";
+  const showDetails = options.showDetails !== false;
+  const showRating = options.showRating !== false;
+  const showBranding = options.showBranding !== false;
 
   let width = 1080;
   let height = 1350;
-  if (aspectRatio === "square") height = 1080;
-  else if (aspectRatio === "story") height = 1920;
+  if (aspectRatio === "square") {
+    height = 1080;
+  } else if (aspectRatio === "story") {
+    height = 1920;
+  } else if (aspectRatio === "landscape") {
+    width = 1920;
+    height = 1080;
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -2051,19 +2060,25 @@ async function generateShareCardCanvas(details, options = {}) {
     }
   }
 
-  // 1. BACKGROUND
+  // 1. BACKGROUND RENDER
   if (theme === "poster" && posterImg) {
     ctx.save();
     try {
-      ctx.filter = "blur(40px) brightness(0.35)";
+      ctx.filter = "blur(45px) brightness(0.32)";
     } catch (e) {}
     ctx.drawImage(posterImg, -50, -50, width + 100, height + 100);
     ctx.restore();
 
     const overlay = ctx.createLinearGradient(0, 0, 0, height);
-    overlay.addColorStop(0, "rgba(15, 23, 42, 0.65)");
+    overlay.addColorStop(0, "rgba(15, 23, 42, 0.6)");
     overlay.addColorStop(1, "rgba(15, 23, 42, 0.92)");
     ctx.fillStyle = overlay;
+    ctx.fillRect(0, 0, width, height);
+  } else if (theme === "minimal") {
+    const gradient = ctx.createLinearGradient(0, 0, 0, height);
+    gradient.addColorStop(0, "#090d16");
+    gradient.addColorStop(1, "#0f172a");
+    ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, width, height);
   } else if (theme === "gradient") {
     const [color1, color2] = getGenreGradient(details.genre);
@@ -2079,6 +2094,7 @@ async function generateShareCardCanvas(details, options = {}) {
     ctx.fillStyle = overlay;
     ctx.fillRect(0, 0, width, height);
   } else {
+    // Dark Glass
     const gradient = ctx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#0f172a");
     gradient.addColorStop(1, "#1e293b");
@@ -2086,149 +2102,269 @@ async function generateShareCardCanvas(details, options = {}) {
     ctx.fillRect(0, 0, width, height);
   }
 
-  // 2. GLASS CARD CONTAINER
-  const cardPadding = 50;
+  // 2. CONTAINER
+  const cardPadding = aspectRatio === "landscape" ? 60 : 50;
   const cardX = cardPadding;
   const cardY = cardPadding;
   const cardW = width - cardPadding * 2;
   const cardH = height - cardPadding * 2;
 
-  ctx.save();
-  ctx.fillStyle = "rgba(30, 41, 59, 0.72)";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
-  ctx.shadowBlur = 30;
-  ctx.shadowOffsetY = 15;
-  roundRect(ctx, cardX, cardY, cardW, cardH, 32);
-  ctx.fill();
-
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
-  ctx.lineWidth = 2;
-  roundRect(ctx, cardX, cardY, cardW, cardH, 32);
-  ctx.stroke();
-  ctx.restore();
-
-  // 3. CARD CONTENT
-  let contentY = cardY + 50;
-
-  if (posterImg) {
-    const maxPosterW = cardW * 0.48;
-    const maxPosterH = aspectRatio === "square" ? cardH * 0.44 : cardH * 0.52;
-    let pw = posterImg.naturalWidth || 300;
-    let ph = posterImg.naturalHeight || 450;
-
-    if (pw > maxPosterW) {
-      ph = (ph * maxPosterW) / pw;
-      pw = maxPosterW;
-    }
-    if (ph > maxPosterH) {
-      pw = (pw * maxPosterH) / ph;
-      ph = maxPosterH;
-    }
-
-    const posterX = cardX + (cardW - pw) / 2;
+  if (showDetails || theme === "dark" || theme === "gradient") {
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,0.6)";
-    ctx.shadowBlur = 25;
-    ctx.shadowOffsetY = 10;
-
-    roundRect(ctx, posterX, contentY, pw, ph, 20);
-    ctx.clip();
-    ctx.drawImage(posterImg, posterX, contentY, pw, ph);
-    ctx.restore();
-
-    ctx.save();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.lineWidth = 2;
-    roundRect(ctx, posterX, contentY, pw, ph, 20);
-    ctx.stroke();
-    ctx.restore();
-
-    contentY += ph + 40;
-  } else {
-    contentY += 40;
-  }
-
-  // TITLE
-  ctx.save();
-  ctx.textAlign = "center";
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
-  ctx.shadowBlur = 12;
-  ctx.shadowOffsetY = 4;
-  ctx.font = "bold 60px 'Poppins', Arial, sans-serif";
-  contentY = wrapText(ctx, details.name || "Untitled", width / 2, contentY, cardW - 80, 68);
-  ctx.restore();
-
-  contentY += 10;
-
-  // METADATA PILLS
-  const pills = [];
-  if (details.category && details.category !== "N/A") pills.push(details.category.toUpperCase());
-  if (details.year && details.year !== "N/A") pills.push(details.year);
-  if (details.runtime && details.runtime !== "N/A") pills.push(details.runtime);
-
-  if (pills.length > 0) {
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
-    ctx.fillStyle = "rgba(226, 232, 240, 0.9)";
-    ctx.fillText(pills.join("  •  "), width / 2, contentY + 25);
-    ctx.restore();
-    contentY += 55;
-  }
-
-  // GENRE PILLS
-  if (details.genre && details.genre !== "N/A") {
-    ctx.save();
-    ctx.textAlign = "center";
-    ctx.font = "28px 'Poppins', Arial, sans-serif";
-    ctx.fillStyle = "rgba(148, 163, 184, 0.95)";
-    ctx.fillText(details.genre.split(",").slice(0, 3).join(" • "), width / 2, contentY + 15);
-    ctx.restore();
-    contentY += 50;
-  }
-
-  // RATING & RECOMMENDATION
-  const ratingValue = details.ratingValue ||
-    ((details.ratingHTML || "").match(/fas fa-star/g) || []).length +
-    ((details.ratingHTML || "").match(/fa-star-half-alt/g) || []).length * 0.5;
-
-  if (ratingValue > 0 || (details.recommendation && details.recommendation !== "N/A")) {
-    const boxW = Math.min(cardW - 100, 500);
-    const boxH = 90;
-    const boxX = (width - boxW) / 2;
-
-    ctx.save();
-    ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
-    roundRect(ctx, boxX, contentY, boxW, boxH, 18);
+    ctx.fillStyle = "rgba(30, 41, 59, 0.72)";
+    ctx.shadowColor = "rgba(0, 0, 0, 0.5)";
+    ctx.shadowBlur = 30;
+    ctx.shadowOffsetY = 15;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 32);
     ctx.fill();
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
-    ctx.lineWidth = 1;
-    roundRect(ctx, boxX, contentY, boxW, boxH, 18);
-    ctx.stroke();
 
-    if (ratingValue > 0) {
-      drawStarsOnCanvas(ctx, boxX + 40, contentY + 56, details.ratingHTML || `${ratingValue} stars`, 34);
-      ctx.font = "bold 32px 'Poppins', Arial, sans-serif";
-      ctx.fillStyle = "#ffd700";
-      ctx.textAlign = "right";
-      ctx.fillText(`${ratingValue.toFixed(1)} / 5`, boxX + boxW - 40, contentY + 56);
-    } else if (details.recommendation) {
-      ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
-      ctx.fillStyle = "#38bdf8";
-      ctx.textAlign = "center";
-      ctx.fillText(details.recommendation, width / 2, contentY + 54);
-    }
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.lineWidth = 2;
+    roundRect(ctx, cardX, cardY, cardW, cardH, 32);
+    ctx.stroke();
     ctx.restore();
+  }
+
+  // 3. LAYOUT RENDERING
+  if (aspectRatio === "landscape") {
+    // Desktop Wallpaper Mode (16:9)
+    if (posterImg) {
+      const maxPosterH = cardH - 100;
+      const maxPosterW = cardW * 0.42;
+      let pw = posterImg.naturalWidth || 300;
+      let ph = posterImg.naturalHeight || 450;
+      if (ph > maxPosterH) {
+        pw = (pw * maxPosterH) / ph;
+        ph = maxPosterH;
+      }
+      if (pw > maxPosterW) {
+        ph = (ph * maxPosterW) / pw;
+        pw = maxPosterW;
+      }
+
+      const posterX = showDetails ? cardX + 60 : (width - pw) / 2;
+      const posterY = cardY + (cardH - ph) / 2;
+
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 30;
+      ctx.shadowOffsetY = 12;
+      roundRect(ctx, posterX, posterY, pw, ph, 24);
+      ctx.clip();
+      ctx.drawImage(posterImg, posterX, posterY, pw, ph);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, posterX, posterY, pw, ph, 24);
+      ctx.stroke();
+      ctx.restore();
+
+      if (showDetails) {
+        let textX = posterX + pw + 80;
+        let textW = cardW - (pw + 180);
+        let textY = cardY + 120;
+
+        ctx.save();
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#ffffff";
+        ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetY = 4;
+        ctx.font = "bold 64px 'Poppins', Arial, sans-serif";
+        textY = wrapText(ctx, details.name || "Untitled", textX, textY, textW, 74);
+        ctx.restore();
+
+        textY += 15;
+
+        const pills = [];
+        if (details.category && details.category !== "N/A") pills.push(details.category.toUpperCase());
+        if (details.year && details.year !== "N/A") pills.push(details.year);
+        if (details.runtime && details.runtime !== "N/A") pills.push(details.runtime);
+
+        if (pills.length > 0) {
+          ctx.save();
+          ctx.textAlign = "left";
+          ctx.font = "bold 32px 'Poppins', Arial, sans-serif";
+          ctx.fillStyle = "rgba(226, 232, 240, 0.9)";
+          ctx.fillText(pills.join("  •  "), textX, textY + 25);
+          ctx.restore();
+          textY += 60;
+        }
+
+        if (details.genre && details.genre !== "N/A") {
+          ctx.save();
+          ctx.textAlign = "left";
+          ctx.font = "30px 'Poppins', Arial, sans-serif";
+          ctx.fillStyle = "rgba(148, 163, 184, 0.95)";
+          ctx.fillText(details.genre, textX, textY + 15);
+          ctx.restore();
+          textY += 65;
+        }
+
+        const ratingValue = details.ratingValue ||
+          ((details.ratingHTML || "").match(/fas fa-star/g) || []).length +
+          ((details.ratingHTML || "").match(/fa-star-half-alt/g) || []).length * 0.5;
+
+        if (showRating && (ratingValue > 0 || details.recommendation)) {
+          const boxW = Math.min(textW, 520);
+          const boxH = 95;
+          const boxX = textX;
+
+          ctx.save();
+          ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
+          roundRect(ctx, boxX, textY, boxW, boxH, 18);
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+          ctx.lineWidth = 1;
+          roundRect(ctx, boxX, textY, boxW, boxH, 18);
+          ctx.stroke();
+
+          if (ratingValue > 0) {
+            drawStarsOnCanvas(ctx, boxX + 35, textY + 60, details.ratingHTML || `${ratingValue} stars`, 34);
+            ctx.font = "bold 32px 'Poppins', Arial, sans-serif";
+            ctx.fillStyle = "#ffd700";
+            ctx.textAlign = "right";
+            ctx.fillText(`${ratingValue.toFixed(1)} / 5`, boxX + boxW - 35, textY + 60);
+          } else if (details.recommendation) {
+            ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
+            ctx.fillStyle = "#38bdf8";
+            ctx.textAlign = "center";
+            ctx.fillText(details.recommendation, boxX + boxW / 2, textY + 58);
+          }
+          ctx.restore();
+        }
+      }
+    }
+  } else {
+    // Portrait / Story / Square Mode
+    let contentY = cardY + 50;
+
+    if (posterImg) {
+      const maxPosterW = cardW * (showDetails ? 0.48 : 0.75);
+      const maxPosterH = showDetails
+        ? (aspectRatio === "square" ? cardH * 0.42 : cardH * 0.52)
+        : cardH - 120;
+      let pw = posterImg.naturalWidth || 300;
+      let ph = posterImg.naturalHeight || 450;
+
+      if (pw > maxPosterW) {
+        ph = (ph * maxPosterW) / pw;
+        pw = maxPosterW;
+      }
+      if (ph > maxPosterH) {
+        pw = (pw * maxPosterH) / ph;
+        ph = maxPosterH;
+      }
+
+      const posterX = cardX + (cardW - pw) / 2;
+      const posterY = showDetails ? contentY : cardY + (cardH - ph) / 2;
+
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 25;
+      ctx.shadowOffsetY = 10;
+
+      roundRect(ctx, posterX, posterY, pw, ph, 20);
+      ctx.clip();
+      ctx.drawImage(posterImg, posterX, posterY, pw, ph);
+      ctx.restore();
+
+      ctx.save();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.lineWidth = 2;
+      roundRect(ctx, posterX, posterY, pw, ph, 20);
+      ctx.stroke();
+      ctx.restore();
+
+      contentY = posterY + ph + 35;
+    } else {
+      contentY += 40;
+    }
+
+    if (showDetails) {
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.6)";
+      ctx.shadowBlur = 12;
+      ctx.shadowOffsetY = 4;
+      ctx.font = "bold 60px 'Poppins', Arial, sans-serif";
+      contentY = wrapText(ctx, details.name || "Untitled", width / 2, contentY, cardW - 80, 68);
+      ctx.restore();
+
+      contentY += 10;
+
+      const pills = [];
+      if (details.category && details.category !== "N/A") pills.push(details.category.toUpperCase());
+      if (details.year && details.year !== "N/A") pills.push(details.year);
+      if (details.runtime && details.runtime !== "N/A") pills.push(details.runtime);
+
+      if (pills.length > 0) {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
+        ctx.fillStyle = "rgba(226, 232, 240, 0.9)";
+        ctx.fillText(pills.join("  •  "), width / 2, contentY + 25);
+        ctx.restore();
+        contentY += 55;
+      }
+
+      if (details.genre && details.genre !== "N/A") {
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.font = "28px 'Poppins', Arial, sans-serif";
+        ctx.fillStyle = "rgba(148, 163, 184, 0.95)";
+        ctx.fillText(details.genre.split(",").slice(0, 3).join(" • "), width / 2, contentY + 15);
+        ctx.restore();
+        contentY += 50;
+      }
+
+      const ratingValue = details.ratingValue ||
+        ((details.ratingHTML || "").match(/fas fa-star/g) || []).length +
+        ((details.ratingHTML || "").match(/fa-star-half-alt/g) || []).length * 0.5;
+
+      if (showRating && (ratingValue > 0 || (details.recommendation && details.recommendation !== "N/A"))) {
+        const boxW = Math.min(cardW - 100, 500);
+        const boxH = 90;
+        const boxX = (width - boxW) / 2;
+
+        ctx.save();
+        ctx.fillStyle = "rgba(15, 23, 42, 0.5)";
+        roundRect(ctx, boxX, contentY, boxW, boxH, 18);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.12)";
+        ctx.lineWidth = 1;
+        roundRect(ctx, boxX, contentY, boxW, boxH, 18);
+        ctx.stroke();
+
+        if (ratingValue > 0) {
+          drawStarsOnCanvas(ctx, boxX + 40, contentY + 56, details.ratingHTML || `${ratingValue} stars`, 34);
+          ctx.font = "bold 32px 'Poppins', Arial, sans-serif";
+          ctx.fillStyle = "#ffd700";
+          ctx.textAlign = "right";
+          ctx.fillText(`${ratingValue.toFixed(1)} / 5`, boxX + boxW - 40, contentY + 56);
+        } else if (details.recommendation) {
+          ctx.font = "bold 30px 'Poppins', Arial, sans-serif";
+          ctx.fillStyle = "#38bdf8";
+          ctx.textAlign = "center";
+          ctx.fillText(details.recommendation, width / 2, contentY + 54);
+        }
+        ctx.restore();
+      }
+    }
   }
 
   // BRAND FOOTER
-  ctx.save();
-  ctx.textAlign = "center";
-  ctx.font = "bold 26px 'Poppins', Arial, sans-serif";
-  ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-  ctx.fillText("KeepMoviEZ  •  Smart Media Tracker", width / 2, cardY + cardH - 30);
-  ctx.restore();
+  if (showBranding) {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.font = "bold 26px 'Poppins', Arial, sans-serif";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
+    ctx.fillText("KeepMoviEZ  •  Smart Media Tracker", width / 2, cardY + cardH - 30);
+    ctx.restore();
+  }
 
   return canvas;
 }
@@ -2250,6 +2386,9 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
 
   let currentAspectRatio = "portrait";
   let currentTheme = details.posterSrc ? "poster" : "gradient";
+  let currentShowDetails = true;
+  let currentShowRating = true;
+  let currentShowBranding = true;
 
   const modalHtml = `
     <div class="modal fade" id="shareOptionsModal" tabindex="-1" role="dialog" aria-labelledby="shareModalTitle" aria-hidden="true">
@@ -2257,7 +2396,7 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="shareModalTitle">
-              <i class="fas fa-share-alt text-primary mr-2" aria-hidden="true"></i> Share Media Showcase
+              <i class="fas fa-share-alt text-primary mr-2" aria-hidden="true"></i> Media Showcase & Wallpaper Export
             </h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
@@ -2267,27 +2406,38 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
             <div class="share-preview-wrapper text-center">
               <div id="shareLoadingSpinner" class="my-5">
                 <i class="fas fa-spinner fa-spin fa-2x text-primary" aria-hidden="true"></i>
-                <p class="small text-muted mt-2">Generating showcase card...</p>
+                <p class="small text-muted mt-2">Generating image...</p>
               </div>
               <img id="shareCardPreviewImg" class="share-preview-img d-none" alt="Share Card Preview">
             </div>
 
             <div class="share-controls-section">
               <div class="mb-3">
-                <div class="share-option-title"><i class="fas fa-crop-alt mr-1" aria-hidden="true"></i> Card Format</div>
+                <div class="share-option-title"><i class="fas fa-crop-alt mr-1" aria-hidden="true"></i> Canvas Format</div>
                 <div class="share-pill-group" id="shareAspectPills">
                   <button type="button" class="share-pill-btn active" data-aspect="portrait">Portrait (4:5)</button>
                   <button type="button" class="share-pill-btn" data-aspect="square">Square (1:1)</button>
-                  <button type="button" class="share-pill-btn" data-aspect="story">Story (9:16)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="story">Phone Wallpaper (9:16)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="landscape">Desktop Wallpaper (16:9)</button>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <div class="share-option-title"><i class="fas fa-palette mr-1" aria-hidden="true"></i> Visual Theme</div>
+                <div class="share-pill-group" id="shareThemePills">
+                  <button type="button" class="share-pill-btn ${currentTheme === 'poster' ? 'active' : ''}" data-theme="poster">Cinematic Blur</button>
+                  <button type="button" class="share-pill-btn" data-theme="minimal">Full Art Minimalist</button>
+                  <button type="button" class="share-pill-btn ${currentTheme === 'gradient' ? 'active' : ''}" data-theme="gradient">Genre Gradient</button>
+                  <button type="button" class="share-pill-btn" data-theme="dark">Dark Glass</button>
                 </div>
               </div>
 
               <div>
-                <div class="share-option-title"><i class="fas fa-palette mr-1" aria-hidden="true"></i> Visual Theme</div>
-                <div class="share-pill-group" id="shareThemePills">
-                  <button type="button" class="share-pill-btn ${currentTheme === 'poster' ? 'active' : ''}" data-theme="poster">Cinematic Blur</button>
-                  <button type="button" class="share-pill-btn ${currentTheme === 'gradient' ? 'active' : ''}" data-theme="gradient">Genre Gradient</button>
-                  <button type="button" class="share-pill-btn" data-theme="dark">Dark Glass</button>
+                <div class="share-option-title"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i> Content Visibility</div>
+                <div class="share-toggle-group" id="shareContentToggles">
+                  <button type="button" class="share-toggle-btn active" id="toggleShowDetails"><i class="fas fa-check" aria-hidden="true"></i> Details</button>
+                  <button type="button" class="share-toggle-btn active" id="toggleShowRating"><i class="fas fa-check" aria-hidden="true"></i> Rating</button>
+                  <button type="button" class="share-toggle-btn active" id="toggleShowBranding"><i class="fas fa-check" aria-hidden="true"></i> Branding</button>
                 </div>
               </div>
             </div>
@@ -2339,6 +2489,9 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
       const canvas = await generateShareCardCanvas(details, {
         aspectRatio: currentAspectRatio,
         theme: currentTheme,
+        showDetails: currentShowDetails,
+        showRating: currentShowRating,
+        showBranding: currentShowBranding,
       });
 
       canvas.toBlob((blob) => {
@@ -2370,6 +2523,27 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
     $("#shareThemePills .share-pill-btn").removeClass("active");
     $(this).addClass("active");
     currentTheme = $(this).data("theme");
+    updatePreview();
+  });
+
+  $("#toggleShowDetails").on("click", function () {
+    currentShowDetails = !currentShowDetails;
+    $(this).toggleClass("active", currentShowDetails);
+    $(this).find("i").attr("class", currentShowDetails ? "fas fa-check" : "fas fa-times");
+    updatePreview();
+  });
+
+  $("#toggleShowRating").on("click", function () {
+    currentShowRating = !currentShowRating;
+    $(this).toggleClass("active", currentShowRating);
+    $(this).find("i").attr("class", currentShowRating ? "fas fa-check" : "fas fa-times");
+    updatePreview();
+  });
+
+  $("#toggleShowBranding").on("click", function () {
+    currentShowBranding = !currentShowBranding;
+    $(this).toggleClass("active", currentShowBranding);
+    $(this).find("i").attr("class", currentShowBranding ? "fas fa-check" : "fas fa-times");
     updatePreview();
   });
 
@@ -2431,7 +2605,7 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
       await navigator.clipboard.write([
         new ClipboardItem({ "image/png": currentBlob }),
       ]);
-      showToast("Copied!", "Showcase card copied to clipboard.", "success");
+      showToast("Copied!", "Showcase image copied to clipboard.", "success");
     } catch (e) {
       showToast("Copy Restricted", "Could not copy image to clipboard.", "warning");
     }

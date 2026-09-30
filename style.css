@@ -4137,6 +4137,35 @@ body,
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
+.share-toggle-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.share-toggle-btn {
+  border: 1px dashed var(--border-color, #cbd5e1);
+  background: var(--bg-color-secondary, rgba(0,0,0,0.02));
+  color: var(--text-color, #1e293b);
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.share-toggle-btn.active {
+  border-style: solid;
+  border-color: var(--success-color, #10b981);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--success-color, #10b981);
+}
+
 .share-action-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));

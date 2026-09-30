@@ -1150,9 +1150,14 @@ test('generateShareTextSummary and generateShareCardCanvas produce expected shar
     assert.ok(summaryText.includes("Rated 5/5 ⭐"), "Summary text should include rating stars");
     assert.ok(summaryText.includes("Tracked on KeepMoviEZ!"), "Summary text should include brand tag");
 
-    // 2. Verify share modal HTML includes accessible buttons
+    // 2. Verify share modal HTML includes accessible buttons and visibility toggles
     assert.ok(uiCode.includes('id="shareGeneratedImageBtn"'), 'Modal should contain share button');
     assert.ok(uiCode.includes('id="downloadGeneratedImageBtn"'), 'Modal should contain download button');
     assert.ok(uiCode.includes('id="shareCopyImageBtn"'), 'Modal should contain copy image button');
     assert.ok(uiCode.includes('id="shareCopyTextBtn"'), 'Modal should contain copy text button');
+    assert.ok(uiCode.includes('id="toggleShowDetails"'), 'Modal should contain show details toggle button');
+    assert.ok(uiCode.includes('id="toggleShowRating"'), 'Modal should contain show rating toggle button');
+    assert.ok(uiCode.includes('id="toggleShowBranding"'), 'Modal should contain show branding toggle button');
+    assert.ok(uiCode.includes('data-aspect="story"'), 'Modal should support phone wallpaper aspect ratio');
+    assert.ok(uiCode.includes('data-aspect="landscape"'), 'Modal should support desktop wallpaper aspect ratio');
 });
