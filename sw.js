@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.7.12";
+const CACHE_NAME = "keepmoviez-local-v5.7.13";
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -7,7 +7,7 @@ const CORE_ASSETS = [
   "./",
   "./index.html",
   "./offline.html",
-  "./style.css?v=5.7.12",
+  "./style.css?v=5.7.13",
   "./manifest.json",
 
   // Local CSS
