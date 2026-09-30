@@ -100,3 +100,9 @@
 **Legal/Copy Risk:** Presenting multi-entry batch edit tools ("Batch Edit Selected Entries") without contextual microcopy or documentation creates user confusion and legal exposure regarding accidental batch property overwrites and IndexedDB/cloud update boundaries.
 **Learning:** High-stakes multi-record editing tools require explicit inline assurances (`(i)`) clarifying that only explicitly checked fields are updated while unchecked properties remain untouched, along with documentation detailing local cache and cloud synchronization behavior.
 **Remedy:** Attach an accessible `(i)` info icon to `#batchEditModalLabel` with `aria-label="Learn more about Batch Edit Operations"` and protective title microcopy, and document selective property batch updates and synchronization boundaries under Advanced Data Controls in `./docs/index.html`.
+
+## 2026-09-30 - Misleading Direct Streaming Microcopy and Third-Party Availability Boundaries
+
+**Legal/Copy Risk:** Labeling external streaming aggregator search buttons as "Watch Here" creates legal exposure by falsely implying that KeepmoviEZ hosts, streams, or embeds copyright-protected video playback directly within the application, creating copyright infringement and warranty claim liabilities.
+**Learning:** Personal logging applications that link to external search services (e.g., JustWatch) must use objective, standard industry phrasing ("Where to Watch") with descriptive tooltips and documentation clarifying that external links perform regional availability lookups on third-party aggregators rather than hosted playback.
+**Remedy:** Update CTA microcopy on `#detailsStreamingBtn` from "Watch Here" to "Where to Watch" with a protective `title` attribute ("Search third-party streaming availability on JustWatch"), and document external streaming availability lookup boundaries in `./docs/index.html`.
