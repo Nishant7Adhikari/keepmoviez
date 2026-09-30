@@ -234,11 +234,21 @@ p {
   background-color: transparent;
   height: 100%;
   padding: 0 8px;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #sortColumnDropdown {
   width: 100%;
   height: auto;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 #clearSearchBtn {
@@ -299,15 +309,17 @@ p {
     border-color 0.15s ease;
 }
 
-.fixed-bottom-nav .btn:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--box-shadow-subtle);
-  background-color: var(--primary-hover-color);
-  border-color: var(--primary-hover-color);
-}
+@media (hover: hover) {
+  .fixed-bottom-nav .btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--box-shadow-subtle);
+    background-color: var(--primary-hover-color);
+    border-color: var(--primary-hover-color);
+  }
 
-.dark-theme .fixed-bottom-nav .btn:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  .dark-theme .fixed-bottom-nav .btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .multi-select-actions-bar {
@@ -705,13 +717,15 @@ body.multi-select-active #addNewEntryBtn {
   /* Increased min-height for better spacing and larger poster */
 }
 
-.movie-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-}
+@media (hover: hover) {
+  .movie-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
 
-.dark-theme .movie-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  .dark-theme .movie-card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  }
 }
 
 .movie-card.selected {
@@ -841,14 +855,21 @@ body.multi-select-active #addNewEntryBtn {
 }
 
 .card-actions .btn {
-  padding: 0.2rem 0.5rem;
-  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 400px) {
   .card-actions .btn {
-    padding: 0.15rem 0.3rem;
-    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
 
@@ -1184,9 +1205,11 @@ body.multi-select-active #addNewEntryBtn {
     transform 0.15s ease;
 }
 
-.genre-tag:hover {
-  transform: translateY(-1px);
-  background-color: var(--primary-hover-color);
+@media (hover: hover) {
+  .genre-tag:hover {
+    transform: translateY(-1px);
+    background-color: var(--primary-hover-color);
+  }
 }
 
 .genre-tag .close {
@@ -1223,13 +1246,15 @@ body.multi-select-active #addNewEntryBtn {
   white-space: nowrap;
 }
 
-.btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
+@media (hover: hover) {
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  }
 
-.dark-theme .btn:hover {
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  .dark-theme .btn:hover {
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  }
 }
 
 .btn:focus-visible,
@@ -2293,9 +2318,11 @@ a:hover {
   color: var(--body-text-color);
 }
 
-.achievement-badge:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+  .achievement-badge:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .achievement-badge .fa-stack {
@@ -2342,6 +2369,11 @@ a:hover {
 #filterBtn {
   padding: 0.375rem 0.6rem;
   line-height: 1.2;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .offcanvas-menu {
@@ -2530,8 +2562,8 @@ a:hover {
   border: none;
   border-radius: var(--border-radius-lg);
   overflow: hidden;
-  height: 90vh;
-  max-height: 800px;
+  height: 90dvh;
+  max-height: 90dvh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.28);
@@ -2544,13 +2576,21 @@ a:hover {
 
 .details-modal-close-btn {
   position: absolute;
-  top: 10px;
-  right: 15px;
+  top: 8px;
+  right: 12px;
   z-index: 10;
-  font-size: 2rem;
+  font-size: 1.8rem;
   color: var(--tdcolor);
   text-shadow: 0 1px 2px var(--card-bg);
   opacity: 0.9;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  padding: 0;
 }
 
 .dark-theme .details-modal-close-btn {
@@ -2716,9 +2756,11 @@ a:hover {
   /* Default text color for action buttons */
 }
 
-.details-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+@media (hover: hover) {
+  .details-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
 }
 
 .details-action-btn.youtube {
@@ -2769,13 +2811,19 @@ a:hover {
 }
 
 .btn-pg-stepper {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50% !important;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
   padding: 0;
   line-height: 1;
   color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
 }
 
 .pg-book-icon {
@@ -2870,6 +2918,7 @@ a:hover {
   border-top: 0;
   border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
   overflow: hidden;
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
 }
 
 /* --- Responsive Split Layout --- */
@@ -4035,6 +4084,59 @@ body,
   .director-chip-input {
     flex: 1 1 100%;
     min-width: 0;
+  }
+
+/* Modal Footer Ergonomics on Mobile */
+  #entryModal .modal-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0.75rem;
+    justify-content: center !important;
+  }
+  #entryModal .modal-footer #addModeButtons {
+    flex: 1 1 100%;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  #entryModal .modal-footer #addModeButtons .btn,
+  #entryModal .modal-footer #updateEntryBtn {
+    flex: 1 1 0;
+    height: 38px;
+    min-height: 38px;
+    max-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 0.4rem;
+    font-size: 0.8rem;
+    margin-right: 0 !important;
+    gap: 4px;
+  }
+  #entryModal .modal-footer > .btn-secondary {
+    flex: 1 1 100%;
+    min-height: 38px;
+    padding: 0.35rem;
+    font-size: 0.85rem;
+  }
+
+  #backfillModal .modal-footer {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px;
+  }
+  #backfillModal .modal-footer > div {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 6px;
+  }
+  #backfillModal .modal-footer .btn {
+    flex: 1;
+    min-height: 44px;
+    margin-right: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* Poster preview sizing on mobile */
