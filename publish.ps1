@@ -27,97 +27,90 @@ function Invoke-Git {
         [switch]$AllowFailure
     )
 
-    # Git writes warnings to stderr even when the command succeeds.
-    # Capture stdout and stderr separately so PowerShell does not treat
-    # normal Git warnings as terminating errors.
-    $stdoutFile = [System.IO.Path]::GetTempFileName()
-    $stderrFile = [System.IO.Path]::GetTempFileName()
-
-    $escapedArgs = @(
-        $Arguments | ForEach-Object {
-            if ($_ -match '[\s"]') {
-                '"{0}"' -f ($_ -replace '(\\*)(")', '$1$1\"' -replace '(\\+)$', '$1$1')
-            } else {
-                $_
-            }
+    $escapedArgs = ($Arguments | ForEach-Object {
+        if ($_ -eq '' -or $_ -match '[\s"]') {
+            '"{0}"' -f ($_ -replace '(\\*)(")', '$1$1\"' -replace '(\\+)$', '$1$1')
+        } else {
+            $_
         }
-    )
+    }) -join ' '
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = 'git.exe'
+    $psi.Arguments = $escapedArgs
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+    $psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $psi.StandardErrorEncoding = [System.Text.Encoding]::UTF8
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $psi
+
+    $exitCode = 0
 
     try {
-        $process = Start-Process `
-            -FilePath "git.exe" `
-            -ArgumentList $escapedArgs `
-            -NoNewWindow `
-            -Wait `
-            -PassThru `
-            -RedirectStandardOutput $stdoutFile `
-            -RedirectStandardError $stderrFile
+        [void]$process.Start()
 
-        $stdout = @()
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
 
-        if (Test-Path -LiteralPath $stdoutFile) {
-            $stdout = @(
-                Get-Content `
-                    -Path $stdoutFile `
-                    -ErrorAction SilentlyContinue
-            )
-        }
-
-        $stderr = @()
-
-        if (Test-Path -LiteralPath $stderrFile) {
-            $stderr = @(
-                Get-Content `
-                    -Path $stderrFile `
-                    -ErrorAction SilentlyContinue
-            )
-        }
-
-        $output = @(
-            $stdout + $stderr
-        )
-
+        $process.WaitForExit()
         $exitCode = $process.ExitCode
 
-        if (-not $AllowFailure -and $exitCode -ne 0) {
-
-            if ($output) {
-                $output | ForEach-Object {
-                    Write-Host $_ -ForegroundColor Red
-                }
-            }
-
-            throw "git $($Arguments -join ' ') failed with exit code $exitCode."
-        }
-
-        # Display Git warnings/informational stderr output without
-        # treating them as PowerShell errors.
-        if ($stderr.Count -gt 0) {
-            $stderr | ForEach-Object {
-                Write-Host $_ -ForegroundColor Yellow
-            }
-        }
-
-        return [PSCustomObject]@{
-            Output   = @($output)
-            ExitCode = $exitCode
-        }
+        $stdoutRaw = $stdoutTask.GetAwaiter().GetResult()
+        $stderrRaw = $stderrTask.GetAwaiter().GetResult()
     }
     finally {
+        $process.Dispose()
+    }
 
-        if (Test-Path -LiteralPath $stdoutFile) {
-            Remove-Item `
-                -Path $stdoutFile `
-                -Force `
-                -ErrorAction SilentlyContinue
+    $stdout = @()
+    if (-not [string]::IsNullOrEmpty($stdoutRaw)) {
+        $reader = New-Object System.IO.StringReader($stdoutRaw)
+        $lines = New-Object System.Collections.Generic.List[string]
+        while (($line = $reader.ReadLine()) -ne $null) {
+            $lines.Add($line)
+        }
+        $stdout = @($lines.ToArray())
+    }
+
+    $stderr = @()
+    if (-not [string]::IsNullOrEmpty($stderrRaw)) {
+        $reader = New-Object System.IO.StringReader($stderrRaw)
+        $lines = New-Object System.Collections.Generic.List[string]
+        while (($line = $reader.ReadLine()) -ne $null) {
+            $lines.Add($line)
+        }
+        $stderr = @($lines.ToArray())
+    }
+
+    $output = @($stdout + $stderr)
+
+
+    if (-not $AllowFailure -and $exitCode -ne 0) {
+
+        if ($output.Count -gt 0) {
+            $output | ForEach-Object {
+                Write-Host $_ -ForegroundColor Red
+            }
         }
 
-        if (Test-Path -LiteralPath $stderrFile) {
-            Remove-Item `
-                -Path $stderrFile `
-                -Force `
-                -ErrorAction SilentlyContinue
+        throw "git $($Arguments -join ' ') failed with exit code $exitCode."
+    }
+
+    # Display Git warnings/informational stderr output without
+    # treating them as PowerShell errors.
+    if ($stderr.Count -gt 0) {
+        $stderr | ForEach-Object {
+            Write-Host $_ -ForegroundColor Yellow
         }
+    }
+
+    return [PSCustomObject]@{
+        Output   = @($output)
+        ExitCode = $exitCode
     }
 }
 
@@ -125,23 +118,44 @@ function Invoke-Git {
 # Repository helpers
 # ------------------------------------------------------------
 
-function Get-RepoPath {
-
+function Get-RepoPathAndCheckMerge {
+    # Batch two rev-parse queries into one git process:
+    #   Line 0: repository root (--show-toplevel)
+    #   Line 1: MERGE_HEAD file path (--git-path MERGE_HEAD)
     $result = Invoke-Git @(
         'rev-parse',
-        '--show-toplevel'
+        '--show-toplevel',
+        '--git-path',
+        'MERGE_HEAD'
     )
 
-    $repoPath = (
+    $lines = @(
         $result.Output |
-        Select-Object -First 1
-    ).ToString().Trim()
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+    )
+
+    if ($lines.Count -lt 1) {
+        throw "Could not determine repository root."
+    }
+
+    $repoPath = $lines[0].ToString().Trim()
 
     if ([string]::IsNullOrWhiteSpace($repoPath)) {
         throw "Could not determine repository root."
     }
 
-    return $repoPath
+    $mergeInProgress = $false
+    if ($lines.Count -ge 2) {
+        $mergeHeadPath = $lines[1].ToString().Trim()
+        if (-not [string]::IsNullOrWhiteSpace($mergeHeadPath)) {
+            $mergeInProgress = Test-Path -LiteralPath $mergeHeadPath
+        }
+    }
+
+    return [PSCustomObject]@{
+        RepoPath        = $repoPath
+        MergeInProgress = $mergeInProgress
+    }
 }
 
 function Test-MergeInProgress {
@@ -208,13 +222,9 @@ function Complete-ExistingMerge {
 
         Write-Host "`nChecking whether the conflict files have been resolved..." -ForegroundColor Cyan
 
-        # Stage ONLY conflict paths.
-        foreach ($path in $unmerged) {
-            Invoke-Git @(
-                'add',
-                '--',
-                $path
-            ) | Out-Null
+        # Stage ONLY conflict paths in a single batched call.
+        if ($unmerged.Count -gt 0) {
+            Invoke-Git (@('add', '--') + $unmerged) | Out-Null
         }
 
         # Git's index is the authority for whether the conflicts
@@ -1001,13 +1011,97 @@ $diffOutput
 # Push helper
 # ------------------------------------------------------------
 
+# ------------------------------------------------------------
+# Input helper with timeout
+# ------------------------------------------------------------
+
+function Read-HostWithTimeout {
+    param(
+        [string]$Prompt = "Do you want to push to remote? [Y/n]",
+        [int]$TimeoutSeconds = 10,
+        [string]$Default = "Y"
+    )
+
+    $isInteractive = $false
+    try {
+        if ([Environment]::UserInteractive -and -not [Console]::IsInputRedirected) {
+            $isInteractive = $true
+        }
+    }
+    catch {
+        $isInteractive = $false
+    }
+
+    if (-not $isInteractive) {
+        Write-Host "$Prompt (Auto-confirming '$Default')" -ForegroundColor Cyan
+        return $Default
+    }
+
+    Write-Host "$Prompt (Auto-confirm in ${TimeoutSeconds}s): " -NoNewline
+
+    $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
+    $buffer = ""
+
+    try {
+        while ($stopwatch.Elapsed.TotalSeconds -lt $TimeoutSeconds) {
+            if ([Console]::KeyAvailable) {
+                $key = [Console]::ReadKey($true)
+
+                if ($key.Key -eq [ConsoleKey]::Enter) {
+                    Write-Host ""
+                    if ([string]::IsNullOrWhiteSpace($buffer)) {
+                        return $Default
+                    }
+                    return $buffer.Trim()
+                }
+                elseif ($key.Key -eq [ConsoleKey]::Backspace) {
+                    if ($buffer.Length -gt 0) {
+                        $buffer = $buffer.Substring(0, $buffer.Length - 1)
+                        Write-Host "`b `b" -NoNewline
+                    }
+                }
+                elseif ($key.Key -eq [ConsoleKey]::Escape) {
+                    Write-Host "`nCancelled." -ForegroundColor Yellow
+                    return "n"
+                }
+                else {
+                    $buffer += $key.KeyChar
+                    Write-Host $key.KeyChar -NoNewline
+                }
+            }
+
+            Start-Sleep -Milliseconds 50
+        }
+
+        Write-Host ""
+        if (-not [string]::IsNullOrWhiteSpace($buffer)) {
+            return $buffer.Trim()
+        }
+
+        Write-Host "No response within ${TimeoutSeconds}s. Automatically proceeding with '$Default'." -ForegroundColor Cyan
+        return $Default
+    }
+    catch {
+        Write-Host ""
+        $inputVal = Read-Host "$Prompt [default: $Default]"
+        if ([string]::IsNullOrWhiteSpace($inputVal)) {
+            return $Default
+        }
+        return $inputVal.Trim()
+    }
+}
+
 function Confirm-AndPush {
 
     param(
-        [string]$Message = "Do you want to push to remote? [Y/n]"
+        [string]$Message = "Do you want to push to remote? [Y/n]",
+        [int]$TimeoutSeconds = 10
     )
 
-    $push = Read-Host $Message
+    $push = Read-HostWithTimeout `
+        -Prompt $Message `
+        -TimeoutSeconds $TimeoutSeconds `
+        -Default "Y"
 
     if (
         $push -eq '' -or
@@ -1046,10 +1140,12 @@ function Confirm-AndPush {
 # ============================================================
 
 # ------------------------------------------------------------
-# 0. Move to repository root
+# 0. Move to repository root, and check merge status in one
+#    git process call.
 # ------------------------------------------------------------
 
-$repoRoot = Get-RepoPath
+$repoInfo = Get-RepoPathAndCheckMerge
+$repoRoot = $repoInfo.RepoPath
 
 Set-Location -Path $repoRoot
 
@@ -1093,7 +1189,7 @@ Write-Host "Last committed VERSION change: $lastVersionCommit" -ForegroundColor 
 #    NEVER fetch/pull again while a merge is already active.
 # ------------------------------------------------------------
 
-if (Test-MergeInProgress) {
+if ($repoInfo.MergeInProgress) {
 
     Complete-ExistingMerge
 }
@@ -1118,23 +1214,34 @@ Invoke-Git @(
 ) | Out-Null
 
 # ------------------------------------------------------------
-# 6. Determine upstream branch.
+# 6. Batch: Determine upstream + get local SHA + get remote SHA.
+#    Single git rev-parse call instead of three.
 # ------------------------------------------------------------
 
-$upstreamResult = Invoke-Git @(
+$batchRevParse = Invoke-Git @(
     'rev-parse',
     '--abbrev-ref',
     '--symbolic-full-name',
-    '@{u}'
+    '@{u}',
+    'HEAD',
+    'HEAD@{upstream}'
 ) -AllowFailure
 
-$upstream = (
-    $upstreamResult.Output |
-    Select-Object -First 1
-).ToString().Trim()
+# Line 0: upstream symbolic name (e.g. origin/main)
+# Line 1: local HEAD sha
+# Line 2: remote sha (HEAD@{upstream})
+$batchLines = @(
+    $batchRevParse.Output |
+    Where-Object { -not [string]::IsNullOrWhiteSpace($_) }
+)
+
+if ($batchRevParse.ExitCode -ne 0 -or $batchLines.Count -lt 1) {
+    throw "This branch has no upstream remote branch. Set one with 'git push -u origin <branch>', then rerun publish.ps1."
+}
+
+$upstream = $batchLines[0].ToString().Trim()
 
 if ([string]::IsNullOrWhiteSpace($upstream)) {
-
     throw "This branch has no upstream remote branch. Set one with 'git push -u origin <branch>', then rerun publish.ps1."
 }
 
@@ -1144,25 +1251,19 @@ Write-Host "Upstream: $upstream" -ForegroundColor DarkGray
 # 7. Compare local branch with remote.
 # ------------------------------------------------------------
 
-$localSha = (
-    Invoke-Git @(
-        'rev-parse',
-        'HEAD'
-    )
-).Output |
-    Select-Object -First 1
+$localSha  = if ($batchLines.Count -ge 2) { $batchLines[1].ToString().Trim() } else { '' }
+$remoteSha = if ($batchLines.Count -ge 3) { $batchLines[2].ToString().Trim() } else { '' }
 
-$localSha = $localSha.ToString().Trim()
+# If batch didn't give us full SHAs (older git), fall back individually
+if ([string]::IsNullOrWhiteSpace($localSha)) {
+    $localSha = (Invoke-Git @('rev-parse', 'HEAD')).Output | Select-Object -First 1
+    $localSha = $localSha.ToString().Trim()
+}
 
-$remoteSha = (
-    Invoke-Git @(
-        'rev-parse',
-        $upstream
-    )
-).Output |
-    Select-Object -First 1
-
-$remoteSha = $remoteSha.ToString().Trim()
+if ([string]::IsNullOrWhiteSpace($remoteSha)) {
+    $remoteSha = (Invoke-Git @('rev-parse', $upstream)).Output | Select-Object -First 1
+    $remoteSha = $remoteSha.ToString().Trim()
+}
 
 $baseSha = (
     Invoke-Git @(
@@ -1358,25 +1459,10 @@ if ($changedSinceVersion.Count -eq 0) {
     # DO NOT bump again.
     # --------------------------------------------------------
 
-    $localNow = (
-        Invoke-Git @(
-            'rev-parse',
-            'HEAD'
-        )
-    ).Output |
-        Select-Object -First 1
-
-    $localNow = $localNow.ToString().Trim()
-
-    $remoteNow = (
-        Invoke-Git @(
-            'rev-parse',
-            $upstream
-        )
-    ).Output |
-        Select-Object -First 1
-
-    $remoteNow = $remoteNow.ToString().Trim()
+    # Batch: get local HEAD sha and remote sha in one call
+    $nowShas = (Invoke-Git @('rev-parse', 'HEAD', $upstream)).Output
+    $localNow  = if ($nowShas.Count -ge 1) { $nowShas[0].ToString().Trim() } else { '' }
+    $remoteNow = if ($nowShas.Count -ge 2) { $nowShas[1].ToString().Trim() } else { '' }
 
     if ($localNow -ne $remoteNow) {
 
@@ -1609,13 +1695,8 @@ $versioningFiles = @(
 
 Write-Host "`nStaging only publication-generated files..." -ForegroundColor Cyan
 
-foreach ($path in $versioningFiles) {
-
-    Invoke-Git @(
-        'add',
-        '--',
-        $path
-    ) | Out-Null
+if ($versioningFiles.Count -gt 0) {
+    Invoke-Git (@('add', '--') + $versioningFiles) | Out-Null
 }
 
 # ------------------------------------------------------------
