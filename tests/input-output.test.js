@@ -74,7 +74,7 @@ test('generateAndDownloadFile executes without crashing', () => {
     });
 });
 
-test('populateImportSummary escapes HTML characters in smartImportState.fileName', async () => {
+test('populateImportSummary escapes HTML characters in smartImportState.fileName and renders summary icons with aria-hidden="true"', async () => {
     let htmlContent = '';
     sandbox.document.getElementById = (id) => {
         if (id === 'importSummary') {
@@ -91,6 +91,9 @@ test('populateImportSummary escapes HTML characters in smartImportState.fileName
     await sandbox.initiateSmartImport([], '<img src="x" onerror="alert(1)">.csv');
     assert.ok(!htmlContent.includes('<img src="x" onerror="alert(1)">'));
     assert.ok(htmlContent.includes('&lt;img src=&quot;x&quot; onerror=&quot;alert(1)&quot;&gt;'));
+    assert.ok(htmlContent.includes('<i class="fas fa-plus-circle text-success mr-2" aria-hidden="true"></i>'));
+    assert.ok(htmlContent.includes('<i class="fas fa-sync-alt text-info mr-2" aria-hidden="true"></i>'));
+    assert.ok(htmlContent.includes('<i class="fas fa-exclamation-triangle text-warning mr-2" aria-hidden="true"></i>'));
 });
 
 test('index.html includes accessible info icon trigger for Smart Import Assistant', () => {
@@ -123,6 +126,16 @@ test('index.html includes accessible info icon trigger for Batch Delete Scopes',
     const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
     assert.ok(html.includes('aria-label="Learn more about Batch Delete Scopes"'));
     assert.ok(html.includes('title="Deletion scope determines whether selected entries are purged from local browser cache, remote cloud database, or both locations."'));
+});
+
+test('index.html and docs/index.html include accessible info icon trigger and documentation for Batch Edit Operations', () => {
+    const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+    assert.ok(html.includes('id="batchEditModalLabel"'));
+    assert.ok(html.includes('aria-label="Learn more about Batch Edit Operations"'));
+    assert.ok(html.includes('title="Applies selective property updates across all selected collection entries. Unchecked fields are preserved without modification."'));
+
+    const docsHtml = fs.readFileSync(path.join(__dirname, '../docs/index.html'), 'utf8');
+    assert.ok(docsHtml.includes('Batch Field Editing &amp; Selective Property Updates:') || docsHtml.includes('Batch Field Editing & Selective Property Updates:'));
 });
 
 test('CSV export sanitizes formula triggers in string fields for full and batch export', () => {

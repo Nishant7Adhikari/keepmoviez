@@ -213,7 +213,8 @@
                     <i class="fas fa-info-circle mr-2" aria-hidden="true"></i> About
                 </button>
                 <a href="/docs/index.html" target="_blank" rel="noopener noreferrer"
-                    class="list-group-item list-group-item-action d-flex align-items-center">
+                    class="list-group-item list-group-item-action d-flex align-items-center"
+                    aria-label="Documentation (opens in new tab)">
                     <i class="fas fa-book mr-2" aria-hidden="true"></i> Documentation
                 </a>
             </div>
@@ -645,7 +646,7 @@
                             <i class="fas fa-info-circle text-info" aria-hidden="true"></i> First time?
                         </button>
                         <a style="color: var(--warning-color)" href="/docs/index.html" target="_blank" rel="noopener noreferrer"
-                            class="btn btn-sm btn-light border">
+                            class="btn btn-sm btn-light border" aria-label="Documentation (opens in new tab)">
                             <i class="fas fa-book text-secondary" aria-hidden="true"></i> Documentation
                         </a>
                     </div>
@@ -1361,7 +1362,7 @@
                                     <a id="detailsTrailerBtn" class="btn details-action-btn youtube" target="_blank"
                                         rel="noopener noreferrer"><i class="fab fa-youtube" aria-hidden="true"></i> Trailer</a>
                                     <a id="detailsStreamingBtn" class="btn details-action-btn stream" target="_blank"
-                                        rel="noopener noreferrer"><i class="fas fa-play-circle" aria-hidden="true"></i> Watch Here</a>
+                                        rel="noopener noreferrer" title="Search third-party streaming availability on JustWatch"><i class="fas fa-play-circle" aria-hidden="true"></i> Where to Watch</a>
 
                                     <!-- Parents Guide Component -->
                                     <div id="detailsParentalGuideSection" style="display:none;">
@@ -2165,7 +2166,11 @@
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content fade-up">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="batchEditModalLabel">Batch Edit Selected Entries</h5>
+                    <h5 class="modal-title" id="batchEditModalLabel">Batch Edit Selected Entries
+                        <button type="button" class="btn btn-link p-0 text-muted ml-1 align-baseline" title="Applies selective property updates across all selected collection entries. Unchecked fields are preserved without modification." aria-label="Learn more about Batch Edit Operations">
+                            <i class="fas fa-info-circle text-muted" aria-hidden="true"></i>
+                        </button>
+                    </h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
                             aria-hidden="true">&times;</span></button>
                 </div>

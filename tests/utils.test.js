@@ -459,6 +459,11 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="forcePullTriggerBtn"') && html.includes('fa-cloud-download-alt" aria-hidden="true"'));
     assert.ok(html.includes('id="forcePushTriggerBtn"') && html.includes('fa-cloud-upload-alt" aria-hidden="true"'));
 
+    assert.ok(html.includes('aria-label="Documentation (opens in new tab)"'));
+
+    const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+    assert.ok(css.includes('.close:focus-visible'));
+
     const iconsWithoutAriaHidden = (html.match(/<i\s+class="[^"]*fa[^"]*"(?![^>]*aria-hidden="true")[^>]*>/g) || []);
     assert.strictEqual(iconsWithoutAriaHidden.length, 0, `All Font Awesome icons in index.html should have aria-hidden="true". Found missing: ${iconsWithoutAriaHidden.join(', ')}`);
 });
@@ -682,7 +687,7 @@ test('showToast preserves and presents standard error title and message without 
     assert.equal(alertCalledMessage, "Database Connection Error: Unable to establish network handshake.");
 });
 
-test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes to prevent XSS', () => {
+test('renderWatchHistoryUI escapes watchDateFormatted in h6 and aria-label attributes to prevent XSS', () => {
     const listEl = { innerHTML: '', appendChild: function(child) { this.innerHTML += child.innerHTML; } };
     const testSandbox = {
         console,
@@ -698,9 +703,9 @@ test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes t
             addEventListener: () => {}
         },
         generateUUID: () => 'watch-123',
-        formatWatchDateDisplay: () => '2026-03-31" onclick="alert(1)',
+        formatWatchDateDisplay: () => '2026-03-31<script>alert(1)</script>"',
         renderStars: () => '★★★★★',
-        escapeHTML: (str) => (str ? String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '')
+        escapeHTML: (str) => (str ? String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '')
     };
     testSandbox.window = testSandbox;
 
@@ -710,8 +715,9 @@ test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes t
 
     testSandbox.renderWatchHistoryUI([{ watchId: 'w1', date: '2026-03-31', notes: 'Great' }]);
 
-    assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&quot; onclick=&quot;alert(1)"'));
-    assert.ok(!listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31" onclick="alert(1)"'));
+    assert.ok(listEl.innerHTML.includes('<h6 class="mb-1">2026-03-31&lt;script&gt;alert(1)&lt;/script&gt;&quot;</h6>'));
+    assert.ok(!listEl.innerHTML.includes('<script>alert(1)</script>'));
+    assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&lt;script&gt;alert(1)&lt;/script&gt;&quot;"'));
     assert.ok(listEl.innerHTML.includes('<i class="fas fa-edit" aria-hidden="true"></i>'));
     assert.ok(listEl.innerHTML.includes('<i class="fas fa-trash" aria-hidden="true"></i>'));
 });
@@ -1085,3 +1091,17 @@ test('details modal supports vertical touch scrolling in mobile view (<768px) an
     );
 });
 
+test('achievement toast notifications in js/main.js and js/app.js do not contain raw HTML tags', () => {
+    const mainCode = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+    const appCode = fs.readFileSync(path.join(__dirname, '../js/app.js'), 'utf8');
+
+    // Verify achievement badge click handler in main.js does not interpolate HTML tags into showToast
+    const badgeClickHandler = mainCode.substring(mainCode.indexOf('.achievement-badge'), mainCode.indexOf('$("#detailsModalAddBtn")'));
+    assert.ok(!badgeClickHandler.includes('<br>'), 'Expected achievement badge click handler message not to contain <br>');
+    assert.ok(!badgeClickHandler.includes('<small'), 'Expected achievement badge click handler message not to contain <small>');
+
+    // Verify checkAndNotifyNewAchievements in app.js does not interpolate HTML tags into showToast
+    const notifyFunc = appCode.substring(appCode.indexOf('checkAndNotifyNewAchievements'), appCode.indexOf('// END CHUNK: Achievement and Usage Helpers'));
+    assert.ok(!notifyFunc.includes('<strong>${achievement.name}</strong>'), 'Expected achievement notification in app.js not to contain <strong> tags');
+    assert.ok(!notifyFunc.includes('<br><small>'), 'Expected achievement notification in app.js not to contain <br><small> tags');
+});

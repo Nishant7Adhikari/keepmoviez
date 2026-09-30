@@ -54,7 +54,7 @@ function getDailyRecommendationPickReason(movie) {
         const favoriteGenreObj = window.globalStatsData.topRatedGenresOverall[0];
         const match = genres.find(g => g.toLowerCase() === favoriteGenreObj.label.toLowerCase());
         if (match) {
-            pickReason = `Matches one of your top-rated genres: <strong>${escapeHTML(match)}</strong> (average rating: ${escapeHTML(favoriteGenreObj.value)} <i class="fas fa-star text-warning"></i>)!`;
+            pickReason = `Matches one of your top-rated genres: <strong>${escapeHTML(match)}</strong> (average rating: ${escapeHTML(favoriteGenreObj.value)} <i class="fas fa-star text-warning" aria-hidden="true"></i>)!`;
         } else if (window.globalStatsData.mostWatchedDirectors && window.globalStatsData.mostWatchedDirectors.length > 0 && movie.director_info && movie.director_info.name) {
             const topDirector = window.globalStatsData.mostWatchedDirectors[0].label;
             if (movie.director_info.name === topDirector) {
@@ -143,7 +143,7 @@ function renderDailyRecommendationCard(card, dailyRecSkipCount) {
                 </div>
                 
                 <div class="daily-pick-reason-box">
-                    <i class="fas fa-magic text-primary mr-1"></i> ${card.pickReason}
+                    <i class="fas fa-magic text-primary mr-1" aria-hidden="true"></i> ${card.pickReason}
                 </div>
                 
                 <div class="daily-pick-description">
@@ -311,7 +311,7 @@ async function advanceDailyRecommendationModal(event) {
 async function displayDailyRecommendationModal() {
     const modalBody = document.getElementById('dailyRecommendationModalBody');
     if (!modalBody) { console.warn("Daily recommendation modal body not found."); return; }
-    modalBody.innerHTML = '<p class="text-center text-muted p-5"><i class="fas fa-spinner fa-spin fa-2x"></i><span class="d-block mt-2">Finding your daily pick...</span></p>';
+    modalBody.innerHTML = '<p class="text-center text-muted p-5"><i class="fas fa-spinner fa-spin fa-2x" aria-hidden="true"></i><span class="d-block mt-2">Finding your daily pick...</span></p>';
 
     const state = await buildDailyRecommendationModalState();
     const dailyRecMovie = state.queue[state.currentIndex];
@@ -330,7 +330,7 @@ async function displayDailyRecommendationModal() {
                 <i class="fas fa-times" aria-hidden="true"></i>
             </button>
             <div class="p-5 text-center">
-                <i class="fas fa-calendar-day fa-3x text-muted mb-3"></i>
+                <i class="fas fa-calendar-day fa-3x text-muted mb-3" aria-hidden="true"></i>
                 <p class="text-muted">${escapeHTML(dailyRecMsg)}</p>
                 <button class="btn btn-secondary mt-3" data-dismiss="modal">Close</button>
             </div>`;
@@ -357,7 +357,7 @@ async function displayPersonalizedSuggestionsModal(sourceMovieId = null) {
 
     // Reset UI for loading state
     titleEl.textContent = 'Engine Suggestions';
-    listEl.innerHTML = '<div class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x"></i><p class="mt-2">Building your suggestion hub...</p></div>';
+    listEl.innerHTML = '<div class="text-center p-4"><i class="fas fa-spinner fa-spin fa-2x" aria-hidden="true"></i><p class="mt-2">Building your suggestion hub...</p></div>';
     
     let seedMovie;
 
@@ -970,7 +970,7 @@ function displayAchievementsModal() {
 
     // Show loading state in all containers
     [containerAll, containerMilestones, containerGenres, containerFun].forEach(c => {
-        if (c) c.innerHTML = '<p class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin"></i> Calculating achievements...</p>';
+        if (c) c.innerHTML = '<p class="text-center text-muted p-3"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Calculating achievements...</p>';
     });
 
     const statsForAchievements = (Object.keys(globalStatsData || {}).length > 0 && globalStatsData.totalEntries > 0)
@@ -1106,7 +1106,7 @@ function _createAchievementBadgeElement(ach) {
 
     badge.innerHTML = `
         <span class="fa-stack fa-2x">
-            <i class="${escapeHTML(ach.icon)} fa-stack-2x"></i>
+            <i class="${escapeHTML(ach.icon)} fa-stack-2x" aria-hidden="true"></i>
         </span>
         <span>${escapeHTML(ach.name)}</span>
         ${progressBarHTML}`;
@@ -1848,7 +1848,7 @@ window.celebrateAchievementUnlock = function (achievement) {
     overlay.innerHTML = `
         <div class="achievement-showcase-card">
             <div class="achievement-showcase-icon">
-                <i class="${escapeHTML(achievement.icon || 'fas fa-trophy')}"></i>
+                <i class="${escapeHTML(achievement.icon || 'fas fa-trophy')}" aria-hidden="true"></i>
             </div>
             <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 2px; color: #ffc107; font-weight: 700; margin-bottom: 0.5rem;">🏆 Achievement Unlocked!</div>
             <div class="achievement-showcase-title">${escapeHTML(achievement.name)}</div>
