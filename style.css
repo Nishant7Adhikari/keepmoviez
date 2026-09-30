@@ -814,11 +814,6 @@ body.multi-select-active #addNewEntryBtn {
   color: var(--warning-text-color);
 }
 
-.status-unwatched {
-  background-color: var(--secondary-color);
-  color: white;
-}
-
 .card-footer {
   display: flex;
   justify-content: flex-end;

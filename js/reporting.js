@@ -1292,7 +1292,6 @@ function renderActivityHeatmap(canvasId) {
     const rows = 7;
     const cellSize = 12;
     const cellGap = 4;
-    const gridWidth = cols * (cellSize + cellGap);
     const gridHeight = rows * (cellSize + cellGap);
     
     const startX = 40;
