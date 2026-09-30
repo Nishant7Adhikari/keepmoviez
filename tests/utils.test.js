@@ -682,7 +682,7 @@ test('showToast preserves and presents standard error title and message without 
     assert.equal(alertCalledMessage, "Database Connection Error: Unable to establish network handshake.");
 });
 
-test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes to prevent XSS', () => {
+test('renderWatchHistoryUI escapes watchDateFormatted in h6 and aria-label attributes to prevent XSS', () => {
     const listEl = { innerHTML: '', appendChild: function(child) { this.innerHTML += child.innerHTML; } };
     const testSandbox = {
         console,
@@ -698,9 +698,9 @@ test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes t
             addEventListener: () => {}
         },
         generateUUID: () => 'watch-123',
-        formatWatchDateDisplay: () => '2026-03-31" onclick="alert(1)',
+        formatWatchDateDisplay: () => '2026-03-31<script>alert(1)</script>"',
         renderStars: () => '★★★★★',
-        escapeHTML: (str) => (str ? String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '')
+        escapeHTML: (str) => (str ? String(str).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '')
     };
     testSandbox.window = testSandbox;
 
@@ -710,8 +710,9 @@ test('renderWatchHistoryUI escapes watchDateFormatted in aria-label attributes t
 
     testSandbox.renderWatchHistoryUI([{ watchId: 'w1', date: '2026-03-31', notes: 'Great' }]);
 
-    assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&quot; onclick=&quot;alert(1)"'));
-    assert.ok(!listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31" onclick="alert(1)"'));
+    assert.ok(listEl.innerHTML.includes('<h6 class="mb-1">2026-03-31&lt;script&gt;alert(1)&lt;/script&gt;&quot;</h6>'));
+    assert.ok(!listEl.innerHTML.includes('<script>alert(1)</script>'));
+    assert.ok(listEl.innerHTML.includes('aria-label="Edit watch record for 2026-03-31&lt;script&gt;alert(1)&lt;/script&gt;&quot;"'));
     assert.ok(listEl.innerHTML.includes('<i class="fas fa-edit" aria-hidden="true"></i>'));
     assert.ok(listEl.innerHTML.includes('<i class="fas fa-trash" aria-hidden="true"></i>'));
 });

@@ -141,7 +141,7 @@ function renderWatchHistoryUI(entryWatchHistory = []) {
     const safeWatchId = escapeHTML(watchId);
     if (!wh.watchId) wh.watchId = watchId;
     const watchDateFormatted = wh.date ? formatWatchDateDisplay(wh.date) : "Invalid Date";
-    item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${watchDateFormatted}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${escapeHTML(wh.notes) || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${safeWatchId}" title="Edit" aria-label="Edit watch record for ${escapeHTML(watchDateFormatted)}"><i class="fas fa-edit" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${safeWatchId}" title="Delete" aria-label="Delete watch record for ${escapeHTML(watchDateFormatted)}"><i class="fas fa-trash" aria-hidden="true"></i></button></div>`;
+    item.innerHTML = `<div class="d-flex w-100 justify-content-between"><h6 class="mb-1">${escapeHTML(watchDateFormatted)}</h6><small>${renderStars(wh.rating)}</small></div><p class="mb-1 text-muted small">${escapeHTML(wh.notes) || "No notes."}</p><div class="text-right"><button type="button" class="btn btn-sm btn-outline-info edit-watch-btn mr-1" data-watchid="${safeWatchId}" title="Edit" aria-label="Edit watch record for ${escapeHTML(watchDateFormatted)}"><i class="fas fa-edit" aria-hidden="true"></i></button><button type="button" class="btn btn-sm btn-outline-danger delete-watch-btn" data-watchid="${safeWatchId}" title="Delete" aria-label="Delete watch record for ${escapeHTML(watchDateFormatted)}"><i class="fas fa-trash" aria-hidden="true"></i></button></div>`;
 
     if (fragment) {
       fragment.appendChild(item);
@@ -601,7 +601,7 @@ function createMovieCardElement(movie) {
     lastWatchedInfo = `<span class="card-last-watched"><i class="fas fa-list-ul" title="Status" aria-hidden="true"></i> In Watchlist</span>`;
   } else {
     const watchDateHTML = (latestWatch && latestWatch.date)
-    ? `<i class="fas fa-history" title="Last Watched" aria-hidden="true"></i> ${formatWatchDateDisplay(latestWatch.date)}`: "";
+    ? `<i class="fas fa-history" title="Last Watched" aria-hidden="true"></i> ${escapeHTML(formatWatchDateDisplay(latestWatch.date))}`: "";
     lastWatchedInfo = `<span class="card-last-watched">${watchDateHTML}</span>`;
   }
 
