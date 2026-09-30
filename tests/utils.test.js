@@ -459,6 +459,11 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="forcePullTriggerBtn"') && html.includes('fa-cloud-download-alt" aria-hidden="true"'));
     assert.ok(html.includes('id="forcePushTriggerBtn"') && html.includes('fa-cloud-upload-alt" aria-hidden="true"'));
 
+    assert.ok(html.includes('aria-label="Documentation (opens in new tab)"'));
+
+    const css = fs.readFileSync(path.join(__dirname, '../style.css'), 'utf8');
+    assert.ok(css.includes('.close:focus-visible'));
+
     const iconsWithoutAriaHidden = (html.match(/<i\s+class="[^"]*fa[^"]*"(?![^>]*aria-hidden="true")[^>]*>/g) || []);
     assert.strictEqual(iconsWithoutAriaHidden.length, 0, `All Font Awesome icons in index.html should have aria-hidden="true". Found missing: ${iconsWithoutAriaHidden.join(', ')}`);
 });

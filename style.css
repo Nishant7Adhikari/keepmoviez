@@ -1238,6 +1238,7 @@ body.multi-select-active #addNewEntryBtn {
 }
 
 .btn:focus-visible,
+.close:focus-visible,
 .form-control:focus-visible,
 .custom-select:focus-visible,
 .dropdown-item:focus-visible,
@@ -1250,6 +1251,7 @@ a:focus-visible {
 }
 
 .dark-theme .btn:focus-visible,
+.dark-theme .close:focus-visible,
 .dark-theme .form-control:focus-visible,
 .dark-theme .custom-select:focus-visible,
 .dark-theme .dropdown-item:focus-visible,

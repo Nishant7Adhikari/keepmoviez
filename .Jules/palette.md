@@ -25,3 +25,7 @@
 ## 2026-10-15 - Dynamic Feedback in Static Utility Pages
 **Learning:** Micro-game and interactive feedback components on fallback utility pages (`404.html`, `offline.html`) fail to announce result state changes to screen reader users unless containers include `aria-live="polite"` and `role="status"`.
 **Action:** Ensure dynamic output or feedback containers on offline/error pages include `aria-live="polite"` and `role="status"`, and all controls have explicit `aria-label` attributes.
+
+## 2026-09-30 - Modal & Offcanvas Close Buttons Focus States
+**Learning:** Bootstrap modal and offcanvas close buttons (`.close`) lack the `.btn` class and can be missed by global `:focus-visible` rules, resulting in missing keyboard focus rings in light and dark themes.
+**Action:** Include `.close:focus-visible` explicitly in global `:focus-visible` focus ring definitions in `style.css`.
