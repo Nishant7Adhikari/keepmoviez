@@ -2921,7 +2921,7 @@ a:hover {
   border-top: 0;
   border-radius: 0 0 var(--border-radius-lg) var(--border-radius-lg);
   overflow: hidden;
-  padding: 0.85rem 1rem;
+  padding: 1rem 1.25rem 1.25rem 1.25rem;
 }
 
 /* --- Responsive Split Layout --- */
@@ -4103,12 +4103,14 @@ body,
   }
   #entryModal .modal-footer #addModeButtons .btn,
   #entryModal .modal-footer #updateEntryBtn {
-    flex: 1;
+    flex: 1 1 0;
+    height: 38px;
     min-height: 38px;
+    max-height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0.35rem 0.5rem;
+    padding: 0 0.4rem;
     font-size: 0.8rem;
     margin-right: 0 !important;
     gap: 4px;
