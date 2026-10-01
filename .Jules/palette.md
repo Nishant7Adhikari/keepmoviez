@@ -29,3 +29,7 @@
 ## 2026-09-30 - Modal & Offcanvas Close Buttons Focus States
 **Learning:** Bootstrap modal and offcanvas close buttons (`.close`) lack the `.btn` class and can be missed by global `:focus-visible` rules, resulting in missing keyboard focus rings in light and dark themes.
 **Action:** Include `.close:focus-visible` explicitly in global `:focus-visible` focus ring definitions in `style.css`.
+
+## 2026-10-18 - Dynamic Sort Controls Accessible State Sync
+**Learning:** Abbreviated or iconic sorting buttons (such as single-letter dropdown triggers or direction toggle arrows) leave screen reader and hover users unaware of active column and sort direction if `aria-label` and `title` attributes remain static on click.
+**Action:** Dynamically update `aria-label` and `title` attributes inside UI update functions (e.g. `updateSortUI`) whenever active sort column or direction state changes.
