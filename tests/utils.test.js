@@ -594,7 +594,7 @@ test('renderMovieCards empty state renders Clear Filters & Search CTA button', (
     testSandbox.renderMovieCards();
 
     assert.ok(cardContainer.innerHTML.includes('id="emptyStateClearFiltersBtn"'));
-    assert.ok(cardContainer.innerHTML.includes('onclick="resetFilters()"'));
+    assert.ok(!cardContainer.innerHTML.includes('onclick="resetFilters()"'));
 });
 
 test('js/ui.js renders card action buttons with accessible names containing entry names', () => {

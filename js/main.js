@@ -1095,6 +1095,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (whyBtn) whyBtn.style.display = "block";
     if (whyContainer) whyContainer.style.display = "none";
   });
+  document.getElementById("unwatchableViewWhyBtn")?.addEventListener("click", function () {
+    const whyContainer = document.getElementById("unwatchableDuplicateWhy");
+    if (whyContainer) whyContainer.style.display = "block";
+    this.style.display = "none";
+  });
+
+  // Modal Backfill Footer buttons
+  document.getElementById("modalBackfillAutoFetchBtn")?.addEventListener("click", () => {
+    if (typeof autoFetchTmdb === "function") autoFetchTmdb();
+  });
+  document.getElementById("modalBackfillSkipBtn")?.addEventListener("click", () => {
+    if (typeof skipCurrentField === "function") skipCurrentField();
+  });
+  document.getElementById("modalBackfillNextBtn")?.addEventListener("click", () => {
+    if (typeof saveAndNext === "function") saveAndNext();
+  });
   document
     .getElementById("exportStatsPdfBtn")
     ?.addEventListener("click", () => exportStatsAsPdf());

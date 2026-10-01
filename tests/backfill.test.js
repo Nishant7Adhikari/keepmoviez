@@ -267,7 +267,7 @@ test('renderStandardBackfillFooter and renderConfigurationScreen include aria-hi
                 }
                 return null;
             },
-            getElementById: () => ({ onclick: null })
+            getElementById: () => ({ onclick: null, addEventListener: () => {} })
         },
         window: {}
     };
@@ -284,4 +284,17 @@ test('renderStandardBackfillFooter and renderConfigurationScreen include aria-hi
     assert.ok(mockFooterHTML.includes('<i class="fas fa-cloud-download-alt" aria-hidden="true"></i>'));
     assert.ok(mockFooterHTML.includes('<i class="fas fa-forward" aria-hidden="true"></i>'));
     assert.ok(mockFooterHTML.includes('<i class="fas fa-check" aria-hidden="true"></i>'));
+});
+
+test('js/backfill.js and index.html do not use inline event handlers on modal buttons or inputs', () => {
+    const backfillCode = fs.readFileSync(path.join(__dirname, '../js/backfill.js'), 'utf8');
+    const indexHtml = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
+
+    assert.equal(backfillCode.includes('onclick="autoFetchTmdb()"'), false, 'renderStandardBackfillFooter should not use inline onclick="autoFetchTmdb()"');
+    assert.equal(backfillCode.includes('onclick="skipCurrentField()"'), false, 'renderStandardBackfillFooter should not use inline onclick="skipCurrentField()"');
+    assert.equal(backfillCode.includes('onclick="saveAndNext()"'), false, 'renderStandardBackfillFooter should not use inline onclick="saveAndNext()"');
+    assert.equal(backfillCode.includes('oninput='), false, 'renderFieldInput should not use inline oninput attributes');
+
+    assert.equal(indexHtml.includes('onclick="autoFetchTmdb()"'), false, 'index.html backfill modal should not use inline onclick="autoFetchTmdb()"');
+    assert.equal(indexHtml.includes('onclick="document.getElementById'), false, 'index.html unwatchable warning should not use inline onclick attribute');
 });
