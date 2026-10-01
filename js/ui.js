@@ -434,7 +434,19 @@ function renderMovieCards(resetScroll = true) {
   if (currentFilteredData.length === 0) {
     cardContainer.innerHTML = "";
     if (movieData.filter((m) => !m.is_deleted).length > 0) {
-      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" onclick="resetFilters()" aria-label="Clear filters and search"><i class="fas fa-undo mr-1" aria-hidden="true"></i> Clear Filters & Search</button></div>`;
+      cardContainer.innerHTML = `<div class="col-12 text-center text-muted py-5"><h4>No Entries Found</h4><p>No entries match your current search and filter criteria.</p><button type="button" id="emptyStateClearFiltersBtn" class="btn btn-sm btn-outline-primary mt-2" aria-label="Clear filters and search"><i class="fas fa-undo mr-1" aria-hidden="true"></i> Clear Filters & Search</button></div>`;
+      const clearBtn = document.getElementById("emptyStateClearFiltersBtn");
+      if (clearBtn) {
+        if (typeof clearBtn.addEventListener === "function") {
+          clearBtn.addEventListener("click", () => {
+            if (typeof resetFilters === "function") resetFilters();
+          });
+        } else {
+          clearBtn.onclick = () => {
+            if (typeof resetFilters === "function") resetFilters();
+          };
+        }
+      }
     }
     lastRenderedStart = -1;
     lastRenderedEnd = -1;
