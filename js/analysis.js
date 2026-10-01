@@ -409,7 +409,17 @@ function calculateAllStatistics(currentMovieData) {
     stats.totalWatchTimeMinutes = totalWatchTimeMinutes;
     stats.toWatchTotalMinutes = toWatchTotalMinutes;
     
-    const formatCounts = (countsObj) => Object.entries(countsObj).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+    // Performance optimization: Direct [label, value] array sort avoids intermediate {label, value} object allocations per map entry
+    const formatCounts = (countsObj) => {
+        const entries = Object.entries(countsObj);
+        if (entries.length === 0) return [];
+        entries.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+        const res = new Array(entries.length);
+        for (let i = 0; i < entries.length; i++) {
+            res[i] = { label: entries[i][0], value: entries[i][1] };
+        }
+        return res;
+    };
     stats.categories = formatCounts(categoryCounts);
     stats.statuses = formatCounts(statusCounts);
     
