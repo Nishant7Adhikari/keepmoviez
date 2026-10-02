@@ -1162,9 +1162,11 @@ test('generateShareTextSummary and generateShareCardCanvas produce expected shar
     assert.ok(uiCode.includes('id="downloadGeneratedImageBtn"'), 'Modal should contain download button');
     assert.ok(uiCode.includes('id="shareCopyImageBtn"'), 'Modal should contain copy image button');
     assert.ok(uiCode.includes('id="shareCopyTextBtn"'), 'Modal should contain copy text button');
-    assert.ok(uiCode.includes('id="toggleShowDetails"'), 'Modal should contain show details toggle button');
-    assert.ok(uiCode.includes('id="toggleShowRating"'), 'Modal should contain show rating toggle button');
-    assert.ok(uiCode.includes('id="toggleShowBranding"'), 'Modal should contain show branding toggle button');
+    assert.ok(uiCode.includes('id="toggleShowDetails"') && uiCode.includes('aria-label="Details visibility"'), 'Modal should contain accessible show details toggle button');
+    assert.ok(uiCode.includes('id="toggleShowRating"') && uiCode.includes('aria-label="Rating visibility"'), 'Modal should contain accessible show rating toggle button');
+    assert.ok(uiCode.includes('id="toggleShowBranding"') && uiCode.includes('aria-label="Branding visibility"'), 'Modal should contain accessible show branding toggle button');
+    assert.ok(uiCode.includes('aria-label="Portrait (4:5) format"') && uiCode.includes('aria-pressed="true"'), 'Modal aspect pills should have aria-label and aria-pressed attributes');
+    assert.ok(uiCode.includes('aria-label="Cinematic Blur theme"'), 'Modal theme pills should have aria-label attributes');
     assert.ok(uiCode.includes('data-aspect="story"'), 'Modal should support phone wallpaper aspect ratio');
     assert.ok(uiCode.includes('data-aspect="landscape"'), 'Modal should support desktop wallpaper aspect ratio');
 });

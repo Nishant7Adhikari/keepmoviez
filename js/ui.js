@@ -2427,29 +2427,29 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
               <div class="mb-3">
                 <div class="share-option-title"><i class="fas fa-crop-alt mr-1" aria-hidden="true"></i> Canvas Format</div>
                 <div class="share-pill-group" id="shareAspectPills">
-                  <button type="button" class="share-pill-btn active" data-aspect="portrait">Portrait (4:5)</button>
-                  <button type="button" class="share-pill-btn" data-aspect="square">Square (1:1)</button>
-                  <button type="button" class="share-pill-btn" data-aspect="story">Phone Wallpaper (9:16)</button>
-                  <button type="button" class="share-pill-btn" data-aspect="landscape">Desktop Wallpaper (16:9)</button>
+                  <button type="button" class="share-pill-btn active" data-aspect="portrait" aria-label="Portrait (4:5) format" aria-pressed="true" title="Portrait (4:5) format">Portrait (4:5)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="square" aria-label="Square (1:1) format" aria-pressed="false" title="Square (1:1) format">Square (1:1)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="story" aria-label="Phone Wallpaper (9:16) format" aria-pressed="false" title="Phone Wallpaper (9:16) format">Phone Wallpaper (9:16)</button>
+                  <button type="button" class="share-pill-btn" data-aspect="landscape" aria-label="Desktop Wallpaper (16:9) format" aria-pressed="false" title="Desktop Wallpaper (16:9) format">Desktop Wallpaper (16:9)</button>
                 </div>
               </div>
 
               <div class="mb-3">
                 <div class="share-option-title"><i class="fas fa-palette mr-1" aria-hidden="true"></i> Visual Theme</div>
                 <div class="share-pill-group" id="shareThemePills">
-                  <button type="button" class="share-pill-btn ${currentTheme === 'poster' ? 'active' : ''}" data-theme="poster">Cinematic Blur</button>
-                  <button type="button" class="share-pill-btn" data-theme="minimal">Full Art Minimalist</button>
-                  <button type="button" class="share-pill-btn ${currentTheme === 'gradient' ? 'active' : ''}" data-theme="gradient">Genre Gradient</button>
-                  <button type="button" class="share-pill-btn" data-theme="dark">Dark Glass</button>
+                  <button type="button" class="share-pill-btn ${currentTheme === 'poster' ? 'active' : ''}" data-theme="poster" aria-label="Cinematic Blur theme" aria-pressed="${currentTheme === 'poster' ? 'true' : 'false'}" title="Cinematic Blur theme">Cinematic Blur</button>
+                  <button type="button" class="share-pill-btn ${currentTheme === 'minimal' ? 'active' : ''}" data-theme="minimal" aria-label="Full Art Minimalist theme" aria-pressed="${currentTheme === 'minimal' ? 'true' : 'false'}" title="Full Art Minimalist theme">Full Art Minimalist</button>
+                  <button type="button" class="share-pill-btn ${currentTheme === 'gradient' ? 'active' : ''}" data-theme="gradient" aria-label="Genre Gradient theme" aria-pressed="${currentTheme === 'gradient' ? 'true' : 'false'}" title="Genre Gradient theme">Genre Gradient</button>
+                  <button type="button" class="share-pill-btn ${currentTheme === 'dark' ? 'active' : ''}" data-theme="dark" aria-label="Dark Glass theme" aria-pressed="${currentTheme === 'dark' ? 'true' : 'false'}" title="Dark Glass theme">Dark Glass</button>
                 </div>
               </div>
 
               <div>
                 <div class="share-option-title"><i class="fas fa-sliders-h mr-1" aria-hidden="true"></i> Content Visibility</div>
                 <div class="share-toggle-group" id="shareContentToggles">
-                  <button type="button" class="share-toggle-btn active" id="toggleShowDetails"><i class="fas fa-check" aria-hidden="true"></i> Details</button>
-                  <button type="button" class="share-toggle-btn active" id="toggleShowRating"><i class="fas fa-check" aria-hidden="true"></i> Rating</button>
-                  <button type="button" class="share-toggle-btn active" id="toggleShowBranding"><i class="fas fa-check" aria-hidden="true"></i> Branding</button>
+                  <button type="button" class="share-toggle-btn active" id="toggleShowDetails" aria-label="Details visibility" aria-pressed="true" title="Toggle Details visibility"><i class="fas fa-check" aria-hidden="true"></i> Details</button>
+                  <button type="button" class="share-toggle-btn active" id="toggleShowRating" aria-label="Rating visibility" aria-pressed="true" title="Toggle Rating visibility"><i class="fas fa-check" aria-hidden="true"></i> Rating</button>
+                  <button type="button" class="share-toggle-btn active" id="toggleShowBranding" aria-label="Branding visibility" aria-pressed="true" title="Toggle Branding visibility"><i class="fas fa-check" aria-hidden="true"></i> Branding</button>
                 </div>
               </div>
             </div>
@@ -2525,36 +2525,36 @@ function showShareOptionsModal(detailsOrBlob, fileName) {
   updatePreview();
 
   $("#shareAspectPills .share-pill-btn").on("click", function () {
-    $("#shareAspectPills .share-pill-btn").removeClass("active");
-    $(this).addClass("active");
+    $("#shareAspectPills .share-pill-btn").removeClass("active").attr("aria-pressed", "false");
+    $(this).addClass("active").attr("aria-pressed", "true");
     currentAspectRatio = $(this).data("aspect");
     updatePreview();
   });
 
   $("#shareThemePills .share-pill-btn").on("click", function () {
-    $("#shareThemePills .share-pill-btn").removeClass("active");
-    $(this).addClass("active");
+    $("#shareThemePills .share-pill-btn").removeClass("active").attr("aria-pressed", "false");
+    $(this).addClass("active").attr("aria-pressed", "true");
     currentTheme = $(this).data("theme");
     updatePreview();
   });
 
   $("#toggleShowDetails").on("click", function () {
     currentShowDetails = !currentShowDetails;
-    $(this).toggleClass("active", currentShowDetails);
+    $(this).toggleClass("active", currentShowDetails).attr("aria-pressed", currentShowDetails ? "true" : "false");
     $(this).find("i").attr("class", currentShowDetails ? "fas fa-check" : "fas fa-times");
     updatePreview();
   });
 
   $("#toggleShowRating").on("click", function () {
     currentShowRating = !currentShowRating;
-    $(this).toggleClass("active", currentShowRating);
+    $(this).toggleClass("active", currentShowRating).attr("aria-pressed", currentShowRating ? "true" : "false");
     $(this).find("i").attr("class", currentShowRating ? "fas fa-check" : "fas fa-times");
     updatePreview();
   });
 
   $("#toggleShowBranding").on("click", function () {
     currentShowBranding = !currentShowBranding;
-    $(this).toggleClass("active", currentShowBranding);
+    $(this).toggleClass("active", currentShowBranding).attr("aria-pressed", currentShowBranding ? "true" : "false");
     $(this).find("i").attr("class", currentShowBranding ? "fas fa-check" : "fas fa-times");
     updatePreview();
   });
