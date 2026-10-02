@@ -1092,8 +1092,10 @@ window.exportSelectedEntries = function (type) {
     showToast("No Selection", "Select entries first.", "warning");
     return;
   }
+  // Performance optimization: Set lookup converts O(S * N) array scanning to O(1)
+  const selectedSet = new Set(selectedEntryIds);
   const selected = movieData
-    .filter((m) => m && selectedEntryIds.includes(m.id) && !m.is_deleted)
+    .filter((m) => m && selectedSet.has(m.id) && !m.is_deleted)
     .map((entry) => {
       const clean = { ...entry };
       delete clean._sync_state;
@@ -1164,8 +1166,15 @@ window.batchRefreshTmdb = async function () {
     return;
   }
 
+  // Performance optimization: Pre-index selected IDs in Set and movieData in Map for O(1) lookups
+  const selectedSet = new Set(selectedEntryIds);
+  const movieIndexMap = new Map();
+  movieData.forEach((m, idx) => {
+    if (m && m.id) movieIndexMap.set(m.id, idx);
+  });
+
   const toRefresh = movieData.filter(
-    (m) => m && selectedEntryIds.includes(m.id) && m.tmdbId && !m.is_deleted,
+    (m) => m && selectedSet.has(m.id) && m.tmdbId && !m.is_deleted,
   );
   const skipped = selectedEntryIds.length - toRefresh.length;
 
@@ -1194,7 +1203,7 @@ window.batchRefreshTmdb = async function () {
       });
       if (!data) { failed++; continue; }
 
-      const entryIndex = movieData.findIndex((m) => m.id === entry.id);
+      const entryIndex = movieIndexMap.has(entry.id) ? movieIndexMap.get(entry.id) : -1;
       if (entryIndex === -1) { failed++; continue; }
       const e = movieData[entryIndex];
 
