@@ -261,6 +261,20 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
+test('sanitizeCSVField sanitizes strings starting with formula triggers or leading whitespace before formula triggers', () => {
+    assert.equal(sandbox.sanitizeCSVField('=SUM(1,2)'), "'=SUM(1,2)");
+    assert.equal(sandbox.sanitizeCSVField('+12345'), "'+12345");
+    assert.equal(sandbox.sanitizeCSVField('-danger'), "'-danger");
+    assert.equal(sandbox.sanitizeCSVField('@admin'), "'@admin");
+    assert.equal(sandbox.sanitizeCSVField('\tTabbed'), "'\tTabbed");
+    assert.equal(sandbox.sanitizeCSVField('\rReturn'), "'\rReturn");
+    assert.equal(sandbox.sanitizeCSVField('  =cmd|'), "'  =cmd|");
+    assert.equal(sandbox.sanitizeCSVField('\n+100'), "'\n+100");
+    assert.equal(sandbox.sanitizeCSVField('Normal Text'), 'Normal Text');
+    assert.equal(sandbox.sanitizeCSVField(123), 123);
+    assert.equal(sandbox.sanitizeCSVField(null), null);
+});
+
 test('renderMovieCards escapes Poster URL, movie.id, statusClass, and statusBadgeText in attributes to prevent XSS', () => {
     const cardContainer = {
         innerHTML: '',

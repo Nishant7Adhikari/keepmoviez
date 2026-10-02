@@ -364,9 +364,7 @@ function generateAndDownloadFile(downloadType) {
                     if (typeof cleanEntry[key] === 'object' && cleanEntry[key] !== null) {
                         cleanEntry[key] = JSON.stringify(cleanEntry[key]);
                     }
-                    if (typeof cleanEntry[key] === 'string' && /^[=+\-@\t\r]/.test(cleanEntry[key])) {
-                        cleanEntry[key] = "'" + cleanEntry[key];
-                    }
+                    cleanEntry[key] = typeof sanitizeCSVField === 'function' ? sanitizeCSVField(cleanEntry[key]) : cleanEntry[key];
                 }
             }
             return cleanEntry;

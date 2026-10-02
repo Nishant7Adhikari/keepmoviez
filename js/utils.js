@@ -154,6 +154,17 @@ function escapeHTML(str) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+// CSV Formula Injection Defense: Sanitizes string values starting with optional leading whitespace
+// followed by formula triggers (=, +, -, @, tab, carriage return) by prepending a single quote.
+const CSV_FORMULA_TRIGGER_REGEX = /^\s*[=+\-@\t\r]/;
+
+function sanitizeCSVField(val) {
+    if (typeof val === 'string' && CSV_FORMULA_TRIGGER_REGEX.test(val)) {
+        return "'" + val;
+    }
+    return val;
+}
 // END CHUNK: UI Enhancements and Helpers
 
 // START CHUNK: Toast Notification System
@@ -438,9 +449,11 @@ function chunkArray(array, chunkSize = 30) {
 if (typeof window !== "undefined") {
     window.safeTransitionModal = safeTransitionModal;
     window.chunkArray = chunkArray;
+    window.sanitizeCSVField = sanitizeCSVField;
 }
 if (typeof globalThis !== "undefined") {
     globalThis.safeTransitionModal = safeTransitionModal;
     globalThis.chunkArray = chunkArray;
+    globalThis.sanitizeCSVField = sanitizeCSVField;
 }
 // END CHUNK: Safe Modal Transition Helper

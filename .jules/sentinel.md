@@ -52,3 +52,8 @@
 **Vulnerability:** Exporting user library entries to CSV (`generateAndDownloadFile`) without sanitizing string fields allowed CSV Formula Injection (Excel Macro Injection) if field values (e.g. entry titles, notes, recommendations) started with formula triggers (`=`, `+`, `-`, `@`, `\t`, `\r`).
 **Learning:** Spreadsheet programs evaluate cells starting with formula characters as formulas or commands upon opening CSV files, potentially leading to command execution or data exfiltration.
 **Prevention:** Prefix any exported string field starting with formula trigger characters (`=`, `+`, `-`, `@`, `\t`, `\r`) with a single quote (`'`) during CSV serialization.
+
+## 2026-10-02 - CSV Formula Injection Defense Against Leading Whitespace Bypasses
+**Vulnerability:** Checking formula trigger characters only at the exact start of strings (`/^[=+\-@\t\r]/`) allowed CSV Formula Injection if inputs contained leading whitespace or newlines before the trigger character (e.g. ` =cmd|' /C calc'!A0`).
+**Learning:** Spreadsheet applications like Microsoft Excel and LibreOffice Calc trim or ignore leading whitespace before formula trigger characters (`=`, `+`, `-`, `@`, `\t`, `\r`) and still execute the formula.
+**Prevention:** Use `/^\s*[=+\-@\t\r]/` and a centralized `sanitizeCSVField` helper to ensure any exported string starting with optional whitespace followed by a formula trigger is prefixed with `'`.

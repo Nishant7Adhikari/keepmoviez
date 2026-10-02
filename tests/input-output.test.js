@@ -152,11 +152,11 @@ test('CSV export sanitizes formula triggers in string fields for full and batch 
     sandbox.movieData = [
         {
             id: 'm1',
-            Name: '=cmd|\' /C calc\'!A0',
-            Description: '+12345',
-            notes: '-danger',
-            Category: '@admin',
-            Status: '\tTabbed'
+            Name: ' =cmd|\' /C calc\'!A0',
+            Description: '  +12345',
+            notes: '\n-danger',
+            Category: '\t@admin',
+            Status: '  \tTabbed'
         }
     ];
     sandbox.selectedEntryIds = ['m1'];
@@ -165,22 +165,22 @@ test('CSV export sanitizes formula triggers in string fields for full and batch 
     // Test generateAndDownloadFile
     sandbox.generateAndDownloadFile('csv');
     assert.ok(unparsedData);
-    assert.equal(unparsedData[0].Name, "'=cmd|' /C calc'!A0");
-    assert.equal(unparsedData[0].Description, "'+12345");
-    assert.equal(unparsedData[0].notes, "'-danger");
-    assert.equal(unparsedData[0].Category, "'@admin");
-    assert.equal(unparsedData[0].Status, "'\tTabbed");
+    assert.equal(unparsedData[0].Name, "' =cmd|' /C calc'!A0");
+    assert.equal(unparsedData[0].Description, "'  +12345");
+    assert.equal(unparsedData[0].notes, "'\n-danger");
+    assert.equal(unparsedData[0].Category, "'\t@admin");
+    assert.equal(unparsedData[0].Status, "'  \tTabbed");
 
     // Reset and test exportSelectedEntries
     unparsedData = null;
     vm.runInContext(appCode, sandbox);
     sandbox.exportSelectedEntries('csv');
     assert.ok(unparsedData);
-    assert.equal(unparsedData[0].Name, "'=cmd|' /C calc'!A0");
-    assert.equal(unparsedData[0].Description, "'+12345");
-    assert.equal(unparsedData[0].notes, "'-danger");
-    assert.equal(unparsedData[0].Category, "'@admin");
-    assert.equal(unparsedData[0].Status, "'\tTabbed");
+    assert.equal(unparsedData[0].Name, "' =cmd|' /C calc'!A0");
+    assert.equal(unparsedData[0].Description, "'  +12345");
+    assert.equal(unparsedData[0].notes, "'\n-danger");
+    assert.equal(unparsedData[0].Category, "'\t@admin");
+    assert.equal(unparsedData[0].Status, "'  \tTabbed");
 });
 
 test('index.html includes refined microcopy and accessible info icons for Reload Local Data, Episodes per Season, and Franchise Linking', () => {
