@@ -681,6 +681,21 @@ body.multi-select-active #addNewEntryBtn {
   margin-top: 50px;
 }
 
+.initial-upload-section .btn {
+  display: flex !important;
+  align-items: center;
+  max-width: 100%;
+  white-space: normal !important;
+}
+
+.initial-upload-section .btn > div {
+  flex: 1 1 auto;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
 .row.mb-3.align-items-center.p-3,
 .stats-section,
 .stats-chart-container {
@@ -2850,10 +2865,10 @@ a:hover {
 .btn-pg-stepper {
   background-color: rgba(255, 255, 255, 0.2);
   border-radius: 50% !important;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   padding: 0;
   line-height: 1;
   color: white;
@@ -3283,8 +3298,8 @@ a:hover {
   top: 15px;
   right: 15px;
   z-index: 10;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: rgba(0, 0, 0, 0.5);
   color: #ffffff !important;
@@ -3298,9 +3313,11 @@ a:hover {
   outline: none !important;
 }
 
-.daily-pick-close-btn:hover {
-  background-color: rgba(0, 0, 0, 0.8);
-  transform: scale(1.05);
+@media (hover: hover) {
+  .daily-pick-close-btn:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: scale(1.05);
+  }
 }
 
 .daily-pick-header-content {
@@ -3486,11 +3503,6 @@ a:hover {
   border: 1px solid var(--card-border-color);
 }
 
-.suggestion-card:hover {
-  transform: translateY(-8px) scale(1.03);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-}
-
 .suggestion-card img {
   width: 100%;
   height: 215px;
@@ -3499,8 +3511,14 @@ a:hover {
   transition: filter 0.3s ease;
 }
 
-.suggestion-card:hover img {
-  filter: brightness(0.6);
+@media (hover: hover) {
+  .suggestion-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  }
+  .suggestion-card:hover img {
+    filter: brightness(0.6);
+  }
 }
 
 .suggestion-card-info {
@@ -3576,15 +3594,17 @@ a:hover {
   /* Make clicking pass through unless visible */
 }
 
-.suggestion-card:hover .quick-action-overlay {
-  opacity: 1;
-  pointer-events: auto;
-  /* Enable clicking */
+@media (hover: hover) {
+  .suggestion-card:hover .quick-action-overlay {
+    opacity: 1;
+    pointer-events: auto;
+    /* Enable clicking */
+  }
 }
 
 .quick-action-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -3597,17 +3617,21 @@ a:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-.quick-action-btn:hover {
-  transform: scale(1.18);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+@media (hover: hover) {
+  .quick-action-btn:hover {
+    transform: scale(1.18);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
 }
 
 .quick-action-add {
   background-color: var(--primary-color);
 }
 
-.quick-action-add:hover {
-  background-color: var(--primary-hover-color);
+@media (hover: hover) {
+  .quick-action-add:hover {
+    background-color: var(--primary-hover-color);
+  }
 }
 
 .quick-action-watch {
@@ -3912,10 +3936,14 @@ body,
 }
 
 .season-quick-pill {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 14px;
+  padding: 4px 12px;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18px;
   cursor: pointer;
   background-color: var(--card-bg, #ffffff);
   border: 1px solid var(--border-color, #cbd5e1);
@@ -3923,20 +3951,24 @@ body,
   transition: all 0.15s ease;
   white-space: nowrap;
 }
-.season-quick-pill:hover {
-  background-color: var(--primary-color, #007b8a);
-  border-color: var(--primary-color, #007b8a);
-  color: #ffffff;
+@media (hover: hover) {
+  .season-quick-pill:hover {
+    background-color: var(--primary-color, #007b8a);
+    border-color: var(--primary-color, #007b8a);
+    color: #ffffff;
+  }
 }
 .dark-theme .season-quick-pill {
   background-color: #2c2c2f !important;
   border-color: #3a3a3d !important;
   color: #d0d0d0 !important;
 }
-.dark-theme .season-quick-pill:hover {
-  background-color: var(--primary-color, #007b8a) !important;
-  border-color: var(--primary-color, #007b8a) !important;
-  color: #ffffff !important;
+@media (hover: hover) {
+  .dark-theme .season-quick-pill:hover {
+    background-color: var(--primary-color, #007b8a) !important;
+    border-color: var(--primary-color, #007b8a) !important;
+    color: #ffffff !important;
+  }
 }
 
 .dark-theme .season-quick-paste-input {
@@ -4000,10 +4032,20 @@ body,
   cursor: pointer;
   margin-left: 2px;
   color: #64748b;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  padding: 0 4px;
 }
-.director-chip .chip-remove:hover {
-  color: #ef4444;
+@media (hover: hover) {
+  .director-chip .chip-remove:hover {
+    color: #ef4444;
+    background-color: rgba(239, 68, 68, 0.1);
+  }
 }
 .director-chip-input {
   border: none;
@@ -4104,8 +4146,8 @@ body,
     width: 140px !important;
   }
   .season-breakdown-card .season-stepper-btn {
-    min-width: 36px;
-    min-height: 36px;
+    min-width: 44px;
+    min-height: 44px;
   }
   .season-breakdown-card .season-ep-count {
     font-size: 1rem;
@@ -4138,21 +4180,19 @@ body,
   #entryModal .modal-footer #addModeButtons .btn,
   #entryModal .modal-footer #updateEntryBtn {
     flex: 1 1 0;
-    height: 38px;
-    min-height: 38px;
-    max-height: 38px;
+    min-height: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 0.4rem;
-    font-size: 0.8rem;
+    padding: 0.4rem 0.5rem;
+    font-size: 0.85rem;
     margin-right: 0 !important;
     gap: 4px;
   }
   #entryModal .modal-footer > .btn-secondary {
     flex: 1 1 100%;
-    min-height: 38px;
-    padding: 0.35rem;
+    min-height: 44px;
+    padding: 0.4rem;
     font-size: 0.85rem;
   }
 
@@ -4261,9 +4301,11 @@ body,
   min-height: 38px;
 }
 
-.share-pill-btn:hover {
-  border-color: var(--primary-color, #3b82f6);
-  color: var(--primary-color, #3b82f6);
+@media (hover: hover) {
+  .share-pill-btn:hover {
+    border-color: var(--primary-color, #3b82f6);
+    color: var(--primary-color, #3b82f6);
+  }
 }
 
 .share-pill-btn.active {

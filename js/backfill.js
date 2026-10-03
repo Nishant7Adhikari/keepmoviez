@@ -329,17 +329,41 @@ function renderStandardBackfillFooter() {
             <i class="fab fa-google" aria-hidden="true"></i> Google It
         </button>
         <div>
-            <button type="button" class="btn btn-info mr-2" onclick="autoFetchTmdb()">
+            <button type="button" class="btn btn-info mr-2" id="backfillAutoFetchBtn">
                 <i class="fas fa-cloud-download-alt" aria-hidden="true"></i> Auto-Fetch
             </button>
-            <button type="button" class="btn btn-secondary mr-2" onclick="skipCurrentField()">
+            <button type="button" class="btn btn-secondary mr-2" id="backfillSkipBtn">
                 <i class="fas fa-forward" aria-hidden="true"></i> Skip
             </button>
-            <button type="button" class="btn btn-success" onclick="saveAndNext()">
+            <button type="button" class="btn btn-success" id="backfillNextBtn">
                 <i class="fas fa-check" aria-hidden="true"></i> Next
             </button>
         </div>
     `;
+  const autoFetchBtn = document.getElementById("backfillAutoFetchBtn");
+  if (autoFetchBtn) {
+    if (typeof autoFetchBtn.addEventListener === "function") {
+      autoFetchBtn.addEventListener("click", autoFetchTmdb);
+    } else {
+      autoFetchBtn.onclick = autoFetchTmdb;
+    }
+  }
+  const skipBtn = document.getElementById("backfillSkipBtn");
+  if (skipBtn) {
+    if (typeof skipBtn.addEventListener === "function") {
+      skipBtn.addEventListener("click", skipCurrentField);
+    } else {
+      skipBtn.onclick = skipCurrentField;
+    }
+  }
+  const nextBtn = document.getElementById("backfillNextBtn");
+  if (nextBtn) {
+    if (typeof nextBtn.addEventListener === "function") {
+      nextBtn.addEventListener("click", saveAndNext);
+    } else {
+      nextBtn.onclick = saveAndNext;
+    }
+  }
 }
 
 /**
@@ -583,12 +607,37 @@ function renderBackfillCard() {
   if (current.fieldConfig.inputType === "poster-preview") {
     const val = entry["Poster URL"] || "";
     const inputEl = document.getElementById("backfillInput");
-    if (inputEl) inputEl.value = val;
+    if (inputEl) {
+      inputEl.value = val;
+      const onInputHandler = function () {
+        const img = document.getElementById("backfillPosterImg");
+        const wrap = document.getElementById("backfillPosterImgWrap");
+        if (img && wrap) {
+          img.src = this.value;
+          wrap.style.display = this.value ? "block" : "none";
+        }
+      };
+      if (typeof inputEl.addEventListener === "function") {
+        inputEl.addEventListener("input", onInputHandler);
+      } else {
+        inputEl.oninput = onInputHandler;
+      }
+    }
     const img = document.getElementById("backfillPosterImg");
     const wrap = document.getElementById("backfillPosterImgWrap");
-    if (img && wrap && val) {
-      img.src = val;
-      wrap.style.display = "block";
+    if (img && wrap) {
+      const onErrorHandler = function () {
+        if (this.parentElement) this.parentElement.style.display = "none";
+      };
+      if (typeof img.addEventListener === "function") {
+        img.addEventListener("error", onErrorHandler);
+      } else {
+        img.onerror = onErrorHandler;
+      }
+      if (val) {
+        img.src = val;
+        wrap.style.display = "block";
+      }
     }
   }
 
@@ -819,10 +868,9 @@ function renderFieldInput(fieldConfig, entry) {
             id="backfillInput" 
             placeholder="${safeEscape(placeholder || "https://...")}"
             autocomplete="off"
-            oninput="const img = document.getElementById('backfillPosterImg'); const wrap = document.getElementById('backfillPosterImgWrap'); if (img && wrap) { img.src = this.value; wrap.style.display = this.value ? 'block' : 'none'; }"
           >
           <div id="backfillPosterImgWrap" class="text-center p-2 border rounded bg-light" style="display: none;">
-            <img id="backfillPosterImg" src="" alt="Poster preview" style="max-height: 180px; max-width: 100%; border-radius: 6px;" onerror="this.parentElement.style.display='none';">
+            <img id="backfillPosterImg" src="" alt="Poster preview" style="max-height: 180px; max-width: 100%; border-radius: 6px;">
           </div>
         </div>
       `;
@@ -1394,7 +1442,7 @@ function renderBackfillDirectorChips() {
     const name = typeof dir === "object" && dir ? dir.name : String(dir);
     chipsHtml += `
       <span class="director-chip" data-index="${idx}">
-        ${avatar ? `<img src="${typeof escapeHTML === "function" ? escapeHTML(avatar) : avatar}" alt="${typeof escapeHTML === "function" ? escapeHTML(name) : name}" onerror="this.style.display='none'">` : `<i class="fas fa-user text-muted mr-1" style="font-size: 0.75rem;" aria-hidden="true"></i>`}
+        ${avatar ? `<img src="${typeof escapeHTML === "function" ? escapeHTML(avatar) : avatar}" alt="${typeof escapeHTML === "function" ? escapeHTML(name) : name}" class="director-avatar-img">` : `<i class="fas fa-user text-muted mr-1" style="font-size: 0.75rem;" aria-hidden="true"></i>`}
         <span>${typeof escapeHTML === "function" ? escapeHTML(name) : name}</span>
         <span class="chip-remove" data-index="${idx}" title="Remove">&times;</span>
       </span>
@@ -1411,6 +1459,12 @@ function renderBackfillDirectorChips() {
       if (!isNaN(idx)) {
         removeBackfillDirector(idx);
       }
+    });
+  });
+
+  container.querySelectorAll(".director-avatar-img").forEach((img) => {
+    img.addEventListener("error", function () {
+      this.style.display = "none";
     });
   });
 

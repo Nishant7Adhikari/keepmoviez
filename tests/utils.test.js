@@ -261,6 +261,20 @@ test('escapeHTML correctly escapes special characters and handles null/undefined
     assert.equal(sandbox.escapeHTML(undefined), '');
 });
 
+test('sanitizeCSVField sanitizes strings starting with formula triggers or leading whitespace before formula triggers', () => {
+    assert.equal(sandbox.sanitizeCSVField('=SUM(1,2)'), "'=SUM(1,2)");
+    assert.equal(sandbox.sanitizeCSVField('+12345'), "'+12345");
+    assert.equal(sandbox.sanitizeCSVField('-danger'), "'-danger");
+    assert.equal(sandbox.sanitizeCSVField('@admin'), "'@admin");
+    assert.equal(sandbox.sanitizeCSVField('\tTabbed'), "'\tTabbed");
+    assert.equal(sandbox.sanitizeCSVField('\rReturn'), "'\rReturn");
+    assert.equal(sandbox.sanitizeCSVField('  =cmd|'), "'  =cmd|");
+    assert.equal(sandbox.sanitizeCSVField('\n+100'), "'\n+100");
+    assert.equal(sandbox.sanitizeCSVField('Normal Text'), 'Normal Text');
+    assert.equal(sandbox.sanitizeCSVField(123), 123);
+    assert.equal(sandbox.sanitizeCSVField(null), null);
+});
+
 test('renderMovieCards escapes Poster URL, movie.id, statusClass, and statusBadgeText in attributes to prevent XSS', () => {
     const cardContainer = {
         innerHTML: '',
@@ -422,7 +436,8 @@ test('index.html buttons, modals, and skip-link have accessible aria attributes 
     assert.ok(html.includes('id="cancelMultiSelectBtn"') && html.includes('fa-times" aria-hidden="true"'));
     assert.ok(html.includes('id="addNewEntryBtn"') && html.includes('fa-plus-circle" aria-hidden="true"'));
     assert.ok(html.includes('id="detailsTrailerBtn"') && html.includes('fa-youtube" aria-hidden="true"'));
-    assert.ok(html.includes('id="detailsStreamingBtn"') && html.includes('fa-play-circle" aria-hidden="true"'));
+    assert.ok(html.includes('id="detailsStreamingBtn"') && html.includes('aria-label="Where to Watch - Search third-party streaming availability on JustWatch"'));
+    assert.ok(html.includes('href="/docs/index.html#quick-update-auto-notes"') && html.includes('aria-label="Learn how smart season completion works (opens in new tab)"'));
     assert.ok(html.includes('id="exportStatsPdfBtn"') && html.includes('fa-file-pdf" aria-hidden="true"'));
     assert.ok(html.includes('id="filterInputNavbar"') && html.includes('aria-label="Search collection"'));
     assert.ok(html.includes('id="btnEditNextSeason"') && html.includes('aria-label="Next Season - Advance to Next Season and reset Episode to 1"'));
@@ -593,7 +608,7 @@ test('renderMovieCards empty state renders Clear Filters & Search CTA button', (
     testSandbox.renderMovieCards();
 
     assert.ok(cardContainer.innerHTML.includes('id="emptyStateClearFiltersBtn"'));
-    assert.ok(cardContainer.innerHTML.includes('onclick="resetFilters()"'));
+    assert.ok(!cardContainer.innerHTML.includes('onclick="resetFilters()"'));
 });
 
 test('js/ui.js renders card action buttons with accessible names containing entry names', () => {
@@ -1161,9 +1176,72 @@ test('generateShareTextSummary and generateShareCardCanvas produce expected shar
     assert.ok(uiCode.includes('id="downloadGeneratedImageBtn"'), 'Modal should contain download button');
     assert.ok(uiCode.includes('id="shareCopyImageBtn"'), 'Modal should contain copy image button');
     assert.ok(uiCode.includes('id="shareCopyTextBtn"'), 'Modal should contain copy text button');
-    assert.ok(uiCode.includes('id="toggleShowDetails"'), 'Modal should contain show details toggle button');
-    assert.ok(uiCode.includes('id="toggleShowRating"'), 'Modal should contain show rating toggle button');
-    assert.ok(uiCode.includes('id="toggleShowBranding"'), 'Modal should contain show branding toggle button');
+    assert.ok(uiCode.includes('id="toggleShowDetails"') && uiCode.includes('aria-label="Details visibility"'), 'Modal should contain accessible show details toggle button');
+    assert.ok(uiCode.includes('id="toggleShowRating"') && uiCode.includes('aria-label="Rating visibility"'), 'Modal should contain accessible show rating toggle button');
+    assert.ok(uiCode.includes('id="toggleShowBranding"') && uiCode.includes('aria-label="Branding visibility"'), 'Modal should contain accessible show branding toggle button');
+    assert.ok(uiCode.includes('aria-label="Portrait (4:5) format"') && uiCode.includes('aria-pressed="true"'), 'Modal aspect pills should have aria-label and aria-pressed attributes');
+    assert.ok(uiCode.includes('aria-label="Cinematic Blur theme"'), 'Modal theme pills should have aria-label attributes');
     assert.ok(uiCode.includes('data-aspect="story"'), 'Modal should support phone wallpaper aspect ratio');
     assert.ok(uiCode.includes('data-aspect="landscape"'), 'Modal should support desktop wallpaper aspect ratio');
+});
+
+test('window.updateSortUI in js/main.js dynamically sets aria-label and title attributes for sort controls', () => {
+    const mainCode = fs.readFileSync(path.join(__dirname, '../js/main.js'), 'utf8');
+    assert.ok(mainCode.includes('sortColumnBtn.setAttribute("aria-label", `Sort by column: ${colName}`)'), 'Should set aria-label for sortColumnDropdown');
+    assert.ok(mainCode.includes('sortDirectionToggle.setAttribute("aria-label", `Sort direction: ${dirLabel}`)'), 'Should set aria-label for sortDirectionToggle');
+
+    // Functional sandbox test
+    let sortColAria = '', sortColTitle = '', sortDirAria = '', sortDirTitle = '';
+    const mockSortColBtn = { setAttribute(k, v) { if (k === 'aria-label') sortColAria = v; if (k === 'title') sortColTitle = v; }, textContent: '' };
+    const mockSortDirToggle = { setAttribute(k, v) { if (k === 'aria-label') sortDirAria = v; if (k === 'title') sortDirTitle = v; } };
+    const mockSortDirIcon = { className: '' };
+
+    const sandbox = {
+        currentSortColumn: 'LastWatchedDate',
+        currentSortDirection: 'asc',
+        document: {
+            getElementById(id) {
+                if (id === 'sortColumnDropdown') return mockSortColBtn;
+                if (id === 'sortDirectionToggle') return mockSortDirToggle;
+                return null;
+            },
+            querySelector(sel) {
+                if (sel === '#sortDirectionToggle i') return mockSortDirIcon;
+                return null;
+            }
+        }
+    };
+
+    const updateSortUIFunc = new Function(
+        'currentSortColumn',
+        'currentSortDirection',
+        'document',
+        `
+        const abbreviationMap = { Name: "N", lastModifiedDate: "M", LastWatchedDate: "W", Year: "Y", overallRating: "R" };
+        const columnNameMap = { Name: "Name", lastModifiedDate: "Last Modified", LastWatchedDate: "Last Watched", Year: "Year", overallRating: "Rating" };
+        const sortColumnBtn = document.getElementById("sortColumnDropdown");
+        const sortDirectionToggle = document.getElementById("sortDirectionToggle");
+        const sortDirectionIcon = document.querySelector("#sortDirectionToggle i");
+        if (sortColumnBtn) {
+          const colName = columnNameMap[currentSortColumn] || "Name";
+          sortColumnBtn.textContent = abbreviationMap[currentSortColumn] || "N";
+          sortColumnBtn.setAttribute("aria-label", "Sort by column: " + colName);
+          sortColumnBtn.setAttribute("title", "Sort by column: " + colName);
+        }
+        if (sortDirectionToggle && sortDirectionIcon) {
+          const isAsc = currentSortDirection === "asc";
+          sortDirectionIcon.className = "fas fa-arrow-" + (isAsc ? "down" : "up");
+          const dirLabel = isAsc ? "Ascending (click to sort descending)" : "Descending (click to sort ascending)";
+          sortDirectionToggle.setAttribute("aria-label", "Sort direction: " + dirLabel);
+          sortDirectionToggle.setAttribute("title", "Sort direction: " + dirLabel);
+        }
+        return { sortColAria: sortColumnBtn ? "Sort by column: " + (columnNameMap[currentSortColumn] || "Name") : "" };
+        `
+    );
+
+    updateSortUIFunc(sandbox.currentSortColumn, sandbox.currentSortDirection, sandbox.document);
+    assert.strictEqual(sortColAria, 'Sort by column: Last Watched');
+    assert.strictEqual(sortColTitle, 'Sort by column: Last Watched');
+    assert.strictEqual(sortDirAria, 'Sort direction: Ascending (click to sort descending)');
+    assert.strictEqual(sortDirTitle, 'Sort direction: Ascending (click to sort descending)');
 });

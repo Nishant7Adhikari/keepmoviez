@@ -966,16 +966,32 @@ document.addEventListener("DOMContentLoaded", () => {
     overallRating: "R",
   };
 
+  const columnNameMap = {
+    Name: "Name",
+    lastModifiedDate: "Last Modified",
+    LastWatchedDate: "Last Watched",
+    Year: "Year",
+    overallRating: "Rating",
+  };
+
   // Function to update UI to reflect current sort state
   window.updateSortUI = function() {
     const sortColumnBtn = document.getElementById("sortColumnDropdown");
+    const sortDirectionToggle = document.getElementById("sortDirectionToggle");
     const sortDirectionIcon = document.querySelector("#sortDirectionToggle i");
     
     if (sortColumnBtn) {
+      const colName = columnNameMap[currentSortColumn] || "Name";
       sortColumnBtn.textContent = abbreviationMap[currentSortColumn] || "N";
+      sortColumnBtn.setAttribute("aria-label", `Sort by column: ${colName}`);
+      sortColumnBtn.setAttribute("title", `Sort by column: ${colName}`);
     }
-    if (sortDirectionIcon) {
-      sortDirectionIcon.className = `fas fa-arrow-${currentSortDirection === "asc" ? "down" : "up"}`;
+    if (sortDirectionToggle && sortDirectionIcon) {
+      const isAsc = currentSortDirection === "asc";
+      sortDirectionIcon.className = `fas fa-arrow-${isAsc ? "down" : "up"}`;
+      const dirLabel = isAsc ? "Ascending (click to sort descending)" : "Descending (click to sort ascending)";
+      sortDirectionToggle.setAttribute("aria-label", `Sort direction: ${dirLabel}`);
+      sortDirectionToggle.setAttribute("title", `Sort direction: ${dirLabel}`);
     }
   };
 
@@ -987,8 +1003,7 @@ document.addEventListener("DOMContentLoaded", () => {
       item.addEventListener("click", (e) => {
         e.preventDefault();
         currentSortColumn = e.target.dataset.sortBy;
-        document.getElementById("sortColumnDropdown").textContent =
-          abbreviationMap[currentSortColumn] || "N";
+        window.updateSortUI();
         // Save sort preference to localStorage
         localStorage.setItem("keepmoviez_sortColumn", currentSortColumn);
         sortMovies(currentSortColumn, currentSortDirection);
@@ -999,9 +1014,7 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("sortDirectionToggle")
     ?.addEventListener("click", (e) => {
       currentSortDirection = currentSortDirection === "asc" ? "desc" : "asc";
-      const icon = e.currentTarget.querySelector("i");
-      if (icon)
-        icon.className = `fas fa-arrow-${currentSortDirection === "asc" ? "down" : "up"}`;
+      window.updateSortUI();
       // Save sort direction preference to localStorage
       localStorage.setItem("keepmoviez_sortDirection", currentSortDirection);
       sortMovies(currentSortColumn, currentSortDirection);
@@ -1081,6 +1094,22 @@ document.addEventListener("DOMContentLoaded", () => {
     const whyContainer = document.getElementById("unwatchableDuplicateWhy");
     if (whyBtn) whyBtn.style.display = "block";
     if (whyContainer) whyContainer.style.display = "none";
+  });
+  document.getElementById("unwatchableViewWhyBtn")?.addEventListener("click", function () {
+    const whyContainer = document.getElementById("unwatchableDuplicateWhy");
+    if (whyContainer) whyContainer.style.display = "block";
+    this.style.display = "none";
+  });
+
+  // Modal Backfill Footer buttons
+  document.getElementById("modalBackfillAutoFetchBtn")?.addEventListener("click", () => {
+    if (typeof autoFetchTmdb === "function") autoFetchTmdb();
+  });
+  document.getElementById("modalBackfillSkipBtn")?.addEventListener("click", () => {
+    if (typeof skipCurrentField === "function") skipCurrentField();
+  });
+  document.getElementById("modalBackfillNextBtn")?.addEventListener("click", () => {
+    if (typeof saveAndNext === "function") saveAndNext();
   });
   document
     .getElementById("exportStatsPdfBtn")

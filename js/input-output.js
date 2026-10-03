@@ -199,6 +199,14 @@ async function processSmartImport() {
         'relatedEntries', 'Genre', 'Country', 'Language'
     ];
 
+    // Performance optimization: Pre-index movieData by ID into a Map to convert O(M * N) findIndex array scans to O(1) lookups
+    const movieIndexMap = new Map();
+    for (let i = 0; i < movieData.length; i++) {
+        if (movieData[i] && movieData[i].id) {
+            movieIndexMap.set(movieData[i].id, i);
+        }
+    }
+
     for (const item of analyzedEntries) {
         const { fileEntry, existingEntry, matchType } = item;
 
@@ -207,9 +215,10 @@ async function processSmartImport() {
             fileEntry.is_deleted = false;
             fileEntry.lastModifiedDate = currentTimestamp;
             movieData.push(fileEntry);
+            if (fileEntry.id) movieIndexMap.set(fileEntry.id, movieData.length - 1);
             appendedCount++;
         } else {
-            const index = movieData.findIndex(e => e.id === existingEntry.id);
+            const index = movieIndexMap.has(existingEntry.id) ? movieIndexMap.get(existingEntry.id) : -1;
             if (index === -1) continue;
 
             let entryModified = false;
@@ -364,9 +373,7 @@ function generateAndDownloadFile(downloadType) {
                     if (typeof cleanEntry[key] === 'object' && cleanEntry[key] !== null) {
                         cleanEntry[key] = JSON.stringify(cleanEntry[key]);
                     }
-                    if (typeof cleanEntry[key] === 'string' && /^[=+\-@\t\r]/.test(cleanEntry[key])) {
-                        cleanEntry[key] = "'" + cleanEntry[key];
-                    }
+                    cleanEntry[key] = typeof sanitizeCSVField === 'function' ? sanitizeCSVField(cleanEntry[key]) : cleanEntry[key];
                 }
             }
             return cleanEntry;

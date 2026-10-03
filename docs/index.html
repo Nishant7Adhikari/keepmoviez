@@ -1024,6 +1024,25 @@
             </div>
           </section>
 
+          <!-- Welcome Screen Onboarding -->
+          <section id="welcome-onboarding">
+            <h2>Welcome Screen & Library Initialization</h2>
+            <p>
+              When your library is empty or uninitialized, KeepMoviEZ provides three primary options to establish your collection:
+            </p>
+            <ul>
+              <li>
+                <strong>Sync from Cloud:</strong> Restores your collection records by pulling your existing backup from your authenticated cloud account.
+              </li>
+              <li>
+                <strong>Reload Local Data:</strong> Re-indexes the browser's local <code>IndexedDB</code> database connection and loads stored entries into active RAM memory.
+              </li>
+              <li>
+                <strong>Import Backup:</strong> Launches the Smart Import Assistant to parse CSV or JSON backup files locally in browser memory.
+              </li>
+            </ul>
+          </section>
+
           <!-- Legal Compliance Section -->
           <section id="legal-compliance">
             <h2>Legal Compliance & Usage Boundaries</h2>
@@ -1032,7 +1051,7 @@
             </p>
             <ul>
               <li><strong>No Media Hosting or Distribution:</strong> KeepmoviEZ does not host, index, stream, or distribute copyright-protected media files.</li>
-              <li><strong>External Service Lookups & Streaming Availability:</strong> UI controls such as "Where to Watch" direct users to third-party availability aggregators (such as JustWatch) to query legal streaming sources in their region. KeepMoviEZ does not embed, host, or stream media playback directly.</li>
+              <li><strong>External Service Lookups & Streaming Availability:</strong> Action links in the details modal (such as "Trailer" for YouTube search, "Parents Guide" for IMDb lookups, and "Where to Watch" for JustWatch aggregators) direct users to third-party web services in a new browser tab. KeepMoviEZ does not host, embed, or stream media playback directly.</li>
               <li><strong>User Responsibility:</strong> Users are solely responsible for ensuring their collection logs, notes, and imported media information comply with applicable copyright laws and third-party terms of service.</li>
               <li><strong>API Attribution:</strong> Metadata and images sourced via search features are provided by third-party services like The Movie Database (TMDB). KeepmoviEZ uses the TMDB API but is not endorsed or certified by TMDB.</li>
             </ul>
