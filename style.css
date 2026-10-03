@@ -234,8 +234,6 @@ p {
   background-color: transparent;
   height: 100%;
   padding: 0 8px;
-  min-width: 44px;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -244,11 +242,22 @@ p {
 #sortColumnDropdown {
   width: 100%;
   height: auto;
-  min-width: 44px;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* 44x44px touch targets only on coarse-pointer (touch) devices */
+@media (pointer: coarse) {
+  #sortDirectionToggle {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  #sortColumnDropdown {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 #clearSearchBtn {
@@ -262,13 +271,18 @@ p {
   color: rgba(255, 255, 255, 0.7);
   background-color: transparent;
   padding: 0;
-  min-width: 44px;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
   line-height: 1;
+}
+
+@media (pointer: coarse) {
+  #clearSearchBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 #clearSearchBtn:hover,
@@ -857,17 +871,30 @@ body.multi-select-active #addNewEntryBtn {
 .card-actions .btn {
   padding: 0.25rem 0.5rem;
   font-size: 0.85rem;
-  min-width: 44px;
-  min-height: 44px;
+  min-width: 32px;
+  min-height: 32px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Ensure 44x44px touch targets only on coarse-pointer (touch) devices */
+@media (pointer: coarse) {
+  .card-actions .btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 @media (max-width: 400px) {
   .card-actions .btn {
     padding: 0.2rem 0.4rem;
     font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 400px) and (pointer: coarse) {
+  .card-actions .btn {
     min-width: 44px;
     min-height: 44px;
   }
@@ -2369,11 +2396,16 @@ a:hover {
 #filterBtn {
   padding: 0.375rem 0.6rem;
   line-height: 1.2;
-  min-width: 44px;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+@media (pointer: coarse) {
+  #filterBtn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .offcanvas-menu {
@@ -2583,14 +2615,19 @@ a:hover {
   color: var(--tdcolor);
   text-shadow: 0 1px 2px var(--card-bg);
   opacity: 0.9;
-  min-width: 44px;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
   background: transparent;
   padding: 0;
+}
+
+@media (pointer: coarse) {
+  .details-modal-close-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 
 .dark-theme .details-modal-close-btn {
