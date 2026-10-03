@@ -197,3 +197,52 @@ test('docs/index.html details Local Browser Storage Cache Re-indexing and FAQ fo
     assert.ok(docsHtml.includes('Local Browser Storage Cache Re-indexing'));
     assert.ok(docsHtml.includes('What does \'Reload Local Data\' do?'));
 });
+
+test('processSmartImport updates matching entries using movieIndexMap and appends new entries cleanly', async () => {
+    let summaryHTML = '';
+    sandbox.document.getElementById = (id) => {
+        if (id === 'importSummary') {
+            return {
+                set innerHTML(val) { summaryHTML = val; },
+                get innerHTML() { return summaryHTML; }
+            };
+        }
+        return null;
+    };
+
+    const uuid1 = '11111111-1111-4111-8111-111111111111';
+    const uuid2 = '22222222-2222-4222-8222-222222222222';
+    const uuid3 = '33333333-3333-4333-8333-333333333333';
+
+    sandbox.movieData = [
+        { id: uuid1, Name: 'The Matrix', Year: '1999', Status: 'Watched', lastModifiedDate: '2026-01-01T00:00:00.000Z' },
+        { id: uuid2, Name: 'Inception', Year: '2010', Status: 'Watched', lastModifiedDate: '2026-01-01T00:00:00.000Z' }
+    ];
+    sandbox.currentSortColumn = 'Name';
+    sandbox.currentSortDirection = 'asc';
+    sandbox.$ = (selector) => {
+        if (selector === 'input[name="importStrategy"]:checked') {
+            return { val: () => 'update_matches' };
+        }
+        return { modal: () => {}, off: () => ({ on: () => {} }) };
+    };
+    sandbox.showLoading = () => {};
+    sandbox.hideLoading = () => {};
+    sandbox.showToast = () => {};
+    sandbox.recalculateAndApplyAllRelationships = () => {};
+    sandbox.sortMovies = () => {};
+    sandbox.saveToIndexedDB = async () => {};
+    sandbox.renderMovieCards = () => {};
+    sandbox.checkAndNotifyNewAchievements = async () => {};
+
+    await sandbox.initiateSmartImport([
+        { id: uuid2, Name: 'Inception (IMAX)', Year: '2010', lastModifiedDate: '2026-05-01T00:00:00.000Z' },
+        { id: uuid3, Name: 'Interstellar', Year: '2014', Status: 'To Watch' }
+    ], 'test_backup.json');
+
+    await sandbox.processSmartImport();
+
+    assert.equal(sandbox.movieData.length, 3);
+    assert.equal(sandbox.movieData[1].Name, 'Inception (IMAX)');
+    assert.equal(sandbox.movieData[2].Name, 'Interstellar');
+});
