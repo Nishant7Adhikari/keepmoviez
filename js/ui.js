@@ -579,6 +579,10 @@ function updateVirtualScroll(force = false) {
 
   // Observe lazy images
   cardContainer.querySelectorAll("img.lazy:not(.loaded)").forEach((img) => {
+    img.onerror = function() {
+      this.onerror = null;
+      this.src = "icons/placeholder-poster.png";
+    };
     if (typeof imageObserver !== "undefined" && imageObserver.observe) {
       imageObserver.observe(img);
     }
@@ -588,7 +592,7 @@ function updateVirtualScroll(force = false) {
 function createMovieCardElement(movie) {
   const latestWatch = getLatestWatchInstance(movie.watchHistory || []);
 
-  let rawPoster = movie["Poster URL"];
+  let rawPoster = movie.poster_url || movie["Poster URL"];
   if (rawPoster && rawPoster.startsWith('"') && rawPoster.endsWith('"')) {
     rawPoster = rawPoster.slice(1, -1);
   }
@@ -1142,8 +1146,8 @@ window.prepareEditModal = function (id, showModal = true) {
   formFieldsGlob.country.value = movie.Country || "";
   formFieldsGlob.description.value = movie.Description || "";
 
-  // NEW: Handle Custom Poster URL (Locked/Quoted)
-  let rawPosterUrl = movie["Poster URL"] || "";
+  // Handle Custom Poster URL (Locked/Quoted)
+  let rawPosterUrl = movie.poster_url || movie["Poster URL"] || "";
   let isLocked = false;
   if (rawPosterUrl.startsWith('"') && rawPosterUrl.endsWith('"')) {
     isLocked = true;
@@ -1162,8 +1166,9 @@ window.prepareEditModal = function (id, showModal = true) {
     typeof movie.runtime === "object" &&
     movie.runtime
   ) {
-    formFieldsGlob.runtimeSeriesSeasons.value = movie.runtime.seasons || "";
-    formFieldsGlob.runtimeSeriesEpisodes.value = movie.runtime.episodes || "";
+    const epCountSum = existingCounts.length > 0 ? existingCounts.reduce((a, b) => a + (Number(b) || 0), 0) : "";
+    formFieldsGlob.runtimeSeriesSeasons.value = movie.runtime.seasons || existingCounts.length || "";
+    formFieldsGlob.runtimeSeriesEpisodes.value = movie.runtime.episodes || epCountSum || "";
     formFieldsGlob.runtimeSeriesAvgEp.value =
       movie.runtime.episode_run_time || "";
   } else if (typeof movie.runtime === "number") {
@@ -1308,7 +1313,7 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
       modal.find(selector).toggle(!!condition);
 
     // 2. POPULATE POSTER
-    let rawPoster = fullDetails["Poster URL"];
+    let rawPoster = fullDetails.poster_url || fullDetails["Poster URL"];
     if (rawPoster && rawPoster.startsWith('"') && rawPoster.endsWith('"')) {
       rawPoster = rawPoster.slice(1, -1);
     }
@@ -1319,7 +1324,11 @@ window.openDetailsModal = async function (id = null, tmdbObject = null) {
         : null);
     toggle("#detailsPoster", !!posterUrl);
     toggle("#noPosterMessage", !posterUrl);
-    if (posterUrl) modal.find("#detailsPoster").attr("src", posterUrl);
+    if (posterUrl) {
+      modal.find("#detailsPoster").attr("src", posterUrl).off("error").on("error", function() {
+        $(this).attr("src", "icons/placeholder-poster.png");
+      });
+    }
 
     // 3. POPULATE INFO
     const title = fullDetails.Name || fullDetails.title || fullDetails.name;

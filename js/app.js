@@ -416,7 +416,7 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
       Year: yearVal,
       Country: countryCodeToStore,
       Description: formFieldsGlob.description.value.trim(),
-      // NEW: Custom Logic for Poster URL (Quote if Manual/Custom)
+      // Custom Logic for Poster URL (Quote if Manual/Custom)
       "Poster URL": (() => {
         const rawVal = formFieldsGlob.posterUrl.value.trim();
         if (!rawVal) return "";
@@ -426,6 +426,14 @@ window.handleFormSubmit = async function (event, saveAction = "quickSave") {
         if (source === "tmdb") return rawVal;
         if (rawVal.startsWith('"') && rawVal.endsWith('"')) return rawVal;
         return `"${rawVal}"`; // Quote it
+      })(),
+      poster_url: (() => {
+        const rawVal = formFieldsGlob.posterUrl.value.trim();
+        if (!rawVal) return "";
+        const source = formFieldsGlob.posterUrl.dataset.source;
+        if (source === "tmdb") return rawVal;
+        if (rawVal.startsWith('"') && rawVal.endsWith('"')) return rawVal;
+        return `"${rawVal}"`;
       })(),
       watchHistory: JSON.parse(
         document.getElementById("currentWatchHistory").value || "[]",

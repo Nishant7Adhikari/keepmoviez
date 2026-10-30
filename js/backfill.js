@@ -970,6 +970,7 @@ async function saveAndNext() {
 
     if (current.fieldKey === "Poster URL") {
       movieData[entryIndex]["Poster URL"] = finalValue;
+      movieData[entryIndex].poster_url = finalValue;
     }
 
     movieData[entryIndex].lastModifiedDate = new Date().toISOString();

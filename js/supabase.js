@@ -107,7 +107,7 @@ function localEntryToSupabaseFormat(localEntry, userId) {
     year: parseNumeric(entryToFormat.Year),
     country: entryToFormat.Country || null,
     description: entryToFormat.Description || null,
-    poster_url: entryToFormat["Poster URL"] || null,
+    poster_url: entryToFormat["Poster URL"] || entryToFormat.poster_url || null,
     watch_history: watchHistoryWithUUIDs,
     related_entries: Array.isArray(entryToFormat.relatedEntries)
       ? entryToFormat.relatedEntries
@@ -236,6 +236,7 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
     Country: supabaseEntry.country || "",
     Description: supabaseEntry.description || "",
     "Poster URL": supabaseEntry.poster_url || "",
+    poster_url: supabaseEntry.poster_url || "",
     watchHistory: watchHistoryWithUUIDs,
     relatedEntries: Array.isArray(supabaseEntry.related_entries)
       ? supabaseEntry.related_entries
@@ -288,6 +289,109 @@ function supabaseEntryToLocalFormat(supabaseEntry) {
 }
 // END CHUNK: 1: Supabase Data Transformation Helpers
 
+// =============================================================================
+// Phase 3: Normalized Database Adapters & Compatibility Helpers
+// =============================================================================
+const SUPABASE_ENTRIES_VIEW = "view_movie_entries_complete";
+const SUPABASE_LEGACY_TABLE = "movie_entries";
+
+async function selectRemoteEntries(queryBuilderFn) {
+  let res = await queryBuilderFn(window.supabaseClient.from(SUPABASE_ENTRIES_VIEW));
+  if (res && res.error) {
+    res = await queryBuilderFn(window.supabaseClient.from(SUPABASE_LEGACY_TABLE));
+  }
+  return res;
+}
+
+function isValidEntryForSync(item) {
+  if (!item || typeof item !== 'object') return false;
+  if (!item.id || typeof item.id !== 'string') return false;
+  if (!item.user_id) return false;
+  const name = item.name || item.Name || '';
+  if (!String(name).trim()) return false;
+  return true;
+}
+
+async function uploadSupabaseBatch(formattedEntries) {
+  if (!formattedEntries || formattedEntries.length === 0) return;
+
+  // 1. Robust pre-sync check: Prevent malformed entries from even being sent
+  const validEntries = [];
+  for (const entry of formattedEntries) {
+    if (isValidEntryForSync(entry)) {
+      validEntries.push(entry);
+    } else {
+      console.warn("[Cloud Sync Validation] Skipped malformed entry before sync:", entry && (entry.id || entry.name));
+    }
+  }
+  if (validEntries.length === 0) return;
+
+  const safeChunk = typeof chunkArray === "function" ? chunkArray : (arr, size) => {
+    const res = [];
+    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    return res;
+  };
+  const chunks = safeChunk(validEntries, 50);
+
+  // 2. Upload batches in single requests to avoid rate-limiting
+  for (const chunk of chunks) {
+    let saved = false;
+    if (typeof window.supabaseClient.rpc === "function") {
+      try {
+        const { data, error } = await window.supabaseClient.rpc("save_movie_entries_batch", {
+          payloads: chunk
+        });
+        if (!error && data && data.success === true) {
+          saved = true;
+          if (Array.isArray(data.failed) && data.failed.length > 0) {
+            console.warn(`[Batch Sync Notice] ${data.failed.length} items had server warnings:`, data.failed);
+          }
+        }
+      } catch (rpcErr) {
+        console.warn("[Batch Sync RPC Warning] Batch call failed, falling back:", rpcErr);
+      }
+    }
+    // Fallback: If normalized batch RPC is unavailable on database, upsert to legacy table
+    if (!saved) {
+      const { error } = await window.supabaseClient
+        .from(SUPABASE_LEGACY_TABLE)
+        .upsert(chunk);
+      if (error) throw new Error(error.message);
+    }
+  }
+}
+
+async function softDeleteSupabaseIds(ids, userId) {
+  if (!ids || ids.length === 0) return;
+  const safeChunk = typeof chunkArray === "function" ? chunkArray : (arr, size) => {
+    const res = [];
+    for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
+    return res;
+  };
+  const deleteChunks = safeChunk(ids, 30);
+  const nowIso = new Date().toISOString();
+  for (const chunk of deleteChunks) {
+    let deleted = false;
+    try {
+      const { error } = await window.supabaseClient
+        .from("user_library")
+        .update({ is_deleted: true, last_modified_date: nowIso })
+        .in("id", chunk)
+        .eq("user_id", userId);
+      if (!error) deleted = true;
+    } catch (_) {}
+
+    const { error: legacyErr } = await window.supabaseClient
+      .from(SUPABASE_LEGACY_TABLE)
+      .update({ is_deleted: true, last_modified_date: nowIso })
+      .in("id", chunk)
+      .eq("user_id", userId);
+    if (!deleted && legacyErr) {
+      throw new Error(`Syncing deletions failed: ${legacyErr.message}`);
+    }
+  }
+}
+
 // Helper to download remote entries in safe URL batches to prevent HTTP 400 (Bad Request / URI Too Long)
 async function downloadRemoteEntriesByIds(ids, userId, onProgress) {
   if (!ids || ids.length === 0) return [];
@@ -309,16 +413,24 @@ async function downloadRemoteEntriesByIds(ids, userId, onProgress) {
     const currentBatch = chunks.slice(i, i + CONCURRENCY);
     const batchResults = await Promise.all(
       currentBatch.map(async (chunk) => {
-        const { data, error } = await window.supabaseClient
-          .from("movie_entries")
+        let res = await window.supabaseClient
+          .from(SUPABASE_ENTRIES_VIEW)
           .select("*")
           .in("id", chunk)
           .eq("user_id", userId)
           .eq("is_deleted", false);
-        if (error) {
-          throw new Error(`Downloading remote entries failed: ${error.message}`);
+        if (res && res.error) {
+          res = await window.supabaseClient
+            .from(SUPABASE_LEGACY_TABLE)
+            .select("*")
+            .in("id", chunk)
+            .eq("user_id", userId)
+            .eq("is_deleted", false);
         }
-        return data || [];
+        if (res && res.error) {
+          throw new Error(`Downloading remote entries failed: ${res.error.message}`);
+        }
+        return (res && res.data) || [];
       })
     );
     for (const chunkData of batchResults) {
@@ -372,6 +484,9 @@ async function comprehensiveSync(silent = false) {
   if (!silent) showLoading("Syncing with cloud...");
 
   try {
+    if (typeof window.syncGenresFromSupabase === "function") {
+      window.syncGenresFromSupabase().catch(() => {});
+    }
     let changesMade = false;
     let pushedCount = 0,
       pulledCount = 0,
@@ -394,18 +509,7 @@ async function comprehensiveSync(silent = false) {
       if (!silent)
         showLoading(`Syncing ${entriesToDelete.length} deletions...`);
       const deleteIds = entriesToDelete.map((e) => e.id);
-      const deleteChunks = safeChunk(deleteIds, 30);
-      for (const chunk of deleteChunks) {
-        const { error } = await window.supabaseClient
-          .from("movie_entries")
-          .update({
-            is_deleted: true,
-            last_modified_date: new Date().toISOString(),
-          })
-          .in("id", chunk)
-          .eq("user_id", currentSupabaseUser.id);
-        if (error) throw new Error(`Syncing deletions failed: ${error.message}`);
-      }
+      await softDeleteSupabaseIds(deleteIds, currentSupabaseUser.id);
       deletedCount = entriesToDelete.length;
       changesMade = true;
     }
@@ -418,14 +522,7 @@ async function comprehensiveSync(silent = false) {
         .map((e) => localEntryToSupabaseFormat(e, currentSupabaseUser.id))
         .filter(Boolean);
       if (supabaseFormatted.length > 0) {
-        const upsertChunks = safeChunk(supabaseFormatted, 100);
-        for (const chunk of upsertChunks) {
-          const { error } = await window.supabaseClient
-            .from("movie_entries")
-            .upsert(chunk);
-          if (error)
-            throw new Error(`Uploading changes failed: ${error.message}`);
-        }
+        await uploadSupabaseBatch(supabaseFormatted);
         pushedCount = supabaseFormatted.length;
         changesMade = true;
       } else {
@@ -440,12 +537,13 @@ async function comprehensiveSync(silent = false) {
     let remotePage = 0;
     const pageSize = 1000;
     while (true) {
-      const { data, error: fetchError } = await window.supabaseClient
-        .from("movie_entries")
-        .select("id, last_modified_date")
-        .eq("user_id", currentSupabaseUser.id)
-        .eq("is_deleted", false)
-        .range(remotePage * pageSize, (remotePage + 1) * pageSize - 1);
+      const { data, error: fetchError } = await selectRemoteEntries(client =>
+        client
+          .select("id, last_modified_date")
+          .eq("user_id", currentSupabaseUser.id)
+          .eq("is_deleted", false)
+          .range(remotePage * pageSize, (remotePage + 1) * pageSize - 1)
+      );
       if (fetchError)
         throw new Error(`Fetching remote state failed: ${fetchError.message}`);
       if (!data || data.length === 0) break;
@@ -611,12 +709,13 @@ async function forcePullFromSupabase() {
     let forcePullPage = 0;
     const forcePullPageSize = 1000;
     while (true) {
-      const { data, error: fetchError } = await window.supabaseClient
-        .from("movie_entries")
-        .select("*")
-        .eq("user_id", currentSupabaseUser.id)
-        .eq("is_deleted", false)
-        .range(forcePullPage * forcePullPageSize, (forcePullPage + 1) * forcePullPageSize - 1);
+      const { data, error: fetchError } = await selectRemoteEntries(client =>
+        client
+          .select("*")
+          .eq("user_id", currentSupabaseUser.id)
+          .eq("is_deleted", false)
+          .range(forcePullPage * forcePullPageSize, (forcePullPage + 1) * forcePullPageSize - 1)
+      );
 
       if (fetchError)
         throw new Error(`Could not fetch cloud data: ${fetchError.message}`);
@@ -689,14 +788,22 @@ async function forcePushToSupabase() {
   try {
     const userId = currentSupabaseUser.id;
 
-    // Step 1: Delete all existing records for this user in Supabase.
-    const { error: deleteError } = await window.supabaseClient
-      .from("movie_entries")
+    // Step 1: Delete all existing records for this user in Supabase (primary: user_library)
+    const { error: ulDeleteError } = await window.supabaseClient
+      .from("user_library")
       .delete()
       .eq("user_id", userId);
 
-    if (deleteError)
-      throw new Error(`Could not clear cloud data: ${deleteError.message}`);
+    if (ulDeleteError) {
+      throw new Error(`Could not clear cloud user_library: ${ulDeleteError.message}`);
+    }
+
+    try {
+      await window.supabaseClient
+        .from("movie_entries")
+        .delete()
+        .eq("user_id", userId);
+    } catch (_) {}
 
     showLoading("Cloud data cleared. Uploading local collection...");
 
@@ -707,21 +814,7 @@ async function forcePushToSupabase() {
       .filter(Boolean);
 
     if (localDataToPush.length > 0) {
-      // Step 3: Insert all local records into the now-empty cloud table in safe chunks.
-      const safeChunk = typeof chunkArray === "function" ? chunkArray : (arr, size) => {
-        const res = [];
-        for (let i = 0; i < arr.length; i += size) res.push(arr.slice(i, i + size));
-        return res;
-      };
-      const insertChunks = safeChunk(localDataToPush, 100);
-      for (const chunk of insertChunks) {
-        const { error: insertError } = await window.supabaseClient
-          .from("movie_entries")
-          .insert(chunk);
-
-        if (insertError)
-          throw new Error(`Could not upload local data: ${insertError.message}`);
-      }
+      await uploadSupabaseBatch(localDataToPush);
     }
 
     // Step 4: Mark all local data as 'synced'
@@ -790,13 +883,7 @@ async function syncSelectedEntries(selectedIds, direction = "push") {
         .filter(Boolean);
 
       if (entriesToPush.length > 0) {
-        const pushChunks = safeChunk(entriesToPush, 100);
-        for (const chunk of pushChunks) {
-          const { error } = await window.supabaseClient
-            .from("movie_entries")
-            .upsert(chunk);
-          if (error) throw new Error(`Push failed: ${error.message}`);
-        }
+        await uploadSupabaseBatch(entriesToPush);
 
         // Mark pushed entries as synced
         entriesToPush.forEach(({ id }) => {
@@ -818,17 +905,16 @@ async function syncSelectedEntries(selectedIds, direction = "push") {
       const pullChunks = safeChunk(selectedIds, 30);
       const remoteEntries = [];
       for (const chunk of pullChunks) {
-        const { data, error: pullError } = await window.supabaseClient
-          .from("movie_entries")
-          .select("*")
-          .in("id", chunk)
-          .eq("user_id", userId);
+        const { data, error: pullError } = await selectRemoteEntries(client =>
+          client
+            .select("*")
+            .in("id", chunk)
+            .eq("user_id", userId)
+        );
 
         if (pullError) throw new Error(`Pull failed: ${pullError.message}`);
         if (data) remoteEntries.push(...data);
       }
-
-      if (pullError) throw new Error(`Pull failed: ${pullError.message}`);
 
       remoteEntries.forEach((remoteEntry) => {
         const localEntry = supabaseEntryToLocalFormat(remoteEntry);
@@ -876,6 +962,27 @@ window.syncSelectedEntries = syncSelectedEntries;
 let currentSupabaseUser = null;
 let isAppInitializing = false;
 
+/**
+ * Synchronizes sidebar menu auth elements (email, Login button, Logout button).
+ */
+function updateMenuAuthDisplay() {
+  const emailEl = document.getElementById("menuLoggedInUserEmail");
+  const loginBtn = document.getElementById("menuSupabaseLoginBtn");
+  const logoutBtn = document.getElementById("menuSupabaseLogoutBtn");
+
+  if (window.currentSupabaseUser) {
+    if (emailEl) emailEl.textContent = window.currentSupabaseUser.email || "Logged In";
+    if (loginBtn) loginBtn.style.display = "none";
+    if (logoutBtn) logoutBtn.style.display = "block";
+  } else {
+    if (emailEl) emailEl.textContent = "Guest (Local Mode)";
+    if (loginBtn) loginBtn.style.display = "block";
+    if (logoutBtn) logoutBtn.style.display = "none";
+  }
+  if (typeof updateSyncButtonState === "function") updateSyncButtonState();
+}
+window.updateMenuAuthDisplay = updateMenuAuthDisplay;
+
 async function initAuth() {
   showLoading("Initializing...");
   try {
@@ -887,6 +994,41 @@ async function initAuth() {
       );
       return;
     }
+
+    const syncUserProfileMode = async (user) => {
+      if (!user || !window.supabaseClient) return;
+      const userSyncKey = user.id + "_sync_mode";
+      try {
+        const { data: profile, error } = await window.supabaseClient
+          .from("profiles")
+          .select("sync_mode")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!error && profile && profile.sync_mode) {
+          localStorage.setItem(userSyncKey, profile.sync_mode);
+          console.log(`[Profile] Restored sync_mode from Supabase profile: "${profile.sync_mode}"`);
+        } else {
+          const currentLocal =
+            localStorage.getItem(userSyncKey) ||
+            localStorage.getItem("keepmoviez_sync_mode") ||
+            "strict_privacy";
+          localStorage.setItem(userSyncKey, currentLocal);
+          await window.supabaseClient.from("profiles").upsert({
+            id: user.id,
+            email: user.email,
+            sync_mode: currentLocal,
+            updated_at: new Date().toISOString(),
+          });
+          console.log(`[Profile] Initialized profile sync_mode to "${currentLocal}"`);
+        }
+        if (typeof window.refreshSyncModeGlobal === "function") {
+          window.refreshSyncModeGlobal();
+        }
+      } catch (err) {
+        console.warn("[Profile] Failed to load/sync user profile mode:", err);
+      }
+    };
 
     const handleUserSession = async (user) => {
       if (isAppInitializing) return;
@@ -901,6 +1043,10 @@ async function initAuth() {
         try {
           isAppInitializing = true; // Lock
           await openDatabase();
+          await syncUserProfileMode(user);
+          if (typeof window.syncGenresFromSupabase === "function") {
+            await window.syncGenresFromSupabase();
+          }
           await initializeApp();
         } catch (dbError) {
           console.error("CRITICAL: Could not open IndexedDB.", dbError);
@@ -949,6 +1095,7 @@ async function initAuth() {
       currentSupabaseUser = user;
       window.currentSupabaseUser = user;
       if (typeof updateSyncButtonState === "function") updateSyncButtonState();
+      updateMenuAuthDisplay(); // Keep Login/Logout buttons in sync
 
       if (event === "SIGNED_OUT") {
         // HERE IS THE CORE LOGIC:
@@ -967,10 +1114,29 @@ async function initAuth() {
           "success",
         );
       } else if (user && user.id !== previousUserId) {
-        movieData = []; // Clear current session memory
-        window.movieData = [];
-        if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
-        await handleUserSession(user);
+        // --- Task 2.3: Login Merge Check ---
+        // If the guest had local data, prompt before wiping it.
+        const guestDataSnapshot = movieData.filter(e => !e.is_deleted);
+        if (guestDataSnapshot.length > 0) {
+          // Stash user + snapshot so merge modal can act on them
+          window._pendingLoginUser = user;
+          window._pendingGuestSnapshot = guestDataSnapshot;
+          // Show the merge decision modal instead of immediately loading
+          if (typeof window.showLoginMergeModal === 'function') {
+            window.showLoginMergeModal(user, guestDataSnapshot);
+          } else {
+            // Fallback: just load without merge (safe degradation)
+            movieData = [];
+            window.movieData = [];
+            if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
+            await handleUserSession(user);
+          }
+        } else {
+          movieData = []; // Clear current session memory
+          window.movieData = [];
+          if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
+          await handleUserSession(user);
+        }
       }
     });
 
@@ -1005,8 +1171,17 @@ async function initAuth() {
         window.movieData = movieData;
         await initializeApp();
       } else {
-        // Case: Not logged in, No data (First time user) -> Show Login
-        await resetAppForLogout("Please log in to continue.", false);
+        // Case: Not logged in, No data (First time user)
+        // v6: Default to Strict Privacy Mode and boot directly into the app.
+        // DO NOT force the login screen — login is opt-in.
+        const guestSyncKey = 'keepmoviez_sync_mode';
+        if (!localStorage.getItem(guestSyncKey)) {
+          localStorage.setItem(guestSyncKey, 'strict_privacy');
+          console.log('[Auth] First-time visit: defaulted to Strict Privacy mode.');
+        }
+        movieData = [];
+        window.movieData = [];
+        await initializeApp();
       }
     }
   } catch (error) {
@@ -1115,12 +1290,8 @@ async function initializeApp() {
       );
     }
 
-    // Update UI for offline/guest state if needed
-    if (!currentSupabaseUser) {
-      const emailEl = document.getElementById("menuLoggedInUserEmail");
-      if (emailEl) emailEl.textContent = "Guest (Local Mode)";
-      if (typeof updateSyncButtonState === "function") updateSyncButtonState();
-    }
+    // Update UI for auth state (Guest vs Logged In)
+    updateMenuAuthDisplay();
   } catch (error) {
     console.error("App init error:", error);
     showToast("Start Failed", error.message, "error");
@@ -1209,6 +1380,9 @@ async function resetAppForLogout(message, wipeData = false) {
       if (appContent) appContent.style.display = "none";
     }
   }
+
+  // Synchronize menu buttons for logged-out state
+  updateMenuAuthDisplay();
 
   // Always reset error messages
   const authMessageEl = document.getElementById("authMessage");
@@ -1480,16 +1654,30 @@ async function eraseAllData() {
   showLoading(message);
   try {
     if (eraseCloudData) {
-      const { error: updateError } = await window.supabaseClient
-        .from("movie_entries")
+      const nowIso = new Date().toISOString();
+      const { error: ulError } = await window.supabaseClient
+        .from("user_library")
         .update({
           is_deleted: true,
-          last_modified_date: new Date().toISOString(),
+          last_modified_date: nowIso,
         })
         .eq("user_id", currentSupabaseUser.id);
-      if (updateError) {
+
+      try {
+        await window.supabaseClient
+          .from("movie_entries")
+          .update({
+            is_deleted: true,
+            last_modified_date: nowIso,
+          })
+          .eq("user_id", currentSupabaseUser.id);
+      } catch (legacyErr) {
+        console.warn("Could not soft-delete legacy movie_entries:", legacyErr);
+      }
+
+      if (ulError) {
         throw new Error(
-          `Cloud erase (soft-delete) failed: ${updateError.message}`,
+          `Cloud erase (soft-delete) failed: ${ulError.message}`,
         );
       }
       showToast(
@@ -1600,3 +1788,165 @@ if (typeof window !== "undefined") {
 if (typeof globalThis !== "undefined") {
   globalThis.downloadRemoteEntriesByIds = downloadRemoteEntriesByIds;
 }
+
+// =============================================================================
+// START CHUNK: Phase 2 — Modal Controllers (Tasks 2.2 & 2.3)
+// =============================================================================
+
+// ─── Task 2.2: TMDB Gate Modal ────────────────────────────────────────────────
+/**
+ * Show an informative modal when a guest user tries to use TMDB auto-search.
+ * The modal explains the feature and offers a sign-in shortcut.
+ */
+window.showTmdbGateModal = function () {
+  // Wire up the "Sign In" button to close the gate modal and open the auth container
+  const signInBtn = document.getElementById("tmdbGateSignInBtn");
+  if (signInBtn) {
+    // Remove any prior listener to prevent duplicate bindings
+    const freshBtn = signInBtn.cloneNode(true);
+    signInBtn.parentNode.replaceChild(freshBtn, signInBtn);
+    freshBtn.addEventListener("click", () => {
+      $("#tmdbGateModal").modal("hide");
+      // Show the auth login panel
+      const authContainer = document.getElementById("authContainer");
+      const appContent = document.getElementById("appContent");
+      if (authContainer) authContainer.style.display = "flex";
+      if (appContent) appContent.style.display = "none";
+    });
+  }
+  $("#tmdbGateModal").modal("show");
+};
+
+// ─── Task 2.3: Login Merge Modal ─────────────────────────────────────────────
+/**
+ * When a guest with local data signs in, show a modal offering merge options.
+ * @param {object} user - The Supabase user object
+ * @param {Array} guestEntries - Local entries captured before clearing movieData
+ */
+window.showLoginMergeModal = function (user, guestEntries) {
+  // Populate modal info
+  const emailEl = document.getElementById("loginMergeUserEmail");
+  const countEl = document.getElementById("loginMergeLocalCount");
+  if (emailEl) emailEl.textContent = user.email || user.id;
+  if (countEl) countEl.textContent = guestEntries.length;
+
+  // Helper: wire a button once (cloneNode trick avoids duplicate listeners)
+  const wire = (id, handler) => {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    const fresh = btn.cloneNode(true);
+    btn.parentNode.replaceChild(fresh, btn);
+    fresh.addEventListener("click", handler);
+  };
+
+  // ── Option 1: Merge local + cloud ──────────────────────────────────────────
+  wire("loginMergeMergeBtn", async () => {
+    $("#loginMergeModal").modal("hide");
+    showLoading("Merging your local entries with cloud data...");
+    try {
+      // 1. Load the app normally (pulls cloud data into movieData)
+      movieData = [];
+      window.movieData = [];
+      if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
+
+      currentSupabaseUser = user;
+      window.currentSupabaseUser = user;
+      await openDatabase();
+      await initializeApp();
+
+      // 2. Inject guest entries that aren't already in movieData (by ID)
+      const existingIds = new Set(movieData.map(e => e.id));
+      const toMerge = guestEntries.filter(e => !existingIds.has(e.id));
+      toMerge.forEach(e => {
+        e._sync_state = "new"; // Mark for upload on next sync
+        movieData.push(e);
+      });
+      window.movieData = movieData;
+
+      // 3. Push merged local entries immediately if online
+      if (navigator.onLine && window.supabaseClient) {
+        const formatted = toMerge
+          .map(e => localEntryToSupabaseFormat(e, user.id))
+          .filter(Boolean);
+        if (formatted.length > 0) {
+          await uploadSupabaseBatch(formatted);
+        }
+        movieData.forEach(e => e._sync_state = "synced");
+      }
+
+      await saveToIndexedDB();
+      if (typeof recalculateAndApplyAllRelationships === "function") recalculateAndApplyAllRelationships();
+      if (typeof renderMovieCards === "function") renderMovieCards();
+      showToast("Merge Complete", `${toMerge.length} local entries merged into your cloud library.`, "success");
+    } catch (err) {
+      console.error("[MergeModal] Merge error:", err);
+      showToast("Merge Failed", err.message, "error");
+    } finally {
+      hideLoading();
+      window._pendingLoginUser = null;
+      window._pendingGuestSnapshot = null;
+    }
+  });
+
+  // ── Option 2: Discard local — use cloud only ───────────────────────────────
+  wire("loginMergeDiscardBtn", async () => {
+    $("#loginMergeModal").modal("hide");
+    movieData = [];
+    window.movieData = [];
+    if (window.refreshSyncModeGlobal) window.refreshSyncModeGlobal();
+    currentSupabaseUser = user;
+    window.currentSupabaseUser = user;
+    window._pendingLoginUser = null;
+    window._pendingGuestSnapshot = null;
+    await openDatabase();
+    await initializeApp();
+    showToast("Signed In", "Local entries discarded. Cloud library loaded.", "info");
+  });
+
+  // ── Option 3: Replace cloud with local ────────────────────────────────────
+  wire("loginMergeLocalWinsBtn", async () => {
+    if (!confirm("This will OVERWRITE your cloud library with your local entries. Continue?")) return;
+    $("#loginMergeModal").modal("hide");
+    showLoading("Uploading local entries to cloud...");
+    try {
+      currentSupabaseUser = user;
+      window.currentSupabaseUser = user;
+
+      // Hard-delete all cloud entries for this user
+      await softDeleteSupabaseIds(guestEntries.map(e => e.id), user.id);
+
+      // Upload local entries
+      const formatted = guestEntries
+        .filter(e => !e.is_deleted)
+        .map(e => localEntryToSupabaseFormat(e, user.id))
+        .filter(Boolean);
+
+      if (formatted.length > 0) {
+        await uploadSupabaseBatch(formatted);
+      }
+
+      // Keep local entries, mark synced
+      movieData = guestEntries;
+      window.movieData = movieData;
+      movieData.forEach(e => e._sync_state = "synced");
+      await openDatabase();
+      await saveToIndexedDB();
+      if (typeof recalculateAndApplyAllRelationships === "function") recalculateAndApplyAllRelationships();
+      if (typeof renderMovieCards === "function") renderMovieCards();
+      showToast("Upload Complete", `${formatted.length} local entries are now your cloud library.`, "success");
+
+      if (authContainer) authContainer.style.display = "none";
+      if (appContent) appContent.style.display = "block";
+    } catch (err) {
+      console.error("[MergeModal] Local-wins error:", err);
+      showToast("Upload Failed", err.message, "error");
+    } finally {
+      hideLoading();
+      window._pendingLoginUser = null;
+      window._pendingGuestSnapshot = null;
+    }
+  });
+
+  $("#loginMergeModal").modal("show");
+};
+// END CHUNK: Phase 2 — Modal Controllers

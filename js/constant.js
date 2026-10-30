@@ -1292,7 +1292,7 @@ let selectedBatchRemoveGenres = []; // For batch edit modal remove genre
 // DOM Element References
 let loadingOverlay, themeTransitionOverlay, authContainer, appContent;
 let appMenu, appMenuBackdrop, menuLoggedInUserEmail, menuOnlineStatusIndicator, menuThemeToggleBtn, menuCsvFileUploader,
-    menuDownloadCsvBtn, menuDownloadJsonBtn, menuSyncDataBtn, menuEraseDataBtn, menuSupabaseLogoutBtn;
+    menuDownloadCsvBtn, menuDownloadJsonBtn, menuSyncDataBtn, menuEraseDataBtn, menuSupabaseLogoutBtn, menuSupabaseLoginBtn;
 let filterInputNavbar;
 let formFieldsGlob = {};
 let watchInstanceFormFields = {};
@@ -1337,6 +1337,7 @@ function initializeDOMElements() {
     menuSyncDataBtn = document.getElementById('menuSyncDataBtn');
     menuEraseDataBtn = document.getElementById('menuEraseDataBtn');
     menuSupabaseLogoutBtn = document.getElementById('menuSupabaseLogoutBtn');
+    menuSupabaseLoginBtn = document.getElementById('menuSupabaseLoginBtn');
     filterInputNavbar = document.getElementById('filterInputNavbar');
 
     formFieldsGlob = {

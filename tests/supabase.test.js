@@ -83,7 +83,7 @@ test('downloadRemoteEntriesByIds batches queries to prevent HTTP 400 URI Too Lon
 
     sandbox.window.supabaseClient = {
         from: (table) => {
-            assert.equal(table, 'movie_entries');
+            assert.ok(table === 'view_movie_entries_complete' || table === 'movie_entries', `Unexpected table name: ${table}`);
             return {
                 select: (columns) => {
                     assert.equal(columns, '*');
@@ -148,5 +148,47 @@ test('downloadRemoteEntriesByIds handles errors cleanly', async () => {
         },
         /Downloading remote entries failed: Network error/
     );
+});
+
+test('supabaseEntryToLocalFormat & localEntryToSupabaseFormat support both poster_url and Poster URL', () => {
+    const localWithCamel = {
+        id: 'uuid-1',
+        Name: 'Test Movie',
+        poster_url: 'https://example.com/poster.jpg'
+    };
+    const row = sandbox.localEntryToSupabaseFormat(localWithCamel, 'u1');
+    assert.equal(row.poster_url, 'https://example.com/poster.jpg');
+
+    const unpacked = sandbox.supabaseEntryToLocalFormat(row);
+    assert.equal(unpacked.poster_url, 'https://example.com/poster.jpg');
+    assert.equal(unpacked['Poster URL'], 'https://example.com/poster.jpg');
+});
+
+test('downloadRemoteEntriesByIds falls back from view_movie_entries_complete to movie_entries on error', async () => {
+    let queriedTables = [];
+    sandbox.window.supabaseClient = {
+        from: (table) => {
+            queriedTables.push(table);
+            return {
+                select: () => ({
+                    in: () => ({
+                        eq: () => ({
+                            eq: () => {
+                                if (table === 'view_movie_entries_complete') {
+                                    return Promise.resolve({ data: null, error: { message: 'View not available' } });
+                                }
+                                return Promise.resolve({ data: [{ id: 'uuid-fb', name: 'Fallback Movie' }], error: null });
+                            }
+                        })
+                    })
+                })
+            };
+        }
+    };
+
+    const res = await sandbox.downloadRemoteEntriesByIds(['uuid-fb'], 'u1');
+    assert.equal(res.length, 1);
+    assert.equal(res[0].name, 'Fallback Movie');
+    assert.deepEqual(queriedTables, ['view_movie_entries_complete', 'movie_entries']);
 });
 

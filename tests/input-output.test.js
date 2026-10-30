@@ -246,3 +246,71 @@ test('processSmartImport updates matching entries using movieIndexMap and append
     assert.equal(sandbox.movieData[1].Name, 'Inception (IMAX)');
     assert.equal(sandbox.movieData[2].Name, 'Interstellar');
 });
+
+test('normalizeImportedRow natively parses Letterboxd CSV row', () => {
+    const letterboxdRow = {
+        Date: '2025-02-14',
+        Name: 'Past Lives',
+        Year: '2023',
+        'Letterboxd URI': 'https://boxd.it/vG6a',
+        Rating: '4.5',
+        Review: 'Beautiful and heartbreaking'
+    };
+    const entry = sandbox.normalizeImportedRow(letterboxdRow);
+    assert.equal(entry.Name, 'Past Lives');
+    assert.equal(entry.Year, '2023');
+    assert.equal(entry.Category, 'Movie');
+    assert.equal(entry.Status, 'Watched');
+    assert.equal(entry.overallRating, '4.5');
+    assert.equal(entry.watchHistory.length, 1);
+    assert.equal(entry.watchHistory[0].date, '2025-02-14');
+    assert.equal(entry.watchHistory[0].rating, 4.5);
+    assert.equal(entry.watchHistory[0].notes, 'Beautiful and heartbreaking');
+});
+
+test('normalizeImportedRow natively parses IMDb CSV row', () => {
+    const imdbRow = {
+        Const: 'tt0111161',
+        'Your Rating': '10',
+        'Date Rated': '2024-01-01',
+        Title: 'The Shawshank Redemption',
+        'Title Type': 'movie',
+        Year: '1994'
+    };
+    const entry = sandbox.normalizeImportedRow(imdbRow);
+    assert.equal(entry.Name, 'The Shawshank Redemption');
+    assert.equal(entry.Year, '1994');
+    assert.equal(entry.Category, 'Movie');
+    assert.equal(entry.Status, 'Watched');
+    assert.equal(entry.overallRating, '10');
+    assert.equal(entry.imdb_id, 'tt0111161');
+    assert.equal(entry.watchHistory.length, 1);
+    assert.equal(entry.watchHistory[0].date, '2024-01-01');
+});
+
+test('normalizeImportedRow accepts Supabase snake_case normalized format', () => {
+    const supabaseRow = {
+        id: '12345678-1234-4000-8000-123456789abc',
+        name: 'Dune: Part Two',
+        category: 'Movie',
+        genre: 'Sci-Fi, Adventure',
+        status: 'Watched',
+        overall_rating: '9',
+        year: '2024',
+        country: 'US',
+        poster_url: 'https://example.com/dune2.jpg',
+        watch_history: JSON.stringify([{ watchDate: '2024-03-01', rating: 9 }])
+    };
+    const entry = sandbox.normalizeImportedRow(supabaseRow);
+    assert.equal(entry.id, supabaseRow.id);
+    assert.equal(entry.Name, 'Dune: Part Two');
+    assert.equal(entry.Category, 'Movie');
+    assert.equal(entry.Genre, 'Sci-Fi, Adventure');
+    assert.equal(entry.Status, 'Watched');
+    assert.equal(entry.overallRating, '9');
+    assert.equal(entry.Year, '2024');
+    assert.equal(entry['Poster URL'], 'https://example.com/dune2.jpg');
+    assert.equal(entry.poster_url, 'https://example.com/dune2.jpg');
+    assert.equal(entry.watchHistory.length, 1);
+});
+

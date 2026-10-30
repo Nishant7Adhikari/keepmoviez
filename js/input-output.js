@@ -110,12 +110,22 @@ async function initiateSmartImport(dataFromFile, fileName) {
     const localNameYearMap = new Map(movieData.map(entry => [`${(entry.Name || '').toLowerCase()}|${entry.Year || ''}`, entry]));
 
     for (const row of dataFromFile) {
-        if (typeof row !== 'object' || row === null || !row.Name) {
+        if (typeof row !== 'object' || row === null) {
+            smartImportState.skippedEntries.push({ entry: row, reason: 'Invalid row' });
+            continue;
+        }
+
+        const rawName = row.Name || row.Title || row.name || row.default_name || row.custom_name;
+        if (!rawName) {
             smartImportState.skippedEntries.push({ entry: row, reason: 'Invalid or missing Name' });
             continue;
         }
 
         const fileEntry = normalizeImportedRow(row);
+        if (!fileEntry) {
+            smartImportState.skippedEntries.push({ entry: row, reason: 'Skipped episode or unsupported entry' });
+            continue;
+        }
         let match = null;
         let matchType = 'none';
 
@@ -297,45 +307,139 @@ async function processSmartImport() {
 }
 
 function normalizeImportedRow(row) {
+    if (!row || typeof row !== 'object') return null;
+
+    // Detect Letterboxd Export
+    const isLetterboxd = Boolean(
+        row['Letterboxd URI'] || 
+        (row.URI && String(row.URI).includes('letterboxd'))
+    );
+
+    // Detect IMDb Export
+    const isImdb = Boolean(
+        (row.Const && String(row.Const).startsWith('tt')) ||
+        row['Title Type']
+    );
+
     const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/;
     let entryId = row.id || row.Id || row.ID;
     
     if (!entryId || typeof entryId !== 'string' || !uuidRegex.test(entryId)) {
         entryId = generateUUID();
     }
+
+    let resolvedName = '';
+    let resolvedYear = '';
+    let resolvedCategory = 'Movie';
+    let resolvedStatus = 'To Watch';
+    let resolvedRating = '';
+    let initialWatchHistory = [];
+
+    if (isLetterboxd) {
+        resolvedName = String(row.Name || row.Title || '').trim();
+        resolvedYear = String(row.Year || '').trim();
+        resolvedCategory = 'Movie';
+        resolvedStatus = 'Watched';
+        if (row.Rating) {
+            const num = parseFloat(row.Rating);
+            resolvedRating = !isNaN(num) ? String(num) : '';
+        }
+        const watchDate = row['Watched Date'] || row.Date;
+        if (watchDate) {
+            initialWatchHistory.push({
+                watchId: generateUUID(),
+                date: String(watchDate).trim(),
+                watchDate: String(watchDate).trim(),
+                rating: resolvedRating ? parseFloat(resolvedRating) : null,
+                notes: row.Review || row.Tags || ''
+            });
+        }
+    } else if (isImdb) {
+        resolvedName = String(row.Title || row.Name || '').trim();
+        resolvedYear = String(row.Year || (row['Release Date'] ? String(row['Release Date']).substring(0, 4) : '')).trim();
+        const titleType = String(row['Title Type'] || '').toLowerCase();
+        switch (true) {
+            case titleType === 'tvepisode':
+                return null;
+            case titleType === 'tvspecial' || titleType.includes('special'):
+            case titleType === 'short' || titleType === 'tvshort':
+                resolvedCategory = 'Special';
+                break;
+            case titleType === 'tvmovie' || titleType === 'video':
+                resolvedCategory = 'Movie';
+                break;
+            case titleType === 'tvseries' || titleType === 'tvminiseries' || titleType.includes('series') || titleType.includes('tv'):
+                resolvedCategory = 'Series';
+                break;
+            case titleType.includes('documentary'):
+                resolvedCategory = 'Documentary';
+                break;
+            default:
+                resolvedCategory = 'Movie';
+                break;
+        }
+        const yourRating = row['Your Rating'] ? String(row['Your Rating']).trim() : '';
+        resolvedRating = yourRating ? String(yourRating) : '';
+        resolvedStatus = yourRating ? 'Watched' : 'To Watch';
+        const dateRated = row['Date Rated'];
+        if (dateRated) {
+            initialWatchHistory.push({
+                watchId: generateUUID(),
+                date: String(dateRated).trim(),
+                watchDate: String(dateRated).trim(),
+                rating: resolvedRating ? parseFloat(resolvedRating) : null,
+                notes: 'Imported from IMDb'
+            });
+        }
+    } else {
+        // Standard KeepMoviEZ or normalized Supabase export
+        resolvedName = String(row.Name || row.name || row.default_name || row.custom_name || '').trim();
+        resolvedYear = String(row.Year || row.year || '').trim();
+        resolvedCategory = String(row.Category || row.category || 'Movie').trim();
+        resolvedStatus = String(row.Status || row.status || 'To Watch').trim();
+        resolvedRating = String(row.overallRating || row.overall_rating || '').trim();
+    }
     
     let relatedEntriesFromFile = [];
-    if (typeof row.relatedEntries === 'string' && row.relatedEntries.trim()) {
-        relatedEntriesFromFile = row.relatedEntries.split(',').map(id => id.trim()).filter(Boolean);
-    } else if (Array.isArray(row.relatedEntries)) {
-        relatedEntriesFromFile = row.relatedEntries.filter(Boolean);
+    const rawRelations = row.relatedEntries || row.related_entries;
+    if (typeof rawRelations === 'string' && rawRelations.trim()) {
+        if (rawRelations.startsWith('[')) {
+            try { relatedEntriesFromFile = JSON.parse(rawRelations); } catch (_) {}
+        } else {
+            relatedEntriesFromFile = rawRelations.split(',').map(id => id.trim()).filter(Boolean);
+        }
+    } else if (Array.isArray(rawRelations)) {
+        relatedEntriesFromFile = rawRelations.filter(Boolean);
     }
+
+    const rawPoster = String(row['Poster URL'] || row.poster_url || row.default_poster_url || row.custom_poster_url || '').trim();
 
     const newEntry = {
         id: entryId,
-        Name: String(row.Name || '').trim(),
-        Category: String(row.Category || 'Movie').trim(),
-        Genre: String(row.Genre || '').trim(),
-        Status: String(row.Status || 'To Watch').trim(),
-        currentSeason: row.currentSeason != null ? row.currentSeason : (row.seasonsCompleted != null ? (parseInt(row.seasonsCompleted, 10) + 1) : null),
-        currentEpisode: row.currentEpisode != null ? row.currentEpisode : (row.currentSeasonEpisodesWatched || null),
-        seasonsCompleted: row.currentSeason != null ? Math.max(0, parseInt(row.currentSeason, 10) - 1) : (row.seasonsCompleted || null),
-        currentSeasonEpisodesWatched: row.currentEpisode != null ? row.currentEpisode : (row.currentSeasonEpisodesWatched || null),
-        Recommendation: String(row.Recommendation || '').trim(),
-        overallRating: String(row.overallRating || '').trim(),
-        personalRecommendation: String(row.personalRecommendation || '').trim(),
-        Language: String(row.Language || '').trim(),
-        Year: String(row.Year || '').trim(),
-        Country: String(row.Country || '').trim(),
-        Description: String(row.Description || '').trim(),
-        'Poster URL': String(row['Poster URL'] || row.poster_url || '').trim(),
-        watchHistory: [],
+        Name: resolvedName,
+        Category: resolvedCategory,
+        Genre: String(row.Genre || row.genre || '').trim(),
+        Status: resolvedStatus,
+        currentSeason: row.currentSeason != null ? row.currentSeason : (row.current_season != null ? row.current_season : (row.seasonsCompleted != null ? (parseInt(row.seasonsCompleted, 10) + 1) : null)),
+        currentEpisode: row.currentEpisode != null ? row.currentEpisode : (row.current_episode != null ? row.current_episode : (row.currentSeasonEpisodesWatched || null)),
+        seasonsCompleted: row.currentSeason != null ? Math.max(0, parseInt(row.currentSeason, 10) - 1) : (row.current_season != null ? Math.max(0, parseInt(row.current_season, 10) - 1) : (row.seasonsCompleted || null)),
+        currentSeasonEpisodesWatched: row.currentEpisode != null ? row.currentEpisode : (row.current_episode != null ? row.current_episode : (row.currentSeasonEpisodesWatched || null)),
+        Recommendation: String(row.Recommendation || row.recommendation || '').trim(),
+        overallRating: resolvedRating,
+        personalRecommendation: String(row.personalRecommendation || row.personal_recommendation || '').trim(),
+        Language: String(row.Language || row.language || '').trim(),
+        Year: resolvedYear,
+        Country: String(row.Country || row.country || '').trim(),
+        Description: String(row.Description || row.description || row.default_description || row.custom_description || '').trim(),
+        'Poster URL': rawPoster,
+        poster_url: rawPoster,
+        watchHistory: initialWatchHistory,
         relatedEntries: relatedEntriesFromFile,
-        lastModifiedDate: row.lastModifiedDate || new Date().toISOString(),
-        tmdbId: String(row.tmdbId || '').trim() || null,
-        tmdbMediaType: row.tmdbMediaType || null,
+        lastModifiedDate: row.lastModifiedDate || row.last_modified_date || new Date().toISOString(),
+        tmdbId: String(row.tmdbId || row.tmdb_id || '').trim() || null,
+        tmdbMediaType: row.tmdbMediaType || row.tmdb_media_type || null,
         tmdb_release_date: row.tmdb_release_date || null,
-        imdb_id: String(row.imdb_id || '').trim() || null,
+        imdb_id: String(row.imdb_id || row.Const || '').trim() || null,
         runtime: (typeof row.runtime === 'string' && row.runtime.startsWith('{')) ? JSON.parse(row.runtime) : (row.runtime || null),
         keywords: (typeof row.keywords === 'string' && row.keywords.startsWith('[')) ? JSON.parse(row.keywords) : (Array.isArray(row.keywords) ? row.keywords : []),
         director_info: (typeof row.director_info === 'string' && row.director_info.startsWith('{')) ? JSON.parse(row.director_info) : (row.director_info || null),
@@ -347,10 +451,11 @@ function normalizeImportedRow(row) {
         series_status: row.series_status || row.seriesStatus || null
     };
     
-    if (typeof row.watchHistory === 'string' && row.watchHistory.startsWith('[')) {
-        try { newEntry.watchHistory = JSON.parse(row.watchHistory); } catch (e) { /* ignore */ }
-    } else if (Array.isArray(row.watchHistory)) {
-        newEntry.watchHistory = row.watchHistory;
+    const rawWatchHistory = row.watchHistory || row.watch_history;
+    if (typeof rawWatchHistory === 'string' && rawWatchHistory.startsWith('[')) {
+        try { newEntry.watchHistory = JSON.parse(rawWatchHistory); } catch (e) { /* ignore */ }
+    } else if (Array.isArray(rawWatchHistory) && rawWatchHistory.length > 0) {
+        newEntry.watchHistory = rawWatchHistory;
     }
 
     return newEntry;

@@ -75,9 +75,29 @@ function addGenre(
   }
 
   const sanitizedGenre = genre.trim();
-  const canonicalGenre = UNIQUE_ALL_GENRES.find(
+  let canonicalGenre = UNIQUE_ALL_GENRES.find(
     (g) => g.toLowerCase() === sanitizedGenre.toLowerCase(),
   );
+
+  if (!canonicalGenre && sanitizedGenre) {
+    canonicalGenre = sanitizedGenre;
+    if (!UNIQUE_ALL_GENRES.includes(canonicalGenre)) {
+      UNIQUE_ALL_GENRES.push(canonicalGenre);
+      UNIQUE_ALL_GENRES.sort();
+      // Persist custom genre to Supabase so normalized entry_genres table can resolve it
+      if (typeof window !== "undefined" && window.supabaseClient && window.currentSupabaseUser) {
+        window.supabaseClient
+          .from("genres")
+          .insert({ name: canonicalGenre, user_id: window.currentSupabaseUser.id })
+          .then(({ error }) => {
+            if (error && error.code !== "23505") {
+              console.warn("Could not save custom genre to Supabase:", error.message);
+            }
+          })
+          .catch(() => {});
+      }
+    }
+  }
 
   if (!canonicalGenre) {
     return;
@@ -233,3 +253,32 @@ function filterGenreDropdown(
   }
 }
 // END CHUNK: Interactive Genre Input Component
+
+/**
+ * Loads official and user custom genres from Supabase normalized 'genres' table.
+ */
+async function syncGenresFromSupabase() {
+  if (typeof window === "undefined" || !window.supabaseClient || !window.currentSupabaseUser) return;
+  try {
+    const { data, error } = await window.supabaseClient
+      .from("genres")
+      .select("id, name, user_id");
+    if (!error && Array.isArray(data)) {
+      data.forEach((g) => {
+        if (g && g.name && typeof g.name === "string") {
+          const trimmed = g.name.trim();
+          if (trimmed && typeof UNIQUE_ALL_GENRES !== "undefined" && !UNIQUE_ALL_GENRES.some((existing) => existing.toLowerCase() === trimmed.toLowerCase())) {
+            UNIQUE_ALL_GENRES.push(trimmed);
+          }
+        }
+      });
+      if (typeof UNIQUE_ALL_GENRES !== "undefined") UNIQUE_ALL_GENRES.sort();
+    }
+  } catch (err) {
+    console.warn("Could not sync genres from Supabase:", err.message);
+  }
+}
+
+if (typeof window !== "undefined") {
+  window.syncGenresFromSupabase = syncGenresFromSupabase;
+}

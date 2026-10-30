@@ -101,6 +101,14 @@ async function loadFromIndexedDB() {
                                 if (entry && (!entry.Status || entry.Status === "N/A" || typeof entry.Status !== "string")) {
                                     entry.Status = (Array.isArray(entry.watchHistory) && entry.watchHistory.length > 0) ? "Watched" : "To Watch";
                                 }
+                                if (entry) {
+                                    if (!entry.poster_url && entry["Poster URL"]) {
+                                        entry.poster_url = entry["Poster URL"];
+                                    }
+                                    if (!entry["Poster URL"] && entry.poster_url) {
+                                        entry["Poster URL"] = entry.poster_url;
+                                    }
+                                }
                                 return entry;
                             });
                             resolve(parsedData);

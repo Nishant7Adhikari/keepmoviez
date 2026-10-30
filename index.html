@@ -66,7 +66,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;900&display=swap"
         rel="stylesheet">
 
-    <link rel="stylesheet" href="/style.css?v=5.7.16">
+    <link rel="stylesheet" href="/style.css?v=6.0.0">
 
     <!-- PWA Manifest and Theme -->
     <link rel="manifest" href="/manifest.json">
@@ -92,7 +92,10 @@
 
     <!-- START CHUNK: Authentication Form -->
     <div id="authContainer" class="auth-container">
-        <div class="auth-card">
+        <div class="auth-card position-relative">
+            <button type="button" class="close position-absolute" id="closeAuthBtn" aria-label="Close" style="top: 15px; right: 20px; font-size: 1.5rem; opacity: 0.8; cursor: pointer; color: inherit;">
+                <span aria-hidden="true">&times;</span>
+            </button>
             <h4 id="authTitle" class="text-center mb-4">Welcome to KeepMoviEZ !</h4>
             <p id="authMessage" class="text-muted text-center mb-3">Please sign in or create an account to continue.</p>
 
@@ -119,6 +122,9 @@
                 </button>
 
                 <button id="supabasePasswordResetBtn" class="btn btn-link btn-block mt-2">Forgot Password?</button>
+                <button type="button" id="continueAsGuestBtn" class="btn btn-link btn-sm btn-block text-muted mt-2">
+                    <i class="fas fa-arrow-left mr-1" aria-hidden="true"></i> Continue as Guest (Offline)
+                </button>
             </div>
 
             <div id="passwordSetupSection" style="display:none;">
@@ -219,7 +225,9 @@
                 </a>
             </div>
             <div class="offcanvas-footer p-3 mt-auto border-top">
-                <button id="menuSupabaseLogoutBtn" class="btn btn-outline-warning btn-block" data-dismiss-menu="true" aria-label="Logout"><i
+                <button id="menuSupabaseLoginBtn" class="btn btn-primary btn-block mb-2" data-dismiss-menu="true" aria-label="Login or Sign Up"><i
+                        class="fas fa-sign-in-alt mr-2" aria-hidden="true"></i> Login / Sign Up</button>
+                <button id="menuSupabaseLogoutBtn" class="btn btn-outline-warning btn-block" data-dismiss-menu="true" aria-label="Logout" style="display: none;"><i
                         class="fas fa-sign-out-alt mr-2" aria-hidden="true"></i> Logout</button>
             </div>
         </div>
@@ -545,6 +553,87 @@
         </div>
     </div>
     <!-- END CHUNK: Backfill Modal -->
+
+    <!-- START CHUNK: TMDB Gate Modal (Task 2.2) -->
+    <div class="modal fade" id="tmdbGateModal" tabindex="-1" role="dialog" aria-labelledby="tmdbGateModalLabel" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tmdbGateModalLabel">
+                        <i class="fas fa-film mr-2 text-primary" aria-hidden="true"></i> TMDB Auto-Search
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">
+                        <strong>Sign in to enable automatic metadata lookup.</strong>
+                    </p>
+                    <p class="text-muted small mb-3">
+                        TMDB auto-search fetches titles, posters, ratings and cast from The Movie Database.
+                        This feature is available to signed-in users. You can still add entries manually without an account.
+                    </p>
+                    <div class="alert alert-info py-2 small mb-0" role="alert">
+                        <i class="fas fa-shield-alt mr-1" aria-hidden="true"></i>
+                        Your private ratings and watch history are <strong>never</strong> sent to TMDB.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Continue Without</button>
+                    <button type="button" class="btn btn-primary" id="tmdbGateSignInBtn">
+                        <i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i> Sign In
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END CHUNK: TMDB Gate Modal -->
+
+    <!-- START CHUNK: Login Merge Modal (Task 2.3) -->
+    <div class="modal fade" id="loginMergeModal" tabindex="-1" role="dialog" aria-labelledby="loginMergeModalLabel" data-backdrop="static" data-keyboard="false" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginMergeModalLabel">
+                        <i class="fas fa-code-branch mr-2 text-warning" aria-hidden="true"></i> You Have Local Data
+                    </h5>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-2">
+                        Welcome back! You signed in with <strong id="loginMergeUserEmail"></strong>.
+                    </p>
+                    <p class="text-muted small mb-3">
+                        You have <strong id="loginMergeLocalCount">0</strong> local entries that were added while browsing as a guest.
+                        What would you like to do?
+                    </p>
+                    <div class="list-group">
+                        <button type="button" class="list-group-item list-group-item-action flex-column align-items-start" id="loginMergeMergeBtn">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><i class="fas fa-object-group mr-2 text-success" aria-hidden="true"></i> Merge Local + Cloud</h6>
+                                <span class="badge badge-success badge-pill">Recommended</span>
+                            </div>
+                            <small class="text-muted">Local entries will be uploaded and combined with your existing cloud library. Conflicts resolved by newest date.</small>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action flex-column align-items-start mt-2" id="loginMergeDiscardBtn">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><i class="fas fa-cloud-download-alt mr-2 text-primary" aria-hidden="true"></i> Use Cloud Data Only</h6>
+                            </div>
+                            <small class="text-muted">Discard local entries. Your cloud library will be downloaded as-is.</small>
+                        </button>
+                        <button type="button" class="list-group-item list-group-item-action flex-column align-items-start mt-2" id="loginMergeLocalWinsBtn">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1"><i class="fas fa-upload mr-2 text-warning" aria-hidden="true"></i> Replace Cloud With Local</h6>
+                            </div>
+                            <small class="text-muted">Upload local entries and overwrite your cloud library. Cloud data will be lost.</small>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END CHUNK: Login Merge Modal -->
+
 
     <!-- START CHUNK: Main App Layout & Top Navigation Bar -->
     <div id="appContent" style="display: none;">
@@ -2794,25 +2883,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
 
     <!-- Custom JS modules  -->
-    <script src="/js/constant.js?v=5.7.1"></script>
-    <script src="/js/utils.js?v=5.7.16"></script>
-    <script src="/js/indexeddb.js?v=5.6.20"></script>
-    <script src="/js/data.js?v=5.6.20"></script>
-    <script src="/js/input-output.js?v=5.7.16"></script>
-    <script src="/js/tmdb.js?v=5.7.5"></script>
-    <script src="/js/genre.js?v=5.6.20"></script>
-    <script src="/js/analysis.js?v=5.7.16"></script>
-    <script src="/js/ui.js?v=5.7.16"></script>
-    <script src="/js/reporting.js?v=5.7.12"></script>
-    <script src="/js/app.js?v=5.7.16"></script>
-    <script src="/js/supabase.js?v=5.6.22"></script>
-    <script src="/js/backfill.js?v=5.7.16"></script>
-    <script src="/js/main.js?v=5.7.16"></script>
+    <script src="/js/constant.js?v=6.0.0"></script>
+    <script src="/js/utils.js?v=6.0.0"></script>
+    <script src="/js/indexeddb.js?v=6.0.0"></script>
+    <script src="/js/data.js?v=6.0.0"></script>
+    <script src="/js/input-output.js?v=6.0.0"></script>
+    <script src="/js/tmdb.js?v=6.0.0"></script>
+    <script src="/js/genre.js?v=6.0.0"></script>
+    <script src="/js/analysis.js?v=6.0.0"></script>
+    <script src="/js/ui.js?v=6.0.0"></script>
+    <script src="/js/reporting.js?v=6.0.0"></script>
+    <script src="/js/app.js?v=6.0.0"></script>
+    <script src="/js/supabase.js?v=6.0.0"></script>
+    <script src="/js/backfill.js?v=6.0.0"></script>
+    <script src="/js/main.js?v=6.0.0"></script>
     <!-- END CHUNK: JavaScript Libraries and Application Logic Scripts -->
 
     <!-- Global Full-Screen Confetti Celebration Canvas -->
-    <canvas id="globalConfettiCanvas"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: none;"></canvas>
+    <canvas id="globalConfettiCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99999; display: none;"></canvas>
 </body>
 
 </html>

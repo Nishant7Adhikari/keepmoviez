@@ -56,7 +56,7 @@ const vm = require('node:vm');
 // ----------------------------------------------------------------------------
 
 /** All valid entity categories supported by KeepMoviEZ */
-const CANONICAL_CATEGORIES = ['Movie', 'Series', 'Documentary'];
+const CANONICAL_CATEGORIES = ['Movie', 'Series', 'Documentary', 'Special'];
 const VALID_CATEGORIES = CANONICAL_CATEGORIES;
 
 /** All valid watch statuses */
@@ -165,6 +165,7 @@ const CANONICAL_LOCAL_PROPERTIES = [
     'Country',
     'Description',
     'Poster URL',
+    'poster_url',
     'watchHistory',
     'relatedEntries',
     'doNotRecommendDaily',
@@ -473,10 +474,11 @@ function setupSandbox() {
 
 test('CONTRACT: Canonical Schema constants define complete KeepMoviEZ specification', () => {
     // 1. Categories
-    assert.equal(VALID_CATEGORIES.length, 3);
+    assert.equal(VALID_CATEGORIES.length, 4);
     assert.ok(VALID_CATEGORIES.includes('Movie'));
     assert.ok(VALID_CATEGORIES.includes('Series'));
     assert.ok(VALID_CATEGORIES.includes('Documentary'));
+    assert.ok(VALID_CATEGORIES.includes('Special'));
 
     // 2. Statuses
     assert.equal(VALID_STATUSES.length, 4);

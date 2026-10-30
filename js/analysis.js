@@ -74,20 +74,37 @@ function calculateAllStatistics(currentMovieData) {
         const watchHistoryCount = Array.isArray(movie.watchHistory) ? movie.watchHistory.length : 0;
         
         if (movie.Category === 'Series') {
+            const runtimeObj = (movie.runtime && typeof movie.runtime === 'object') ? movie.runtime : {};
+            const epCounts = Array.isArray(runtimeObj.episodes_per_season) && runtimeObj.episodes_per_season.length > 0
+                ? runtimeObj.episodes_per_season
+                : (Array.isArray(movie.episodesPerSeason) && movie.episodesPerSeason.length > 0
+                    ? movie.episodesPerSeason
+                    : (Array.isArray(movie.episodes_per_season) ? movie.episodes_per_season : []));
+
+            const totalEps = runtimeObj.episodes != null && !isNaN(runtimeObj.episodes)
+                ? Number(runtimeObj.episodes)
+                : (epCounts.length > 0 ? epCounts.reduce((a, b) => a + (Number(b) || 0), 0) : 0);
+
+            const totalSeasons = runtimeObj.seasons != null && !isNaN(runtimeObj.seasons)
+                ? Number(runtimeObj.seasons)
+                : epCounts.length;
+
+            const avgRunTime = (runtimeObj.episode_run_time != null && !isNaN(runtimeObj.episode_run_time) && runtimeObj.episode_run_time > 0)
+                ? Number(runtimeObj.episode_run_time)
+                : 30;
+
             // For Series, count its runtime only ONCE, based on its status.
-            if (movie.Status === 'Watched' && movie.runtime && typeof movie.runtime === 'object' && movie.runtime.episodes && movie.runtime.episode_run_time) {
-                totalWatchTimeMinutes += movie.runtime.episodes * movie.runtime.episode_run_time;
-            } else if (movie.Status === 'Continue' && movie.runtime && typeof movie.runtime === 'object') {
+            if (movie.Status === 'Watched') {
+                if (totalEps > 0) {
+                    totalWatchTimeMinutes += totalEps * avgRunTime;
+                }
+            } else if (movie.Status === 'Continue') {
                 const completedSeasons = movie.currentSeason != null 
                     ? Math.max(0, movie.currentSeason - 1) 
                     : (typeof movie.seasonsCompleted === 'number' ? movie.seasonsCompleted : 0);
                 const currentSeasonEpisodes = movie.currentEpisode != null
                     ? movie.currentEpisode
                     : (typeof movie.currentSeasonEpisodesWatched === 'number' ? movie.currentSeasonEpisodesWatched : 0);
-
-                const epCounts = movie.episodesPerSeason || movie.episodes_per_season;
-                const { seasons, episodes, episode_run_time: episodeRunTime } = movie.runtime;
-                const avgRunTime = episodeRunTime || 30;
 
                 if (Array.isArray(epCounts) && epCounts.length > 0) {
                     let watchedEps = 0;
@@ -96,8 +113,8 @@ function calculateAllStatistics(currentMovieData) {
                     }
                     watchedEps += currentSeasonEpisodes;
                     totalWatchTimeMinutes += watchedEps * avgRunTime;
-                } else if (seasons > 0 && episodes > 0 && avgRunTime > 0) {
-                    const avgEpisodesPerSeason = episodes / seasons;
+                } else if (totalSeasons > 0 && totalEps > 0 && avgRunTime > 0) {
+                    const avgEpisodesPerSeason = totalEps / totalSeasons;
                     const totalEpisodesWatched = (completedSeasons * avgEpisodesPerSeason) + currentSeasonEpisodes;
                     totalWatchTimeMinutes += totalEpisodesWatched * avgRunTime;
                 }
@@ -113,8 +130,25 @@ function calculateAllStatistics(currentMovieData) {
 
         // --- "To Watch" list runtime calculation ---
         if (movie.Status === 'To Watch') {
-            if (movie.Category === 'Series' && movie.runtime && typeof movie.runtime === 'object' && movie.runtime.episodes && movie.runtime.episode_run_time) {
-                toWatchTotalMinutes += movie.runtime.episodes * movie.runtime.episode_run_time;
+            if (movie.Category === 'Series') {
+                const runtimeObj = (movie.runtime && typeof movie.runtime === 'object') ? movie.runtime : {};
+                const epCounts = Array.isArray(runtimeObj.episodes_per_season) && runtimeObj.episodes_per_season.length > 0
+                    ? runtimeObj.episodes_per_season
+                    : (Array.isArray(movie.episodesPerSeason) && movie.episodesPerSeason.length > 0
+                        ? movie.episodesPerSeason
+                        : (Array.isArray(movie.episodes_per_season) ? movie.episodes_per_season : []));
+
+                const totalEps = runtimeObj.episodes != null && !isNaN(runtimeObj.episodes)
+                    ? Number(runtimeObj.episodes)
+                    : (epCounts.length > 0 ? epCounts.reduce((a, b) => a + (Number(b) || 0), 0) : 0);
+
+                const avgRunTime = (runtimeObj.episode_run_time != null && !isNaN(runtimeObj.episode_run_time) && runtimeObj.episode_run_time > 0)
+                    ? Number(runtimeObj.episode_run_time)
+                    : 30;
+
+                if (totalEps > 0) {
+                    toWatchTotalMinutes += totalEps * avgRunTime;
+                }
             } else if (typeof movie.runtime === 'number' && movie.runtime > 0) {
                 toWatchTotalMinutes += movie.runtime;
             }
@@ -171,9 +205,20 @@ function calculateAllStatistics(currentMovieData) {
             }
             if (movie.Recommendation === 'Highly Recommended') highlyRecCount++;
             
-            if (movie.Category === 'Series' && movie.runtime && typeof movie.runtime === 'object') {
-                const numEps = movie.runtime.episodes || 0;
-                if(movie.runtime.seasons >= 3 || numEps >= 40) longSeriesCount++;
+            if (movie.Category === 'Series') {
+                const runtimeObj = (movie.runtime && typeof movie.runtime === 'object') ? movie.runtime : {};
+                const epCounts = Array.isArray(runtimeObj.episodes_per_season) && runtimeObj.episodes_per_season.length > 0
+                    ? runtimeObj.episodes_per_season
+                    : (Array.isArray(movie.episodesPerSeason) && movie.episodesPerSeason.length > 0
+                        ? movie.episodesPerSeason
+                        : (Array.isArray(movie.episodes_per_season) ? movie.episodes_per_season : []));
+                const numEps = (runtimeObj.episodes != null && !isNaN(runtimeObj.episodes))
+                    ? Number(runtimeObj.episodes)
+                    : (epCounts.length > 0 ? epCounts.reduce((a, b) => a + (Number(b) || 0), 0) : 0);
+                const numSeasons = (runtimeObj.seasons != null && !isNaN(runtimeObj.seasons))
+                    ? Number(runtimeObj.seasons)
+                    : epCounts.length;
+                if (numSeasons >= 3 || numEps >= 40) longSeriesCount++;
             }
 
             if (genres.length > 0) {

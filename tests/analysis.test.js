@@ -76,3 +76,70 @@ test('checkAchievement validates unlock rules accurately', () => {
     const res1 = sandbox.checkAchievement(ach1, mockStats);
     assert.ok(res1);
 });
+
+test('calculateAllStatistics calculates series runtime using 3-layer episodes_per_season fallback', () => {
+    const seriesData = [
+        // Layer 1: runtime.episodes_per_season
+        {
+            id: 's1',
+            Name: 'Series Layer 1',
+            Status: 'Watched',
+            Category: 'Series',
+            runtime: { episode_run_time: 45, episodes_per_season: [10, 10, 10] },
+            currentSeason: 3,
+            currentEpisode: 10,
+            watchHistory: [{ date: '2024-01-01' }]
+        },
+        // Layer 2: movie.episodesPerSeason
+        {
+            id: 's2',
+            Name: 'Series Layer 2',
+            Status: 'Watched',
+            Category: 'Series',
+            runtime: { episode_run_time: 50, episodes_per_season: [] },
+            episodesPerSeason: [12, 12, 12, 12],
+            currentSeason: 4,
+            currentEpisode: 12,
+            watchHistory: [{ date: '2024-02-01' }]
+        },
+        // Layer 3: movie.episodes_per_season (snake_case fallback for longSeriesCount)
+        {
+            id: 's3',
+            Name: 'Series Layer 3',
+            Status: 'Watched',
+            Category: 'Series',
+            runtime: null,
+            episodes_per_season: [8, 8, 8, 8, 8],
+            currentSeason: 5,
+            currentEpisode: 8,
+            watchHistory: [{ date: '2024-03-01' }]
+        },
+        // Documentary and Special category tracking
+        {
+            id: 'd1',
+            Name: 'Planet Earth',
+            Status: 'Watched',
+            Category: 'Documentary',
+            runtime: 60,
+            overallRating: '5',
+            watchHistory: [{ date: '2024-04-01', rating: '5' }]
+        },
+        {
+            id: 'sp1',
+            Name: 'Guardians Holiday Special',
+            Status: 'Watched',
+            Category: 'Special',
+            runtime: 44,
+            overallRating: '4.5',
+            watchHistory: [{ date: '2024-05-01', rating: '4.5' }]
+        }
+    ];
+
+    const stats = sandbox.calculateAllStatistics(seriesData);
+    assert.equal(stats.totalEntries, 5);
+    assert.equal(stats.achievementData.category_watched_count['Documentary'], 1);
+    assert.equal(stats.achievementData.category_watched_count['Special'], 1);
+    assert.equal(stats.achievementData.category_watched_count['Series'], 3);
+    assert.ok(stats.achievementData.long_series_watched_count >= 3, `Expected at least 3 long series, got ${stats.achievementData.long_series_watched_count}`);
+});
+

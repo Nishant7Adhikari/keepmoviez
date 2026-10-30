@@ -311,15 +311,23 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
         }
     }
 
-    // Auto-Category Logic
-    let detectedCategory = 'Movie';
-    if (mediaType === 'tv') {
-        detectedCategory = 'Series';
-    } else if (mediaType === 'movie') {
-        const hasDocGenre = (tmdbGenres || []).some(g => g.toLowerCase() === 'documentary');
-        if (hasDocGenre) {
-            detectedCategory = 'Documentary';
-        }
+    // Auto-Category Logic:
+    // 1. If genre ID 99 or 'Documentary' is present on either movie or tv, classify as Documentary (structured TMDB genre)
+    const hasDocGenre = (detailData.genres || []).some(g => g.id === 99 || (g.name && g.name.toLowerCase() === 'documentary')) ||
+                        (tmdbGenres || []).some(g => typeof g === 'string' && g.toLowerCase() === 'documentary');
+
+    // 2. Structured Special Check:
+    // Only auto-classify as Special if a TV show structurally has NO regular seasons and only Season 0 ("Specials").
+    // We intentionally avoid title string matching or loose keyword guessing to prevent false positives (e.g., "Midnight Special").
+    // Users can cleanly select "Special" via the dropdown, which saves to user_library.custom_category.
+    const hasOnlySeason0 = mediaType === 'tv' && Array.isArray(detailData.seasons) && detailData.seasons.length > 0 &&
+        detailData.seasons.every(s => s.season_number === 0 || (s.name && s.name.toLowerCase().includes('special')));
+
+    let detectedCategory = mediaType === 'tv' ? 'Series' : 'Movie';
+    if (hasDocGenre) {
+        detectedCategory = 'Documentary';
+    } else if (hasOnlySeason0) {
+        detectedCategory = 'Special';
     }
 
     const releaseDate = detailData.release_date || detailData.first_air_date || '';
@@ -354,6 +362,225 @@ async function fetchAndProcessTmdbDetails(mediaType, id) {
         series_status: detailData.status || null
     };
 }
+
+// START CHUNK: Supabase Catalog-First Flow
+function catalogRowToProcessedFormat(entry) {
+    const hasSeasons = entry.category === 'Series' || (Array.isArray(entry.seasons) && entry.seasons.length > 0);
+    let runtimeVal = null;
+    let epPerSeason = [];
+
+    if (hasSeasons) {
+        const seasons = Array.isArray(entry.seasons) ? entry.seasons : [];
+        seasons.sort((a, b) => (a.season_number || 0) - (b.season_number || 0));
+        epPerSeason = seasons.map(s => s.episode_count || 0);
+
+        const totalEpisodes = epPerSeason.reduce((a, b) => a + b, 0);
+        runtimeVal = {
+            seasons: seasons.length || null,
+            episodes: totalEpisodes || null,
+            episodes_per_season: epPerSeason,
+            episode_run_time: entry.runtime_minutes || null,
+            series_status: entry.series_status || null
+        };
+    } else {
+        runtimeVal = entry.runtime_minutes != null ? entry.runtime_minutes : null;
+    }
+
+    const defaultGenres = Array.isArray(entry.default_genres) ? entry.default_genres : [];
+
+    return {
+        Name: entry.default_name || '',
+        Category: entry.category || (hasSeasons ? 'Series' : 'Movie'),
+        Genre: defaultGenres.join(', '),
+        genres: defaultGenres,
+        Language: entry.language || '',
+        Year: entry.year ? String(entry.year) : (entry.release_date ? new Date(entry.release_date).getFullYear().toString() : ''),
+        Country: entry.country || '',
+        Description: entry.default_description || '',
+        "Poster URL": entry.default_poster_url || '',
+        poster_url: entry.default_poster_url || '',
+        keywords: Array.isArray(entry.keywords) ? entry.keywords : [],
+        full_cast: Array.isArray(entry.full_cast) ? entry.full_cast : [],
+        director_info: entry.director_info || null,
+        production_companies: Array.isArray(entry.production_companies) ? entry.production_companies : [],
+        tmdb_vote_average: entry.vote_average != null ? Number(entry.vote_average) : null,
+        tmdb_vote_count: entry.vote_count != null ? Number(entry.vote_count) : null,
+        runtime: runtimeVal,
+        tmdb_collection_id: entry.collection_id || null,
+        tmdb_collection_name: entry.collection_name || null,
+        tmdb_collection_total_parts: entry.collection_total_parts || null,
+        imdb_id: entry.imdb_id || null,
+        tmdb_release_date: entry.release_date || null,
+        episodesPerSeason: epPerSeason,
+        episodes_per_season: epPerSeason,
+        seriesStatus: entry.series_status || null,
+        series_status: entry.series_status || null
+    };
+}
+
+async function cacheTmdbToSupabaseCatalog(tmdbData, tmdbId, category) {
+    if (!window.supabaseClient || typeof window.supabaseClient.rpc !== 'function') {
+        return null;
+    }
+
+    try {
+        const isSeriesLike = category === 'Series' || (tmdbData && Array.isArray(tmdbData.episodesPerSeason) && tmdbData.episodesPerSeason.length > 0) || (tmdbData && typeof tmdbData.runtime === 'object' && Array.isArray(tmdbData.runtime?.episodes_per_season) && tmdbData.runtime.episodes_per_season.length > 0);
+        const episodesPerSeason = isSeriesLike && Array.isArray(tmdbData.episodesPerSeason)
+            ? tmdbData.episodesPerSeason
+            : (isSeriesLike && typeof tmdbData.runtime === 'object' && Array.isArray(tmdbData.runtime?.episodes_per_season)
+                ? tmdbData.runtime.episodes_per_season
+                : []);
+
+        const seasonsPayload = episodesPerSeason.map((count, idx) => ({
+            season_number: idx + 1,
+            episode_count: count
+        }));
+
+        let runtimeMinutes = null;
+        if (typeof tmdbData.runtime === 'number') {
+            runtimeMinutes = tmdbData.runtime;
+        } else if (typeof tmdbData.runtime === 'object' && tmdbData.runtime) {
+            runtimeMinutes = tmdbData.runtime.episode_run_time || null;
+        }
+
+        const payload = {
+            tmdb_id: tmdbId,
+            category: category,
+            default_name: tmdbData.Name,
+            release_date: tmdbData.tmdb_release_date || null,
+            year: tmdbData.Year ? parseInt(tmdbData.Year, 10) : null,
+            country: tmdbData.Country || null,
+            language: tmdbData.Language || null,
+            default_description: tmdbData.Description || null,
+            default_poster_url: tmdbData.poster_url || tmdbData["Poster URL"] || null,
+            runtime_minutes: runtimeMinutes,
+            series_status: tmdbData.seriesStatus || tmdbData.series_status || null,
+            vote_average: tmdbData.tmdb_vote_average || null,
+            vote_count: tmdbData.tmdb_vote_count || null,
+            collection_id: tmdbData.tmdb_collection_id || null,
+            collection_name: tmdbData.tmdb_collection_name || null,
+            collection_total_parts: tmdbData.tmdb_collection_total_parts || null,
+            director_info: tmdbData.director_info || null,
+            full_cast: tmdbData.full_cast || [],
+            production_companies: tmdbData.production_companies || [],
+            keywords: tmdbData.keywords || [],
+            default_genres: tmdbData.genres || (tmdbData.Genre ? tmdbData.Genre.split(',').map(s => s.trim()).filter(Boolean) : []),
+            imdb_id: tmdbData.imdb_id || null,
+            seasons: seasonsPayload
+        };
+
+        const { data, error } = await window.supabaseClient.rpc('save_media_catalog_entry', { payload });
+        if (error) {
+            console.warn('[Catalog Cache] RPC save_media_catalog_entry error:', error.message);
+            return null;
+        }
+        if (data && data.success && data.catalog_entry) {
+            return data.catalog_entry;
+        }
+    } catch (e) {
+        console.warn('[Catalog Cache] Failed to cache TMDB entry into Supabase:', e);
+    }
+    return null;
+}
+
+async function fetchMediaDetailsCatalogFirst(mediaType, tmdbId) {
+    const isTv = mediaType === 'tv';
+    const numId = parseInt(tmdbId, 10);
+    const candidateCategories = isTv ? ['Series', 'Documentary'] : ['Movie', 'Documentary', 'Special'];
+
+    // 1. Query Supabase media_catalog first
+    let catalogEntry = null;
+    if (window.supabaseClient) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from('media_catalog')
+                .select(`
+                    *,
+                    collections (name, total_parts),
+                    series_seasons (season_number, episode_count)
+                `)
+                .eq('tmdb_id', numId)
+                .in('category', candidateCategories)
+                .maybeSingle();
+
+            if (!error && data) {
+                catalogEntry = {
+                    ...data,
+                    collection_name: data.collections?.name || null,
+                    collection_total_parts: data.collections?.total_parts || null,
+                    seasons: data.series_seasons || []
+                };
+            }
+        } catch (fetchErr) {
+            console.warn('[Catalog] Error querying media_catalog:', fetchErr);
+        }
+    }
+
+    // Branch 1: Movie (or Movie-based Documentary/Special)
+    if (!isTv) {
+        if (catalogEntry) {
+            console.log(`[Catalog Hit] ${catalogEntry.category} tmdb_id=${numId} loaded directly from Supabase (0 TMDB calls)`);
+            return catalogRowToProcessedFormat(catalogEntry);
+        }
+        // Not in Supabase -> Fetch from TMDB proxy -> Save in Supabase -> Return from catalog
+        console.log(`[Catalog Miss] Movie tmdb_id=${numId} fetching from TMDB proxy...`);
+        const tmdbData = await fetchAndProcessTmdbDetails('movie', numId);
+        const targetCategory = tmdbData.Category || 'Movie';
+        const savedCatalog = await cacheTmdbToSupabaseCatalog(tmdbData, numId, targetCategory);
+        return savedCatalog ? catalogRowToProcessedFormat(savedCatalog) : tmdbData;
+    }
+
+    // Branch 2: Series (or TV-based Docuseries)
+    if (catalogEntry) {
+        const rawStatus = (catalogEntry.series_status || '').toLowerCase().trim();
+        const isCompleted = rawStatus === 'ended' || rawStatus === 'canceled';
+
+        if (isCompleted) {
+            console.log(`[Catalog Hit] Series tmdb_id=${numId} is completed (${catalogEntry.series_status}). Loaded directly from Supabase (0 TMDB calls)`);
+            return catalogRowToProcessedFormat(catalogEntry);
+        }
+
+        // Series is Ongoing -> Fetch latest details from TMDB proxy, but ONLY update catalog if episodes/seasons or status changed
+        console.log(`[Catalog Check] Series tmdb_id=${numId} is ongoing (${catalogEntry.series_status}). Checking for new seasons/episodes...`);
+        try {
+            const tmdbData = await fetchAndProcessTmdbDetails('tv', numId);
+            
+            // Compare catalog seasons with freshly fetched TMDB seasons
+            const catalogSeasonCounts = (catalogEntry.seasons || [])
+                .slice()
+                .sort((a, b) => a.season_number - b.season_number)
+                .map(s => s.episode_count);
+
+            const tmdbSeasonCounts = Array.isArray(tmdbData.episodesPerSeason) ? tmdbData.episodesPerSeason : [];
+            const hasNewSeasonsOrEpisodes = 
+                tmdbSeasonCounts.length !== catalogSeasonCounts.length ||
+                tmdbSeasonCounts.some((count, i) => count !== catalogSeasonCounts[i]);
+
+            const hasStatusChanged = (tmdbData.seriesStatus || '').toLowerCase().trim() !== (catalogEntry.series_status || '').toLowerCase().trim();
+
+            if (!hasNewSeasonsOrEpisodes && !hasStatusChanged) {
+                console.log(`[Catalog Up-to-date] Series tmdb_id=${numId} has no new episodes/seasons. Skipping database catalog write.`);
+                return catalogRowToProcessedFormat(catalogEntry);
+            }
+
+            console.log(`[Catalog Update Needed] Series tmdb_id=${numId} has changes (New seasons/episodes: ${hasNewSeasonsOrEpisodes}, Status change: ${hasStatusChanged}). Updating media_catalog...`);
+            const targetCategory = tmdbData.Category || 'Series';
+            const updatedCatalog = await cacheTmdbToSupabaseCatalog(tmdbData, numId, targetCategory);
+            return updatedCatalog ? catalogRowToProcessedFormat(updatedCatalog) : tmdbData;
+        } catch (err) {
+            console.warn('[Catalog] Ongoing series refresh failed, falling back to cached catalog:', err);
+            return catalogRowToProcessedFormat(catalogEntry);
+        }
+    }
+
+    // Series not in Supabase -> Fetch from TMDB proxy -> Save in Supabase -> Return from catalog
+    console.log(`[Catalog Miss] Series tmdb_id=${numId} fetching from TMDB proxy...`);
+    const tmdbData = await fetchAndProcessTmdbDetails('tv', numId);
+    const targetCategory = tmdbData.Category || 'Series';
+    const savedCatalog = await cacheTmdbToSupabaseCatalog(tmdbData, numId, targetCategory);
+    return savedCatalog ? catalogRowToProcessedFormat(savedCatalog) : tmdbData;
+}
+// END CHUNK: Supabase Catalog-First Flow
 
 async function applyTmdbSelection(item, force = false) {
     if (!formFieldsGlob) {
@@ -428,7 +655,7 @@ async function applyTmdbSelection(item, force = false) {
     if (typeof showLoading === 'function') showLoading("Fetching details for TMDB selection...");
 
     try {
-        const processed = await fetchAndProcessTmdbDetails(item.media_type, item.id);
+        const processed = await fetchMediaDetailsCatalogFirst(item.media_type, item.id);
 
         formFieldsGlob.name.value = processed.Name || formFieldsGlob.name.value;
         formFieldsGlob.category.value = processed.Category;
@@ -450,7 +677,8 @@ async function applyTmdbSelection(item, force = false) {
             if (formFieldsGlob.runtimeSeriesAvgEp) {
                 formFieldsGlob.runtimeSeriesAvgEp.value = (processed.runtime && processed.runtime.episode_run_time) || '';
             }
-        } else if (processed.Category === 'Movie' || processed.Category === 'Documentary') {
+        } else {
+            // Movie, Documentary, Special
             if (formFieldsGlob.runtimeMovie) {
                 formFieldsGlob.runtimeMovie.value = (typeof processed.runtime === 'number' ? processed.runtime : (processed.runtime && processed.runtime.episode_run_time)) || '';
             }

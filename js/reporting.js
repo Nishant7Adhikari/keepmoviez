@@ -71,7 +71,9 @@ async function prepareDailyRecommendationCard(movie) {
 
     if (movie.tmdbId) {
         try {
-            const mediaType = movie.tmdbMediaType || (movie.Category === 'Series' ? 'tv' : 'movie');
+            const mediaType = (movie.tmdbMediaType === 'tv' || movie.tmdbMediaType === 'movie')
+                ? movie.tmdbMediaType
+                : (movie.Category === 'Series' ? 'tv' : 'movie');
             const detailData = await callTmdbApiDirect(`/${mediaType}/${movie.tmdbId}`);
             if (detailData && detailData.backdrop_path) {
                 backdropUrl = `https://image.tmdb.org/t/p/w780${detailData.backdrop_path}`;
@@ -439,14 +441,18 @@ async function fetchSuggestionCarousels(seedMovie) {
     for (let i = 0; i < movieData.length; i++) {
         const m = movieData[i];
         if (m && m.tmdbId) {
-            const type = m.tmdbMediaType || (m.Category === 'Series' ? 'tv' : 'movie');
+            const type = (m.tmdbMediaType === 'tv' || m.tmdbMediaType === 'movie')
+                ? m.tmdbMediaType
+                : (m.Category === 'Series' ? 'tv' : 'movie');
             loggedTmdbKeys.add(`${type}_${m.tmdbId}`);
         }
     }
     
     // 1. "Because You Liked..." carousel
     try {
-        const seedMediaType = seedMovie.tmdbMediaType || 'movie';
+        const seedMediaType = (seedMovie.tmdbMediaType === 'tv' || seedMovie.tmdbMediaType === 'movie')
+            ? seedMovie.tmdbMediaType
+            : (seedMovie.Category === 'Series' ? 'tv' : 'movie');
         const data = await callTmdbApiDirect(`/${seedMediaType}/${seedMovie.tmdbId}/recommendations`);
         const items = (data.results || []).filter(rec => {
             const recType = rec.media_type || seedMediaType;
@@ -705,9 +711,10 @@ async function fastSaveSuggestion(item, status) {
     } catch (err) {
         console.warn("Could not fetch full details for fast-save:", err);
         // Fallback minimally if tmdb fetch fails
+        const hasDoc = Array.isArray(item.genre_ids) && item.genre_ids.includes(99);
         processed = {
             Name: name,
-            Category: isSeries ? 'Series' : 'Movie',
+            Category: hasDoc ? 'Documentary' : (isSeries ? 'Series' : 'Movie'),
             Genre: '',
             genres: [],
             Language: '',

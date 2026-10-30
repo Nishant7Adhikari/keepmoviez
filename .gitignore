@@ -1,5 +1,3 @@
-TODO.md
-Suggestions.md
 *delete*
 ANTIGRAVITY.md
 .agents/*
@@ -7,3 +5,5 @@ tools
 analyze.txt
 bugReport.txt
 .vscode
+supabase_migrations
+extras

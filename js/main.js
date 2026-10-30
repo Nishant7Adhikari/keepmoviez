@@ -31,11 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // --- MODIFIED: Sync Mode Init (Namespaced) ---
   const getLocalSyncModeKey = () => window.currentSupabaseUser ? window.currentSupabaseUser.id + "_sync_mode" : "keepmoviez_sync_mode";
-  // Default to 'manual' if not set
-  let currentSyncMode = localStorage.getItem(getLocalSyncModeKey()) || "manual";
+  // Default to 'strict_privacy' if not set
+  let currentSyncMode = localStorage.getItem(getLocalSyncModeKey()) || "strict_privacy";
   
   window.refreshSyncModeGlobal = () => {
-    currentSyncMode = localStorage.getItem(getLocalSyncModeKey()) || "manual";
+    currentSyncMode = localStorage.getItem(getLocalSyncModeKey()) || "strict_privacy";
     if (typeof updateSyncUI === "function") updateSyncUI();
     if (typeof updateCustomSyncUI === "function") updateCustomSyncUI();
   };
@@ -255,8 +255,24 @@ document.addEventListener("DOMContentLoaded", () => {
     appMenu.classList.add("show");
     appMenuBackdrop.classList.add("show");
     document.body.style.overflow = "hidden";
-    document.getElementById("menuLoggedInUserEmail").textContent =
-      currentSupabaseUser?.email || "Not Logged In";
+    
+    // Sync menu email and Login vs Logout buttons
+    if (typeof window.updateMenuAuthDisplay === "function") {
+      window.updateMenuAuthDisplay();
+    } else {
+      document.getElementById("menuLoggedInUserEmail").textContent =
+        currentSupabaseUser?.email || "Guest (Local Mode)";
+      const loginBtn = document.getElementById("menuSupabaseLoginBtn");
+      const logoutBtn = document.getElementById("menuSupabaseLogoutBtn");
+      if (currentSupabaseUser) {
+        if (loginBtn) loginBtn.style.display = "none";
+        if (logoutBtn) logoutBtn.style.display = "block";
+      } else {
+        if (loginBtn) loginBtn.style.display = "block";
+        if (logoutBtn) logoutBtn.style.display = "none";
+      }
+    }
+
     const isOnline = navigator.onLine;
     const onlineIndicator = document.getElementById(
       "menuOnlineStatusIndicator",
@@ -913,6 +929,11 @@ document.addEventListener("DOMContentLoaded", () => {
         : "";
 
       if (query.length >= 2) {
+        // Task 2.2: Gate TMDB search for guest users
+        if (!window.currentSupabaseUser && typeof window.showTmdbGateModal === 'function') {
+          window.showTmdbGateModal();
+          return;
+        }
         fetchMovieInfoFromTmdb(query, year);
       } else {
         // Clear results AND Spinner if input is cleared/too short
@@ -1103,6 +1124,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Modal Backfill Footer buttons
   document.getElementById("modalBackfillAutoFetchBtn")?.addEventListener("click", () => {
+    // Task 2.2: Gate auto-fetch for guest users
+    if (!window.currentSupabaseUser && typeof window.showTmdbGateModal === 'function') {
+      window.showTmdbGateModal();
+      return;
+    }
     if (typeof autoFetchTmdb === "function") autoFetchTmdb();
   });
   document.getElementById("modalBackfillSkipBtn")?.addEventListener("click", () => {
@@ -1175,6 +1201,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
       supabaseUpdateUserPassword(newPass);
     });
+
+  // Login button opens auth container
+  document
+    .getElementById("menuSupabaseLoginBtn")
+    ?.addEventListener("click", () => {
+      closeMenu();
+      const authContainer = document.getElementById("authContainer");
+      if (authContainer) {
+        authContainer.style.display = "flex";
+        const authErrorDiv = document.getElementById("authError");
+        if (authErrorDiv) {
+          authErrorDiv.textContent = "";
+          authErrorDiv.style.display = "none";
+        }
+      }
+    });
+
+  // Dismiss auth modal (return to guest mode)
+  const dismissAuthModal = () => {
+    const authContainer = document.getElementById("authContainer");
+    const appContent = document.getElementById("appContent");
+    if (authContainer) authContainer.style.display = "none";
+    if (appContent) appContent.style.display = "block";
+  };
+  document.getElementById("closeAuthBtn")?.addEventListener("click", dismissAuthModal);
+  document.getElementById("continueAsGuestBtn")?.addEventListener("click", dismissAuthModal);
+
   document
     .getElementById("menuSupabaseLogoutBtn")
     ?.addEventListener("click", supabaseSignOutUser);
@@ -1205,6 +1258,20 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem(getLocalSyncModeKey(), newMode);
         updateSyncUI(); // Update Badge and Buttons
         if (typeof updateCustomSyncUI === "function") updateCustomSyncUI();
+
+        // Persist to Supabase profiles if authenticated
+        if (window.currentSupabaseUser && window.supabaseClient) {
+          window.supabaseClient
+            .from("profiles")
+            .upsert({
+              id: window.currentSupabaseUser.id,
+              email: window.currentSupabaseUser.email,
+              sync_mode: newMode,
+              updated_at: new Date().toISOString(),
+            })
+            .then(() => console.log(`[Profile] Saved sync_mode "${newMode}" to profiles`))
+            .catch((err) => console.warn("[Profile] Error saving sync_mode to profiles:", err));
+        }
 
         showToast(
           "Settings Saved",
