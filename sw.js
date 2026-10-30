@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v5.7.16";
+const CACHE_NAME = "keepmoviez-local-v5.7.17";
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
@@ -34,20 +34,20 @@ const CORE_ASSETS = [
   "https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js",
 
   // App Logic Scripts
-  "./js/constant.js?v=5.7.1",
-  "./js/backfill.js?v=5.7.16",
+  "./js/constant.js?v=5.7.17",
+  "./js/backfill.js?v=5.7.17",
   "./js/utils.js?v=5.7.16",
   "./js/indexeddb.js?v=5.6.20",
-  "./js/data.js?v=5.6.20",
-  "./js/input-output.js?v=5.7.16",
-  "./js/tmdb.js?v=5.7.5",
-  "./js/genre.js?v=5.6.20",
-  "./js/analysis.js?v=5.7.16",
-  "./js/ui.js?v=5.7.16",
-  "./js/reporting.js?v=5.7.12",
-  "./js/app.js?v=5.7.16",
-  "./js/supabase.js?v=5.6.22",
-  "./js/main.js?v=5.7.16",
+  "./js/data.js?v=5.7.17",
+  "./js/input-output.js?v=5.7.17",
+  "./js/tmdb.js?v=5.7.17",
+  "./js/genre.js?v=5.7.17",
+  "./js/analysis.js?v=5.7.17",
+  "./js/ui.js?v=5.7.17",
+  "./js/reporting.js?v=5.7.17",
+  "./js/app.js?v=5.7.17",
+  "./js/supabase.js?v=5.7.17",
+  "./js/main.js?v=5.7.17",
 
   // Icons
   "./icons/icon-192x192.png",
