@@ -1,5 +1,5 @@
 // sw.js
-const CACHE_NAME = "keepmoviez-local-v6.0.0";
+const CACHE_NAME = "keepmoviez-local-v6.0.1";
 const OFFLINE_URL = "offline.html";
 const SUPABASE_URL = "https://ujnjtvlkxhdbdbngdaeb.supabase.co";
 
